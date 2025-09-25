@@ -21,7 +21,6 @@ graph TB
     
     subgraph "Next.js Application"
         E[App Router]
-        F[API Routes]
         G[Middleware]
         H[Server Components]
     end
