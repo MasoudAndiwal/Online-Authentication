@@ -69,11 +69,18 @@ export default function Home() {
                 className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
               >
                 Benefits
-              </a>  <a
+              </a>
+              <a
                 href="/login"
                 className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
               >
-                login
+                Login
+              </a>
+              <a
+                href="/dashboard"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Dashboard Demo
               </a>
               <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg">
                 Contact Office
