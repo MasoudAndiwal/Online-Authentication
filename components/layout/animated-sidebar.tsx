@@ -268,7 +268,12 @@ export function AnimatedSidebar({
     if (onNavigate) {
       onNavigate(href);
     } else {
-      window.location.href = href;
+      // Fallback to window navigation if no onNavigate prop provided
+      try {
+        window.location.href = href;
+      } catch (error) {
+        console.error("Navigation failed:", error);
+      }
     }
   };
 
@@ -312,6 +317,7 @@ export function AnimatedSidebar({
               onToggle={() => toggleExpanded(item.href)}
               onNavigate={handleNavigation}
               level={0}
+              currentPath={currentPath}
             />
           </motion.div>
         ))}
@@ -327,6 +333,7 @@ interface NavigationItemProps {
   onToggle: () => void;
   onNavigate: (href: string) => void;
   level: number;
+  currentPath?: string;
 }
 
 function NavigationItem({
@@ -336,6 +343,7 @@ function NavigationItem({
   onToggle,
   onNavigate,
   level,
+  currentPath,
 }: NavigationItemProps) {
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
@@ -420,11 +428,12 @@ function NavigationItem({
               >
                 <NavigationItem
                   item={child}
-                  isActive={child.href === window.location.pathname}
+                  isActive={child.href === currentPath}
                   isExpanded={isChildExpanded(child.href)}
                   onToggle={() => toggleChildExpanded(child.href)}
                   onNavigate={onNavigate}
                   level={level + 1}
+                  currentPath={currentPath}
                 />
               </motion.div>
             ))}

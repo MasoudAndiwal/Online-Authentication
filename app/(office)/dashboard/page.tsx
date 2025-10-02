@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   ModernDashboardLayout,
   PageContainer,
@@ -47,11 +48,12 @@ const sampleUser = {
 };
 
 export default function OfficeDashboardPage() {
+  const router = useRouter();
   const [currentPath, setCurrentPath] = React.useState("/dashboard");
 
   const handleNavigation = (href: string) => {
     setCurrentPath(href);
-    console.log("Navigate to:", href);
+    router.push(href);
   };
 
   const handleLogout = () => {

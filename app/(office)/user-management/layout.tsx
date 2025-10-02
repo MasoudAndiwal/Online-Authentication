@@ -36,11 +36,7 @@ export default function UserManagementLayout({
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Security Header */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 text-center text-sm font-medium">
-        🔒 Restricted Area - Office Administrator Access Only
-      </div>
+    <div className="min-h-screen">      
       {children}
     </div>
   )

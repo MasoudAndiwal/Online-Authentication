@@ -2,7 +2,14 @@
 
 ## Overview
 
-The University Attendance System is a modern, visually stunning, high-trust web application built with Next.js 15, React 19, and PostgreSQL. The system implements a sophisticated role-based architecture supporting Office administrators, Teachers, and Students with comprehensive dashboard functionality featuring cutting-edge UI/UX design with modern component libraries, beautiful animations, and 3D iconography. The application follows a weekly attendance tracking model (Saturday-Thursday) with advanced academic rule enforcement for disqualification and certification requirements, featuring extensive reporting and analytics capabilities with immersive animations and interactions.
+The University Attendance System is a modern, visually stunning, high-trust web application built with Next.js 15, React 19, and PostgreSQL. The system implements a sophisticated role-based architecture supporting Office administrators, Teachers, and Students with comprehensive dashboard functionality featuring cutting-edge UI/UX design that matches the existing login page aesthetics with university blue palette, smooth animations, and professional campus look. The application follows a weekly attendance tracking model (Saturday-Thursday) with advanced academic rule enforcement for disqualification (محروم) and certification requirements (تصدیق طلب), featuring extensive reporting and analytics capabilities with immersive animations and interactions.
+
+### Key Business Rules
+- **Weekly Schedule**: Saturday to Thursday academic week with 6 class hours per day (45 minutes each), totaling 36 hours per week with configurable adjustments
+- **Disqualification (محروم)**: Based purely on Absent hours (excluding Sick and Leave), prevents final exam registration
+- **Certification Requirement (تصدیق طلب)**: Based on combined (Absent + Sick + Leave) hours, requires medical documentation for exam eligibility
+- **Break Rules**: Automatic 15-minute breaks after every 3 hours of class
+- **Single Class Enrollment**: Students can only be enrolled in one class to maintain data integrity
 
 ### Core Design Principles
 - **Visual Excellence**: Modern glassmorphism design with vibrant gradients, 3D icons from Lucide React and Heroicons, smooth micro-interactions, and contemporary aesthetics
@@ -43,31 +50,37 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - Icon: `CheckCircle` with 3D depth shadow and bounce spring animation
   - Animation: Scale bounce (1 → 1.2 → 1) with green glow pulse
   - Hover: Rotate 360° with shadow elevation
+  - Business Logic: Counts toward attendance requirements
 
 - **🔴 Absent**: #EF4444 (red-500)
   - Icon: `XCircle` with 3D layered shadow and shake animation
   - Animation: Horizontal shake with red warning pulse
   - Hover: Slight tilt with shadow depth increase
+  - Business Logic: Pure absence - counts toward محروم threshold only
 
 - **🟡 Sick**: #F59E0B (amber-500)
   - Icon: `Heart` with 3D gradient and gentle pulse glow
   - Animation: Heartbeat pulse with warm amber glow
   - Hover: Scale with soft yellow halo effect
+  - Business Logic: Counts toward تصدیق طلب threshold but NOT محروم
 
 - **🔵 Leave**: #06B6D4 (cyan-500)
   - Icon: `Calendar` with 3D perspective and slide transition
   - Animation: Slide-in from left with cyan shimmer
   - Hover: Flip animation with depth shadow
+  - Business Logic: Counts toward تصدیق طلب threshold but NOT محروم
 
-- **🟣 Disqualified**: #8B5CF6 (violet-500)
+- **🟣 محروم (Disqualified)**: #8B5CF6 (violet-500)
   - Icon: `AlertTriangle` with 3D warning depth and urgent pulse
   - Animation: Warning pulse with violet glow and slight shake
   - Hover: Intense glow with shadow expansion
+  - Business Logic: Prevents final exam registration, requires class repetition
 
-- **🟠 Certification Required**: #F97316 (orange-500)
+- **🟠 تصدیق طلب (Certification Required)**: #F97316 (orange-500)
   - Icon: `FileText` with 3D document stack and attention blink
   - Animation: Attention blink with orange highlight sweep
   - Hover: Document stack effect with shadow layers
+  - Business Logic: Requires medical certificate upload and Office approval for exam eligibility
 
 #### Typography System
 - **Primary Font**: Inter Variable (300-900 weights)
@@ -490,6 +503,674 @@ const darkModeColors = {
   - Reduced motion preferences respect
   - 60fps target for all animations
 
+## Data Models
+
+### Core Database Schema
+
+The database design supports the complex business rules while maintaining data integrity and performance.
+
+```typescript
+// User Management
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'OFFICE' | 'TEACHER' | 'STUDENT';
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string; // Office user who created this account
+  isActive: boolean;
+}
+
+// Academic Structure
+interface Class {
+  id: string;
+  name: string;
+  teacherId: string;
+  schedule: WeeklySchedule;
+  maxStudents: number;
+  academicYear: string;
+  semester: string;
+  createdAt: Date;
+}
+
+interface WeeklySchedule {
+  saturday: TimeSlot[];
+  sunday: TimeSlot[];
+  monday: TimeSlot[];
+  tuesday: TimeSlot[];
+  wednesday: TimeSlot[];
+  thursday: TimeSlot[];
+}
+
+interface TimeSlot {
+  startTime: string; // "08:00"
+  endTime: string;   // "08:45"
+  sessionNumber: number; // 1-6
+  breakAfter?: boolean; // true after sessions 3 and 6
+}
+
+// Attendance Tracking
+interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  classId: string;
+  date: Date;
+  sessionNumber: number;
+  status: 'PRESENT' | 'ABSENT' | 'SICK' | 'LEAVE';
+  markedBy: string; // Teacher or Office user
+  markedAt: Date;
+  modifiedBy?: string;
+  modifiedAt?: Date;
+  notes?: string;
+}
+
+// Student Status Tracking
+interface StudentStatus {
+  id: string;
+  studentId: string;
+  classId: string;
+  weekStartDate: Date;
+  presentHours: number;
+  absentHours: number; // Pure absences for محروم calculation
+  sickHours: number;
+  leaveHours: number;
+  totalHours: number;
+  isDisqualified: boolean; // محروم status
+  requiresCertification: boolean; // تصدیق طلب status
+  calculatedAt: Date;
+}
+
+// Medical Certification
+interface MedicalCertificate {
+  id: string;
+  studentId: string;
+  classId: string;
+  uploadedAt: Date;
+  fileName: string;
+  fileUrl: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  reviewNotes?: string;
+}
+
+// System Configuration
+interface AttendanceRules {
+  id: string;
+  disqualificationThreshold: number; // Pure absence hours for محروم
+  certificationThreshold: number; // Combined absence hours for تصدیق طلب
+  hoursPerDay: number; // Default 6
+  sessionDuration: number; // Default 45 minutes
+  weeklyTotalHours: number; // Default 36
+  breakDuration: number; // Default 15 minutes
+  breakAfterSessions: number[]; // Default [3, 6]
+  updatedBy: string;
+  updatedAt: Date;
+}
+```
+
+**Design Rationale**: The schema separates concerns while maintaining referential integrity. The StudentStatus table provides pre-calculated weekly summaries for performance, while AttendanceRecord maintains granular session-level data for accuracy and audit trails.
+
+### Business Logic Implementation
+
+#### Attendance Calculation Engine
+
+```typescript
+class AttendanceCalculator {
+  // Calculate weekly totals with proper business rule separation
+  calculateWeeklyStatus(studentId: string, weekStart: Date): StudentStatus {
+    const records = this.getWeeklyRecords(studentId, weekStart);
+    
+    return {
+      presentHours: records.filter(r => r.status === 'PRESENT').length * 0.75, // 45min sessions
+      absentHours: records.filter(r => r.status === 'ABSENT').length * 0.75, // Pure absences only
+      sickHours: records.filter(r => r.status === 'SICK').length * 0.75,
+      leaveHours: records.filter(r => r.status === 'LEAVE').length * 0.75,
+      totalHours: this.getConfiguredWeeklyHours(),
+      isDisqualified: this.checkDisqualification(studentId),
+      requiresCertification: this.checkCertificationRequirement(studentId)
+    };
+  }
+
+  // محروم calculation - pure absences only
+  checkDisqualification(studentId: string): boolean {
+    const totalAbsentHours = this.getTotalAbsentHours(studentId);
+    const threshold = this.getDisqualificationThreshold();
+    return totalAbsentHours >= threshold;
+  }
+
+  // تصدیق طلب calculation - combined absences
+  checkCertificationRequirement(studentId: string): boolean {
+    const combinedAbsences = this.getTotalAbsentHours(studentId) + 
+                           this.getTotalSickHours(studentId) + 
+                           this.getTotalLeaveHours(studentId);
+    const threshold = this.getCertificationThreshold();
+    return combinedAbsences >= threshold;
+  }
+}
+```
+
+#### Medical Certification Workflow
+
+```typescript
+class CertificationWorkflow {
+  async submitCertificate(studentId: string, file: File): Promise<MedicalCertificate> {
+    // Validate student is flagged for certification
+    const student = await this.getStudentStatus(studentId);
+    if (!student.requiresCertification) {
+      throw new Error('Student does not require certification');
+    }
+
+    // Upload and create certificate record
+    const certificate = await this.createCertificateRecord(studentId, file);
+    
+    // Notify Office administrators
+    await this.notifyOfficeForReview(certificate);
+    
+    return certificate;
+  }
+
+  async approveCertificate(certificateId: string, reviewerId: string): Promise<void> {
+    const certificate = await this.getCertificate(certificateId);
+    
+    // Update certificate status
+    certificate.status = 'APPROVED';
+    certificate.reviewedBy = reviewerId;
+    certificate.reviewedAt = new Date();
+    
+    // Restore exam eligibility
+    await this.updateStudentExamEligibility(certificate.studentId, true);
+    
+    // Notify student of approval
+    await this.notifyStudentOfApproval(certificate.studentId);
+  }
+}
+```
+
+**Design Rationale**: The business logic clearly separates the two different absence calculations (محروم vs تصدیق طلب) to ensure accurate academic rule enforcement while maintaining flexibility for configuration changes.
+
+## Error Handling
+
+### Navigation and Routing Issues
+
+#### Problem: User Management Navigation Blocking
+**Issue**: When opening the "Add Teacher" page, users cannot navigate to other pages within the User Management section due to improper navigation handling.
+
+**Root Cause**: The navigation handler in pages only updates local state without triggering actual route changes.
+
+**Solution**: Implement proper Next.js router integration for navigation.
+
+```typescript
+// Fixed Navigation Implementation
+'use client'
+
+import { useRouter } from 'next/navigation'
+
+export default function AddTeacherPage() {
+  const router = useRouter()
+
+  const handleNavigation = (href: string) => {
+    // Use Next.js router for actual navigation
+    router.push(href)
+  }
+
+  // Rest of component...
+}
+```
+
+#### Navigation Error Handling Strategy
+
+```typescript
+class NavigationErrorHandler {
+  static handleNavigationError(error: Error, fallbackRoute: string) {
+    console.error('Navigation failed:', error)
+    
+    // Attempt fallback navigation
+    try {
+      window.location.href = fallbackRoute
+    } catch (fallbackError) {
+      // Show user-friendly error message
+      this.showNavigationError()
+    }
+  }
+
+  static showNavigationError() {
+    // Display toast notification or modal
+    // "Navigation failed. Please refresh the page and try again."
+  }
+}
+```
+
+### Form Validation and Data Integrity
+
+#### Real-time Validation System
+```typescript
+interface ValidationRule {
+  field: string
+  validator: (value: any) => boolean | string
+  message: string
+  severity: 'error' | 'warning' | 'info'
+}
+
+class FormValidator {
+  static validateUserForm(data: UserFormData): ValidationResult {
+    const rules: ValidationRule[] = [
+      {
+        field: 'email',
+        validator: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+        message: 'Please enter a valid email address',
+        severity: 'error'
+      },
+      {
+        field: 'role',
+        validator: (role) => ['OFFICE', 'TEACHER', 'STUDENT'].includes(role),
+        message: 'Invalid role selected',
+        severity: 'error'
+      },
+      {
+        field: 'name',
+        validator: (name) => name && name.trim().length >= 2,
+        message: 'Name must be at least 2 characters long',
+        severity: 'error'
+      }
+    ]
+
+    return this.runValidation(data, rules)
+  }
+}
+```
+
+### Business Rule Enforcement Errors
+
+#### Attendance Calculation Error Handling
+```typescript
+class AttendanceErrorHandler {
+  static handleCalculationError(studentId: string, error: Error): void {
+    // Log error for debugging
+    console.error(`Attendance calculation failed for student ${studentId}:`, error)
+    
+    // Notify administrators
+    this.notifyAdministrators({
+      type: 'CALCULATION_ERROR',
+      studentId,
+      error: error.message,
+      timestamp: new Date()
+    })
+    
+    // Use fallback calculation or cached values
+    this.useFallbackCalculation(studentId)
+  }
+
+  static validateBusinessRules(attendanceData: AttendanceRecord[]): ValidationResult {
+    const errors: string[] = []
+    
+    // Check for duplicate entries
+    const duplicates = this.findDuplicateEntries(attendanceData)
+    if (duplicates.length > 0) {
+      errors.push(`Duplicate attendance entries found: ${duplicates.join(', ')}`)
+    }
+    
+    // Validate date ranges
+    const invalidDates = this.validateDateRanges(attendanceData)
+    if (invalidDates.length > 0) {
+      errors.push(`Invalid dates found: ${invalidDates.join(', ')}`)
+    }
+    
+    return { isValid: errors.length === 0, errors }
+  }
+}
+```
+
+### Database and API Error Handling
+
+#### Comprehensive Error Response System
+```typescript
+interface APIError {
+  code: string
+  message: string
+  details?: any
+  timestamp: Date
+  requestId: string
+}
+
+class APIErrorHandler {
+  static handleDatabaseError(error: any): APIError {
+    const errorMap = {
+      'P2002': 'A record with this information already exists',
+      'P2025': 'The requested record was not found',
+      'P2003': 'This action would violate data integrity rules',
+      'P2016': 'Query interpretation error occurred'
+    }
+
+    return {
+      code: error.code || 'DATABASE_ERROR',
+      message: errorMap[error.code] || 'A database error occurred',
+      details: process.env.NODE_ENV === 'development' ? error : undefined,
+      timestamp: new Date(),
+      requestId: this.generateRequestId()
+    }
+  }
+
+  static handleValidationError(validationErrors: any[]): APIError {
+    return {
+      code: 'VALIDATION_ERROR',
+      message: 'The provided data is invalid',
+      details: validationErrors,
+      timestamp: new Date(),
+      requestId: this.generateRequestId()
+    }
+  }
+}
+```
+
+### User Experience Error Handling
+
+#### Graceful Degradation Strategy
+```typescript
+class UXErrorHandler {
+  static handleComponentError(error: Error, componentName: string): React.ReactElement {
+    // Log error for monitoring
+    console.error(`Component error in ${componentName}:`, error)
+    
+    // Return fallback UI
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600" />
+          <div>
+            <h4 className="font-semibold text-red-900">Something went wrong</h4>
+            <p className="text-sm text-red-700">
+              We're having trouble loading this section. Please refresh the page or try again later.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  static handleLoadingError(retryFunction: () => void): React.ReactElement {
+    return (
+      <div className="text-center py-8">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
+          <AlertTriangle className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
+          <h3 className="font-semibold text-yellow-900 mb-2">Loading Failed</h3>
+          <p className="text-sm text-yellow-700 mb-4">
+            We couldn't load the requested data. This might be due to a network issue.
+          </p>
+          <button
+            onClick={retryFunction}
+            className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+}
+```
+
+**Design Rationale**: The error handling system provides comprehensive coverage for navigation, validation, business logic, and user experience issues. Each error type has specific handling strategies that maintain system stability while providing clear feedback to users and administrators.
+
+## Testing Strategy
+
+### Navigation Testing Framework
+
+#### Automated Navigation Tests
+```typescript
+// Navigation Integration Tests
+describe('User Management Navigation', () => {
+  test('should navigate between user management pages without blocking', async () => {
+    const { user } = render(<AddTeacherPage />)
+    
+    // Navigate to different sections
+    await user.click(screen.getByText('All Users'))
+    expect(window.location.pathname).toBe('/user-management/all-users')
+    
+    await user.click(screen.getByText('Add Student'))
+    expect(window.location.pathname).toBe('/user-management/add-student')
+    
+    // Verify no navigation blocking occurs
+    await user.click(screen.getByText('Teachers'))
+    expect(window.location.pathname).toBe('/user-management/teachers')
+  })
+
+  test('should handle navigation errors gracefully', async () => {
+    // Mock navigation failure
+    const mockRouter = { push: jest.fn().mockRejectedValue(new Error('Navigation failed')) }
+    
+    const { user } = render(<AddTeacherPage />, { router: mockRouter })
+    
+    await user.click(screen.getByText('All Users'))
+    
+    // Verify error handling
+    expect(screen.getByText(/navigation failed/i)).toBeInTheDocument()
+  })
+})
+```
+
+### Business Logic Testing
+
+#### Attendance Calculation Tests
+```typescript
+describe('Attendance Business Logic', () => {
+  test('should calculate محروم status correctly', () => {
+    const calculator = new AttendanceCalculator()
+    const studentRecords = [
+      { status: 'ABSENT', sessionNumber: 1, date: '2024-01-01' },
+      { status: 'ABSENT', sessionNumber: 2, date: '2024-01-01' },
+      { status: 'SICK', sessionNumber: 3, date: '2024-01-01' },
+      { status: 'LEAVE', sessionNumber: 4, date: '2024-01-01' }
+    ]
+    
+    const result = calculator.calculateWeeklyStatus('student-1', new Date('2024-01-01'))
+    
+    // Only pure absences count toward محروم
+    expect(result.absentHours).toBe(1.5) // 2 sessions * 0.75 hours
+    expect(result.isDisqualified).toBe(false) // Below threshold
+  })
+
+  test('should calculate تصدیق طلب status correctly', () => {
+    const calculator = new AttendanceCalculator()
+    // Test combined absence calculation
+    const result = calculator.checkCertificationRequirement('student-1')
+    
+    expect(result).toBe(true) // Combined absences exceed threshold
+  })
+})
+```
+
+### Component Testing Strategy
+
+#### Modern UI Component Tests
+```typescript
+describe('ModernDashboardLayout', () => {
+  test('should render with proper navigation structure', () => {
+    const mockUser = { name: 'Test User', role: 'OFFICE', email: 'test@test.com' }
+    
+    render(
+      <ModernDashboardLayout user={mockUser} currentPath="/user-management">
+        <div>Test Content</div>
+      </ModernDashboardLayout>
+    )
+    
+    // Verify navigation items are rendered
+    expect(screen.getByText('User Management')).toBeInTheDocument()
+    expect(screen.getByText('Classes & Schedule')).toBeInTheDocument()
+    expect(screen.getByText('Attendance')).toBeInTheDocument()
+  })
+
+  test('should handle role-based navigation correctly', () => {
+    const teacherUser = { name: 'Teacher', role: 'TEACHER', email: 'teacher@test.com' }
+    
+    render(<ModernDashboardLayout user={teacherUser} />)
+    
+    // Teachers should not see user management
+    expect(screen.queryByText('User Management')).not.toBeInTheDocument()
+    expect(screen.getByText('My Classes')).toBeInTheDocument()
+  })
+})
+```
+
+### End-to-End Testing
+
+#### Critical User Workflows
+```typescript
+// E2E Tests using Playwright
+test.describe('Office Administrator Workflow', () => {
+  test('should complete full user creation workflow', async ({ page }) => {
+    await page.goto('/user-management/add-teacher')
+    
+    // Fill form
+    await page.fill('[data-testid="firstName"]', 'John')
+    await page.fill('[data-testid="lastName"]', 'Doe')
+    await page.fill('[data-testid="email"]', 'john.doe@university.edu')
+    
+    // Submit form
+    await page.click('[data-testid="submit-button"]')
+    
+    // Verify success
+    await expect(page.locator('[data-testid="success-message"]')).toBeVisible()
+    
+    // Navigate to user list
+    await page.click('[data-testid="nav-all-users"]')
+    
+    // Verify user appears in list
+    await expect(page.locator('text=John Doe')).toBeVisible()
+  })
+
+  test('should handle attendance marking workflow', async ({ page }) => {
+    await page.goto('/attendance/mark')
+    
+    // Select class
+    await page.selectOption('[data-testid="class-select"]', 'CS-101')
+    
+    // Mark attendance for students
+    await page.click('[data-testid="student-1-present"]')
+    await page.click('[data-testid="student-2-absent"]')
+    
+    // Submit attendance
+    await page.click('[data-testid="submit-attendance"]')
+    
+    // Verify confirmation
+    await expect(page.locator('text=Attendance saved successfully')).toBeVisible()
+  })
+})
+```
+
+### Performance Testing
+
+#### Load Testing Strategy
+```typescript
+describe('Performance Tests', () => {
+  test('should handle large user lists efficiently', async () => {
+    // Mock 1000+ users
+    const largeUserList = Array.from({ length: 1000 }, (_, i) => ({
+      id: `user-${i}`,
+      name: `User ${i}`,
+      email: `user${i}@test.com`,
+      role: 'STUDENT'
+    }))
+    
+    const startTime = performance.now()
+    
+    render(<UserList users={largeUserList} />)
+    
+    const endTime = performance.now()
+    const renderTime = endTime - startTime
+    
+    // Should render within 100ms
+    expect(renderTime).toBeLessThan(100)
+  })
+
+  test('should optimize attendance calculations', async () => {
+    const calculator = new AttendanceCalculator()
+    const largeDataset = generateLargeAttendanceDataset(10000) // 10k records
+    
+    const startTime = performance.now()
+    
+    const results = calculator.calculateBulkStatus(largeDataset)
+    
+    const endTime = performance.now()
+    const calculationTime = endTime - startTime
+    
+    // Should calculate within 500ms
+    expect(calculationTime).toBeLessThan(500)
+    expect(results).toHaveLength(largeDataset.length)
+  })
+})
+```
+
+### Accessibility Testing
+
+#### WCAG Compliance Tests
+```typescript
+describe('Accessibility Tests', () => {
+  test('should meet WCAG 2.1 AA standards', async () => {
+    const { container } = render(<AddTeacherPage />)
+    
+    const results = await axe(container)
+    
+    expect(results).toHaveNoViolations()
+  })
+
+  test('should support keyboard navigation', async () => {
+    const { user } = render(<UserManagementLayout />)
+    
+    // Tab through navigation items
+    await user.tab()
+    expect(screen.getByText('Dashboard')).toHaveFocus()
+    
+    await user.tab()
+    expect(screen.getByText('User Management')).toHaveFocus()
+    
+    // Enter to expand submenu
+    await user.keyboard('{Enter}')
+    expect(screen.getByText('Add User')).toBeVisible()
+  })
+
+  test('should provide proper ARIA labels', () => {
+    render(<AttendanceGrid />)
+    
+    // Verify ARIA labels exist
+    expect(screen.getByLabelText('Mark student as present')).toBeInTheDocument()
+    expect(screen.getByLabelText('Mark student as absent')).toBeInTheDocument()
+    
+    // Verify screen reader announcements
+    expect(screen.getByRole('status')).toHaveTextContent('Attendance grid loaded')
+  })
+})
+```
+
+### Security Testing
+
+#### Authentication and Authorization Tests
+```typescript
+describe('Security Tests', () => {
+  test('should prevent unauthorized access to Office features', async () => {
+    const studentUser = { role: 'STUDENT', name: 'Student', email: 'student@test.com' }
+    
+    render(<UserManagementLayout />, { user: studentUser })
+    
+    // Should redirect or show error
+    expect(screen.queryByText('User Management')).not.toBeInTheDocument()
+  })
+
+  test('should validate input sanitization', async () => {
+    const { user } = render(<AddTeacherForm />)
+    
+    // Attempt XSS injection
+    await user.type(screen.getByLabelText('Name'), '<script>alert("xss")</script>')
+    
+    // Should be sanitized
+    expect(screen.getByDisplayValue('<script>alert("xss")</script>')).not.toBeInTheDocument()
+  })
+})
+```
+
+**Design Rationale**: The comprehensive testing strategy ensures system reliability, performance, accessibility, and security. Each testing layer validates different aspects of the system, from unit-level business logic to end-to-end user workflows, providing confidence in the system's robustness and user experience quality.
+
 ## Architecture
 
 ### System Architecture Pattern
@@ -507,9 +1188,31 @@ graph TB
 ```
 
 ### Role-Based Access Control (RBAC)
-- **Administrator**: Full system access, account management, configuration, reporting
-- **Teacher**: Class-specific attendance management, student viewing
-- **Student**: Read-only access to personal attendance data
+
+The system implements strict role-based access control with clear permission boundaries and audit trails.
+
+#### Office Administrator Role
+- **User Management**: Exclusive authority to create, modify, and delete user accounts
+- **System Configuration**: Full access to attendance rules, academic calendar, and system settings
+- **Reporting**: Complete access to all reports, analytics, and export functionality
+- **Attendance Management**: Can view and modify all attendance records with audit logging
+- **Certification Workflow**: Manages medical certificate approvals and student status updates
+
+#### Teacher Role
+- **Class Management**: Access only to assigned classes and enrolled students
+- **Attendance Marking**: Can mark attendance for assigned classes with deadline enforcement
+- **Student Viewing**: Read access to student information within assigned classes only
+- **Limited Reporting**: Class-specific reports and attendance statistics
+- **Historical Access**: Can review and correct previous attendance entries within administrative guidelines
+
+#### Student Role
+- **Personal Data**: Read-only access to own attendance records and academic standing
+- **Single Class Enforcement**: System prevents enrollment in multiple classes
+- **Status Monitoring**: Can view محروم and تصدیق طلب status with explanatory information
+- **Certification Submission**: Can upload medical certificates when flagged as تصدیق طلب
+- **Privacy Protection**: Cannot access other students' data or modify any attendance records
+
+**Design Rationale**: The three-tier role system ensures proper separation of duties while maintaining data integrity and academic policy compliance. Each role has clearly defined boundaries with appropriate error handling and informative feedback.
 
 ### Security Architecture
 - JWT-based authentication with secure session management
@@ -522,29 +1225,33 @@ graph TB
 
 ### Dashboard Navigation Structure
 
+The navigation structure is designed to provide intuitive access to all system features with role-based visibility and smooth animations matching the login page quality.
+
 ```
 Dashboard Navigation Hierarchy:
-├── User Management/
-│   ├── All Users (list, search, filter, pagination)
-│   ├── Add User (single + CSV bulk import)
-│   └── Roles & Permissions (role management interface)
-├── Classes & Schedule/
-│   ├── All Classes (class listing and overview)
-│   ├── Schedule Builder (drag-and-drop interface)
-│   └── Class Management (assignments and enrollment)
-├── Attendance/
-│   ├── Overview (system-wide attendance dashboard)
-│   ├── Mark Attendance (teacher interface with grid)
-│   └── Attendance History (detailed timeline view)
-├── Reports & Analytics/
-│   ├── Weekly Reports (Present/Absent/Sick/Leave/Total)
-│   ├── Student Status (محروم and تصدیق طلب tracking)
-│   └── Export Data (CSV/PDF/Excel with filters)
-└── System Settings/
-    ├── General Settings (system configuration)
-    ├── Academic Calendar (semester/term setup)
-    └── Attendance Rules (thresholds and business rules)
+├── User Management/ (Office Only)
+│   ├── All Users (animated user cards with search, filter, pagination)
+│   ├── Add User (single form + CSV bulk import with progress tracking)
+│   └── Roles & Permissions (interactive permission matrix)
+├── Classes & Schedule/ (Office + Teachers)
+│   ├── All Classes (animated class cards with enrollment indicators)
+│   ├── Schedule Builder (drag-and-drop with conflict detection)
+│   └── Class Management (teacher assignments and student enrollment)
+├── Attendance/ (All Roles - Filtered by Permission)
+│   ├── Overview (system-wide dashboard for Office, class-specific for Teachers)
+│   ├── Mark Attendance (teacher grid interface with bulk actions)
+│   └── Attendance History (timeline view with export capabilities)
+├── Reports & Analytics/ (Office + Limited Teacher Access)
+│   ├── Weekly Reports (Present/Absent/Sick/Leave/Total with business rule calculations)
+│   ├── Student Status (محروم and تصدیق طلب tracking with visual indicators)
+│   └── Export Data (CSV/PDF/Excel with flexible filtering)
+└── System Settings/ (Office Only)
+    ├── General Settings (system configuration and notifications)
+    ├── Academic Calendar (semester/term setup with holiday management)
+    └── Attendance Rules (configurable thresholds for محروم and تصدیق طلب)
 ```
+
+**Design Rationale**: The hierarchical structure ensures logical grouping of related functionality while maintaining clear role-based access control. Each section uses consistent visual language with animated transitions and modern card-based layouts.
 
 ### Modern Dashboard Component Architecture
 
