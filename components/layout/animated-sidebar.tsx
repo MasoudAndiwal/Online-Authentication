@@ -16,6 +16,8 @@ import {
   Clock,
   TrendingUp,
   ChevronRight,
+  GraduationCap,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,14 +64,38 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         icon: Users,
         children: [
           {
-            label: "All Users",
-            href: "/user-management/all-users",
-            icon: Users,
-          },
-          {
             label: "Add User",
             href: "/user-management/add-user",
             icon: UserPlus,
+            children: [
+              {
+                label: "Add Teacher",
+                href: "/user-management/add-teacher",
+                icon: GraduationCap,
+              },
+              {
+                label: "Add Student",
+                href: "/user-management/add-student",
+                icon: User,
+              },
+            ],
+          },
+          {
+            label: "All Users",
+            href: "/user-management/all-users",
+            icon: Users,
+            children: [
+              {
+                label: "Teacher List",
+                href: "/user-management/teachers",
+                icon: GraduationCap,
+              },
+              {
+                label: "Student List",
+                href: "/user-management/students",
+                icon: User,
+              },
+            ],
           },
           {
             label: "Roles & Permissions",
@@ -231,9 +257,10 @@ export function AnimatedSidebar({
   const isExpanded = (href: string) => {
     return (
       expandedItems.includes(href) ||
-      navigationItems
+      (navigationItems
         .find((item) => item.href === href)
-        ?.children?.some((child) => isActive(child.href))
+        ?.children?.some((child) => isActive(child.href)) ??
+        false)
     );
   };
 
@@ -312,6 +339,21 @@ function NavigationItem({
 }: NavigationItemProps) {
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
+  const [childExpandedItems, setChildExpandedItems] = React.useState<string[]>(
+    []
+  );
+
+  const toggleChildExpanded = (href: string) => {
+    setChildExpandedItems((prev) =>
+      prev.includes(href)
+        ? prev.filter((item) => item !== href)
+        : [...prev, href]
+    );
+  };
+
+  const isChildExpanded = (href: string) => {
+    return childExpandedItems.includes(href);
+  };
 
   return (
     <div>
@@ -379,8 +421,8 @@ function NavigationItem({
                 <NavigationItem
                   item={child}
                   isActive={child.href === window.location.pathname}
-                  isExpanded={false}
-                  onToggle={() => {}}
+                  isExpanded={isChildExpanded(child.href)}
+                  onToggle={() => toggleChildExpanded(child.href)}
                   onNavigate={onNavigate}
                   level={level + 1}
                 />
