@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   ModernDashboardLayout,
   PageContainer,
@@ -10,32 +10,45 @@ import { ModernCard, ModernCardContent } from "@/components/ui/modern-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import {
   User,
   Phone,
   Save,
   GraduationCap,
-  Sparkles,
   ArrowRight,
   CheckCircle,
-  Users,
-  Award,
-  Target,
   AlertCircle,
-  Clock,
-  Plus,
-  X,
+  ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 // Sample user data
 const sampleUser = {
-  name: "AN. Masoud Andiwal",
-  email: "MasoudAndiwal@university.edu",
+  name: "Dr. Sarah Ahmed",
+  email: "sarah.ahmed@university.edu",
   role: "OFFICE" as const,
   avatar: undefined,
+};
+
+// Sample student data for editing
+const sampleStudentData = {
+  id: "CS-2024-001",
+  firstName: "Ahmad",
+  lastName: "Hassan",
+  fatherName: "Mohammad Hassan",
+  grandFatherName: "Ali Hassan",
+  studentId: "CS-2024-001",
+  dateOfBirth: undefined,
+  phone: "+1 (555) 111-2222",
+  fatherPhone: "+1 (555) 111-3333",
+  address: "123 Main Street, City, State",
+  programs: ["Computer Science"],
+  semester: "Fall 2024",
+  enrollmentYear: "2024",
+  classSection: "Section A",
+  timeSlot: "morning",
 };
 
 // Form state interface
@@ -54,9 +67,6 @@ interface FormData {
   enrollmentYear: string;
   classSection: string;
   timeSlot: string;
-  username: string;
-  studentIdRef: string;
-  password: string;
 }
 
 // Form validation errors
@@ -75,32 +85,36 @@ interface FormErrors {
   enrollmentYear?: string;
   classSection?: string;
   timeSlot?: string;
-  username?: string;
-  studentIdRef?: string;
-  password?: string;
 }
 
-export default function AddStudentPage() {
+export default function EditStudentPage() {
   const router = useRouter();
-  const [currentPath] = React.useState("/user-management/add-student");
+  const params = useParams();
+  const studentId = params.id as string;
+
+  // Redirect to student list if no ID is provided
+  React.useEffect(() => {
+    if (!studentId) {
+      router.replace("/user-management/students");
+    }
+  }, [studentId, router]);
+
+  const [currentPath] = React.useState("/user-management/edit-student");
   const [formData, setFormData] = React.useState<FormData>({
-    firstName: "",
-    lastName: "",
-    fatherName: "",
-    grandFatherName: "",
-    studentId: "",
-    dateOfBirth: undefined,
-    phone: "",
-    fatherPhone: "",
-    address: "",
-    programs: [],
-    semester: "",
-    enrollmentYear: "",
-    classSection: "",
-    timeSlot: "",
-    username: "",
-    studentIdRef: "",
-    password: "",
+    firstName: sampleStudentData.firstName,
+    lastName: sampleStudentData.lastName,
+    fatherName: sampleStudentData.fatherName,
+    grandFatherName: sampleStudentData.grandFatherName,
+    studentId: sampleStudentData.studentId,
+    dateOfBirth: sampleStudentData.dateOfBirth,
+    phone: sampleStudentData.phone,
+    fatherPhone: sampleStudentData.fatherPhone,
+    address: sampleStudentData.address,
+    programs: sampleStudentData.programs,
+    semester: sampleStudentData.semester,
+    enrollmentYear: sampleStudentData.enrollmentYear,
+    classSection: sampleStudentData.classSection,
+    timeSlot: sampleStudentData.timeSlot,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -135,23 +149,6 @@ export default function AddStudentPage() {
     }
   };
 
-  // Auto-generate username when first name or last name changes
-  React.useEffect(() => {
-    if (formData.firstName && formData.lastName) {
-      const autoUsername = (formData.firstName + formData.lastName)
-        .toLowerCase()
-        .replace(/\s+/g, "");
-      setFormData((prev) => ({ ...prev, username: autoUsername }));
-    }
-  }, [formData.firstName, formData.lastName]);
-
-  // Auto-populate studentIdRef when studentId changes
-  React.useEffect(() => {
-    if (formData.studentId) {
-      setFormData((prev) => ({ ...prev, studentIdRef: formData.studentId }));
-    }
-  }, [formData.studentId]);
-
   // Validation functions
   const validateStep1 = (): boolean => {
     const errors: FormErrors = {};
@@ -171,7 +168,6 @@ export default function AddStudentPage() {
     if (!formData.studentId.trim()) {
       errors.studentId = "Student ID is required";
     }
-    // Date of birth is now optional
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -217,25 +213,6 @@ export default function AddStudentPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const validateStep4 = (): boolean => {
-    const errors: FormErrors = {};
-
-    if (!formData.username.trim()) {
-      errors.username = "Username is required";
-    }
-    if (!formData.studentIdRef.trim()) {
-      errors.studentIdRef = "Student ID reference is required";
-    }
-    if (!formData.password.trim()) {
-      errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -243,7 +220,6 @@ export default function AddStudentPage() {
     const step1Valid = validateStep1();
     const step2Valid = validateStep2();
     const step3Valid = validateStep3();
-    const step4Valid = validateStep4();
 
     if (!step1Valid) {
       setCurrentStep(1);
@@ -257,10 +233,6 @@ export default function AddStudentPage() {
       setCurrentStep(3);
       return;
     }
-    if (!step4Valid) {
-      setCurrentStep(4);
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -270,11 +242,9 @@ export default function AddStudentPage() {
 
       setIsSubmitting(false);
       setShowSuccess(true);
-
-      // Don't auto-redirect - let user choose what to do next
     } catch (error) {
       setIsSubmitting(false);
-      console.error("Error creating student:", error);
+      console.error("Error updating student:", error);
     }
   };
 
@@ -288,7 +258,7 @@ export default function AddStudentPage() {
     if (currentStep === 3 && !validateStep3()) {
       return;
     }
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -299,233 +269,14 @@ export default function AddStudentPage() {
 
   const steps = [
     { number: 1, title: "Personal Info", icon: User, color: "green" },
-    { number: 2, title: "Contact & Address", icon: User, color: "green" },
+    { number: 2, title: "Contact & Address", icon: Phone, color: "green" },
     {
       number: 3,
       title: "Academic Details",
       icon: GraduationCap,
       color: "green",
     },
-    {
-      number: 4,
-      title: "Account & Login",
-      icon: User,
-      color: "green",
-    },
   ];
-
-  // 3D Icon Component
-  const Icon3D = ({
-    icon: IconComponent,
-    className = "",
-    size = "h-6 w-6",
-  }: {
-    icon: any;
-    className?: string;
-    size?: string;
-  }) => (
-    <motion.div
-      whileHover={{
-        scale: 1.1,
-        rotateY: 15,
-        rotateX: 5,
-        transition: { type: "spring", stiffness: 300, damping: 20 },
-      }}
-      className={`relative ${className}`}
-      style={{
-        transformStyle: "preserve-3d",
-        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))",
-      }}
-    >
-      <IconComponent className={`${size} relative z-10`} />
-      <div
-        className={`absolute inset-0 ${size} opacity-30 blur-sm`}
-        style={{ transform: "translateZ(-2px) translateY(2px)" }}
-      >
-        <IconComponent className={size} />
-      </div>
-    </motion.div>
-  );
-
-  // MultiSelect Component for Programs
-  const MultiSelect = ({
-    id,
-    label,
-    options,
-    selectedValues,
-    onChange,
-    placeholder,
-    error,
-    required = false,
-  }: {
-    id: string;
-    label: string;
-    options: string[];
-    selectedValues: string[];
-    onChange: (value: string) => void;
-    placeholder: string;
-    error?: string;
-    required?: boolean;
-  }) => {
-    const [isOpen, setIsOpen] = React.useState(false);
-    const [customInput, setCustomInput] = React.useState("");
-    const [showCustomInput, setShowCustomInput] = React.useState(false);
-
-    const handleAddCustom = () => {
-      if (customInput.trim() && !selectedValues.includes(customInput.trim())) {
-        onChange(customInput.trim());
-        setCustomInput("");
-        setShowCustomInput(false);
-      }
-    };
-
-    return (
-      <div
-        className="space-y-2 relative"
-        style={{ position: "relative", zIndex: isOpen ? 9999 : "auto" }}
-      >
-        <Label htmlFor={id} className="text-sm font-semibold text-slate-700">
-          {label} {required && "*"}
-        </Label>
-
-        {/* Selected Values Display */}
-        <div
-          className={cn(
-            "min-h-12 border bg-white rounded-lg p-3 transition-all duration-300",
-            error ? "border-red-500" : "border-slate-200",
-            "focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-100"
-          )}
-        >
-          <div className="flex flex-wrap gap-2">
-            {selectedValues.map((value) => (
-              <span
-                key={value}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-sm rounded-md"
-              >
-                {value}
-                <button
-                  type="button"
-                  onClick={() => onChange(value)}
-                  className="hover:bg-green-200 rounded-full p-0.5"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-            {selectedValues.length === 0 && (
-              <span className="text-slate-500 text-sm">{placeholder}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Dropdown Button */}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full justify-between h-10"
-        >
-          Add {label}
-          <ArrowRight
-            className={cn(
-              "h-4 w-4 transition-transform",
-              isOpen && "rotate-90"
-            )}
-          />
-        </Button>
-
-        {/* Dropdown Menu */}
-        {isOpen && (
-          <div
-            className="absolute w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto"
-            style={{
-              position: "absolute",
-              zIndex: 99999,
-              top: "100%",
-              left: 0,
-              right: 0,
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            }}
-          >
-            <div className="p-2 space-y-1">
-              {options.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => {
-                    onChange(option);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
-                    selectedValues.includes(option)
-                      ? "bg-green-100 text-green-800"
-                      : "hover:bg-slate-100"
-                  )}
-                >
-                  {option}
-                  {selectedValues.includes(option) && (
-                    <CheckCircle className="h-4 w-4 inline ml-2" />
-                  )}
-                </button>
-              ))}
-
-              {/* Custom Input Section */}
-              <div className="border-t border-slate-200 pt-2 mt-2">
-                {!showCustomInput ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomInput(true)}
-                    className="w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add New Class
-                  </button>
-                ) : (
-                  <div className="flex gap-2 p-2">
-                    <Input
-                      value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
-                      placeholder="Enter custom class name"
-                      className="flex-1 h-8 text-sm"
-                      onKeyPress={(e) => e.key === "Enter" && handleAddCustom()}
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAddCustom}
-                      className="h-8 px-2 bg-green-600 hover:bg-green-700"
-                    >
-                      Add
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setShowCustomInput(false);
-                        setCustomInput("");
-                      }}
-                      className="h-8 px-2"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-500 flex items-center gap-1">
-            <AlertCircle className="h-4 w-4" />
-            {error}
-          </p>
-        )}
-      </div>
-    );
-  };
 
   // Program options (Classes)
   const programOptions = [
@@ -536,54 +287,6 @@ export default function AddStudentPage() {
     "Class 11",
     "Class 12",
   ];
-
-  // Handle multi-select changes for programs
-  const handleProgramChange = (value: string) => {
-    setFormData((prev) => {
-      const currentPrograms = prev.programs;
-      const newPrograms = currentPrograms.includes(value)
-        ? currentPrograms.filter((item) => item !== value)
-        : [...currentPrograms, value];
-      return { ...prev, programs: newPrograms };
-    });
-
-    // Clear error when user makes selection
-    if (formErrors.programs) {
-      setFormErrors((prev) => ({ ...prev, programs: undefined }));
-    }
-  };
-
-  // Add custom program
-  const addCustomProgram = (customValue: string) => {
-    if (customValue.trim() && !formData.programs.includes(customValue.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        programs: [...prev.programs, customValue.trim()],
-      }));
-    }
-  };
-
-  // Remove selected program
-  const removeSelectedProgram = (value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      programs: prev.programs.filter((item) => item !== value),
-    }));
-  };
-
-  // Auto-calculate enrollment year based on semester
-  const calculateEnrollmentYear = (semester: string) => {
-    const currentYear = new Date().getFullYear();
-    const semesterNumber = parseInt(semester);
-
-    if (semesterNumber && semesterNumber >= 1 && semesterNumber <= 4) {
-      // 2-year program: Semester 1-2 = Year 1, Semester 3-4 = Year 2
-      const yearsAgo = Math.floor((semesterNumber - 1) / 2);
-      return (currentYear - yearsAgo).toString();
-    }
-
-    return "";
-  };
 
   // Class section options
   const classSectionOptions = [
@@ -612,97 +315,35 @@ export default function AddStudentPage() {
     },
   ];
 
-  // Time slot options with detailed schedule
-  const timeSlotOptions1 = [
-    {
-      value: "morning",
-      label: "Morning (8:30 AM - 12:30 PM)",
-      description: "6 teaching hours, 40 min each + 15 min breaks",
-    },
-    {
-      value: "afternoon",
-      label: "Afternoon (1:30 PM - 6:30 PM)",
-      description: "6 teaching hours, 40 min each",
-    },
-  ];
   if (showSuccess) {
     return (
       <ModernDashboardLayout
         user={sampleUser}
-        title="Add Student"
-        subtitle="Create a new student account"
         currentPath={currentPath}
         onNavigate={handleNavigation}
         onLogout={handleLogout}
         onSearch={handleSearch}
         hideHeader={true}
       >
-        <style jsx global>{`
-          /* Hide scrollbar but keep functionality */
-          ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
-          }
-          ::-webkit-scrollbar-thumb {
-            background: transparent;
-          }
-          /* For Firefox */
-          html {
-            scrollbar-width: none;
-          }
-          /* For IE and Edge */
-          body {
-            -ms-overflow-style: none;
-          }
-        `}</style>
         <PageContainer>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="min-h-[60vh] flex items-center justify-center"
-          >
+          <div className="min-h-[60vh] flex items-center justify-center">
             <div className="text-center max-w-md">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="mb-8"
-              >
+              <div className="mb-8">
                 <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
                   <CheckCircle className="h-12 w-12 text-white" />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute inset-0 bg-green-400 rounded-full opacity-30"
-                  />
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-3xl font-bold text-slate-900 mb-4"
-              >
-                Student Created Successfully! 🎉
-              </motion.h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                Student Updated Successfully! 🎉
+              </h2>
 
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-slate-600 mb-8"
-              >
-                {formData.firstName} {formData.lastName} has been added to the
-                system.
-              </motion.p>
+              <p className="text-slate-600 mb-8">
+                {formData.firstName} {formData.lastName}'s information has been
+                updated.
+              </p>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="flex justify-center space-x-4"
-              >
+              <div className="flex justify-center space-x-4">
                 <Button
                   onClick={() => handleNavigation("/user-management/students")}
                   className="bg-green-600 hover:bg-green-700"
@@ -713,11 +354,11 @@ export default function AddStudentPage() {
                   variant="outline"
                   onClick={() => window.location.reload()}
                 >
-                  Add Another Student
+                  Edit Again
                 </Button>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </PageContainer>
       </ModernDashboardLayout>
     );
@@ -726,89 +367,56 @@ export default function AddStudentPage() {
   return (
     <ModernDashboardLayout
       user={sampleUser}
-      title="Add Student"
-      subtitle="Create a new student account"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
       hideHeader={true}
     >
-      <style jsx global>{`
-        /* Hide scrollbar but keep functionality */
-        ::-webkit-scrollbar {
-          width: 0px;
-          background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: transparent;
-        }
-        /* For Firefox */
-        html {
-          scrollbar-width: none;
-        }
-        /* For IE and Edge */
-        body {
-          -ms-overflow-style: none;
-        }
-      `}</style>
       <PageContainer>
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => handleNavigation("/user-management/students")}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Students
+          </Button>
+        </div>
+
         {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8">
           <div className="relative inline-block">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-4 -right-4 text-green-500"
-            >
-              <Sparkles className="h-8 w-8" />
-            </motion.div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800">
-              Create New Student Account
+              Edit Student Account
             </h1>
+            <p className="text-slate-600 mt-2">
+              Update {formData.firstName} {formData.lastName}'s information
+            </p>
           </div>
-        </motion.div>
+        </div>
 
         {/* Progress Steps */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <div className="flex justify-center items-center space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-4">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
+                <div
                   className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
                     currentStep >= step.number
                       ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
-                  <Icon3D
-                    icon={step.icon}
-                    className={
-                      currentStep >= step.number
-                        ? "text-white"
-                        : "text-slate-500"
-                    }
-                  />
+                  <step.icon className="h-6 w-6" />
                   {currentStep > step.number && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
-                    >
+                    <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
                       <CheckCircle className="h-3 w-3 text-white" />
-                    </motion.div>
+                    </div>
                   )}
-                </motion.div>
+                </div>
 
                 <div className="ml-2 sm:ml-3 text-left">
                   <div
@@ -832,7 +440,7 @@ export default function AddStudentPage() {
                 </div>
 
                 {index < steps.length - 1 && (
-                  <motion.div
+                  <div
                     className={`mx-2 sm:mx-4 lg:mx-6 h-0.5 w-8 sm:w-12 lg:w-16 transition-all duration-300 ${
                       currentStep > step.number
                         ? "bg-green-400"
@@ -843,18 +451,11 @@ export default function AddStudentPage() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Form Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
-        >
-          <ModernCard className="overflow-hidden bg-white border border-slate-200 shadow-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white/50" />
-
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ModernCard className="overflow-visible bg-white border border-slate-200 shadow-xl">
             <ModernCardContent className="relative p-4 sm:p-6 lg:p-8">
               <form onSubmit={handleSubmit}>
                 <AnimatePresence mode="wait">
@@ -869,25 +470,19 @@ export default function AddStudentPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
-                        >
+                        <div className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4">
                           <User className="h-8 w-8 text-white" />
-                        </motion.div>
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900">
                           Personal Information
                         </h2>
                         <p className="text-slate-600">
-                          Let's start with basic personal details
+                          Update basic personal details
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="firstName"
                             className="text-sm font-semibold text-slate-700"
@@ -914,12 +509,9 @@ export default function AddStudentPage() {
                               {formErrors.firstName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="lastName"
                             className="text-sm font-semibold text-slate-700"
@@ -946,12 +538,9 @@ export default function AddStudentPage() {
                               {formErrors.lastName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="fatherName"
                             className="text-sm font-semibold text-slate-700"
@@ -978,12 +567,9 @@ export default function AddStudentPage() {
                               {formErrors.fatherName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="grandFatherName"
                             className="text-sm font-semibold text-slate-700"
@@ -1013,12 +599,9 @@ export default function AddStudentPage() {
                               {formErrors.grandFatherName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="studentId"
                             className="text-sm font-semibold text-slate-700"
@@ -1045,12 +628,9 @@ export default function AddStudentPage() {
                               {formErrors.studentId}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="dateOfBirth"
                             className="text-sm font-semibold text-slate-700"
@@ -1088,12 +668,24 @@ export default function AddStudentPage() {
                               {formErrors.dateOfBirth}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between pt-6">
+                        <div></div>
+                        <Button
+                          type="button"
+                          onClick={nextStep}
+                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                          Next Step
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Step 2: Contact Information */}
+                  {/* Step 2: Contact & Address */}
                   {currentStep === 2 && (
                     <motion.div
                       key="step2"
@@ -1104,91 +696,77 @@ export default function AddStudentPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
-                        >
+                        <div className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4">
                           <Phone className="h-8 w-8 text-white" />
-                        </motion.div>
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900">
                           Contact & Address
                         </h2>
                         <p className="text-slate-600">
-                          Contact information and address details
+                          Update contact information and address
                         </p>
                       </div>
 
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="phone"
+                            className="text-sm font-semibold text-slate-700"
                           >
-                            <Label
-                              htmlFor="phone"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Phone Number *
-                            </Label>
-                            <Input
-                              id="phone"
-                              value={formData.phone}
-                              onChange={(e) =>
-                                handleInputChange("phone", e.target.value)
-                              }
-                              placeholder="+1 (555) 123-4567"
-                              className={cn(
-                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.phone
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            {formErrors.phone && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.phone}
-                              </p>
+                            Phone Number *
+                          </Label>
+                          <Input
+                            id="phone"
+                            value={formData.phone}
+                            onChange={(e) =>
+                              handleInputChange("phone", e.target.value)
+                            }
+                            placeholder="+1 (555) 123-4567"
+                            className={cn(
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
+                              formErrors.phone
+                                ? "border-red-500"
+                                : "border-slate-200"
                             )}
-                          </motion.div>
-
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="fatherPhone"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Father Phone Number *
-                            </Label>
-                            <Input
-                              id="fatherPhone"
-                              value={formData.fatherPhone}
-                              onChange={(e) =>
-                                handleInputChange("fatherPhone", e.target.value)
-                              }
-                              placeholder="+1 (555) 987-6543"
-                              className={cn(
-                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.fatherPhone
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            {formErrors.fatherPhone && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.fatherPhone}
-                              </p>
-                            )}
-                          </motion.div>
+                          />
+                          {formErrors.phone && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              {formErrors.phone}
+                            </p>
+                          )}
                         </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="fatherPhone"
+                            className="text-sm font-semibold text-slate-700"
+                          >
+                            Father Phone Number *
+                          </Label>
+                          <Input
+                            id="fatherPhone"
+                            value={formData.fatherPhone}
+                            onChange={(e) =>
+                              handleInputChange("fatherPhone", e.target.value)
+                            }
+                            placeholder="+1 (555) 987-6543"
+                            className={cn(
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
+                              formErrors.fatherPhone
+                                ? "border-red-500"
+                                : "border-slate-200"
+                            )}
+                          />
+                          {formErrors.fatherPhone && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              {formErrors.fatherPhone}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2 sm:col-span-2">
                           <Label
                             htmlFor="address"
                             className="text-sm font-semibold text-slate-700"
@@ -1215,7 +793,26 @@ export default function AddStudentPage() {
                               {formErrors.address}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between pt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={prevStep}
+                          className="px-8 py-3 rounded-lg font-semibold"
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={nextStep}
+                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                          Next Step
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                       </div>
                     </motion.div>
                   )}
@@ -1470,263 +1067,41 @@ export default function AddStudentPage() {
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  )}
 
-                  {/* Step 4: Account & Login */}
-                  {currentStep === 4 && (
-                    <motion.div
-                      key="step4"
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-8"
-                    >
-                      <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
+                      <div className="flex justify-between pt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={prevStep}
+                          className="px-8 py-3 rounded-lg font-semibold"
                         >
-                          <User className="h-8 w-8 text-white" />
-                        </motion.div>
-                        <h2 className="text-2xl font-bold text-slate-900">
-                          Account & Login
-                        </h2>
-                        <p className="text-slate-600">
-                          Set up login credentials for the student
-                        </p>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="username"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Username *
-                            </Label>
-                            <Input
-                              id="username"
-                              value={formData.username}
-                              onChange={(e) =>
-                                handleInputChange("username", e.target.value)
-                              }
-                              placeholder="Auto-generated from first and last name"
-                              className={cn(
-                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.username
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            <p className="text-xs text-slate-500">
-                              Username is auto-generated but can be manually
-                              changed
-                            </p>
-                            {formErrors.username && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.username}
-                              </p>
-                            )}
-                          </motion.div>
-
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="studentIdRef"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Student ID *
-                            </Label>
-                            <Input
-                              id="studentIdRef"
-                              value={formData.studentIdRef}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "studentIdRef",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Auto-populated from Personal Information"
-                              className={cn(
-                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.studentIdRef
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            <p className="text-xs text-slate-500">
-                              References the Student ID from Personal
-                              Information
-                            </p>
-                            {formErrors.studentIdRef && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.studentIdRef}
-                              </p>
-                            )}
-                          </motion.div>
-
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="password"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Password *
-                            </Label>
-                            <Input
-                              id="password"
-                              type="password"
-                              value={formData.password}
-                              onChange={(e) =>
-                                handleInputChange("password", e.target.value)
-                              }
-                              placeholder="Enter password (minimum 6 characters)"
-                              className={cn(
-                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.password
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            {formErrors.password && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.password}
-                              </p>
-                            )}
-                          </motion.div>
-                        </div>
+                          Previous
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Updating...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Update Student
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Navigation Buttons */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t border-slate-200 gap-4"
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={currentStep === 1}
-                    className="flex items-center gap-2 w-full sm:w-auto"
-                  >
-                    <ArrowRight className="h-4 w-4 rotate-180" />
-                    Previous
-                  </Button>
-
-                  <div className="flex items-center gap-2">
-                    {steps.map((step) => (
-                      <div
-                        key={step.number}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          currentStep >= step.number
-                            ? "bg-green-500"
-                            : "bg-slate-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  {currentStep < 4 ? (
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-                    >
-                      Next
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: "linear",
-                            }}
-                            className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"
-                          />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4" />
-                          Create Student Account
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </motion.div>
               </form>
             </ModernCardContent>
           </ModernCard>
-        </motion.div>
-
-        {/* Features Preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
-        >
-          {[
-            {
-              icon: Target,
-              title: "Attendance Tracking",
-              desc: "Real-time attendance monitoring",
-            },
-            {
-              icon: Award,
-              title: "Progress Reports",
-              desc: "Detailed academic progress",
-            },
-            {
-              icon: Users,
-              title: "Class Management",
-              desc: "Easy class enrollment",
-            },
-          ].map((feature, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="p-6 bg-white rounded-xl shadow-md border border-slate-100 hover:shadow-lg transition-all duration-300"
-            >
-              <Icon3D
-                icon={feature.icon}
-                className="text-green-600 mb-4"
-                size="h-8 w-8"
-              />
-              <h3 className="font-semibold text-slate-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-slate-600">{feature.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
+        </div>
       </PageContainer>
     </ModernDashboardLayout>
   );

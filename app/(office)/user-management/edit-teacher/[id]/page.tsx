@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   ModernDashboardLayout,
   PageContainer,
@@ -15,14 +15,11 @@ import {
   Phone,
   Save,
   GraduationCap,
-  Sparkles,
   ArrowRight,
   CheckCircle,
-  Users,
-  Award,
-  Target,
   AlertCircle,
-
+  ArrowLeft,
+  Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -33,6 +30,26 @@ const sampleUser = {
   email: "sarah.ahmed@university.edu",
   role: "OFFICE" as const,
   avatar: undefined,
+};
+
+// Sample teacher data for editing
+const sampleTeacherData = {
+  id: "T-2024-001",
+  firstName: "Ahmad",
+  lastName: "Hassan",
+  fatherName: "Mohammad Hassan",
+  grandFatherName: "Ali Hassan",
+  teacherId: "T-2024-001",
+  dateOfBirth: undefined,
+  phone: "+1 (555) 111-2222",
+  secondaryPhone: "+1 (555) 111-3333",
+  address: "123 Main Street, City, State",
+  departments: ["Computer Science"],
+  qualification: "Master's in Computer Science",
+  experience: "5 years",
+  specialization: "Software Engineering",
+  subjects: ["Programming", "Data Structures"],
+  classes: ["Section A", "Morning Batch"],
 };
 
 // Form state interface
@@ -52,8 +69,6 @@ interface FormData {
   specialization: string;
   subjects: string[];
   classes: string[];
-  username: string;
-  password: string;
 }
 
 // Form validation errors
@@ -73,31 +88,37 @@ interface FormErrors {
   specialization?: string;
   subjects?: string;
   classes?: string;
-  username?: string;
-  password?: string;
 }
 
-export default function AddTeacherPage() {
+export default function EditTeacherPage() {
   const router = useRouter();
-  const [currentPath] = React.useState("/user-management/add-teacher");
+  const params = useParams();
+  const teacherId = params.id as string;
+
+  // Redirect to teacher list if no ID is provided
+  React.useEffect(() => {
+    if (!teacherId) {
+      router.replace("/user-management/teachers");
+    }
+  }, [teacherId, router]);
+
+  const [currentPath] = React.useState("/user-management/edit-teacher");
   const [formData, setFormData] = React.useState<FormData>({
-    firstName: "",
-    lastName: "",
-    fatherName: "",
-    grandFatherName: "",
-    teacherId: "",
-    dateOfBirth: undefined,
-    phone: "",
-    secondaryPhone: "",
-    address: "",
-    departments: [],
-    qualification: "",
-    experience: "",
-    specialization: "",
-    subjects: [],
-    classes: [],
-    username: "",
-    password: "",
+    firstName: sampleTeacherData.firstName,
+    lastName: sampleTeacherData.lastName,
+    fatherName: sampleTeacherData.fatherName,
+    grandFatherName: sampleTeacherData.grandFatherName,
+    teacherId: sampleTeacherData.teacherId,
+    dateOfBirth: sampleTeacherData.dateOfBirth,
+    phone: sampleTeacherData.phone,
+    secondaryPhone: sampleTeacherData.secondaryPhone,
+    address: sampleTeacherData.address,
+    departments: sampleTeacherData.departments,
+    qualification: sampleTeacherData.qualification,
+    experience: sampleTeacherData.experience,
+    specialization: sampleTeacherData.specialization,
+    subjects: sampleTeacherData.subjects,
+    classes: sampleTeacherData.classes,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -112,7 +133,6 @@ export default function AddTeacherPage() {
       window.location.href = href;
     }
   };
-
   const handleLogout = () => {
     console.log("Logout clicked");
   };
@@ -131,14 +151,6 @@ export default function AddTeacherPage() {
       setFormErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
-
-  // Auto-generate username when first name or last name changes
-  React.useEffect(() => {
-    if (formData.firstName && formData.lastName) {
-      const autoUsername = (formData.firstName + formData.lastName).toLowerCase().replace(/\s+/g, '');
-      setFormData((prev) => ({ ...prev, username: autoUsername }));
-    }
-  }, [formData.firstName, formData.lastName]);
 
   const handleMultiSelectChange = (
     field: "departments" | "subjects" | "classes",
@@ -178,7 +190,6 @@ export default function AddTeacherPage() {
     if (!formData.teacherId.trim()) {
       errors.teacherId = "Teacher ID is required";
     }
-    // Date of birth is now optional
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -221,22 +232,6 @@ export default function AddTeacherPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const validateStep4 = (): boolean => {
-    const errors: FormErrors = {};
-
-    if (!formData.username.trim()) {
-      errors.username = "Username is required";
-    }
-    if (!formData.password.trim()) {
-      errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -244,7 +239,6 @@ export default function AddTeacherPage() {
     const step1Valid = validateStep1();
     const step2Valid = validateStep2();
     const step3Valid = validateStep3();
-    const step4Valid = validateStep4();
 
     if (!step1Valid) {
       setCurrentStep(1);
@@ -258,10 +252,6 @@ export default function AddTeacherPage() {
       setCurrentStep(3);
       return;
     }
-    if (!step4Valid) {
-      setCurrentStep(4);
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -271,11 +261,9 @@ export default function AddTeacherPage() {
 
       setIsSubmitting(false);
       setShowSuccess(true);
-
-      // Don't auto-redirect - let user choose what to do next
     } catch (error) {
       setIsSubmitting(false);
-      console.error("Error creating teacher:", error);
+      console.error("Error updating teacher:", error);
     }
   };
 
@@ -286,10 +274,7 @@ export default function AddTeacherPage() {
     if (currentStep === 2 && !validateStep2()) {
       return;
     }
-    if (currentStep === 3 && !validateStep3()) {
-      return;
-    }
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -300,23 +285,16 @@ export default function AddTeacherPage() {
 
   const steps = [
     { number: 1, title: "Personal Info", icon: User, color: "orange" },
-    { number: 2, title: "Contact & Department", icon: Phone, color: "orange" },
+    { number: 2, title: "Contact & Address", icon: Phone, color: "orange" },
     {
       number: 3,
       title: "Academic Details",
       icon: GraduationCap,
       color: "orange",
     },
-    {
-      number: 4,
-      title: "Account & Login",
-      icon: User,
-      color: "orange",
-    },
   ];
 
   // Department options
-  // Department options (all available departments)
   const departmentOptions = [
     "Computer Science",
     "Electrical Engineering",
@@ -358,39 +336,6 @@ export default function AddTeacherPage() {
     "Afternoon Batch",
     "Evening Batch",
   ];
-
-  // 3D Icon Component
-  const Icon3D = ({
-    icon: IconComponent,
-    className = "",
-    size = "h-6 w-6",
-  }: {
-    icon: any;
-    className?: string;
-    size?: string;
-  }) => (
-    <motion.div
-      whileHover={{
-        scale: 1.1,
-        rotateY: 15,
-        rotateX: 5,
-        transition: { type: "spring", stiffness: 300, damping: 20 },
-      }}
-      className={`relative ${className}`}
-      style={{
-        transformStyle: "preserve-3d",
-        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))",
-      }}
-    >
-      <IconComponent className={`${size} relative z-10`} />
-      <div
-        className={`absolute inset-0 ${size} opacity-30 blur-sm`}
-        style={{ transform: "translateZ(-2px) translateY(2px)" }}
-      >
-        <IconComponent className={size} />
-      </div>
-    </motion.div>
-  );
 
   // Multi-Select Component
   const MultiSelect = ({
@@ -476,7 +421,7 @@ export default function AddTeacherPage() {
 
           {isOpen && (
             <div
-              className="absolute w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto"
+              className="absolute w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto scrollbar-hide"
               style={{
                 position: "absolute",
                 zIndex: 99999,
@@ -484,6 +429,8 @@ export default function AddTeacherPage() {
                 left: 0,
                 right: 0,
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
               }}
             >
               {options.map((option) => (
@@ -523,88 +470,34 @@ export default function AddTeacherPage() {
     return (
       <ModernDashboardLayout
         user={sampleUser}
-        title="Add Teacher"
-        subtitle="Create a new teacher account"
         currentPath={currentPath}
         onNavigate={handleNavigation}
         onLogout={handleLogout}
         onSearch={handleSearch}
         hideHeader={true}
       >
-        <style jsx global>{`
-          /* Hide scrollbar but keep functionality */
-          ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
-          }
-          ::-webkit-scrollbar-thumb {
-            background: transparent;
-          }
-          /* For Firefox */
-          html {
-            scrollbar-width: none;
-          }
-          /* For IE and Edge */
-          body {
-            -ms-overflow-style: none;
-          }
-          /* Ensure dropdowns appear on top */
-          .dropdown-portal {
-            position: fixed !important;
-            z-index: 99999 !important;
-          }
-        `}</style>
         <PageContainer>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="min-h-[60vh] flex items-center justify-center"
-          >
+          <div className="min-h-[60vh] flex items-center justify-center">
             <div className="text-center max-w-md">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="mb-8"
-              >
-                <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
+              <div className="mb-8">
+                <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-2xl">
                   <CheckCircle className="h-12 w-12 text-white" />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute inset-0 bg-green-400 rounded-full opacity-30"
-                  />
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-3xl font-bold text-slate-900 mb-4"
-              >
-                Teacher Created Successfully! 🎉
-              </motion.h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                Teacher Updated Successfully! 🎉
+              </h2>
 
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-slate-600 mb-8"
-              >
-                {formData.firstName} {formData.lastName} has been added to the
-                system.
-              </motion.p>
+              <p className="text-slate-600 mb-8">
+                {formData.firstName} {formData.lastName}'s information has been
+                updated.
+              </p>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="flex justify-center space-x-4"
-              >
+              <div className="flex justify-center space-x-4">
                 <Button
                   onClick={() => handleNavigation("/user-management/teachers")}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-orange-600 hover:bg-orange-700"
                 >
                   View All Teachers
                 </Button>
@@ -612,11 +505,11 @@ export default function AddTeacherPage() {
                   variant="outline"
                   onClick={() => window.location.reload()}
                 >
-                  Add Another Teacher
+                  Edit Again
                 </Button>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </PageContainer>
       </ModernDashboardLayout>
     );
@@ -625,8 +518,6 @@ export default function AddTeacherPage() {
   return (
     <ModernDashboardLayout
       user={sampleUser}
-      title="Add Teacher"
-      subtitle="Create a new teacher account"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
@@ -634,85 +525,61 @@ export default function AddTeacherPage() {
       hideHeader={true}
     >
       <style jsx global>{`
-        /* Hide scrollbar but keep functionality */
-        ::-webkit-scrollbar {
-          width: 0px;
-          background: transparent;
+        /* Hide scrollbar for webkit browsers */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
-        ::-webkit-scrollbar-thumb {
-          background: transparent;
-        }
-        /* For Firefox */
-        html {
-          scrollbar-width: none;
-        }
-        /* For IE and Edge */
-        body {
-          -ms-overflow-style: none;
-        }
-        /* Ensure dropdowns appear on top */
-        .dropdown-portal {
-          position: fixed !important;
-          z-index: 99999 !important;
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .scrollbar-hide {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
         }
       `}</style>
       <PageContainer>
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => handleNavigation("/user-management/teachers")}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Teachers
+          </Button>
+        </div>
+
         {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8">
           <div className="relative inline-block">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-4 -right-4 text-orange-500"
-            >
-              <Sparkles className="h-8 w-8" />
-            </motion.div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800">
-              Create New Teacher Account
+              Edit Teacher Account
             </h1>
+            <p className="text-slate-600 mt-2">
+              Update {formData.firstName} {formData.lastName}'s information
+            </p>
           </div>
-        </motion.div>
+        </div>
 
         {/* Progress Steps */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <div className="flex justify-center items-center space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-4">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
+                <div
                   className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
                     currentStep >= step.number
                       ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
-                  <Icon3D
-                    icon={step.icon}
-                    className={
-                      currentStep >= step.number
-                        ? "text-white"
-                        : "text-slate-500"
-                    }
-                  />
+                  <step.icon className="h-6 w-6" />
                   {currentStep > step.number && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
-                    >
+                    <div className="absolute -top-1 -right-1 bg-orange-500 rounded-full p-1">
                       <CheckCircle className="h-3 w-3 text-white" />
-                    </motion.div>
+                    </div>
                   )}
-                </motion.div>
+                </div>
 
                 <div className="ml-2 sm:ml-3 text-left">
                   <div
@@ -736,7 +603,7 @@ export default function AddTeacherPage() {
                 </div>
 
                 {index < steps.length - 1 && (
-                  <motion.div
+                  <div
                     className={`mx-2 sm:mx-4 lg:mx-6 h-0.5 w-8 sm:w-12 lg:w-16 transition-all duration-300 ${
                       currentStep > step.number
                         ? "bg-orange-400"
@@ -747,18 +614,11 @@ export default function AddTeacherPage() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Form Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
-        >
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ModernCard className="overflow-visible bg-white border border-slate-200 shadow-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white/50" />
-
             <ModernCardContent className="relative p-4 sm:p-6 lg:p-8">
               <form onSubmit={handleSubmit}>
                 <AnimatePresence mode="wait">
@@ -773,25 +633,19 @@ export default function AddTeacherPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4"
-                        >
+                        <div className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4">
                           <User className="h-8 w-8 text-white" />
-                        </motion.div>
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900">
                           Personal Information
                         </h2>
                         <p className="text-slate-600">
-                          Let's start with basic personal details
+                          Update basic personal details
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="firstName"
                             className="text-sm font-semibold text-slate-700"
@@ -818,12 +672,9 @@ export default function AddTeacherPage() {
                               {formErrors.firstName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="lastName"
                             className="text-sm font-semibold text-slate-700"
@@ -850,12 +701,9 @@ export default function AddTeacherPage() {
                               {formErrors.lastName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="fatherName"
                             className="text-sm font-semibold text-slate-700"
@@ -882,12 +730,9 @@ export default function AddTeacherPage() {
                               {formErrors.fatherName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="grandFatherName"
                             className="text-sm font-semibold text-slate-700"
@@ -917,12 +762,9 @@ export default function AddTeacherPage() {
                               {formErrors.grandFatherName}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="teacherId"
                             className="text-sm font-semibold text-slate-700"
@@ -935,7 +777,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("teacherId", e.target.value)
                             }
-                            placeholder="e.g., TCH-2024-001"
+                            placeholder="e.g., T-2024-001"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.teacherId
@@ -949,12 +791,9 @@ export default function AddTeacherPage() {
                               {formErrors.teacherId}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="dateOfBirth"
                             className="text-sm font-semibold text-slate-700"
@@ -992,12 +831,24 @@ export default function AddTeacherPage() {
                               {formErrors.dateOfBirth}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between pt-6">
+                        <div></div>
+                        <Button
+                          type="button"
+                          onClick={nextStep}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                          Next Step
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Step 2: Contact Information & Department */}
+                  {/* Step 2: Contact & Department */}
                   {currentStep === 2 && (
                     <motion.div
                       key="step2"
@@ -1008,83 +859,80 @@ export default function AddTeacherPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4"
-                        >
+                        <div className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4">
                           <Phone className="h-8 w-8 text-white" />
-                        </motion.div>
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900">
-                          Contact & Department
+                          Contact & Address
                         </h2>
                         <p className="text-slate-600">
-                          Contact information and department assignment
+                          Update contact information and address
                         </p>
                       </div>
 
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="phone"
+                            className="text-sm font-semibold text-slate-700"
                           >
-                            <Label
-                              htmlFor="phone"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Phone Number *
-                            </Label>
-                            <Input
-                              id="phone"
-                              value={formData.phone}
-                              onChange={(e) =>
-                                handleInputChange("phone", e.target.value)
-                              }
-                              placeholder="+1 (555) 123-4567"
-                              className={cn(
-                                "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
-                                formErrors.phone
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            {formErrors.phone && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.phone}
-                              </p>
+                            Phone Number *
+                          </Label>
+                          <Input
+                            id="phone"
+                            value={formData.phone}
+                            onChange={(e) =>
+                              handleInputChange("phone", e.target.value)
+                            }
+                            placeholder="+1 (555) 123-4567"
+                            className={cn(
+                              "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
+                              formErrors.phone
+                                ? "border-red-500"
+                                : "border-slate-200"
                             )}
-                          </motion.div>
-
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="secondaryPhone"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Secondary Phone Number (Optional)
-                            </Label>
-                            <Input
-                              id="secondaryPhone"
-                              value={formData.secondaryPhone}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "secondaryPhone",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="+1 (555) 987-6543"
-                              className="h-12 border border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg"
-                            />
-                          </motion.div>
+                          />
+                          {formErrors.phone && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              {formErrors.phone}
+                            </p>
+                          )}
                         </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="secondaryPhone"
+                            className="text-sm font-semibold text-slate-700"
+                          >
+                            Secondary Phone
+                          </Label>
+                          <Input
+                            id="secondaryPhone"
+                            value={formData.secondaryPhone}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "secondaryPhone",
+                                e.target.value
+                              )
+                            }
+                            placeholder="+1 (555) 987-6543"
+                            className={cn(
+                              "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
+                              formErrors.secondaryPhone
+                                ? "border-red-500"
+                                : "border-slate-200"
+                            )}
+                          />
+                          {formErrors.secondaryPhone && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              {formErrors.secondaryPhone}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2 sm:col-span-2">
                           <Label
                             htmlFor="address"
                             className="text-sm font-semibold text-slate-700"
@@ -1111,9 +959,26 @@ export default function AddTeacherPage() {
                               {formErrors.address}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
+                      </div>
 
-
+                      <div className="flex justify-between pt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={prevStep}
+                          className="px-8 py-3 rounded-lg font-semibold"
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={nextStep}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                          Next Step
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                       </div>
                     </motion.div>
                   )}
@@ -1129,12 +994,9 @@ export default function AddTeacherPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4"
-                        >
+                        <div className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4">
                           <GraduationCap className="h-8 w-8 text-white" />
-                        </motion.div>
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900">
                           Academic Details
                         </h2>
@@ -1145,10 +1007,7 @@ export default function AddTeacherPage() {
 
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
+                          <div className="space-y-2">
                             <Label
                               htmlFor="qualification"
                               className="text-sm font-semibold text-slate-700"
@@ -1178,12 +1037,9 @@ export default function AddTeacherPage() {
                                 {formErrors.qualification}
                               </p>
                             )}
-                          </motion.div>
+                          </div>
 
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
+                          <div className="space-y-2">
                             <Label
                               htmlFor="experience"
                               className="text-sm font-semibold text-slate-700"
@@ -1192,7 +1048,6 @@ export default function AddTeacherPage() {
                             </Label>
                             <Input
                               id="experience"
-                              type="number"
                               value={formData.experience}
                               onChange={(e) =>
                                 handleInputChange("experience", e.target.value)
@@ -1211,13 +1066,10 @@ export default function AddTeacherPage() {
                                 {formErrors.experience}
                               </p>
                             )}
-                          </motion.div>
+                          </div>
                         </div>
 
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="space-y-2"
-                        >
+                        <div className="space-y-2">
                           <Label
                             htmlFor="specialization"
                             className="text-sm font-semibold text-slate-700"
@@ -1247,7 +1099,7 @@ export default function AddTeacherPage() {
                               {formErrors.specialization}
                             </p>
                           )}
-                        </motion.div>
+                        </div>
 
                         {/* Teaching Assignments Section */}
                         <div
@@ -1257,11 +1109,10 @@ export default function AddTeacherPage() {
                           <h3 className="text-lg font-semibold text-slate-900 mb-6">
                             Teaching Assignments
                           </h3>
-                          
+
                           {/* Departments Section */}
                           <div className="mb-6">
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
+                            <div
                               className="space-y-2"
                               style={{ position: "relative", zIndex: 10 }}
                             >
@@ -1277,15 +1128,14 @@ export default function AddTeacherPage() {
                                 error={formErrors.departments}
                                 required={true}
                               />
-                            </motion.div>
+                            </div>
                           </div>
 
                           <div
                             className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                             style={{ position: "relative", zIndex: 5 }}
                           >
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
+                            <div
                               className="space-y-2"
                               style={{ position: "relative", zIndex: 8 }}
                             >
@@ -1301,10 +1151,9 @@ export default function AddTeacherPage() {
                                 error={formErrors.subjects}
                                 required={true}
                               />
-                            </motion.div>
+                            </div>
 
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
+                            <div
                               className="space-y-2"
                               style={{ position: "relative", zIndex: 7 }}
                             >
@@ -1320,234 +1169,45 @@ export default function AddTeacherPage() {
                                 error={formErrors.classes}
                                 required={true}
                               />
-                            </motion.div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  )}
 
-                  {/* Step 4: Account & Login */}
-                  {currentStep === 4 && (
-                    <motion.div
-                      key="step4"
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-8"
-                    >
-                      <div className="text-center mb-8">
-                        <motion.div
-                          whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4"
+                      <div className="flex justify-between pt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={prevStep}
+                          className="px-8 py-3 rounded-lg font-semibold"
                         >
-                          <User className="h-8 w-8 text-white" />
-                        </motion.div>
-                        <h2 className="text-2xl font-bold text-slate-900">
-                          Account & Login
-                        </h2>
-                        <p className="text-slate-600">
-                          Set up login credentials for the teacher
-                        </p>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="username"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Username *
-                            </Label>
-                            <Input
-                              id="username"
-                              value={formData.username}
-                              onChange={(e) =>
-                                handleInputChange("username", e.target.value)
-                              }
-                              placeholder="Auto-generated from first and last name"
-                              className={cn(
-                                "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
-                                formErrors.username
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            <p className="text-xs text-slate-500">
-                              Username is auto-generated but can be manually changed
-                            </p>
-                            {formErrors.username && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.username}
-                              </p>
-                            )}
-                          </motion.div>
-
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="password"
-                              className="text-sm font-semibold text-slate-700"
-                            >
-                              Password *
-                            </Label>
-                            <Input
-                              id="password"
-                              type="password"
-                              value={formData.password}
-                              onChange={(e) =>
-                                handleInputChange("password", e.target.value)
-                              }
-                              placeholder="Enter password (minimum 6 characters)"
-                              className={cn(
-                                "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
-                                formErrors.password
-                                  ? "border-red-500"
-                                  : "border-slate-200"
-                              )}
-                            />
-                            {formErrors.password && (
-                              <p className="text-sm text-red-500 flex items-center gap-1">
-                                <AlertCircle className="h-4 w-4" />
-                                {formErrors.password}
-                              </p>
-                            )}
-                          </motion.div>
-                        </div>
+                          Previous
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Updating...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Update Teacher
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Navigation Buttons */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t border-slate-200 gap-4"
-                  style={{ position: "relative" }}
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={currentStep === 1}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowRight className="h-4 w-4 rotate-180" />
-                    Previous
-                  </Button>
-
-                  <div className="flex items-center gap-2">
-                    {steps.map((step) => (
-                      <div
-                        key={step.number}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          currentStep >= step.number
-                            ? "bg-orange-500"
-                            : "bg-slate-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  {currentStep < 4 ? (
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
-                    >
-                      Next
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: "linear",
-                            }}
-                            className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"
-                          />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4" />
-                          Create Teacher Account
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </motion.div>
               </form>
             </ModernCardContent>
           </ModernCard>
-        </motion.div>
-
-        {/* Features Preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
-        >
-          {[
-            {
-              icon: Target,
-              title: "Class Management",
-              desc: "Manage assigned classes and students",
-            },
-            {
-              icon: Award,
-              title: "Attendance Tracking",
-              desc: "Mark and track student attendance",
-            },
-            {
-              icon: Users,
-              title: "Student Progress",
-              desc: "Monitor student academic progress",
-            },
-          ].map((feature, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="bg-white rounded-xl p-6 shadow-lg border border-slate-200"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
-                  <Icon3D
-                    icon={feature.icon}
-                    className="text-white"
-                    size="h-6 w-6"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-slate-600">{feature.desc}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+        </div>
       </PageContainer>
     </ModernDashboardLayout>
   );

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ModernDashboardLayout,
   PageContainer,
-  PageHeader,
 } from "@/components/layout/modern-dashboard-layout";
 import {
   ModernCard,
@@ -16,17 +15,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  User, 
-  Search, 
-  Plus, 
-  Mail, 
-  Phone, 
-  Edit, 
-  Trash2, 
-  BookOpen
+import {
+  User,
+  Search,
+  Plus,
+  Phone,
+  Edit,
+  Trash2,
+  Eye,
+  GraduationCap,
+  Calendar,
 } from "lucide-react";
-import { motion } from "framer-motion";
+
 
 // Sample user data
 const sampleUser = {
@@ -41,62 +41,42 @@ const sampleStudents = [
   {
     id: "CS-2024-001",
     name: "Ahmad Hassan",
-    email: "ahmad.hassan@student.university.edu",
     program: "Computer Science",
-    year: "2nd Year",
     phone: "+1 (555) 111-2222",
     semester: "Fall 2024",
-    gpa: "3.8",
     status: "Active",
-    attendance: "92%",
   },
   {
     id: "CS-2024-002",
     name: "Sara Khan",
-    email: "sara.khan@student.university.edu",
     program: "Computer Science",
-    year: "1st Year",
     phone: "+1 (555) 222-3333",
     semester: "Fall 2024",
-    gpa: "3.9",
     status: "Active",
-    attendance: "95%",
   },
   {
     id: "MATH-2024-001",
     name: "Omar Ali",
-    email: "omar.ali@student.university.edu",
     program: "Mathematics",
-    year: "3rd Year",
     phone: "+1 (555) 333-4444",
     semester: "Fall 2024",
-    gpa: "3.6",
     status: "Active",
-    attendance: "88%",
   },
   {
     id: "PHY-2024-001",
     name: "Layla Ahmed",
-    email: "layla.ahmed@student.university.edu",
     program: "Physics",
-    year: "2nd Year",
     phone: "+1 (555) 444-5555",
     semester: "Fall 2024",
-    gpa: "3.7",
     status: "On Leave",
-    attendance: "0%",
   },
   {
     id: "CS-2024-003",
     name: "Yusuf Rahman",
-    email: "yusuf.rahman@student.university.edu",
     program: "Computer Science",
-    year: "4th Year",
     phone: "+1 (555) 555-6666",
     semester: "Fall 2024",
-    gpa: "3.5",
     status: "Active",
-    attendance: "85%",
   },
 ];
 
@@ -122,91 +102,73 @@ export default function StudentListPage() {
     setSearchQuery(query);
   };
 
-  const filteredStudents = sampleStudents.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.program.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.id.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredStudents = sampleStudents.filter(
+    (student) =>
+      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.program.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const getAttendanceColor = (attendance: string) => {
-    const percent = parseInt(attendance);
-    if (percent >= 90) return "text-green-600 bg-green-50 border-green-200";
-    if (percent >= 75) return "text-yellow-600 bg-yellow-50 border-yellow-200";
-    return "text-red-600 bg-red-50 border-red-200";
-  };
 
   return (
     <ModernDashboardLayout
       user={sampleUser}
-      title="Student List"
-      subtitle="Manage all student accounts"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
     >
       <PageContainer>
-        <PageHeader
-          title="All Students"
-          subtitle="View and manage all student accounts in the system"
-          breadcrumbs={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "User Management", href: "/user-management" },
-            { label: "All Users" },
-            { label: "Student List" },
-          ]}
-          actions={
-            <Button
-              onClick={() => handleNavigation("/user-management/add-student")}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Student
-            </Button>
-          }
-        />
-
         {/* Search and Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
+        <div>
           <ModernCard className="mb-6">
             <ModernCardContent className="p-6">
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder="Search students by name, program, or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-slate-200 focus:border-purple-500"
+                    className="pl-10 border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 h-12 transition-all duration-300"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Badge variant="outline" className="px-3 py-2">
-                    Total: {sampleStudents.length}
-                  </Badge>
-                  <Badge variant="outline" className="px-3 py-2 bg-green-50 text-green-700 border-green-200">
-                    Active: {sampleStudents.filter(s => s.status === "Active").length}
-                  </Badge>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="px-3 py-2">
+                      Total: {sampleStudents.length}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="px-3 py-2 bg-green-50 text-green-700 border-green-200"
+                    >
+                      Active:{" "}
+                      {
+                        sampleStudents.filter((s) => s.status === "Active")
+                          .length
+                      }
+                    </Badge>
+                  </div>
+                  <Button
+                    onClick={() =>
+                      handleNavigation("/user-management/add-student")
+                    }
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto focus:ring-2 focus:ring-green-100"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Student
+                  </Button>
                 </div>
               </div>
             </ModernCardContent>
           </ModernCard>
-        </motion.div>
+        </div>
 
         {/* Students List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-        >
+        <div>
           <ModernCard>
             <ModernCardHeader>
               <ModernCardTitle
-                icon={<User className="h-6 w-6 text-purple-600" />}
+                icon={<User className="h-6 w-6 text-green-600" />}
                 className="text-2xl"
               >
                 Students ({filteredStudents.length})
@@ -215,25 +177,109 @@ export default function StudentListPage() {
             <ModernCardContent>
               <div className="space-y-4">
                 {filteredStudents.map((student, index) => (
-                  <motion.div
+                  <div
                     key={student.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
-                    className="p-6 border border-slate-200 rounded-lg hover:shadow-md transition-all duration-300 hover:border-purple-300"
+                    className="p-6 border border-slate-200 rounded-2xl hover:shadow-lg transition-all duration-300 hover:border-green-300 hover:shadow-green-100/50 bg-white"
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                    {/* Mobile Layout */}
+                    <div className="block md:hidden">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
                             <User className="h-6 w-6 text-white" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-slate-900">{student.name}</h3>
-                            <p className="text-sm text-slate-500">{student.id}</p>
+                            <h3 className="text-lg font-semibold text-slate-900">
+                              {student.name}
+                            </h3>
+                            <p className="text-sm text-slate-500">
+                              {student.id}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge
+                          variant={
+                            student.status === "Active"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            student.status === "Active"
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                          }
+                        >
+                          {student.status}
+                        </Badge>
+                      </div>
+
+                      {/* Essential mobile info */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-green-500" />
+                          <span className="text-sm font-medium">
+                            {student.program}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-green-500" />
+                          <span className="text-sm">{student.semester}</span>
+                        </div>
+                      </div>
+
+                      {/* Mobile actions */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleNavigation(`/user-management/edit-student/${student.id}`)
+                          }
+                          className="flex-1 border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Tablet Layout */}
+                    <div className="hidden md:block lg:hidden">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                            <User className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-slate-900">
+                              {student.name}
+                            </h3>
+                            <p className="text-sm text-slate-500">
+                              {student.id}
+                            </p>
                           </div>
                           <Badge
-                            variant={student.status === "Active" ? "default" : "secondary"}
+                            variant={
+                              student.status === "Active"
+                                ? "default"
+                                : "secondary"
+                            }
                             className={
                               student.status === "Active"
                                 ? "bg-green-100 text-green-800 border-green-200"
@@ -243,87 +289,182 @@ export default function StudentListPage() {
                             {student.status}
                           </Badge>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleNavigation(`/user-management/edit-student/${student.id}`)
+                            }
+                            className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 transition-all duration-200 rounded-xl font-medium px-4"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-green-500" />
                           <div>
-                            <span className="text-slate-500">Program:</span>
-                            <p className="font-medium text-slate-900">{student.program}</p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500">Year:</span>
-                            <p className="font-medium text-slate-900">{student.year}</p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500">GPA:</span>
-                            <p className="font-medium text-slate-900">{student.gpa}</p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500">Semester:</span>
-                            <p className="font-medium text-slate-900">{student.semester}</p>
-                          </div>
-                          <div>
-                            <span className="text-slate-500">Attendance:</span>
-                            <Badge
-                              variant="outline"
-                              className={`font-medium ${getAttendanceColor(student.attendance)}`}
-                            >
-                              {student.attendance}
-                            </Badge>
+                            <span className="text-slate-500 text-xs">
+                              Program
+                            </span>
+                            <p className="font-medium text-slate-900">
+                              {student.program}
+                            </p>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
-                          <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4" />
-                            <span>{student.email}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Phone className="h-4 w-4" />
-                            <span>{student.phone}</span>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-green-500" />
+                          <div>
+                            <span className="text-slate-500 text-xs">
+                              Semester
+                            </span>
+                            <p className="font-medium text-slate-900">
+                              {student.semester}
+                            </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                        >
-                          <BookOpen className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-red-200 text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
-                        </Button>
+                      <div className="flex items-center gap-4 text-sm text-slate-600">
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-4 w-4" />
+                          <span>{student.phone}</span>
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
+
+                    {/* Desktop Layout */}
+                    <div className="hidden lg:block">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                              <User className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-slate-900">
+                                {student.name}
+                              </h3>
+                              <p className="text-sm text-slate-500">
+                                {student.id}
+                              </p>
+                            </div>
+                            <Badge
+                              variant={
+                                student.status === "Active"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className={
+                                student.status === "Active"
+                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                              }
+                            >
+                              {student.status}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <GraduationCap className="h-4 w-4 text-green-500" />
+                              <div>
+                                <span className="text-slate-500 text-xs">
+                                  Program
+                                </span>
+                                <p className="font-medium text-slate-900">
+                                  {student.program}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-green-500" />
+                              <div>
+                                <span className="text-slate-500 text-xs">
+                                  Semester
+                                </span>
+                                <p className="font-medium text-slate-900">
+                                  {student.semester}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-4 w-4" />
+                              <span>{student.phone}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleNavigation(`/user-management/edit-student/${student.id}`)
+                            }
+                            className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
 
                 {filteredStudents.length === 0 && (
                   <div className="text-center py-12">
                     <User className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No students found</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                      No students found
+                    </h3>
                     <p className="text-slate-600 mb-4">
-                      {searchQuery ? "Try adjusting your search criteria" : "No students have been added yet"}
+                      {searchQuery
+                        ? "Try adjusting your search criteria"
+                        : "No students have been added yet"}
                     </p>
                     <Button
-                      onClick={() => handleNavigation("/user-management/add-student")}
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() =>
+                        handleNavigation("/user-management/add-student")
+                      }
+                      className="bg-green-600 hover:bg-green-700 text-white focus:ring-2 focus:ring-green-100 transition-all duration-300"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Student
@@ -333,7 +474,7 @@ export default function StudentListPage() {
               </div>
             </ModernCardContent>
           </ModernCard>
-        </motion.div>
+        </div>
       </PageContainer>
     </ModernDashboardLayout>
   );
