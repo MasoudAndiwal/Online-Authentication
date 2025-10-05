@@ -35,6 +35,7 @@ interface ModernDashboardLayoutProps {
   onLogout?: () => void
   onSearch?: (query: string) => void
   className?: string
+  hideHeader?: boolean
 }
 
 export function ModernDashboardLayout({
@@ -47,7 +48,8 @@ export function ModernDashboardLayout({
   onNavigate,
   onLogout,
   onSearch,
-  className
+  className,
+  hideHeader = false
 }: ModernDashboardLayoutProps) {
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false)
 
@@ -68,7 +70,7 @@ export function ModernDashboardLayout({
     />
   )
 
-  const header = (
+  const header = !hideHeader ? (
     <DashboardHeader
       title={title}
       subtitle={subtitle}
@@ -78,7 +80,7 @@ export function ModernDashboardLayout({
       onLogout={onLogout}
       onSearch={onSearch}
     />
-  )
+  ) : null
 
   return (
     <>

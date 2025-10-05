@@ -12,9 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   User,
-  Mail,
   Phone,
-  MapPin,
   Save,
   GraduationCap,
   Sparkles,
@@ -24,6 +22,9 @@ import {
   Award,
   Target,
   AlertCircle,
+  Clock,
+  Plus,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Select } from "@/components/ui/select";
@@ -31,8 +32,8 @@ import { cn } from "@/lib/utils";
 
 // Sample user data
 const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
+  name: "AN. Masoud Andiwal",
+  email: "MasoudAndiwal@university.edu",
   role: "OFFICE" as const,
   avatar: undefined,
 };
@@ -48,9 +49,11 @@ interface FormData {
   phone: string;
   fatherPhone: string;
   address: string;
-  program: string;
+  programs: string[];
   semester: string;
-  enrollmentDate: string;
+  enrollmentYear: string;
+  classSection: string;
+  timeSlot: string;
 }
 
 // Form validation errors
@@ -64,9 +67,11 @@ interface FormErrors {
   phone?: string;
   fatherPhone?: string;
   address?: string;
-  program?: string;
+  programs?: string;
   semester?: string;
-  enrollmentDate?: string;
+  enrollmentYear?: string;
+  classSection?: string;
+  timeSlot?: string;
 }
 
 export default function AddStudentPage() {
@@ -82,9 +87,11 @@ export default function AddStudentPage() {
     phone: "",
     fatherPhone: "",
     address: "",
-    program: "",
+    programs: [],
     semester: "",
-    enrollmentDate: "",
+    enrollmentYear: "",
+    classSection: "",
+    timeSlot: "",
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -138,9 +145,7 @@ export default function AddStudentPage() {
     if (!formData.studentId.trim()) {
       errors.studentId = "Student ID is required";
     }
-    if (!formData.dateOfBirth) {
-      errors.dateOfBirth = "Date of birth is required";
-    }
+    // Date of birth is now optional
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -166,14 +171,20 @@ export default function AddStudentPage() {
   const validateStep3 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.program.trim()) {
-      errors.program = "Program/Major is required";
+    if (formData.programs.length === 0) {
+      errors.programs = "At least one program/class is required";
     }
     if (!formData.semester.trim()) {
       errors.semester = "Current semester is required";
     }
-    if (!formData.enrollmentDate.trim()) {
-      errors.enrollmentDate = "Enrollment date is required";
+    if (!formData.enrollmentYear.trim()) {
+      errors.enrollmentYear = "Enrollment year is required";
+    }
+    if (!formData.classSection.trim()) {
+      errors.classSection = "Class Name is required";
+    }
+    if (!formData.timeSlot.trim()) {
+      errors.timeSlot = "Time slot is required";
     }
 
     setFormErrors(errors);
@@ -234,13 +245,13 @@ export default function AddStudentPage() {
   };
 
   const steps = [
-    { number: 1, title: "Personal Info", icon: User, color: "blue" },
-    { number: 2, title: "Contact & Address", icon: Mail, color: "blue" },
+    { number: 1, title: "Personal Info", icon: User, color: "green" },
+    { number: 2, title: "Contact & Address", icon: User, color: "green" },
     {
       number: 3,
       title: "Academic Details",
       icon: GraduationCap,
-      color: "blue",
+      color: "green",
     },
   ];
 
@@ -277,13 +288,284 @@ export default function AddStudentPage() {
     </motion.div>
   );
 
-  // Program options
+  // MultiSelect Component for Programs
+  const MultiSelect = ({
+    id,
+    label,
+    options,
+    selectedValues,
+    onChange,
+    placeholder,
+    error,
+    required = false,
+  }: {
+    id: string;
+    label: string;
+    options: string[];
+    selectedValues: string[];
+    onChange: (value: string) => void;
+    placeholder: string;
+    error?: string;
+    required?: boolean;
+  }) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [customInput, setCustomInput] = React.useState("");
+    const [showCustomInput, setShowCustomInput] = React.useState(false);
+
+    const handleAddCustom = () => {
+      if (customInput.trim() && !selectedValues.includes(customInput.trim())) {
+        onChange(customInput.trim());
+        setCustomInput("");
+        setShowCustomInput(false);
+      }
+    };
+
+    return (
+      <div
+        className="space-y-2 relative"
+        style={{ position: "relative", zIndex: isOpen ? 9999 : "auto" }}
+      >
+        <Label htmlFor={id} className="text-sm font-semibold text-slate-700">
+          {label} {required && "*"}
+        </Label>
+
+        {/* Selected Values Display */}
+        <div
+          className={cn(
+            "min-h-12 border bg-white rounded-lg p-3 transition-all duration-300",
+            error ? "border-red-500" : "border-slate-200",
+            "focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-100"
+          )}
+        >
+          <div className="flex flex-wrap gap-2">
+            {selectedValues.map((value) => (
+              <span
+                key={value}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-sm rounded-md"
+              >
+                {value}
+                <button
+                  type="button"
+                  onClick={() => onChange(value)}
+                  className="hover:bg-green-200 rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+            {selectedValues.length === 0 && (
+              <span className="text-slate-500 text-sm">{placeholder}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Dropdown Button */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full justify-between h-10"
+        >
+          Add {label}
+          <ArrowRight
+            className={cn(
+              "h-4 w-4 transition-transform",
+              isOpen && "rotate-90"
+            )}
+          />
+        </Button>
+
+        {/* Dropdown Menu */}
+        {isOpen && (
+          <div
+            className="absolute w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto"
+            style={{
+              position: "absolute",
+              zIndex: 99999,
+              top: "100%",
+              left: 0,
+              right: 0,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            }}
+          >
+            <div className="p-2 space-y-1">
+              {options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    onChange(option);
+                    setIsOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
+                    selectedValues.includes(option)
+                      ? "bg-green-100 text-green-800"
+                      : "hover:bg-slate-100"
+                  )}
+                >
+                  {option}
+                  {selectedValues.includes(option) && (
+                    <CheckCircle className="h-4 w-4 inline ml-2" />
+                  )}
+                </button>
+              ))}
+
+              {/* Custom Input Section */}
+              <div className="border-t border-slate-200 pt-2 mt-2">
+                {!showCustomInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomInput(true)}
+                    className="w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add New Class
+                  </button>
+                ) : (
+                  <div className="flex gap-2 p-2">
+                    <Input
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      placeholder="Enter custom class name"
+                      className="flex-1 h-8 text-sm"
+                      onKeyPress={(e) => e.key === "Enter" && handleAddCustom()}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddCustom}
+                      className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCustomInput(false);
+                        setCustomInput("");
+                      }}
+                      className="h-8 px-2"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-sm text-red-500 flex items-center gap-1">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  // Program options (Classes)
   const programOptions = [
-    "Computer Science",
-    "Electrical Engineering",
-    "Building Engineering",
+    "computer science",
+    "Electrical engineering ",
+    "Building engineering",
+    "Class 10",
+    "Class 11",
+    "Class 12",
   ];
 
+  // Handle multi-select changes for programs
+  const handleProgramChange = (value: string) => {
+    setFormData((prev) => {
+      const currentPrograms = prev.programs;
+      const newPrograms = currentPrograms.includes(value)
+        ? currentPrograms.filter((item) => item !== value)
+        : [...currentPrograms, value];
+      return { ...prev, programs: newPrograms };
+    });
+
+    // Clear error when user makes selection
+    if (formErrors.programs) {
+      setFormErrors((prev) => ({ ...prev, programs: undefined }));
+    }
+  };
+
+  // Add custom program
+  const addCustomProgram = (customValue: string) => {
+    if (customValue.trim() && !formData.programs.includes(customValue.trim())) {
+      setFormData((prev) => ({
+        ...prev,
+        programs: [...prev.programs, customValue.trim()],
+      }));
+    }
+  };
+
+  // Remove selected program
+  const removeSelectedProgram = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      programs: prev.programs.filter((item) => item !== value),
+    }));
+  };
+
+  // Auto-calculate enrollment year based on semester
+  const calculateEnrollmentYear = (semester: string) => {
+    const currentYear = new Date().getFullYear();
+    const semesterNumber = parseInt(semester);
+
+    if (semesterNumber && semesterNumber >= 1 && semesterNumber <= 4) {
+      // 2-year program: Semester 1-2 = Year 1, Semester 3-4 = Year 2
+      const yearsAgo = Math.floor((semesterNumber - 1) / 2);
+      return (currentYear - yearsAgo).toString();
+    }
+
+    return "";
+  };
+
+  // Class section options
+  const classSectionOptions = [
+"class B",
+    "class C",
+    "class D",
+    "class E",
+    "class F",
+    "class G",
+    "class H",
+    "class I",
+    "class A",
+  ];
+
+  // Time slot options with detailed schedule
+  const timeSlotOptions = [
+    {
+      value: "morning",
+      label: "Morning (8:30 AM - 12:30 PM)",
+      description: "6 teaching hours, 40 min each + 15 min breaks",
+    },
+    {
+      value: "afternoon",
+      label: "Afternoon (1:30 PM - 6:30 PM)",
+      description: "6 teaching hours, 40 min each + 15 min breaks",
+    },
+  ];
+
+  // Time slot options with detailed schedule
+  const timeSlotOptions1 = [
+    {
+      value: "morning",
+      label: "Morning (8:30 AM - 12:30 PM)",
+      description: "6 teaching hours, 40 min each + 15 min breaks",
+    },
+    {
+      value: "afternoon",
+      label: "Afternoon (1:30 PM - 6:30 PM)",
+      description: "6 teaching hours, 40 min each",
+    },
+  ];
   if (showSuccess) {
     return (
       <ModernDashboardLayout
@@ -294,7 +576,26 @@ export default function AddStudentPage() {
         onNavigate={handleNavigation}
         onLogout={handleLogout}
         onSearch={handleSearch}
+        hideHeader={true}
       >
+        <style jsx global>{`
+          /* Hide scrollbar but keep functionality */
+          ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: transparent;
+          }
+          /* For Firefox */
+          html {
+            scrollbar-width: none;
+          }
+          /* For IE and Edge */
+          body {
+            -ms-overflow-style: none;
+          }
+        `}</style>
         <PageContainer>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -372,7 +673,26 @@ export default function AddStudentPage() {
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
+      hideHeader={true}
     >
+      <style jsx global>{`
+        /* Hide scrollbar but keep functionality */
+        ::-webkit-scrollbar {
+          width: 0px;
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: transparent;
+        }
+        /* For Firefox */
+        html {
+          scrollbar-width: none;
+        }
+        /* For IE and Edge */
+        body {
+          -ms-overflow-style: none;
+        }
+      `}</style>
       <PageContainer>
         {/* Hero Section */}
         <motion.div
@@ -384,11 +704,11 @@ export default function AddStudentPage() {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-4 -right-4 text-blue-500"
+              className="absolute -top-4 -right-4 text-green-500"
             >
               <Sparkles className="h-8 w-8" />
             </motion.div>
-            <h1 className="text-4xl font-bold text-slate-800">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800">
               Create New Student Account
             </h1>
           </div>
@@ -401,14 +721,14 @@ export default function AddStudentPage() {
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          <div className="flex justify-center items-center space-x-8">
+          <div className="flex justify-center items-center space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-4">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
                     currentStep >= step.number
-                      ? `bg-gradient-to-br from-${step.color}-500 to-${step.color}-600 text-white shadow-lg`
+                      ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
@@ -431,9 +751,9 @@ export default function AddStudentPage() {
                   )}
                 </motion.div>
 
-                <div className="ml-3 text-left">
+                <div className="ml-2 sm:ml-3 text-left">
                   <div
-                    className={`text-sm font-semibold ${
+                    className={`text-xs sm:text-sm font-semibold ${
                       currentStep >= step.number
                         ? "text-slate-900"
                         : "text-slate-500"
@@ -454,8 +774,10 @@ export default function AddStudentPage() {
 
                 {index < steps.length - 1 && (
                   <motion.div
-                    className={`mx-6 h-0.5 w-16 transition-all duration-300 ${
-                      currentStep > step.number ? "bg-blue-400" : "bg-slate-200"
+                    className={`mx-2 sm:mx-4 lg:mx-6 h-0.5 w-8 sm:w-12 lg:w-16 transition-all duration-300 ${
+                      currentStep > step.number
+                        ? "bg-green-400"
+                        : "bg-slate-200"
                     }`}
                   />
                 )}
@@ -469,12 +791,12 @@ export default function AddStudentPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="max-w-4xl mx-auto"
+          className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
         >
           <ModernCard className="overflow-hidden bg-white border border-slate-200 shadow-xl">
             <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white/50" />
 
-            <ModernCardContent className="relative p-8">
+            <ModernCardContent className="relative p-4 sm:p-6 lg:p-8">
               <form onSubmit={handleSubmit}>
                 <AnimatePresence mode="wait">
                   {/* Step 1: Personal Information */}
@@ -490,7 +812,7 @@ export default function AddStudentPage() {
                       <div className="text-center mb-8">
                         <motion.div
                           whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-4"
+                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
                         >
                           <User className="h-8 w-8 text-white" />
                         </motion.div>
@@ -502,7 +824,7 @@ export default function AddStudentPage() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <motion.div
                           whileHover={{ scale: 1.02 }}
                           className="space-y-2"
@@ -521,7 +843,7 @@ export default function AddStudentPage() {
                             }
                             placeholder="Enter first name"
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.firstName
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -553,7 +875,7 @@ export default function AddStudentPage() {
                             }
                             placeholder="Enter last name"
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.lastName
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -585,7 +907,7 @@ export default function AddStudentPage() {
                             }
                             placeholder="Enter father name"
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.fatherName
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -620,7 +942,7 @@ export default function AddStudentPage() {
                             }
                             placeholder="Enter grand father name"
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.grandFatherName
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -652,7 +974,7 @@ export default function AddStudentPage() {
                             }
                             placeholder="e.g., CS-2024-001"
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.studentId
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -674,7 +996,7 @@ export default function AddStudentPage() {
                             htmlFor="dateOfBirth"
                             className="text-sm font-semibold text-slate-700"
                           >
-                            Date of Birth *
+                            Date of Birth
                           </Label>
                           <Input
                             id="dateOfBirth"
@@ -695,7 +1017,7 @@ export default function AddStudentPage() {
                               )
                             }
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.dateOfBirth
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -725,7 +1047,7 @@ export default function AddStudentPage() {
                       <div className="text-center mb-8">
                         <motion.div
                           whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-4"
+                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
                         >
                           <Phone className="h-8 w-8 text-white" />
                         </motion.div>
@@ -738,7 +1060,7 @@ export default function AddStudentPage() {
                       </div>
 
                       <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <motion.div
                             whileHover={{ scale: 1.02 }}
                             className="space-y-2"
@@ -757,7 +1079,7 @@ export default function AddStudentPage() {
                               }
                               placeholder="+1 (555) 123-4567"
                               className={cn(
-                                "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                                 formErrors.phone
                                   ? "border-red-500"
                                   : "border-slate-200"
@@ -789,7 +1111,7 @@ export default function AddStudentPage() {
                               }
                               placeholder="+1 (555) 987-6543"
                               className={cn(
-                                "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                                 formErrors.fatherPhone
                                   ? "border-red-500"
                                   : "border-slate-200"
@@ -822,7 +1144,7 @@ export default function AddStudentPage() {
                             }
                             placeholder="Enter full address"
                             className={cn(
-                              "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.address
                                 ? "border-red-500"
                                 : "border-slate-200"
@@ -852,7 +1174,7 @@ export default function AddStudentPage() {
                       <div className="text-center mb-8">
                         <motion.div
                           whileHover={{ scale: 1.05, rotateY: 10 }}
-                          className="inline-block p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-4"
+                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
                         >
                           <GraduationCap className="h-8 w-8 text-white" />
                         </motion.div>
@@ -865,7 +1187,7 @@ export default function AddStudentPage() {
                       </div>
 
                       <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <motion.div
                             whileHover={{ scale: 1.02 }}
                             className="space-y-2"
@@ -878,13 +1200,18 @@ export default function AddStudentPage() {
                             </Label>
                             <Select
                               id="program"
-                              value={formData.program}
+                              value={formData.programs[0] || ""}
                               onChange={(e) =>
-                                handleInputChange("program", e.target.value)
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  programs: e.target.value
+                                    ? [e.target.value]
+                                    : [],
+                                }))
                               }
                               placeholder="Select Program"
                               className={cn(
-                                formErrors.program
+                                formErrors.programs
                                   ? "border-red-500"
                                   : "border-slate-200"
                               )}
@@ -895,10 +1222,10 @@ export default function AddStudentPage() {
                                 </option>
                               ))}
                             </Select>
-                            {formErrors.program && (
+                            {formErrors.programs && (
                               <p className="text-sm text-red-500 flex items-center gap-1">
                                 <AlertCircle className="h-4 w-4" />
-                                {formErrors.program}
+                                {formErrors.programs}
                               </p>
                             )}
                           </motion.div>
@@ -921,7 +1248,7 @@ export default function AddStudentPage() {
                           </motion.div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                           <motion.div
                             whileHover={{ scale: 1.02 }}
                             className="space-y-2"
@@ -940,7 +1267,7 @@ export default function AddStudentPage() {
                               }
                               placeholder="e.g., Fall 2024"
                               className={cn(
-                                "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
+                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                                 formErrors.semester
                                   ? "border-red-500"
                                   : "border-slate-200"
@@ -964,30 +1291,124 @@ export default function AddStudentPage() {
                             >
                               Enrollment Date *
                             </Label>
-                            <Input
+<Input
                               id="enrollmentDate"
-                              type="date"
-                              value={formData.enrollmentDate}
+                              type="number"
+                              min="1380"
+                              max="1404"
+                              placeholder="YYYY"
+                              value={formData.enrollmentYear}
                               onChange={(e) =>
                                 handleInputChange(
-                                  "enrollmentDate",
+                                  "enrollmentYear",
                                   e.target.value
                                 )
                               }
                               className={cn(
-                                "h-12 border bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 rounded-lg",
-                                formErrors.enrollmentDate
+                                "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
+                                formErrors.enrollmentYear
                                   ? "border-red-500"
                                   : "border-slate-200"
                               )}
                             />
-                            {formErrors.enrollmentDate && (
+                            {formErrors.enrollmentYear && (
                               <p className="text-sm text-red-500 flex items-center gap-1">
                                 <AlertCircle className="h-4 w-4" />
-                                {formErrors.enrollmentDate}
+                                {formErrors.enrollmentYear}
                               </p>
                             )}
                           </motion.div>
+                        </div>
+
+                        {/* Class Schedule Section */}
+                        <div className="border-t border-slate-200 pt-6 mt-6">
+                          <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                            Class Schedule
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <motion.div
+                              whileHover={{ scale: 1.02 }}
+                              className="space-y-2"
+                            >
+                              <Label
+                                htmlFor="classSection"
+                                className="text-sm font-semibold text-slate-700"
+                              >
+                                Class Name *
+                              </Label>
+                              <Select
+                                id="classSection"
+                                value={formData.classSection}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    "classSection",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Select Class Section"
+                                className={cn(
+                                  formErrors.classSection
+                                    ? "border-red-500"
+                                    : "border-slate-200"
+                                )}
+                              >
+                                {classSectionOptions.map((section) => (
+                                  <option key={section} value={section}>
+                                    {section}
+                                  </option>
+                                ))}
+                              </Select>
+                              {formErrors.classSection && (
+                                <p className="text-sm text-red-500 flex items-center gap-1">
+                                  <AlertCircle className="h-4 w-4" />
+                                  {formErrors.classSection}
+                                </p>
+                              )}
+                            </motion.div>
+
+                            <motion.div
+                              whileHover={{ scale: 1.02 }}
+                              className="space-y-2"
+                            >
+                              <Label
+                                htmlFor="timeSlot"
+                                className="text-sm font-semibold text-slate-700"
+                              >
+                                Time Slot *
+                              </Label>
+                              <Select
+                                id="timeSlot"
+                                value={formData.timeSlot}
+                                onChange={(e) =>
+                                  handleInputChange("timeSlot", e.target.value)
+                                }
+                                placeholder="Select Time Slot"
+                                className={cn(
+                                  formErrors.timeSlot
+                                    ? "border-red-500"
+                                    : "border-slate-200"
+                                )}
+                              >
+                                {timeSlotOptions.map((slot) => (
+                                  <option key={slot.value} value={slot.value}>
+                                    {slot.label}
+                                  </option>
+                                ))}
+                              </Select>
+                              {formErrors.timeSlot && (
+                                <p className="text-sm text-red-500 flex items-center gap-1">
+                                  <AlertCircle className="h-4 w-4" />
+                                  {formErrors.timeSlot}
+                                </p>
+                              )}
+                              <p className="text-xs text-slate-500">
+                                {formData.timeSlot &&
+                                  timeSlotOptions.find(
+                                    (slot) => slot.value === formData.timeSlot
+                                  )?.description}
+                              </p>
+                            </motion.div>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -996,79 +1417,70 @@ export default function AddStudentPage() {
 
                 {/* Navigation Buttons */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="flex justify-between items-center pt-8 mt-8 border-t border-slate-200"
+                  className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t border-slate-200 gap-4"
                 >
                   <Button
                     type="button"
                     variant="outline"
                     onClick={prevStep}
                     disabled={currentStep === 1}
-                    className="px-6 py-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-300 disabled:opacity-50"
+                    className="flex items-center gap-2 w-full sm:w-auto"
                   >
+                    <ArrowRight className="h-4 w-4 rotate-180" />
                     Previous
                   </Button>
 
-                  <div className="flex space-x-3">
-                    {steps.map((_, index) => (
+                  <div className="flex items-center gap-2">
+                    {steps.map((step) => (
                       <div
-                        key={index}
-                        className={`h-2 w-8 rounded-full transition-all duration-300 ${
-                          index + 1 <= currentStep
-                            ? "bg-blue-400"
-                            : "bg-slate-200"
+                        key={step.number}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                          currentStep >= step.number
+                            ? "bg-green-500"
+                            : "bg-slate-300"
                         }`}
                       />
                     ))}
                   </div>
 
                   {currentStep < 3 ? (
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <Button
+                      type="button"
+                      onClick={nextStep}
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                     >
-                      <Button
-                        type="button"
-                        onClick={nextStep}
-                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        Next Step
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </motion.div>
+                      Next
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                   ) : (
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                     >
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                              className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"
-                            />
-                            Creating Account...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-2" />
-                            Create Student Account
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
+                      {isSubmitting ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                          />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Create Student Account
+                        </>
+                      )}
+                    </Button>
                   )}
                 </motion.div>
               </form>
@@ -1078,10 +1490,10 @@ export default function AddStudentPage() {
 
         {/* Features Preview */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
         >
           {[
             {
@@ -1107,7 +1519,7 @@ export default function AddStudentPage() {
             >
               <Icon3D
                 icon={feature.icon}
-                className="text-blue-600 mb-4"
+                className="text-green-600 mb-4"
                 size="h-8 w-8"
               />
               <h3 className="font-semibold text-slate-900 mb-2">

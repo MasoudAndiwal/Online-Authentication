@@ -5,6 +5,7 @@
 The University Attendance System is a modern, visually stunning, high-trust web application built with Next.js 15, React 19, and PostgreSQL. The system implements a sophisticated role-based architecture supporting Office administrators, Teachers, and Students with comprehensive dashboard functionality featuring cutting-edge UI/UX design that matches the existing login page aesthetics with university blue palette, smooth animations, and professional campus look. The application follows a weekly attendance tracking model (Saturday-Thursday) with advanced academic rule enforcement for disqualification (محروم) and certification requirements (تصدیق طلب), featuring extensive reporting and analytics capabilities with immersive animations and interactions.
 
 ### Key Business Rules
+
 - **Weekly Schedule**: Saturday to Thursday academic week with 6 class hours per day (45 minutes each), totaling 36 hours per week with configurable adjustments
 - **Disqualification (محروم)**: Based purely on Absent hours (excluding Sick and Leave), prevents final exam registration
 - **Certification Requirement (تصدیق طلب)**: Based on combined (Absent + Sick + Leave) hours, requires medical documentation for exam eligibility
@@ -12,6 +13,7 @@ The University Attendance System is a modern, visually stunning, high-trust web 
 - **Single Class Enrollment**: Students can only be enrolled in one class to maintain data integrity
 
 ### Core Design Principles
+
 - **Visual Excellence**: Modern glassmorphism design with vibrant gradients, 3D icons from Lucide React and Heroicons, smooth micro-interactions, and contemporary aesthetics
 - **Modern Interactions**: Framer Motion animations with spring physics, hover effects with 3D transforms, gesture-based interactions, and delightful micro-animations
 - **Comprehensive Navigation**: Floating navigation with blur effects, animated sidebar with 3D depth, smooth page transitions, and gesture-based menu systems
@@ -25,7 +27,9 @@ The University Attendance System is a modern, visually stunning, high-trust web 
 ### Visual Design System (Modern UI Library Integration)
 
 #### Color Palette & Gradients
-- **Primary Palette**: 
+
+- **Primary Palette**:
+
   - Electric Blue: #0066FF (primary), #0052CC (dark), #3B82F6 (light)
   - Accent Purple: #8B5CF6 (primary), #7C3AED (dark), #A78BFA (light)
   - Success Green: #10B981 (primary), #059669 (dark), #34D399 (light)
@@ -33,6 +37,7 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - Error Red: #EF4444 (primary), #DC2626 (dark), #F87171 (light)
 
 - **Modern Gradients**:
+
   - Hero: `from-blue-600 via-purple-600 to-indigo-700`
   - Cards: `from-white/90 via-white/95 to-white/90`
   - Buttons: `from-blue-500 to-purple-600`, `from-emerald-500 to-teal-600`
@@ -46,31 +51,37 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - Glass morphism: `bg-white/80 backdrop-blur-xl border-white/20`
 
 #### Status Colors & 3D Icons (with Physics-Based Animations)
+
 - **🟢 Present**: #10B981 (emerald-500)
+
   - Icon: `CheckCircle` with 3D depth shadow and bounce spring animation
   - Animation: Scale bounce (1 → 1.2 → 1) with green glow pulse
   - Hover: Rotate 360° with shadow elevation
   - Business Logic: Counts toward attendance requirements
 
 - **🔴 Absent**: #EF4444 (red-500)
+
   - Icon: `XCircle` with 3D layered shadow and shake animation
   - Animation: Horizontal shake with red warning pulse
   - Hover: Slight tilt with shadow depth increase
   - Business Logic: Pure absence - counts toward محروم threshold only
 
 - **🟡 Sick**: #F59E0B (amber-500)
+
   - Icon: `Heart` with 3D gradient and gentle pulse glow
   - Animation: Heartbeat pulse with warm amber glow
   - Hover: Scale with soft yellow halo effect
   - Business Logic: Counts toward تصدیق طلب threshold but NOT محروم
 
 - **🔵 Leave**: #06B6D4 (cyan-500)
+
   - Icon: `Calendar` with 3D perspective and slide transition
   - Animation: Slide-in from left with cyan shimmer
   - Hover: Flip animation with depth shadow
   - Business Logic: Counts toward تصدیق طلب threshold but NOT محروم
 
 - **🟣 محروم (Disqualified)**: #8B5CF6 (violet-500)
+
   - Icon: `AlertTriangle` with 3D warning depth and urgent pulse
   - Animation: Warning pulse with violet glow and slight shake
   - Hover: Intense glow with shadow expansion
@@ -83,12 +94,15 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - Business Logic: Requires medical certificate upload and Office approval for exam eligibility
 
 #### Typography System
+
 - **Primary Font**: Inter Variable (300-900 weights)
+
   - Headings: 600-700 weights with tight letter-spacing (-0.025em)
   - Body: 400-500 weights with optimized line-height (1.6)
   - Captions: 400 weight with relaxed letter-spacing (0.025em)
 
 - **Display Font**: Clash Display (500-700 weights)
+
   - Hero titles: 700 weight with gradient text effects
   - Section headers: 600 weight with subtle shadows
   - Feature callouts: 500 weight with animated underlines
@@ -99,7 +113,9 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - System info: 300 weight with subtle background
 
 #### Spacing & Layout System
+
 - **Base Unit**: 4px with golden ratio scaling
+
   - Micro: 4px, 8px (borders, fine details)
   - Small: 12px, 16px (component padding, gaps)
   - Medium: 24px, 32px (card padding, section spacing)
@@ -113,29 +129,34 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - Aspect ratio containers for media consistency
 
 #### Animation & Interaction System
+
 - **Timing Functions**:
+
   - Micro interactions: 150ms ease-out
   - Standard transitions: 300ms cubic-bezier(0.4, 0, 0.2, 1)
   - Complex animations: 500ms spring physics
   - Page transitions: 400ms ease-in-out
 
 - **Spring Physics** (Framer Motion):
+
   ```typescript
   const springConfig = {
     type: "spring",
     stiffness: 300,
     damping: 30,
-    mass: 1
+    mass: 1,
   };
   ```
 
 - **Hover Effects**:
+
   - Cards: Scale 1.02, shadow elevation, border glow
   - Buttons: Scale 1.05, gradient shift, shadow expansion
   - Icons: Rotate, color shift, glow effect
   - Images: Scale 1.1 with overlay fade
 
 - **Loading States**:
+
   - Skeleton screens with shimmer wave animation
   - Pulse effects for loading placeholders
   - Progress bars with smooth value transitions
@@ -148,28 +169,31 @@ The University Attendance System is a modern, visually stunning, high-trust web 
   - Fade with blur for content changes
 
 #### Shadows & Depth System
+
 - **Elevation Levels**:
+
   - Level 1: `shadow-sm` (0 1px 2px rgba(0,0,0,0.05))
   - Level 2: `shadow-md` (0 4px 6px rgba(0,0,0,0)
   - Level 3: `shadow-lg` (0 10px 15px rgba(0,0,0,0.1))
   - Level 4: `shadow-xl` (0 20px 25px rgba(0,0,0,0.1))
   - Level 5: `shadow-2xl` (0 25px 50px rgba(0,0,0,0.25))
 
-- **Dynamic Sha
-sition
+- \*\*Dynamic Sha
+  sition
+
   - Animated shadow expansion oion
   - Colored shadows matching element themes
-n
+    n
 
-- **3D T
+- \*\*3D T
   - Perspective containers: `perspective-1000`
   - Card tilts: `rotateX(5deg) rotateY(5deg)`
   - Button presses: `translateZ(-2px)` won
   - fset
 
 #### Modern UI Component Library
-- **Base Components**:
-  -
+
+- ## **Base Components**:
 
   - Headless UI for complex interact
   - React Aria for keyboard navigation
@@ -181,14 +205,17 @@ n
   - React Transition Group for page transitions
 
 - **Icon Systems**:
+
   - Lucide React (primary, 3D varian
 
   - Phosphor Icons (specialt
-upportation s with animcons iVGCustom S-   ns)icoy ne/solid)ary, outliv2 (secondons  - Heroic able)ilts ava interactsedics-baationsplex animon for com Motiramer  - Fnsioancempliibility cocess for acitivesUI primix - Rad  rideseme over custom thadcn/ui with Shwith ofow layers ple shadultidepth: MIcon ow reductiith shadm Effects**:ansforrlusioD depth ilor 3dows fd sha  - Layerenteractn i cursor poowfollthat s r shadow  - Hovedows**:.07)verla for modal o
+    upportation s with animcons iVGCustom S- ns)icoy ne/solid)ary, outliv2 (secondons - Heroic able)ilts ava interactsedics-baationsplex animon for com Motiramer - Fnsioancempliibility cocess for acitivesUI primix - Rad rideseme over custom thadcn/ui with Shwith ofow layers ple shadultidepth: MIcon ow reductiith shadm Effects**:ansforrlusioD depth ilor 3dows fd sha - Layerenteractn i cursor poowfollthat s r shadow - Hovedows**:.07)verla for modal o
+
 ### Technology Stack
+
 - **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS v4
 - **UI Library**: Shadcn/ui, Radix UI, Headless UI, Mantine (for complex components)
-- **Animations**: 
+- **Animations**:
   - Framer Motion (primary animation library)
   - React Spring (physics-based animations)
   - Lottie React (complex micro-animations)
@@ -199,7 +226,7 @@ upportation s with animcons iVGCustom S-   ns)icoy ne/solid)ary, outliv2 (second
   - React Three Fiber (React integration for Three.js)
   - Spline (3D design integration)
   - CSS 3D Transforms (hardware-accelerated animations)
-- **Icons & Graphics**: 
+- **Icons & Graphics**:
   - Lucide React (primary icon set with 3D variants)
   - Heroicons v2 (secondary icons)
   - Phosphor Icons (specialty icons)
@@ -219,28 +246,29 @@ upportation s with animcons iVGCustom S-   ns)icoy ne/solid)ary, outliv2 (second
 ### Modern Animation Patterns & 3D Effects
 
 #### Micro-Interactions
+
 ```typescript
 // Button hover with 3D effect
 const buttonVariants = {
-  idle: { 
-    scale: 1, 
-    rotateX: 0, 
+  idle: {
+    scale: 1,
+    rotateX: 0,
     rotateY: 0,
-    boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
   },
-  hover: { 
-    scale: 1.05, 
-    rotateX: -5, 
+  hover: {
+    scale: 1.05,
+    rotateX: -5,
     rotateY: 5,
     boxShadow: "0 20px 25px rgba(0,0,0,0.15)",
-    transition: { type: "spring", stiffness: 300, damping: 20 }
+    transition: { type: "spring", stiffness: 300, damping: 20 },
   },
-  tap: { 
+  tap: {
     scale: 0.98,
     rotateX: 0,
     rotateY: 0,
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-  }
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+  },
 };
 
 // Status badge pulse animation
@@ -250,45 +278,47 @@ const statusPulse = {
   transition: {
     duration: 2,
     repeat: Infinity,
-    ease: "easeInOut"
-  }
+    ease: "easeInOut",
+  },
 };
 ```
 
 #### Page Transitions
+
 ```typescript
 // Smooth page transitions with parallax
 const pageVariants = {
-  initial: { 
-    opacity: 0, 
-    x: -100, 
+  initial: {
+    opacity: 0,
+    x: -100,
     scale: 0.95,
-    filter: "blur(10px)"
+    filter: "blur(10px)",
   },
-  in: { 
-    opacity: 1, 
-    x: 0, 
+  in: {
+    opacity: 1,
+    x: 0,
     scale: 1,
     filter: "blur(0px)",
-    transition: { 
-      duration: 0.4, 
-      ease: "easeOut" 
-    }
+    transition: {
+      duration: 0.4,
+      ease: "easeOut",
+    },
   },
-  out: { 
-    opacity: 0, 
-    x: 100, 
+  out: {
+    opacity: 0,
+    x: 100,
     scale: 1.05,
     filter: "blur(5px)",
-    transition: { 
-      duration: 0.3, 
-      ease: "easeIn" 
-    }
-  }
+    transition: {
+      duration: 0.3,
+      ease: "easeIn",
+    },
+  },
 };
 ```
 
 #### 3D Card Effects
+
 ```typescript
 // Glass morphism card with 3D hover
 const cardVariants = {
@@ -298,7 +328,7 @@ const cardVariants = {
     scale: 1,
     background: "rgba(255,255,255,0.8)",
     backdropFilter: "blur(20px)",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.1)"
+    boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
   },
   hover: {
     rotateX: -10,
@@ -310,121 +340,127 @@ const cardVariants = {
     transition: {
       type: "spring",
       stiffness: 300,
-      damping: 20
-    }
-  }
+      damping: 20,
+    },
+  },
 };
 ```
 
 #### Data Loading Animations
+
 ```typescript
 // Skeleton loading with shimmer effect
 const shimmerVariants = {
   initial: { x: "-100%" },
-  animate: { 
+  animate: {
     x: "100%",
     transition: {
       repeat: Infinity,
       duration: 1.5,
-      ease: "linear"
-    }
-  }
+      ease: "linear",
+    },
+  },
 };
 
 // Count-up animation for metrics
 const countUpVariants = {
   initial: { scale: 0.8, opacity: 0 },
-  animate: { 
-    scale: 1, 
+  animate: {
+    scale: 1,
     opacity: 1,
-    transition: { 
-      type: "spring", 
-      stiffness: 200, 
-      damping: 15 
-    }
-  }
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 15,
+    },
+  },
 };
 ```
 
 #### Interactive Chart Animations
+
 ```typescript
 // Chart data point hover effects
 const chartPointVariants = {
-  rest: { 
-    scale: 1, 
-    fill: "#3B82F6" 
+  rest: {
+    scale: 1,
+    fill: "#3B82F6",
   },
-  hover: { 
-    scale: 1.5, 
+  hover: {
+    scale: 1.5,
     fill: "#1D4ED8",
-    transition: { 
-      type: "spring", 
-      stiffness: 400, 
-      damping: 10 
-    }
-  }
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 10,
+    },
+  },
 };
 
 // Bar chart growth animation
 const barGrowth = {
   initial: { scaleY: 0, originY: 1 },
-  animate: { 
+  animate: {
     scaleY: 1,
-    transition: { 
-      duration: 0.8, 
+    transition: {
+      duration: 0.8,
       ease: "easeOut",
-      delay: (index: number) => index * 0.1
-    }
-  }
+      delay: (index: number) => index * 0.1,
+    },
+  },
 };
 ```
 
 #### Notification System
+
 ```typescript
 // Toast notification slide-in
 const toastVariants = {
-  initial: { 
-    x: 300, 
-    opacity: 0, 
-    scale: 0.8 
-  },
-  animate: { 
-    x: 0, 
-    opacity: 1, 
-    scale: 1,
-    transition: { 
-      type: "spring", 
-      stiffness: 300, 
-      damping: 25 
-    }
-  },
-  exit: { 
-    x: 300, 
-    opacity: 0, 
+  initial: {
+    x: 300,
+    opacity: 0,
     scale: 0.8,
-    transition: { 
-      duration: 0.2 
-    }
-  }
+  },
+  animate: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 25,
+    },
+  },
+  exit: {
+    x: 300,
+    opacity: 0,
+    scale: 0.8,
+    transition: {
+      duration: 0.2,
+    },
+  },
 };
 ```
 
 ### Modern Responsive Design & Accessibility
 
 #### Responsive Breakpoints
+
 ```typescript
 const breakpoints = {
-  xs: '320px',   // Mobile portrait
-  sm: '640px',   // Mobile landscape
-  md: '768px',   // Tablet portrait
-  lg: '1024px',  // Tablet landscape / Small desktop
-  xl: '1280px',  // Desktop
-  '2xl': '1536px' // Large desktop
+  xs: "320px", // Mobile portrait
+  sm: "640px", // Mobile landscape
+  md: "768px", // Tablet portrait
+  lg: "1024px", // Tablet landscape / Small desktop
+  xl: "1280px", // Desktop
+  "2xl": "1536px", // Large desktop
 };
 ```
 
 #### Mobile-First Approach
+
 - **Touch Optimizations**:
+
   - Minimum 44px touch targets
   - Gesture-based navigation (swipe, pinch, tap)
   - Haptic feedback for interactions
@@ -439,7 +475,9 @@ const breakpoints = {
   - Progressive enhancement
 
 #### Accessibility Features (WCAG 2.1 AA Compliance)
+
 - **Keyboard Navigation**:
+
   - Focus management with visible indicators
   - Skip links for main content
   - Logical tab order
@@ -447,6 +485,7 @@ const breakpoints = {
   - Escape key handling for modals
 
 - **Screen Reader Support**:
+
   - Semantic HTML structure
   - ARIA labels and descriptions
   - Live regions for dynamic content
@@ -454,6 +493,7 @@ const breakpoints = {
   - Alternative text for images
 
 - **Visual Accessibility**:
+
   - High contrast mode support
   - Reduced motion preferences
   - Color-blind friendly palettes
@@ -468,28 +508,31 @@ const breakpoints = {
   - Simple language and clear instructions
 
 #### Dark Mode Support
+
 ```typescript
 const darkModeColors = {
   background: {
-    primary: '#0F172A',
-    secondary: '#1E293B',
-    tertiary: '#334155'
+    primary: "#0F172A",
+    secondary: "#1E293B",
+    tertiary: "#334155",
   },
   text: {
-    primary: '#F8FAFC',
-    secondary: '#CBD5E1',
-    muted: '#64748B'
+    primary: "#F8FAFC",
+    secondary: "#CBD5E1",
+    muted: "#64748B",
   },
   accent: {
-    blue: '#3B82F6',
-    purple: '#8B5CF6',
-    green: '#10B981'
-  }
+    blue: "#3B82F6",
+    purple: "#8B5CF6",
+    green: "#10B981",
+  },
 };
 ```
 
 #### Performance Optimizations
+
 - **Loading Strategies**:
+
   - Lazy loading for images and components
   - Skeleton screens during data fetching
   - Progressive image loading with blur-up
@@ -515,7 +558,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'OFFICE' | 'TEACHER' | 'STUDENT';
+  role: "OFFICE" | "TEACHER" | "STUDENT";
   createdAt: Date;
   updatedAt: Date;
   createdBy: string; // Office user who created this account
@@ -545,7 +588,7 @@ interface WeeklySchedule {
 
 interface TimeSlot {
   startTime: string; // "08:00"
-  endTime: string;   // "08:45"
+  endTime: string; // "08:45"
   sessionNumber: number; // 1-6
   breakAfter?: boolean; // true after sessions 3 and 6
 }
@@ -557,7 +600,7 @@ interface AttendanceRecord {
   classId: string;
   date: Date;
   sessionNumber: number;
-  status: 'PRESENT' | 'ABSENT' | 'SICK' | 'LEAVE';
+  status: "PRESENT" | "ABSENT" | "SICK" | "LEAVE";
   markedBy: string; // Teacher or Office user
   markedAt: Date;
   modifiedBy?: string;
@@ -589,7 +632,7 @@ interface MedicalCertificate {
   uploadedAt: Date;
   fileName: string;
   fileUrl: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   reviewedBy?: string;
   reviewedAt?: Date;
   reviewNotes?: string;
@@ -621,15 +664,15 @@ class AttendanceCalculator {
   // Calculate weekly totals with proper business rule separation
   calculateWeeklyStatus(studentId: string, weekStart: Date): StudentStatus {
     const records = this.getWeeklyRecords(studentId, weekStart);
-    
+
     return {
-      presentHours: records.filter(r => r.status === 'PRESENT').length * 0.75, // 45min sessions
-      absentHours: records.filter(r => r.status === 'ABSENT').length * 0.75, // Pure absences only
-      sickHours: records.filter(r => r.status === 'SICK').length * 0.75,
-      leaveHours: records.filter(r => r.status === 'LEAVE').length * 0.75,
+      presentHours: records.filter((r) => r.status === "PRESENT").length * 0.75, // 45min sessions
+      absentHours: records.filter((r) => r.status === "ABSENT").length * 0.75, // Pure absences only
+      sickHours: records.filter((r) => r.status === "SICK").length * 0.75,
+      leaveHours: records.filter((r) => r.status === "LEAVE").length * 0.75,
       totalHours: this.getConfiguredWeeklyHours(),
       isDisqualified: this.checkDisqualification(studentId),
-      requiresCertification: this.checkCertificationRequirement(studentId)
+      requiresCertification: this.checkCertificationRequirement(studentId),
     };
   }
 
@@ -642,9 +685,10 @@ class AttendanceCalculator {
 
   // تصدیق طلب calculation - combined absences
   checkCertificationRequirement(studentId: string): boolean {
-    const combinedAbsences = this.getTotalAbsentHours(studentId) + 
-                           this.getTotalSickHours(studentId) + 
-                           this.getTotalLeaveHours(studentId);
+    const combinedAbsences =
+      this.getTotalAbsentHours(studentId) +
+      this.getTotalSickHours(studentId) +
+      this.getTotalLeaveHours(studentId);
     const threshold = this.getCertificationThreshold();
     return combinedAbsences >= threshold;
   }
@@ -655,33 +699,39 @@ class AttendanceCalculator {
 
 ```typescript
 class CertificationWorkflow {
-  async submitCertificate(studentId: string, file: File): Promise<MedicalCertificate> {
+  async submitCertificate(
+    studentId: string,
+    file: File
+  ): Promise<MedicalCertificate> {
     // Validate student is flagged for certification
     const student = await this.getStudentStatus(studentId);
     if (!student.requiresCertification) {
-      throw new Error('Student does not require certification');
+      throw new Error("Student does not require certification");
     }
 
     // Upload and create certificate record
     const certificate = await this.createCertificateRecord(studentId, file);
-    
+
     // Notify Office administrators
     await this.notifyOfficeForReview(certificate);
-    
+
     return certificate;
   }
 
-  async approveCertificate(certificateId: string, reviewerId: string): Promise<void> {
+  async approveCertificate(
+    certificateId: string,
+    reviewerId: string
+  ): Promise<void> {
     const certificate = await this.getCertificate(certificateId);
-    
+
     // Update certificate status
-    certificate.status = 'APPROVED';
+    certificate.status = "APPROVED";
     certificate.reviewedBy = reviewerId;
     certificate.reviewedAt = new Date();
-    
+
     // Restore exam eligibility
     await this.updateStudentExamEligibility(certificate.studentId, true);
-    
+
     // Notify student of approval
     await this.notifyStudentOfApproval(certificate.studentId);
   }
@@ -695,6 +745,7 @@ class CertificationWorkflow {
 ### Navigation and Routing Issues
 
 #### Problem: User Management Navigation Blocking
+
 **Issue**: When opening the "Add Teacher" page, users cannot navigate to other pages within the User Management section due to improper navigation handling.
 
 **Root Cause**: The navigation handler in pages only updates local state without triggering actual route changes.
@@ -703,17 +754,17 @@ class CertificationWorkflow {
 
 ```typescript
 // Fixed Navigation Implementation
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation";
 
 export default function AddTeacherPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleNavigation = (href: string) => {
     // Use Next.js router for actual navigation
-    router.push(href)
-  }
+    router.push(href);
+  };
 
   // Rest of component...
 }
@@ -724,14 +775,14 @@ export default function AddTeacherPage() {
 ```typescript
 class NavigationErrorHandler {
   static handleNavigationError(error: Error, fallbackRoute: string) {
-    console.error('Navigation failed:', error)
-    
+    console.error("Navigation failed:", error);
+
     // Attempt fallback navigation
     try {
-      window.location.href = fallbackRoute
+      window.location.href = fallbackRoute;
     } catch (fallbackError) {
       // Show user-friendly error message
-      this.showNavigationError()
+      this.showNavigationError();
     }
   }
 
@@ -745,38 +796,39 @@ class NavigationErrorHandler {
 ### Form Validation and Data Integrity
 
 #### Real-time Validation System
+
 ```typescript
 interface ValidationRule {
-  field: string
-  validator: (value: any) => boolean | string
-  message: string
-  severity: 'error' | 'warning' | 'info'
+  field: string;
+  validator: (value: any) => boolean | string;
+  message: string;
+  severity: "error" | "warning" | "info";
 }
 
 class FormValidator {
   static validateUserForm(data: UserFormData): ValidationResult {
     const rules: ValidationRule[] = [
       {
-        field: 'email',
+        field: "email",
         validator: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-        message: 'Please enter a valid email address',
-        severity: 'error'
+        message: "Please enter a valid email address",
+        severity: "error",
       },
       {
-        field: 'role',
-        validator: (role) => ['OFFICE', 'TEACHER', 'STUDENT'].includes(role),
-        message: 'Invalid role selected',
-        severity: 'error'
+        field: "role",
+        validator: (role) => ["OFFICE", "TEACHER", "STUDENT"].includes(role),
+        message: "Invalid role selected",
+        severity: "error",
       },
       {
-        field: 'name',
+        field: "name",
         validator: (name) => name && name.trim().length >= 2,
-        message: 'Name must be at least 2 characters long',
-        severity: 'error'
-      }
-    ]
+        message: "Name must be at least 2 characters long",
+        severity: "error",
+      },
+    ];
 
-    return this.runValidation(data, rules)
+    return this.runValidation(data, rules);
   }
 }
 ```
@@ -784,40 +836,48 @@ class FormValidator {
 ### Business Rule Enforcement Errors
 
 #### Attendance Calculation Error Handling
+
 ```typescript
 class AttendanceErrorHandler {
   static handleCalculationError(studentId: string, error: Error): void {
     // Log error for debugging
-    console.error(`Attendance calculation failed for student ${studentId}:`, error)
-    
+    console.error(
+      `Attendance calculation failed for student ${studentId}:`,
+      error
+    );
+
     // Notify administrators
     this.notifyAdministrators({
-      type: 'CALCULATION_ERROR',
+      type: "CALCULATION_ERROR",
       studentId,
       error: error.message,
-      timestamp: new Date()
-    })
-    
+      timestamp: new Date(),
+    });
+
     // Use fallback calculation or cached values
-    this.useFallbackCalculation(studentId)
+    this.useFallbackCalculation(studentId);
   }
 
-  static validateBusinessRules(attendanceData: AttendanceRecord[]): ValidationResult {
-    const errors: string[] = []
-    
+  static validateBusinessRules(
+    attendanceData: AttendanceRecord[]
+  ): ValidationResult {
+    const errors: string[] = [];
+
     // Check for duplicate entries
-    const duplicates = this.findDuplicateEntries(attendanceData)
+    const duplicates = this.findDuplicateEntries(attendanceData);
     if (duplicates.length > 0) {
-      errors.push(`Duplicate attendance entries found: ${duplicates.join(', ')}`)
+      errors.push(
+        `Duplicate attendance entries found: ${duplicates.join(", ")}`
+      );
     }
-    
+
     // Validate date ranges
-    const invalidDates = this.validateDateRanges(attendanceData)
+    const invalidDates = this.validateDateRanges(attendanceData);
     if (invalidDates.length > 0) {
-      errors.push(`Invalid dates found: ${invalidDates.join(', ')}`)
+      errors.push(`Invalid dates found: ${invalidDates.join(", ")}`);
     }
-    
-    return { isValid: errors.length === 0, errors }
+
+    return { isValid: errors.length === 0, errors };
   }
 }
 ```
@@ -825,41 +885,42 @@ class AttendanceErrorHandler {
 ### Database and API Error Handling
 
 #### Comprehensive Error Response System
+
 ```typescript
 interface APIError {
-  code: string
-  message: string
-  details?: any
-  timestamp: Date
-  requestId: string
+  code: string;
+  message: string;
+  details?: any;
+  timestamp: Date;
+  requestId: string;
 }
 
 class APIErrorHandler {
   static handleDatabaseError(error: any): APIError {
     const errorMap = {
-      'P2002': 'A record with this information already exists',
-      'P2025': 'The requested record was not found',
-      'P2003': 'This action would violate data integrity rules',
-      'P2016': 'Query interpretation error occurred'
-    }
+      P2002: "A record with this information already exists",
+      P2025: "The requested record was not found",
+      P2003: "This action would violate data integrity rules",
+      P2016: "Query interpretation error occurred",
+    };
 
     return {
-      code: error.code || 'DATABASE_ERROR',
-      message: errorMap[error.code] || 'A database error occurred',
-      details: process.env.NODE_ENV === 'development' ? error : undefined,
+      code: error.code || "DATABASE_ERROR",
+      message: errorMap[error.code] || "A database error occurred",
+      details: process.env.NODE_ENV === "development" ? error : undefined,
       timestamp: new Date(),
-      requestId: this.generateRequestId()
-    }
+      requestId: this.generateRequestId(),
+    };
   }
 
   static handleValidationError(validationErrors: any[]): APIError {
     return {
-      code: 'VALIDATION_ERROR',
-      message: 'The provided data is invalid',
+      code: "VALIDATION_ERROR",
+      message: "The provided data is invalid",
       details: validationErrors,
       timestamp: new Date(),
-      requestId: this.generateRequestId()
-    }
+      requestId: this.generateRequestId(),
+    };
   }
 }
 ```
@@ -867,12 +928,16 @@ class APIErrorHandler {
 ### User Experience Error Handling
 
 #### Graceful Degradation Strategy
+
 ```typescript
 class UXErrorHandler {
-  static handleComponentError(error: Error, componentName: string): React.ReactElement {
+  static handleComponentError(
+    error: Error,
+    componentName: string
+  ): React.ReactElement {
     // Log error for monitoring
-    console.error(`Component error in ${componentName}:`, error)
-    
+    console.error(`Component error in ${componentName}:`, error);
+
     // Return fallback UI
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -881,12 +946,13 @@ class UXErrorHandler {
           <div>
             <h4 className="font-semibold text-red-900">Something went wrong</h4>
             <p className="text-sm text-red-700">
-              We're having trouble loading this section. Please refresh the page or try again later.
+              We're having trouble loading this section. Please refresh the page
+              or try again later.
             </p>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   static handleLoadingError(retryFunction: () => void): React.ReactElement {
@@ -896,7 +962,8 @@ class UXErrorHandler {
           <AlertTriangle className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
           <h3 className="font-semibold text-yellow-900 mb-2">Loading Failed</h3>
           <p className="text-sm text-yellow-700 mb-4">
-            We couldn't load the requested data. This might be due to a network issue.
+            We couldn't load the requested data. This might be due to a network
+            issue.
           </p>
           <button
             onClick={retryFunction}
@@ -906,7 +973,7 @@ class UXErrorHandler {
           </button>
         </div>
       </div>
-    )
+    );
   }
 }
 ```
@@ -918,255 +985,290 @@ class UXErrorHandler {
 ### Navigation Testing Framework
 
 #### Automated Navigation Tests
+
 ```typescript
 // Navigation Integration Tests
-describe('User Management Navigation', () => {
-  test('should navigate between user management pages without blocking', async () => {
-    const { user } = render(<AddTeacherPage />)
-    
-    // Navigate to different sections
-    await user.click(screen.getByText('All Users'))
-    expect(window.location.pathname).toBe('/user-management/all-users')
-    
-    await user.click(screen.getByText('Add Student'))
-    expect(window.location.pathname).toBe('/user-management/add-student')
-    
-    // Verify no navigation blocking occurs
-    await user.click(screen.getByText('Teachers'))
-    expect(window.location.pathname).toBe('/user-management/teachers')
-  })
+describe("User Management Navigation", () => {
+  test("should navigate between user management pages without blocking", async () => {
+    const { user } = render(<AddTeacherPage />);
 
-  test('should handle navigation errors gracefully', async () => {
+    // Navigate to different sections
+    await user.click(screen.getByText("All Users"));
+    expect(window.location.pathname).toBe("/user-management/all-users");
+
+    await user.click(screen.getByText("Add Student"));
+    expect(window.location.pathname).toBe("/user-management/add-student");
+
+    // Verify no navigation blocking occurs
+    await user.click(screen.getByText("Teachers"));
+    expect(window.location.pathname).toBe("/user-management/teachers");
+  });
+
+  test("should handle navigation errors gracefully", async () => {
     // Mock navigation failure
-    const mockRouter = { push: jest.fn().mockRejectedValue(new Error('Navigation failed')) }
-    
-    const { user } = render(<AddTeacherPage />, { router: mockRouter })
-    
-    await user.click(screen.getByText('All Users'))
-    
+    const mockRouter = {
+      push: jest.fn().mockRejectedValue(new Error("Navigation failed")),
+    };
+
+    const { user } = render(<AddTeacherPage />, { router: mockRouter });
+
+    await user.click(screen.getByText("All Users"));
+
     // Verify error handling
-    expect(screen.getByText(/navigation failed/i)).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText(/navigation failed/i)).toBeInTheDocument();
+  });
+});
 ```
 
 ### Business Logic Testing
 
 #### Attendance Calculation Tests
-```typescript
-describe('Attendance Business Logic', () => {
-  test('should calculate محروم status correctly', () => {
-    const calculator = new AttendanceCalculator()
-    const studentRecords = [
-      { status: 'ABSENT', sessionNumber: 1, date: '2024-01-01' },
-      { status: 'ABSENT', sessionNumber: 2, date: '2024-01-01' },
-      { status: 'SICK', sessionNumber: 3, date: '2024-01-01' },
-      { status: 'LEAVE', sessionNumber: 4, date: '2024-01-01' }
-    ]
-    
-    const result = calculator.calculateWeeklyStatus('student-1', new Date('2024-01-01'))
-    
-    // Only pure absences count toward محروم
-    expect(result.absentHours).toBe(1.5) // 2 sessions * 0.75 hours
-    expect(result.isDisqualified).toBe(false) // Below threshold
-  })
 
-  test('should calculate تصدیق طلب status correctly', () => {
-    const calculator = new AttendanceCalculator()
+```typescript
+describe("Attendance Business Logic", () => {
+  test("should calculate محروم status correctly", () => {
+    const calculator = new AttendanceCalculator();
+    const studentRecords = [
+      { status: "ABSENT", sessionNumber: 1, date: "2024-01-01" },
+      { status: "ABSENT", sessionNumber: 2, date: "2024-01-01" },
+      { status: "SICK", sessionNumber: 3, date: "2024-01-01" },
+      { status: "LEAVE", sessionNumber: 4, date: "2024-01-01" },
+    ];
+
+    const result = calculator.calculateWeeklyStatus(
+      "student-1",
+      new Date("2024-01-01")
+    );
+
+    // Only pure absences count toward محروم
+    expect(result.absentHours).toBe(1.5); // 2 sessions * 0.75 hours
+    expect(result.isDisqualified).toBe(false); // Below threshold
+  });
+
+  test("should calculate تصدیق طلب status correctly", () => {
+    const calculator = new AttendanceCalculator();
     // Test combined absence calculation
-    const result = calculator.checkCertificationRequirement('student-1')
-    
-    expect(result).toBe(true) // Combined absences exceed threshold
-  })
-})
+    const result = calculator.checkCertificationRequirement("student-1");
+
+    expect(result).toBe(true); // Combined absences exceed threshold
+  });
+});
 ```
 
 ### Component Testing Strategy
 
 #### Modern UI Component Tests
+
 ```typescript
-describe('ModernDashboardLayout', () => {
-  test('should render with proper navigation structure', () => {
-    const mockUser = { name: 'Test User', role: 'OFFICE', email: 'test@test.com' }
-    
+describe("ModernDashboardLayout", () => {
+  test("should render with proper navigation structure", () => {
+    const mockUser = {
+      name: "Test User",
+      role: "OFFICE",
+      email: "test@test.com",
+    };
+
     render(
       <ModernDashboardLayout user={mockUser} currentPath="/user-management">
         <div>Test Content</div>
       </ModernDashboardLayout>
-    )
-    
-    // Verify navigation items are rendered
-    expect(screen.getByText('User Management')).toBeInTheDocument()
-    expect(screen.getByText('Classes & Schedule')).toBeInTheDocument()
-    expect(screen.getByText('Attendance')).toBeInTheDocument()
-  })
+    );
 
-  test('should handle role-based navigation correctly', () => {
-    const teacherUser = { name: 'Teacher', role: 'TEACHER', email: 'teacher@test.com' }
-    
-    render(<ModernDashboardLayout user={teacherUser} />)
-    
+    // Verify navigation items are rendered
+    expect(screen.getByText("User Management")).toBeInTheDocument();
+    expect(screen.getByText("Classes & Schedule")).toBeInTheDocument();
+    expect(screen.getByText("Attendance")).toBeInTheDocument();
+  });
+
+  test("should handle role-based navigation correctly", () => {
+    const teacherUser = {
+      name: "Teacher",
+      role: "TEACHER",
+      email: "teacher@test.com",
+    };
+
+    render(<ModernDashboardLayout user={teacherUser} />);
+
     // Teachers should not see user management
-    expect(screen.queryByText('User Management')).not.toBeInTheDocument()
-    expect(screen.getByText('My Classes')).toBeInTheDocument()
-  })
-})
+    expect(screen.queryByText("User Management")).not.toBeInTheDocument();
+    expect(screen.getByText("My Classes")).toBeInTheDocument();
+  });
+});
 ```
 
 ### End-to-End Testing
 
 #### Critical User Workflows
+
 ```typescript
 // E2E Tests using Playwright
-test.describe('Office Administrator Workflow', () => {
-  test('should complete full user creation workflow', async ({ page }) => {
-    await page.goto('/user-management/add-teacher')
-    
-    // Fill form
-    await page.fill('[data-testid="firstName"]', 'John')
-    await page.fill('[data-testid="lastName"]', 'Doe')
-    await page.fill('[data-testid="email"]', 'john.doe@university.edu')
-    
-    // Submit form
-    await page.click('[data-testid="submit-button"]')
-    
-    // Verify success
-    await expect(page.locator('[data-testid="success-message"]')).toBeVisible()
-    
-    // Navigate to user list
-    await page.click('[data-testid="nav-all-users"]')
-    
-    // Verify user appears in list
-    await expect(page.locator('text=John Doe')).toBeVisible()
-  })
+test.describe("Office Administrator Workflow", () => {
+  test("should complete full user creation workflow", async ({ page }) => {
+    await page.goto("/user-management/add-teacher");
 
-  test('should handle attendance marking workflow', async ({ page }) => {
-    await page.goto('/attendance/mark')
-    
+    // Fill form
+    await page.fill('[data-testid="firstName"]', "John");
+    await page.fill('[data-testid="lastName"]', "Doe");
+    await page.fill('[data-testid="email"]', "john.doe@university.edu");
+
+    // Submit form
+    await page.click('[data-testid="submit-button"]');
+
+    // Verify success
+    await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+
+    // Navigate to user list
+    await page.click('[data-testid="nav-all-users"]');
+
+    // Verify user appears in list
+    await expect(page.locator("text=John Doe")).toBeVisible();
+  });
+
+  test("should handle attendance marking workflow", async ({ page }) => {
+    await page.goto("/attendance/mark");
+
     // Select class
-    await page.selectOption('[data-testid="class-select"]', 'CS-101')
-    
+    await page.selectOption('[data-testid="class-select"]', "CS-101");
+
     // Mark attendance for students
-    await page.click('[data-testid="student-1-present"]')
-    await page.click('[data-testid="student-2-absent"]')
-    
+    await page.click('[data-testid="student-1-present"]');
+    await page.click('[data-testid="student-2-absent"]');
+
     // Submit attendance
-    await page.click('[data-testid="submit-attendance"]')
-    
+    await page.click('[data-testid="submit-attendance"]');
+
     // Verify confirmation
-    await expect(page.locator('text=Attendance saved successfully')).toBeVisible()
-  })
-})
+    await expect(
+      page.locator("text=Attendance saved successfully")
+    ).toBeVisible();
+  });
+});
 ```
 
 ### Performance Testing
 
 #### Load Testing Strategy
+
 ```typescript
-describe('Performance Tests', () => {
-  test('should handle large user lists efficiently', async () => {
+describe("Performance Tests", () => {
+  test("should handle large user lists efficiently", async () => {
     // Mock 1000+ users
     const largeUserList = Array.from({ length: 1000 }, (_, i) => ({
       id: `user-${i}`,
       name: `User ${i}`,
       email: `user${i}@test.com`,
-      role: 'STUDENT'
-    }))
-    
-    const startTime = performance.now()
-    
-    render(<UserList users={largeUserList} />)
-    
-    const endTime = performance.now()
-    const renderTime = endTime - startTime
-    
-    // Should render within 100ms
-    expect(renderTime).toBeLessThan(100)
-  })
+      role: "STUDENT",
+    }));
 
-  test('should optimize attendance calculations', async () => {
-    const calculator = new AttendanceCalculator()
-    const largeDataset = generateLargeAttendanceDataset(10000) // 10k records
-    
-    const startTime = performance.now()
-    
-    const results = calculator.calculateBulkStatus(largeDataset)
-    
-    const endTime = performance.now()
-    const calculationTime = endTime - startTime
-    
+    const startTime = performance.now();
+
+    render(<UserList users={largeUserList} />);
+
+    const endTime = performance.now();
+    const renderTime = endTime - startTime;
+
+    // Should render within 100ms
+    expect(renderTime).toBeLessThan(100);
+  });
+
+  test("should optimize attendance calculations", async () => {
+    const calculator = new AttendanceCalculator();
+    const largeDataset = generateLargeAttendanceDataset(10000); // 10k records
+
+    const startTime = performance.now();
+
+    const results = calculator.calculateBulkStatus(largeDataset);
+
+    const endTime = performance.now();
+    const calculationTime = endTime - startTime;
+
     // Should calculate within 500ms
-    expect(calculationTime).toBeLessThan(500)
-    expect(results).toHaveLength(largeDataset.length)
-  })
-})
+    expect(calculationTime).toBeLessThan(500);
+    expect(results).toHaveLength(largeDataset.length);
+  });
+});
 ```
 
 ### Accessibility Testing
 
 #### WCAG Compliance Tests
+
 ```typescript
-describe('Accessibility Tests', () => {
-  test('should meet WCAG 2.1 AA standards', async () => {
-    const { container } = render(<AddTeacherPage />)
-    
-    const results = await axe(container)
-    
-    expect(results).toHaveNoViolations()
-  })
+describe("Accessibility Tests", () => {
+  test("should meet WCAG 2.1 AA standards", async () => {
+    const { container } = render(<AddTeacherPage />);
 
-  test('should support keyboard navigation', async () => {
-    const { user } = render(<UserManagementLayout />)
-    
+    const results = await axe(container);
+
+    expect(results).toHaveNoViolations();
+  });
+
+  test("should support keyboard navigation", async () => {
+    const { user } = render(<UserManagementLayout />);
+
     // Tab through navigation items
-    await user.tab()
-    expect(screen.getByText('Dashboard')).toHaveFocus()
-    
-    await user.tab()
-    expect(screen.getByText('User Management')).toHaveFocus()
-    
-    // Enter to expand submenu
-    await user.keyboard('{Enter}')
-    expect(screen.getByText('Add User')).toBeVisible()
-  })
+    await user.tab();
+    expect(screen.getByText("Dashboard")).toHaveFocus();
 
-  test('should provide proper ARIA labels', () => {
-    render(<AttendanceGrid />)
-    
+    await user.tab();
+    expect(screen.getByText("User Management")).toHaveFocus();
+
+    // Enter to expand submenu
+    await user.keyboard("{Enter}");
+    expect(screen.getByText("Add User")).toBeVisible();
+  });
+
+  test("should provide proper ARIA labels", () => {
+    render(<AttendanceGrid />);
+
     // Verify ARIA labels exist
-    expect(screen.getByLabelText('Mark student as present')).toBeInTheDocument()
-    expect(screen.getByLabelText('Mark student as absent')).toBeInTheDocument()
-    
+    expect(
+      screen.getByLabelText("Mark student as present")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Mark student as absent")).toBeInTheDocument();
+
     // Verify screen reader announcements
-    expect(screen.getByRole('status')).toHaveTextContent('Attendance grid loaded')
-  })
-})
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Attendance grid loaded"
+    );
+  });
+});
 ```
 
 ### Security Testing
 
 #### Authentication and Authorization Tests
-```typescript
-describe('Security Tests', () => {
-  test('should prevent unauthorized access to Office features', async () => {
-    const studentUser = { role: 'STUDENT', name: 'Student', email: 'student@test.com' }
-    
-    render(<UserManagementLayout />, { user: studentUser })
-    
-    // Should redirect or show error
-    expect(screen.queryByText('User Management')).not.toBeInTheDocument()
-  })
 
-  test('should validate input sanitization', async () => {
-    const { user } = render(<AddTeacherForm />)
-    
+```typescript
+describe("Security Tests", () => {
+  test("should prevent unauthorized access to Office features", async () => {
+    const studentUser = {
+      role: "STUDENT",
+      name: "Student",
+      email: "student@test.com",
+    };
+
+    render(<UserManagementLayout />, { user: studentUser });
+
+    // Should redirect or show error
+    expect(screen.queryByText("User Management")).not.toBeInTheDocument();
+  });
+
+  test("should validate input sanitization", async () => {
+    const { user } = render(<AddTeacherForm />);
+
     // Attempt XSS injection
-    await user.type(screen.getByLabelText('Name'), '<script>alert("xss")</script>')
-    
+    await user.type(
+      screen.getByLabelText("Name"),
+      '<script>alert("xss")</script>'
+    );
+
     // Should be sanitized
-    expect(screen.getByDisplayValue('<script>alert("xss")</script>')).not.toBeInTheDocument()
-  })
-})
+    expect(
+      screen.getByDisplayValue('<script>alert("xss")</script>')
+    ).not.toBeInTheDocument();
+  });
+});
 ```
 
 **Design Rationale**: The comprehensive testing strategy ensures system reliability, performance, accessibility, and security. Each testing layer validates different aspects of the system, from unit-level business logic to end-to-end user workflows, providing confidence in the system's robustness and user experience quality.
@@ -1174,6 +1276,7 @@ describe('Security Tests', () => {
 ## Architecture
 
 ### System Architecture Pattern
+
 The application follows a **layered architecture** with clear separation of concerns:
 
 ```mermaid
@@ -1181,7 +1284,7 @@ graph TB
     A[Presentation Layer - Next.js Pages/Components] --> B[Business Logic Layer - Services/Hooks]
     B --> C[Data Access Layer - Prisma/Repositories]
     C --> D[Database Layer - PostgreSQL]
-    
+
     E[Authentication Middleware] --> A
     F[Authorization Guards] --> B
     G[Validation Layer - Zod Schemas] --> B
@@ -1192,6 +1295,7 @@ graph TB
 The system implements strict role-based access control with clear permission boundaries and audit trails.
 
 #### Office Administrator Role
+
 - **User Management**: Exclusive authority to create, modify, and delete user accounts
 - **System Configuration**: Full access to attendance rules, academic calendar, and system settings
 - **Reporting**: Complete access to all reports, analytics, and export functionality
@@ -1199,6 +1303,7 @@ The system implements strict role-based access control with clear permission bou
 - **Certification Workflow**: Manages medical certificate approvals and student status updates
 
 #### Teacher Role
+
 - **Class Management**: Access only to assigned classes and enrolled students
 - **Attendance Marking**: Can mark attendance for assigned classes with deadline enforcement
 - **Student Viewing**: Read access to student information within assigned classes only
@@ -1206,6 +1311,7 @@ The system implements strict role-based access control with clear permission bou
 - **Historical Access**: Can review and correct previous attendance entries within administrative guidelines
 
 #### Student Role
+
 - **Personal Data**: Read-only access to own attendance records and academic standing
 - **Single Class Enforcement**: System prevents enrollment in multiple classes
 - **Status Monitoring**: Can view محروم and تصدیق طلب status with explanatory information
@@ -1215,6 +1321,7 @@ The system implements strict role-based access control with clear permission bou
 **Design Rationale**: The three-tier role system ensures proper separation of duties while maintaining data integrity and academic policy compliance. Each role has clearly defined boundaries with appropriate error handling and informative feedback.
 
 ### Security Architecture
+
 - JWT-based authentication with secure session management
 - Role-based middleware for API route protection
 - Input validation using Zod schemas
@@ -1340,8 +1447,8 @@ components/
     └── MorphingShape.tsx        # Morphing SVG shapes for decorative elements
 ```
 
-
 #### Accessibility Features
+
 - **Focus Management**: Clear focus rings with 4px offset, logical tab order
 - **Screen Reader Support**: Proper ARIA labels, semantic HTML structure
 - **Color Contrast**: Minimum 4.5:1 ratio for all text, 3:1 for UI components
@@ -1351,18 +1458,21 @@ components/
 ### Performance Optimization Strategy
 
 #### Loading Performance
+
 - **Code Splitting**: Route-based splitting with dynamic imports
 - **Lazy Loading**: Images and non-critical components loaded on scroll
 - **Bundle Optimization**: Tree shaking, compression, and minification
 - **Caching Strategy**: Service worker for offline functionality, browser caching for assets
 
 #### Runtime Performance
+
 - **Virtual Scrolling**: For large data tables and lists
 - **Debounced Search**: 300ms delay for search inputs
 - **Optimistic Updates**: Immediate UI feedback before server confirmation
 - **Memory Management**: Proper cleanup of event listeners and subscriptions
 
 #### Database Performance
+
 - **Query Optimization**: Indexed queries, efficient joins
 - **Connection Pooling**: Reuse database connections
 - **Caching Layer**: Redis for frequently accessed data
