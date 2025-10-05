@@ -116,6 +116,7 @@ export default function StudentListPage() {
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
+      hideHeader={true}
     >
       <PageContainer>
         {/* Search and Filters */}

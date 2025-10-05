@@ -17,6 +17,7 @@ interface Teacher {
   experience: string;
   status: "Active" | "On Leave" | "Inactive";
   classes: number;
+  subjects?: string[];
 }
 
 interface TeacherCardProps {
@@ -49,14 +50,12 @@ export function TeacherCard({ teacher, index, onEdit, onDelete }: TeacherCardPro
                 </p>
               </div>
               <Badge
-                variant={
-                  teacher.status === "Active"
-                    ? "default"
-                    : "secondary"
-                }
+                variant="outline"
                 className={
                   teacher.status === "Active"
-                    ? "bg-orange-100 text-orange-800 border-orange-200"
+                    ? "bg-green-100 text-green-800 border-green-200"
+                    : teacher.status === "Inactive"
+                    ? "bg-red-100 text-red-800 border-red-200"
                     : "bg-yellow-100 text-yellow-800 border-yellow-200"
                 }
               >
@@ -94,6 +93,23 @@ export function TeacherCard({ teacher, index, onEdit, onDelete }: TeacherCardPro
                 </p>
               </div>
             </div>
+
+            {teacher.subjects && teacher.subjects.length > 0 && (
+              <div className="mt-3">
+                <span className="text-slate-500 text-sm">Subjects:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {teacher.subjects.map((subject, idx) => (
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      className="text-xs bg-orange-50 text-orange-700 border-orange-200"
+                    >
+                      {subject}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
               <div className="flex items-center gap-1">
