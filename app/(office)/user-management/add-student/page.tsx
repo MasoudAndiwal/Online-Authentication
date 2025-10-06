@@ -27,7 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Select } from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom-select";
 import { cn } from "@/lib/utils";
 
 // Sample user data
@@ -265,9 +265,75 @@ export default function AddStudentPage() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Prepare data for API
+      const studentData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fatherName: formData.fatherName,
+        grandFatherName: formData.grandFatherName,
+        studentId: formData.studentId,
+        dateOfBirth: formData.dateOfBirth?.toISOString(),
+        phone: formData.phone,
+        fatherPhone: formData.fatherPhone,
+        address: formData.address,
+        programs: formData.programs,
+        semester: formData.semester,
+        enrollmentYear: formData.enrollmentYear,
+        classSection: formData.classSection,
+        timeSlot: formData.timeSlot,
+        username: formData.username,
+        studentIdRef: formData.studentIdRef,
+        password: formData.password,
+      };
 
+      // Call API
+      const response = await fetch("/api/students", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(studentData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle different error status codes
+        if (response.status === 400) {
+          // Validation error
+          setFormErrors({
+            ...formErrors,
+            password:
+              data.error || "Validation failed. Please check your inputs.",
+          });
+        } else if (response.status === 409) {
+          // Conflict error (duplicate studentId or username)
+          const errorMessage =
+            data.error || "Student ID or username already exists";
+          if (errorMessage.toLowerCase().includes("studentid")) {
+            setFormErrors({ ...formErrors, studentId: errorMessage });
+            setCurrentStep(1);
+          } else if (errorMessage.toLowerCase().includes("username")) {
+            setFormErrors({ ...formErrors, username: errorMessage });
+            setCurrentStep(4);
+          } else {
+            setFormErrors({ ...formErrors, studentId: errorMessage });
+            setCurrentStep(1);
+          }
+        } else {
+          // Server error
+          setFormErrors({
+            ...formErrors,
+            password:
+              data.error ||
+              "An error occurred while creating the student. Please try again.",
+          });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success
       setIsSubmitting(false);
       setShowSuccess(true);
 
@@ -275,6 +341,10 @@ export default function AddStudentPage() {
     } catch (error) {
       setIsSubmitting(false);
       console.error("Error creating student:", error);
+      setFormErrors({
+        ...formErrors,
+        password: "Network error. Please check your connection and try again.",
+      });
     }
   };
 
@@ -1257,15 +1327,13 @@ export default function AddStudentPage() {
                             >
                               Program/Major *
                             </Label>
-                            <Select
+                            <CustomSelect
                               id="program"
                               value={formData.programs[0] || ""}
-                              onChange={(e) =>
+                              onValueChange={(value) =>
                                 setFormData((prev) => ({
                                   ...prev,
-                                  programs: e.target.value
-                                    ? [e.target.value]
-                                    : [],
+                                  programs: value ? [value] : [],
                                 }))
                               }
                               placeholder="Select Program"
@@ -1280,7 +1348,7 @@ export default function AddStudentPage() {
                                   {program}
                                 </option>
                               ))}
-                            </Select>
+                            </CustomSelect>
                             {formErrors.programs && (
                               <p className="text-sm text-red-500 flex items-center gap-1">
                                 <AlertCircle className="h-4 w-4" />
@@ -1395,14 +1463,11 @@ export default function AddStudentPage() {
                               >
                                 Class Name *
                               </Label>
-                              <Select
+                              <CustomSelect
                                 id="classSection"
                                 value={formData.classSection}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "classSection",
-                                    e.target.value
-                                  )
+                                onValueChange={(value) =>
+                                  handleInputChange("classSection", value)
                                 }
                                 placeholder="Select Class Section"
                                 className={cn(
@@ -1416,7 +1481,7 @@ export default function AddStudentPage() {
                                     {section}
                                   </option>
                                 ))}
-                              </Select>
+                              </CustomSelect>
                               {formErrors.classSection && (
                                 <p className="text-sm text-red-500 flex items-center gap-1">
                                   <AlertCircle className="h-4 w-4" />
@@ -1435,11 +1500,11 @@ export default function AddStudentPage() {
                               >
                                 Time Slot *
                               </Label>
-                              <Select
+                              <CustomSelect
                                 id="timeSlot"
                                 value={formData.timeSlot}
-                                onChange={(e) =>
-                                  handleInputChange("timeSlot", e.target.value)
+                                onValueChange={(value) =>
+                                  handleInputChange("timeSlot", value)
                                 }
                                 placeholder="Select Time Slot"
                                 className={cn(
@@ -1453,7 +1518,7 @@ export default function AddStudentPage() {
                                     {slot.label}
                                   </option>
                                 ))}
-                              </Select>
+                              </CustomSelect>
                               {formErrors.timeSlot && (
                                 <p className="text-sm text-red-500 flex items-center gap-1">
                                   <AlertCircle className="h-4 w-4" />

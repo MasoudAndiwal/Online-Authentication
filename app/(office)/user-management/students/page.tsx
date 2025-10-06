@@ -6,12 +6,7 @@ import {
   ModernDashboardLayout,
   PageContainer,
 } from "@/components/layout/modern-dashboard-layout";
-import {
-  ModernCard,
-  ModernCardHeader,
-  ModernCardTitle,
-  ModernCardContent,
-} from "@/components/ui/modern-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +20,12 @@ import {
   Eye,
   GraduationCap,
   Calendar,
+  Users,
+  UserCheck,
+  HeartPulse,
+  Filter,
 } from "lucide-react";
-
+import { CustomSelect } from "@/components/ui/custom-select";
 
 // Sample user data
 const sampleUser = {
@@ -45,6 +44,7 @@ const sampleStudents = [
     phone: "+1 (555) 111-2222",
     semester: "Fall 2024",
     status: "Active",
+    classSection: "class A",
   },
   {
     id: "CS-2024-002",
@@ -53,6 +53,7 @@ const sampleStudents = [
     phone: "+1 (555) 222-3333",
     semester: "Fall 2024",
     status: "Active",
+    classSection: "class B",
   },
   {
     id: "MATH-2024-001",
@@ -61,6 +62,7 @@ const sampleStudents = [
     phone: "+1 (555) 333-4444",
     semester: "Fall 2024",
     status: "Active",
+    classSection: "class A",
   },
   {
     id: "PHY-2024-001",
@@ -68,7 +70,8 @@ const sampleStudents = [
     program: "Physics",
     phone: "+1 (555) 444-5555",
     semester: "Fall 2024",
-    status: "On Leave",
+    status: "Sick",
+    classSection: "class C",
   },
   {
     id: "CS-2024-003",
@@ -77,6 +80,16 @@ const sampleStudents = [
     phone: "+1 (555) 555-6666",
     semester: "Fall 2024",
     status: "Active",
+    classSection: "class A",
+  },
+  {
+    id: "ENG-2024-001",
+    name: "Fatima Ali",
+    program: "Engineering",
+    phone: "+1 (555) 666-7777",
+    semester: "Fall 2024",
+    status: "Sick",
+    classSection: "class D",
   },
 ];
 
@@ -84,6 +97,9 @@ export default function StudentListPage() {
   const router = useRouter();
   const [currentPath] = React.useState("/user-management/students");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [programFilter, setProgramFilter] = React.useState("");
+  const [classFilter, setClassFilter] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("");
 
   const handleNavigation = (href: string) => {
     try {
@@ -102,12 +118,35 @@ export default function StudentListPage() {
     setSearchQuery(query);
   };
 
-  const filteredStudents = sampleStudents.filter(
-    (student) =>
+  // Get unique programs and classes for filter options
+  const programs = [
+    ...new Set(sampleStudents.map((student) => student.program)),
+  ];
+  const classes = [
+    ...new Set(sampleStudents.map((student) => student.classSection)),
+  ];
+
+  const filteredStudents = sampleStudents.filter((student) => {
+    const matchesSearch =
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.program.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      student.id.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesProgram = !programFilter || student.program === programFilter;
+    const matchesClass = !classFilter || student.classSection === classFilter;
+    const matchesStatus = !statusFilter || student.status === statusFilter;
+
+    return matchesSearch && matchesProgram && matchesClass && matchesStatus;
+  });
+
+  // Calculate statistics
+  const totalStudents = sampleStudents.length;
+  const activeStudents = sampleStudents.filter(
+    (student) => student.status === "Active"
+  ).length;
+  const sickStudents = sampleStudents.filter(
+    (student) => student.status === "Sick"
+  ).length;
 
   return (
     <ModernDashboardLayout
@@ -119,68 +158,212 @@ export default function StudentListPage() {
       hideHeader={true}
     >
       <PageContainer>
-        {/* Search and Filters */}
-        <div>
-          <ModernCard className="mb-6">
-            <ModernCardContent className="p-6">
-              <div className="flex flex-col gap-4">
+        {/* Statistics Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-green-50 to-green-100/50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600 mb-1">
+                    Total Students
+                  </p>
+                  <p className="text-3xl font-bold text-green-700">
+                    {totalStudents}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-600 rounded-xl">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-blue-50 to-blue-100/50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600 mb-1">
+                    Active Students
+                  </p>
+                  <p className="text-3xl font-bold text-blue-700">
+                    {activeStudents}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-600 rounded-xl">
+                  <UserCheck className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-red-50 to-red-100/50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-600 mb-1">
+                    Sick Students
+                  </p>
+                  <p className="text-3xl font-bold text-red-700">
+                    {sickStudents}
+                  </p>
+                </div>
+                <div className="p-3 bg-red-600 rounded-xl">
+                  <HeartPulse className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-6">
+          <Card className="rounded-2xl shadow-lg border-slate-200/60">
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Search Bar */}
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="Search students by name, program, or ID..."
+                    placeholder="Search by name, program, or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 h-12 transition-all duration-300"
+                    className="pl-10 h-12 border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 rounded-xl"
                   />
                 </div>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="px-3 py-2">
-                      Total: {sampleStudents.length}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="px-3 py-2 bg-green-50 text-green-700 border-green-200"
+
+                {/* Filter Options */}
+                <div className="flex flex-col sm:flex-row gap-3 lg:w-auto">
+                  <div className="relative w-full sm:w-48">
+                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+                    <CustomSelect
+                      value={programFilter}
+                      onValueChange={(value) => setProgramFilter(value)}
+                      placeholder="Program"
+                      className="pl-10 h-12 border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 rounded-xl"
                     >
-                      Active:{" "}
-                      {
-                        sampleStudents.filter((s) => s.status === "Active")
-                          .length
-                      }
-                    </Badge>
+                      <option value="">All Programs</option>
+                      {programs.map((program) => (
+                        <option key={program} value={program}>
+                          {program}
+                        </option>
+                      ))}
+                    </CustomSelect>
                   </div>
-                  <Button
-                    onClick={() =>
-                      handleNavigation("/user-management/add-student")
-                    }
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto focus:ring-2 focus:ring-green-100"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Student
-                  </Button>
+
+                  <div className="relative w-full sm:w-48">
+                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+                    <CustomSelect
+                      value={classFilter}
+                      onValueChange={(value) => setClassFilter(value)}
+                      placeholder="Class"
+                      className="pl-10 h-12 border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 rounded-xl"
+                    >
+                      <option value="">All Classes</option>
+                      {classes.map((cls) => (
+                        <option key={cls} value={cls}>
+                          {cls}
+                        </option>
+                      ))}
+                    </CustomSelect>
+                  </div>
+
+                  <div className="relative w-full sm:w-48">
+                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+                    <CustomSelect
+                      value={statusFilter}
+                      onValueChange={(value) => setStatusFilter(value)}
+                      placeholder="Status"
+                      className="pl-10 h-12 border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 rounded-xl"
+                    >
+                      <option value="">All Status</option>
+                      <option value="Active">Active</option>
+                      <option value="Sick">Sick</option>
+                    </CustomSelect>
+                  </div>
                 </div>
               </div>
-            </ModernCardContent>
-          </ModernCard>
+
+              {/* Active Filters Display */}
+              {(programFilter ||
+                classFilter ||
+                statusFilter ||
+                searchQuery) && (
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-200">
+                  <span className="text-sm text-slate-600 font-medium">
+                    Active filters:
+                  </span>
+                  {searchQuery && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Search: "{searchQuery}"
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="ml-2 hover:text-green-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {programFilter && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Program: {programFilter}
+                      <button
+                        onClick={() => setProgramFilter("")}
+                        className="ml-2 hover:text-blue-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {classFilter && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Class: {classFilter}
+                      <button
+                        onClick={() => setClassFilter("")}
+                        className="ml-2 hover:text-purple-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {statusFilter && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      Status: {statusFilter}
+                      <button
+                        onClick={() => setStatusFilter("")}
+                        className="ml-2 hover:text-orange-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Add Student Button */}
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <Button
+                  onClick={() =>
+                    handleNavigation("/user-management/add-student")
+                  }
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto focus:ring-2 focus:ring-green-100"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Student
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Students List */}
         <div>
-          <ModernCard>
-            <ModernCardHeader>
-              <ModernCardTitle
-                icon={<User className="h-6 w-6 text-green-600" />}
-                className="text-2xl"
-              >
-                Students ({filteredStudents.length})
-              </ModernCardTitle>
-            </ModernCardHeader>
-            <ModernCardContent>
+          <Card className="rounded-2xl shadow-lg border-slate-200/60">
+            <CardContent className="p-6">
               <div className="space-y-4">
-                {filteredStudents.map((student, index) => (
+                {filteredStudents.map((student) => (
                   <div
                     key={student.id}
-                    className="p-6 border border-slate-200 rounded-2xl hover:shadow-lg transition-all duration-300 hover:border-green-300 hover:shadow-green-100/50 bg-white"
+                    className="p-6 border border-slate-200 rounded-xl hover:shadow-md transition-shadow duration-200 bg-white"
                   >
                     {/* Mobile Layout */}
                     <div className="block md:hidden">
@@ -199,15 +382,11 @@ export default function StudentListPage() {
                           </div>
                         </div>
                         <Badge
-                          variant={
-                            student.status === "Active"
-                              ? "default"
-                              : "secondary"
-                          }
+                          variant="outline"
                           className={
                             student.status === "Active"
                               ? "bg-green-100 text-green-800 border-green-200"
-                              : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                              : "bg-red-100 text-red-800 border-red-200"
                           }
                         >
                           {student.status}
@@ -242,7 +421,9 @@ export default function StudentListPage() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            handleNavigation(`/user-management/edit-student/${student.id}`)
+                            handleNavigation(
+                              `/user-management/edit-student/${student.id}`
+                            )
                           }
                           className="flex-1 border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
                         >
@@ -276,15 +457,11 @@ export default function StudentListPage() {
                             </p>
                           </div>
                           <Badge
-                            variant={
-                              student.status === "Active"
-                                ? "default"
-                                : "secondary"
-                            }
+                            variant="outline"
                             className={
                               student.status === "Active"
                                 ? "bg-green-100 text-green-800 border-green-200"
-                                : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                : "bg-red-100 text-red-800 border-red-200"
                             }
                           >
                             {student.status}
@@ -302,7 +479,9 @@ export default function StudentListPage() {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              handleNavigation(`/user-management/edit-student/${student.id}`)
+                              handleNavigation(
+                                `/user-management/edit-student/${student.id}`
+                              )
                             }
                             className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4"
                           >
@@ -368,15 +547,11 @@ export default function StudentListPage() {
                               </p>
                             </div>
                             <Badge
-                              variant={
-                                student.status === "Active"
-                                  ? "default"
-                                  : "secondary"
-                              }
+                              variant="outline"
                               className={
                                 student.status === "Active"
                                   ? "bg-green-100 text-green-800 border-green-200"
-                                  : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                  : "bg-red-100 text-red-800 border-red-200"
                               }
                             >
                               {student.status}
@@ -429,7 +604,9 @@ export default function StudentListPage() {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              handleNavigation(`/user-management/edit-student/${student.id}`)
+                              handleNavigation(
+                                `/user-management/edit-student/${student.id}`
+                              )
                             }
                             className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
                           >
@@ -473,8 +650,8 @@ export default function StudentListPage() {
                   </div>
                 )}
               </div>
-            </ModernCardContent>
-          </ModernCard>
+            </CardContent>
+          </Card>
         </div>
       </PageContainer>
     </ModernDashboardLayout>

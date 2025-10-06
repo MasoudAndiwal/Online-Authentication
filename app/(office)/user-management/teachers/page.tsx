@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom-select";
 import { motion } from "framer-motion";
 import { TeacherCard } from "@/components/shared/teacher-card";
 
@@ -233,9 +233,9 @@ export default function TeacherListPage() {
                 <div className="flex flex-col sm:flex-row gap-3 lg:w-auto">
                   <div className="relative w-full sm:w-48">
                     <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
-                    <Select
+                    <CustomSelect
                       value={departmentFilter}
-                      onChange={(e) => setDepartmentFilter(e.target.value)}
+                      onValueChange={(value) => setDepartmentFilter(value)}
                       placeholder="Department"
                       className="pl-10 h-12 border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-xl"
                     >
@@ -245,14 +245,14 @@ export default function TeacherListPage() {
                           {dept}
                         </option>
                       ))}
-                    </Select>
+                    </CustomSelect>
                   </div>
 
                   <div className="relative w-full sm:w-48">
                     <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
-                    <Select
+                    <CustomSelect
                       value={subjectFilter}
-                      onChange={(e) => setSubjectFilter(e.target.value)}
+                      onValueChange={(value) => setSubjectFilter(value)}
                       placeholder="Subject"
                       className="pl-10 h-12 border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-xl"
                     >
@@ -262,21 +262,21 @@ export default function TeacherListPage() {
                           {subject}
                         </option>
                       ))}
-                    </Select>
+                    </CustomSelect>
                   </div>
 
                   <div className="relative w-full sm:w-48">
                     <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
-                    <Select
+                    <CustomSelect
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
+                      onValueChange={(value) => setStatusFilter(value)}
                       placeholder="Status"
                       className="pl-10 h-12 border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 rounded-xl"
                     >
                       <option value="">All Status</option>
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
-                    </Select>
+                    </CustomSelect>
                   </div>
                 </div>
               </div>

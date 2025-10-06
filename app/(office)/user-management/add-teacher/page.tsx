@@ -266,9 +266,71 @@ export default function AddTeacherPage() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Prepare data for API
+      const teacherData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fatherName: formData.fatherName,
+        grandFatherName: formData.grandFatherName,
+        teacherId: formData.teacherId,
+        dateOfBirth: formData.dateOfBirth?.toISOString(),
+        phone: formData.phone,
+        secondaryPhone: formData.secondaryPhone || undefined,
+        address: formData.address,
+        departments: formData.departments,
+        qualification: formData.qualification,
+        experience: formData.experience,
+        specialization: formData.specialization,
+        subjects: formData.subjects,
+        classes: formData.classes,
+        username: formData.username,
+        password: formData.password,
+      };
 
+      // Call API
+      const response = await fetch("/api/teachers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(teacherData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle different error status codes
+        if (response.status === 400) {
+          // Validation error
+          setFormErrors({ 
+            ...formErrors, 
+            password: data.error || "Validation failed. Please check your inputs." 
+          });
+        } else if (response.status === 409) {
+          // Conflict error (duplicate teacherId or username)
+          const errorMessage = data.error || "Teacher ID or username already exists";
+          if (errorMessage.toLowerCase().includes("teacherid")) {
+            setFormErrors({ ...formErrors, teacherId: errorMessage });
+            setCurrentStep(1);
+          } else if (errorMessage.toLowerCase().includes("username")) {
+            setFormErrors({ ...formErrors, username: errorMessage });
+            setCurrentStep(4);
+          } else {
+            setFormErrors({ ...formErrors, teacherId: errorMessage });
+            setCurrentStep(1);
+          }
+        } else {
+          // Server error
+          setFormErrors({ 
+            ...formErrors, 
+            password: data.error || "An error occurred while creating the teacher. Please try again." 
+          });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success
       setIsSubmitting(false);
       setShowSuccess(true);
 
@@ -276,6 +338,10 @@ export default function AddTeacherPage() {
     } catch (error) {
       setIsSubmitting(false);
       console.error("Error creating teacher:", error);
+      setFormErrors({ 
+        ...formErrors, 
+        password: "Network error. Please check your connection and try again." 
+      });
     }
   };
 

@@ -17,9 +17,9 @@ model Student {
   lastName        String
   fatherName      String
   grandFatherName String
-  studentId       Int        @unique
+  studentId       Int       @unique
   dateOfBirth     DateTime?
-  phone           String     @unique     
+  phone           String    @unique
   fatherPhone     String
   address         String
   programs        String
@@ -50,9 +50,9 @@ model Teacher {
   specialization  String
   subjects        String[]
   classes         String[]
+  employmentType  String
   username        String    @unique
   password        String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
-
