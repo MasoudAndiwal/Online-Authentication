@@ -29,6 +29,21 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { cn } from "@/lib/utils";
+import {
+  validateName,
+  validateId,
+  validateDate,
+  validatePhone,
+  validateAddress,
+  validateSemester,
+  validateEnrollmentYear,
+  validateUsername,
+  validatePassword,
+  sanitizeLettersOnly,
+  sanitizeNumbersOnly,
+  sanitizeAlphanumeric,
+  sanitizePhone,
+} from "@/lib/utils/validation";
 
 // Sample user data
 const sampleUser = {
@@ -156,22 +171,31 @@ export default function AddStudentPage() {
   const validateStep1 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.firstName.trim()) {
-      errors.firstName = "First name is required";
+    // Validate first name
+    const firstNameError = validateName(formData.firstName, 'firstName');
+    if (firstNameError) errors.firstName = firstNameError;
+
+    // Validate last name
+    const lastNameError = validateName(formData.lastName, 'lastName');
+    if (lastNameError) errors.lastName = lastNameError;
+
+    // Validate father name
+    const fatherNameError = validateName(formData.fatherName, 'fatherName');
+    if (fatherNameError) errors.fatherName = fatherNameError;
+
+    // Validate grandfather name
+    const grandFatherNameError = validateName(formData.grandFatherName, 'grandFatherName');
+    if (grandFatherNameError) errors.grandFatherName = grandFatherNameError;
+
+    // Validate student ID
+    const studentIdError = validateId(formData.studentId, 'studentId');
+    if (studentIdError) errors.studentId = studentIdError;
+
+    // Validate date of birth (optional)
+    if (formData.dateOfBirth) {
+      const dateError = validateDate(formData.dateOfBirth.toISOString().split('T')[0].replace(/-/g, '/'));
+      if (dateError) errors.dateOfBirth = dateError;
     }
-    if (!formData.lastName.trim()) {
-      errors.lastName = "Last name is required";
-    }
-    if (!formData.fatherName.trim()) {
-      errors.fatherName = "Father name is required";
-    }
-    if (!formData.grandFatherName.trim()) {
-      errors.grandFatherName = "Grand father name is required";
-    }
-    if (!formData.studentId.trim()) {
-      errors.studentId = "Student ID is required";
-    }
-    // Date of birth is now optional
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -180,14 +204,18 @@ export default function AddStudentPage() {
   const validateStep2 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.phone.trim()) {
-      errors.phone = "Phone number is required";
-    }
-    if (!formData.fatherPhone.trim()) {
-      errors.fatherPhone = "Father phone number is required";
-    }
-    if (!formData.address.trim()) {
-      errors.address = "Address is required";
+    // Validate phone number
+    const phoneError = validatePhone(formData.phone, 'phone');
+    if (phoneError) errors.phone = phoneError;
+
+    // Validate father phone number
+    const fatherPhoneError = validatePhone(formData.fatherPhone, 'fatherPhone');
+    if (fatherPhoneError) errors.fatherPhone = fatherPhoneError;
+
+    // Validate address (optional)
+    if (formData.address) {
+      const addressError = validateAddress(formData.address);
+      if (addressError) errors.address = addressError;
     }
 
     setFormErrors(errors);
@@ -200,12 +228,15 @@ export default function AddStudentPage() {
     if (formData.programs.length === 0) {
       errors.programs = "At least one program/class is required";
     }
-    if (!formData.semester.trim()) {
-      errors.semester = "Current semester is required";
-    }
-    if (!formData.enrollmentYear.trim()) {
-      errors.enrollmentYear = "Enrollment year is required";
-    }
+
+    // Validate semester
+    const semesterError = validateSemester(formData.semester);
+    if (semesterError) errors.semester = semesterError;
+
+    // Validate enrollment year
+    const enrollmentYearError = validateEnrollmentYear(formData.enrollmentYear);
+    if (enrollmentYearError) errors.enrollmentYear = enrollmentYearError;
+
     if (!formData.classSection.trim()) {
       errors.classSection = "Class Name is required";
     }
@@ -220,17 +251,17 @@ export default function AddStudentPage() {
   const validateStep4 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.username.trim()) {
-      errors.username = "Username is required";
-    }
+    // Validate username
+    const usernameError = validateUsername(formData.username);
+    if (usernameError) errors.username = usernameError;
+
     if (!formData.studentIdRef.trim()) {
       errors.studentIdRef = "Student ID reference is required";
     }
-    if (!formData.password.trim()) {
-      errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
+
+    // Validate password
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -599,7 +630,7 @@ export default function AddStudentPage() {
 
   // Program options (Classes)
   const programOptions = [
-    "computer science",
+    "Computer science",
     "Electrical engineering ",
     "Building engineering",
     "Class 10",

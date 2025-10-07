@@ -27,7 +27,6 @@ const sampleTeachers = [
   {
     id: "TCH-2024-001",
     name: "Dr. Mohammad Ali",
-    email: "mohammad.ali@university.edu",
     department: "Computer Science",
     phone: "+1 (555) 123-4567",
     qualification: "PhD in Computer Science",
@@ -39,7 +38,6 @@ const sampleTeachers = [
   {
     id: "TCH-2024-002",
     name: "Prof. Fatima Khan",
-    email: "fatima.khan@university.edu",
     department: "Mathematics",
     phone: "+1 (555) 234-5678",
     qualification: "PhD in Mathematics",
@@ -51,7 +49,6 @@ const sampleTeachers = [
   {
     id: "TCH-2024-003",
     name: "Dr. Ahmed Hassan",
-    email: "ahmed.hassan@university.edu",
     department: "Physics",
     phone: "+1 (555) 345-6789",
     qualification: "PhD in Physics",
@@ -63,7 +60,6 @@ const sampleTeachers = [
   {
     id: "TCH-2024-004",
     name: "Dr. Aisha Rahman",
-    email: "aisha.rahman@university.edu",
     department: "Chemistry",
     phone: "+1 (555) 456-7890",
     qualification: "PhD in Chemistry",
@@ -75,7 +71,6 @@ const sampleTeachers = [
   {
     id: "TCH-2024-005",
     name: "Dr. Omar Malik",
-    email: "omar.malik@university.edu",
     department: "Engineering",
     phone: "+1 (555) 567-8901",
     qualification: "PhD in Engineering",
@@ -87,7 +82,6 @@ const sampleTeachers = [
   {
     id: "TCH-2024-006",
     name: "Prof. Zara Ahmed",
-    email: "zara.ahmed@university.edu",
     department: "Computer Science",
     phone: "+1 (555) 678-9012",
     qualification: "PhD in Computer Science",
@@ -280,7 +274,17 @@ export default function TeacherListPage() {
                   </div>
                 </div>
               </div>
-
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                <Button
+                  onClick={() =>
+                    handleNavigation("/user-management/add-teacher")
+                  }
+                  className="bg-orange-500 hover:text-white hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto focus:ring-2 focus:ring-green-100"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Teacher
+                </Button>
+              </div>
               {/* Active Filters Display */}
               {(departmentFilter || subjectFilter || statusFilter || searchQuery) && (
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-200">

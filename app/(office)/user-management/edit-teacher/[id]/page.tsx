@@ -24,6 +24,21 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
+import {
+  validateName,
+  validateId,
+  validateDate,
+  validatePhone,
+  validateAddress,
+  validateExperience,
+  validateSpecialization,
+  validateUsername,
+  validatePassword,
+  sanitizeLettersOnly,
+  sanitizeNumbersOnly,
+  sanitizeAlphanumeric,
+  sanitizePhone,
+} from "@/lib/utils/validation";
 
 // Sample user data
 const sampleUser = {
@@ -180,20 +195,30 @@ export default function EditTeacherPage() {
   const validateStep1 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.firstName.trim()) {
-      errors.firstName = "First name is required";
-    }
-    if (!formData.lastName.trim()) {
-      errors.lastName = "Last name is required";
-    }
-    if (!formData.fatherName.trim()) {
-      errors.fatherName = "Father name is required";
-    }
-    if (!formData.grandFatherName.trim()) {
-      errors.grandFatherName = "Grand father name is required";
-    }
-    if (!formData.teacherId.trim()) {
-      errors.teacherId = "Teacher ID is required";
+    // Validate first name
+    const firstNameError = validateName(formData.firstName, 'firstName');
+    if (firstNameError) errors.firstName = firstNameError;
+
+    // Validate last name
+    const lastNameError = validateName(formData.lastName, 'lastName');
+    if (lastNameError) errors.lastName = lastNameError;
+
+    // Validate father name
+    const fatherNameError = validateName(formData.fatherName, 'fatherName');
+    if (fatherNameError) errors.fatherName = fatherNameError;
+
+    // Validate grandfather name
+    const grandFatherNameError = validateName(formData.grandFatherName, 'grandFatherName');
+    if (grandFatherNameError) errors.grandFatherName = grandFatherNameError;
+
+    // Validate teacher ID
+    const teacherIdError = validateId(formData.teacherId, 'teacherId');
+    if (teacherIdError) errors.teacherId = teacherIdError;
+
+    // Validate date of birth (optional)
+    if (formData.dateOfBirth) {
+      const dateError = validateDate(formData.dateOfBirth.toISOString().split('T')[0].replace(/-/g, '/'));
+      if (dateError) errors.dateOfBirth = dateError;
     }
 
     setFormErrors(errors);
@@ -203,11 +228,20 @@ export default function EditTeacherPage() {
   const validateStep2 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.phone.trim()) {
-      errors.phone = "Phone number is required";
+    // Validate phone number
+    const phoneError = validatePhone(formData.phone, 'phone');
+    if (phoneError) errors.phone = phoneError;
+
+    // Validate secondary phone (optional)
+    if (formData.secondaryPhone) {
+      const secondaryPhoneError = validatePhone(formData.secondaryPhone, 'secondaryPhone');
+      if (secondaryPhoneError) errors.secondaryPhone = secondaryPhoneError;
     }
-    if (!formData.address.trim()) {
-      errors.address = "Address is required";
+
+    // Validate address (optional)
+    if (formData.address) {
+      const addressError = validateAddress(formData.address);
+      if (addressError) errors.address = addressError;
     }
 
     setFormErrors(errors);
@@ -220,12 +254,15 @@ export default function EditTeacherPage() {
     if (!formData.qualification.trim()) {
       errors.qualification = "Qualification is required";
     }
-    if (!formData.experience.trim()) {
-      errors.experience = "Experience is required";
-    }
-    if (!formData.specialization.trim()) {
-      errors.specialization = "Specialization is required";
-    }
+
+    // Validate experience
+    const experienceError = validateExperience(formData.experience);
+    if (experienceError) errors.experience = experienceError;
+
+    // Validate specialization
+    const specializationError = validateSpecialization(formData.specialization);
+    if (specializationError) errors.specialization = specializationError;
+
     if (formData.subjects.length === 0) {
       errors.subjects = "At least one subject is required";
     }
