@@ -26,6 +26,22 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CustomSelect } from "@/components/ui/custom-select";
+import {
+  validateName,
+  validateId,
+  validateDate,
+  validatePhone,
+  validateAddress,
+  validateExperience,
+  validateSpecialization,
+  validateUsername,
+  validatePassword,
+  sanitizeLettersOnly,
+  sanitizeNumbersOnly,
+  sanitizeAlphanumeric,
+  sanitizePhone,
+} from "@/lib/utils/validation";
 
 // Sample user data
 const sampleUser = {
@@ -52,6 +68,7 @@ interface FormData {
   specialization: string;
   subjects: string[];
   classes: string[];
+  employmentType: string;
   username: string;
   password: string;
 }
@@ -73,6 +90,7 @@ interface FormErrors {
   specialization?: string;
   subjects?: string;
   classes?: string;
+  employmentType?: string;
   username?: string;
   password?: string;
 }
@@ -96,6 +114,7 @@ export default function AddTeacherPage() {
     specialization: "",
     subjects: [],
     classes: [],
+    employmentType: "",
     username: "",
     password: "",
   });
@@ -163,22 +182,31 @@ export default function AddTeacherPage() {
   const validateStep1 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.firstName.trim()) {
-      errors.firstName = "First name is required";
+    // Validate first name
+    const firstNameError = validateName(formData.firstName, 'firstName');
+    if (firstNameError) errors.firstName = firstNameError;
+
+    // Validate last name
+    const lastNameError = validateName(formData.lastName, 'lastName');
+    if (lastNameError) errors.lastName = lastNameError;
+
+    // Validate father name
+    const fatherNameError = validateName(formData.fatherName, 'fatherName');
+    if (fatherNameError) errors.fatherName = fatherNameError;
+
+    // Validate grandfather name
+    const grandFatherNameError = validateName(formData.grandFatherName, 'grandFatherName');
+    if (grandFatherNameError) errors.grandFatherName = grandFatherNameError;
+
+    // Validate teacher ID
+    const teacherIdError = validateId(formData.teacherId, 'teacherId');
+    if (teacherIdError) errors.teacherId = teacherIdError;
+
+    // Validate date of birth (optional)
+    if (formData.dateOfBirth) {
+      const dateError = validateDate(formData.dateOfBirth.toISOString().split('T')[0].replace(/-/g, '/'));
+      if (dateError) errors.dateOfBirth = dateError;
     }
-    if (!formData.lastName.trim()) {
-      errors.lastName = "Last name is required";
-    }
-    if (!formData.fatherName.trim()) {
-      errors.fatherName = "Father name is required";
-    }
-    if (!formData.grandFatherName.trim()) {
-      errors.grandFatherName = "Grand father name is required";
-    }
-    if (!formData.teacherId.trim()) {
-      errors.teacherId = "Teacher ID is required";
-    }
-    // Date of birth is now optional
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -187,11 +215,20 @@ export default function AddTeacherPage() {
   const validateStep2 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.phone.trim()) {
-      errors.phone = "Phone number is required";
+    // Validate phone number
+    const phoneError = validatePhone(formData.phone, 'phone');
+    if (phoneError) errors.phone = phoneError;
+
+    // Validate secondary phone (optional)
+    if (formData.secondaryPhone) {
+      const secondaryPhoneError = validatePhone(formData.secondaryPhone, 'secondaryPhone');
+      if (secondaryPhoneError) errors.secondaryPhone = secondaryPhoneError;
     }
-    if (!formData.address.trim()) {
-      errors.address = "Address is required";
+
+    // Validate address (optional)
+    if (formData.address) {
+      const addressError = validateAddress(formData.address);
+      if (addressError) errors.address = addressError;
     }
 
     setFormErrors(errors);
@@ -204,17 +241,23 @@ export default function AddTeacherPage() {
     if (!formData.qualification.trim()) {
       errors.qualification = "Qualification is required";
     }
-    if (!formData.experience.trim()) {
-      errors.experience = "Experience is required";
-    }
-    if (!formData.specialization.trim()) {
-      errors.specialization = "Specialization is required";
-    }
+
+    // Validate experience
+    const experienceError = validateExperience(formData.experience);
+    if (experienceError) errors.experience = experienceError;
+
+    // Validate specialization
+    const specializationError = validateSpecialization(formData.specialization);
+    if (specializationError) errors.specialization = specializationError;
+
     if (formData.subjects.length === 0) {
       errors.subjects = "At least one subject is required";
     }
     if (formData.classes.length === 0) {
       errors.classes = "At least one class is required";
+    }
+    if (!formData.employmentType.trim()) {
+      errors.employmentType = "Employment type is required";
     }
 
     setFormErrors(errors);
@@ -224,14 +267,13 @@ export default function AddTeacherPage() {
   const validateStep4 = (): boolean => {
     const errors: FormErrors = {};
 
-    if (!formData.username.trim()) {
-      errors.username = "Username is required";
-    }
-    if (!formData.password.trim()) {
-      errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
+    // Validate username
+    const usernameError = validateUsername(formData.username);
+    if (usernameError) errors.username = usernameError;
+
+    // Validate password
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -283,6 +325,7 @@ export default function AddTeacherPage() {
         specialization: formData.specialization,
         subjects: formData.subjects,
         classes: formData.classes,
+        employmentType: formData.employmentType,
         username: formData.username,
         password: formData.password,
       };
@@ -1386,6 +1429,44 @@ export default function AddTeacherPage() {
                                 error={formErrors.classes}
                                 required={true}
                               />
+                            </motion.div>
+                          </div>
+
+                          {/* Employment Type Section */}
+                          <div className="mt-6">
+                            <motion.div
+                              whileHover={{ scale: 1.02 }}
+                              className="space-y-2"
+                            >
+                              <Label
+                                htmlFor="employmentType"
+                                className="text-sm font-semibold text-slate-700"
+                              >
+                                Employment Type *
+                              </Label>
+                              <CustomSelect
+                                id="employmentType"
+                                value={formData.employmentType}
+                                onValueChange={(value) =>
+                                  handleInputChange("employmentType", value)
+                                }
+                                placeholder="Select employment type"
+                                className={cn(
+                                  formErrors.employmentType
+                                    ? "border-red-500"
+                                    : "border-slate-200"
+                                )}
+                              >
+                                <option value="">Select employment type</option>
+                                <option value="Full Time (Permanent)">Full Time (Permanent)</option>
+                                <option value="Part Time (Credit-Based)">Part Time (Credit-Based)</option>
+                              </CustomSelect>
+                              {formErrors.employmentType && (
+                                <p className="text-sm text-red-500 flex items-center gap-1">
+                                  <AlertCircle className="h-4 w-4" />
+                                  {formErrors.employmentType}
+                                </p>
+                              )}
                             </motion.div>
                           </div>
                         </div>

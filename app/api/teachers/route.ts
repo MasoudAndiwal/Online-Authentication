@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
         specialization: validatedData.specialization,
         subjects: validatedData.subjects,
         classes: validatedData.classes,
+        employmentType: validatedData.employmentType,
         username: validatedData.username,
         password: hashedPassword,
       },

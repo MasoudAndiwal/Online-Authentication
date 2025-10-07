@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 // Sample user data
 const sampleUser = {
@@ -50,6 +51,7 @@ const sampleTeacherData = {
   specialization: "Software Engineering",
   subjects: ["Programming", "Data Structures"],
   classes: ["Section A", "Morning Batch"],
+  employmentType: "Full Time (Permanent)",
 };
 
 // Form state interface
@@ -69,6 +71,7 @@ interface FormData {
   specialization: string;
   subjects: string[];
   classes: string[];
+  employmentType: string;
 }
 
 // Form validation errors
@@ -88,6 +91,7 @@ interface FormErrors {
   specialization?: string;
   subjects?: string;
   classes?: string;
+  employmentType?: string;
 }
 
 export default function EditTeacherPage() {
@@ -119,6 +123,7 @@ export default function EditTeacherPage() {
     specialization: sampleTeacherData.specialization,
     subjects: sampleTeacherData.subjects,
     classes: sampleTeacherData.classes,
+    employmentType: sampleTeacherData.employmentType,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -226,6 +231,9 @@ export default function EditTeacherPage() {
     }
     if (formData.classes.length === 0) {
       errors.classes = "At least one class is required";
+    }
+    if (!formData.employmentType.trim()) {
+      errors.employmentType = "Employment type is required";
     }
 
     setFormErrors(errors);
@@ -1169,6 +1177,45 @@ export default function EditTeacherPage() {
                                 error={formErrors.classes}
                                 required={true}
                               />
+                            </div>
+                          </div>
+
+                          {/* Employment Type Section */}
+                          <div className="mt-6">
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="employmentType"
+                                className="text-sm font-semibold text-slate-700"
+                              >
+                                Employment Type *
+                              </Label>
+                              <CustomSelect
+                                id="employmentType"
+                                value={formData.employmentType}
+                                onValueChange={(value) =>
+                                  handleInputChange("employmentType", value)
+                                }
+                                placeholder="Select employment type"
+                                className={cn(
+                                  formErrors.employmentType
+                                    ? "border-red-500"
+                                    : "border-slate-200"
+                                )}
+                              >
+                                <option value="">Select employment type</option>
+                                <option value="Full Time (Permanent)">
+                                  Full Time (Permanent)
+                                </option>
+                                <option value="Part Time (Credit-Based)">
+                                  Part Time (Credit-Based)
+                                </option>
+                              </CustomSelect>
+                              {formErrors.employmentType && (
+                                <p className="text-sm text-red-500 flex items-center gap-1">
+                                  <AlertCircle className="h-4 w-4" />
+                                  {formErrors.employmentType}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
