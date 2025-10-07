@@ -151,11 +151,13 @@ export default function StudentListPage() {
   return (
     <ModernDashboardLayout
       user={sampleUser}
+      title="Student List"
+      subtitle="Manage all student accounts"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
-      hideHeader={true}
+      hideSearch={true}
     >
       <PageContainer>
         {/* Statistics Summary */}

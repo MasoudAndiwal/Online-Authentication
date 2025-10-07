@@ -149,7 +149,7 @@ export default function TeacherListPage() {
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
-      hideHeader={true}
+      hideSearch={true}
     >
       <PageContainer>
         {/* Statistics Summary */}

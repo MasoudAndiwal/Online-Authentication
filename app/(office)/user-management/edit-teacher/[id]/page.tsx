@@ -515,11 +515,13 @@ export default function EditTeacherPage() {
     return (
       <ModernDashboardLayout
         user={sampleUser}
+        title="Edit Teacher"
+        subtitle="Update teacher account information"
         currentPath={currentPath}
         onNavigate={handleNavigation}
         onLogout={handleLogout}
         onSearch={handleSearch}
-        hideHeader={true}
+        hideSearch={true}
       >
         <PageContainer>
           <div className="min-h-[60vh] flex items-center justify-center">
@@ -563,11 +565,13 @@ export default function EditTeacherPage() {
   return (
     <ModernDashboardLayout
       user={sampleUser}
+      title="Edit Teacher"
+      subtitle="Update teacher account information"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
-      hideHeader={true}
+      hideSearch={true}
     >
       <style jsx global>{`
         /* Hide scrollbar for webkit browsers */
@@ -606,29 +610,73 @@ export default function EditTeacherPage() {
           </div>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex justify-center items-center space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-4">
+        {/* Fully Responsive Progress Steps */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          {/* Mobile Layout (< sm) */}
+          <div className="sm:hidden">
+            <div className="flex items-center justify-center mb-4">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 ${
+                  currentStep >= steps[currentStep - 1]?.number
+                    ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg"
+                    : "bg-slate-200 text-slate-500"
+                }`}
+              >
+{React.createElement(steps[currentStep - 1]?.icon, { className: "h-8 w-8 text-white" })}
+              </motion.div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-slate-900 mb-1">
+                Step {currentStep} of {steps.length}
+              </div>
+              <div className="text-xs text-slate-600 mb-3">
+                {steps[currentStep - 1]?.title}
+              </div>
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <motion.div
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(currentStep / steps.length) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet Layout (sm to lg) */}
+          <div className="hidden sm:flex lg:hidden justify-center items-center space-x-3 overflow-x-auto pb-4">
             {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center">
-                <div
+              <div key={step.number} className="flex items-center flex-shrink-0">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
                   className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
                     currentStep >= step.number
                       ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
-                  <step.icon className="h-6 w-6" />
+                  <step.icon className="h-5 w-5" />
                   {currentStep > step.number && (
-                    <div className="absolute -top-1 -right-1 bg-orange-500 rounded-full p-1">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
+                    >
                       <CheckCircle className="h-3 w-3 text-white" />
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
 
-                <div className="ml-2 sm:ml-3 text-left">
+                <div className="ml-2 text-left">
                   <div
-                    className={`text-xs sm:text-sm font-semibold ${
+                    className={`text-xs font-semibold ${
                       currentStep >= step.number
                         ? "text-slate-900"
                         : "text-slate-500"
@@ -648,8 +696,8 @@ export default function EditTeacherPage() {
                 </div>
 
                 {index < steps.length - 1 && (
-                  <div
-                    className={`mx-2 sm:mx-4 lg:mx-6 h-0.5 w-8 sm:w-12 lg:w-16 transition-all duration-300 ${
+                  <motion.div
+                    className={`mx-3 h-0.5 w-8 transition-all duration-300 ${
                       currentStep > step.number
                         ? "bg-orange-400"
                         : "bg-slate-200"
@@ -659,7 +707,65 @@ export default function EditTeacherPage() {
               </div>
             ))}
           </div>
-        </div>
+
+          {/* Desktop Layout (lg+) */}
+          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto pb-4">
+            {steps.map((step, index) => (
+              <div key={step.number} className="flex items-center">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${
+                    currentStep >= step.number
+                      ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg"
+                      : "bg-slate-200 text-slate-500"
+                  }`}
+                >
+                  <step.icon className="h-6 w-6" />
+                  {currentStep > step.number && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
+                    >
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                <div className="ml-4 text-left">
+                  <div
+                    className={`text-sm font-semibold ${
+                      currentStep >= step.number
+                        ? "text-slate-900"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    Step {step.number}
+                  </div>
+                  <div
+                    className={`text-sm ${
+                      currentStep >= step.number
+                        ? "text-slate-600"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {step.title}
+                  </div>
+                </div>
+
+                {index < steps.length - 1 && (
+                  <motion.div
+                    className={`mx-6 h-0.5 w-16 transition-all duration-300 ${
+                      currentStep > step.number
+                        ? "bg-orange-400"
+                        : "bg-slate-200"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Form Card */}
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -879,12 +985,12 @@ export default function EditTeacherPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between pt-6">
-                        <div></div>
+                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
+                        <div className="order-2 sm:order-1"></div>
                         <Button
                           type="button"
                           onClick={nextStep}
-                          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="order-1 sm:order-2 w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                           Next Step
                           <ArrowRight className="h-4 w-4 ml-2" />
@@ -1007,19 +1113,19 @@ export default function EditTeacherPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between pt-6">
+                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={prevStep}
-                          className="px-8 py-3 rounded-lg font-semibold"
+                          className="order-2 sm:order-1 w-full sm:w-auto px-8 py-3 rounded-lg font-semibold"
                         >
                           Previous
                         </Button>
                         <Button
                           type="button"
                           onClick={nextStep}
-                          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="order-1 sm:order-2 w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                           Next Step
                           <ArrowRight className="h-4 w-4 ml-2" />
@@ -1092,6 +1198,7 @@ export default function EditTeacherPage() {
                               Years of Experience *
                             </Label>
                             <Input
+                            min="0"
                               id="experience"
                               value={formData.experience}
                               onChange={(e) =>
@@ -1234,6 +1341,7 @@ export default function EditTeacherPage() {
                                 }
                                 placeholder="Select employment type"
                                 className={cn(
+                                  "focus:border-orange-500 focus:ring-2 focus:ring-orange-100",
                                   formErrors.employmentType
                                     ? "border-red-500"
                                     : "border-slate-200"
@@ -1258,19 +1366,19 @@ export default function EditTeacherPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between pt-6">
+                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={prevStep}
-                          className="px-8 py-3 rounded-lg font-semibold"
+                          className="order-2 sm:order-1 w-full sm:w-auto px-8 py-3 rounded-lg font-semibold"
                         >
                           Previous
                         </Button>
                         <Button
                           type="submit"
                           disabled={isSubmitting}
-                          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                          className="order-1 sm:order-2 w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                         >
                           {isSubmitting ? (
                             <>

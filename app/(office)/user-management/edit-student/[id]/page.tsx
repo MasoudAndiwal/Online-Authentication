@@ -37,12 +37,7 @@ import {
   sanitizeAlphanumeric,
   sanitizePhone,
 } from "@/lib/utils/validation";
-import { Select } from "@radix-ui/react-select";
-import { Select } from "@radix-ui/react-select";
-import { Select } from "@radix-ui/react-select";
-import { Select } from "@radix-ui/react-select";
-import { Select } from "@radix-ui/react-select";
-import { Select } from "@radix-ui/react-select";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 // Sample user data
 const sampleUser = {
@@ -64,10 +59,10 @@ const sampleStudentData = {
   phone: "+1 (555) 111-2222",
   fatherPhone: "+1 (555) 111-3333",
   address: "123 Main Street, City, State",
-  programs: ["Computer Science"],
+  programs: [], // Empty to show placeholder
   semester: "Fall 2024",
   enrollmentYear: "2024",
-  classSection: "Section A",
+  classSection: "", // Empty to show placeholder
   timeSlot: "morning",
 };
 
@@ -322,9 +317,9 @@ export default function EditStudentPage() {
 
   // Program options (Classes)
   const programOptions = [
-    "computer science",
-    "Electrical engineering ",
-    "Building engineering",
+    "Computer Science",
+    "Electrical Engineering",
+    "Building Engineering",
     "Class 10",
     "Class 11",
     "Class 12",
@@ -332,15 +327,15 @@ export default function EditStudentPage() {
 
   // Class section options
   const classSectionOptions = [
-    "class B",
-    "class C",
-    "class D",
-    "class E",
-    "class F",
-    "class G",
-    "class H",
-    "class I",
-    "class A",
+    "Section A",
+    "Section B", 
+    "Section C",
+    "Section D",
+    "Section E",
+    "Section F",
+    "Section G",
+    "Section H",
+    "Section I",
   ];
 
   // Time slot options with detailed schedule
@@ -361,11 +356,13 @@ export default function EditStudentPage() {
     return (
       <ModernDashboardLayout
         user={sampleUser}
+        title="Edit Student"
+        subtitle="Update student account information"
         currentPath={currentPath}
         onNavigate={handleNavigation}
         onLogout={handleLogout}
         onSearch={handleSearch}
-        hideHeader={true}
+        hideSearch={true}
       >
         <PageContainer>
           <div className="min-h-[60vh] flex items-center justify-center">
@@ -409,11 +406,13 @@ export default function EditStudentPage() {
   return (
     <ModernDashboardLayout
       user={sampleUser}
+      title="Edit Student"
+      subtitle="Update student account information"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
-      hideHeader={true}
+      hideSearch={true}
     >
       <PageContainer>
         {/* Back Button */}
@@ -440,29 +439,78 @@ export default function EditStudentPage() {
           </div>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex justify-center items-center space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-4">
+        {/* Fully Responsive Progress Steps */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          {/* Mobile Layout (< sm) */}
+          <div className="sm:hidden">
+            <div className="flex items-center justify-center mb-4">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 ${
+                  currentStep >= steps[currentStep - 1]?.number
+                    ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
+                    : "bg-slate-200 text-slate-500"
+                }`}
+              >
+                {React.createElement(steps[currentStep - 1]?.icon, {
+                  className: "h-8 w-8 text-white",
+                })}
+              </motion.div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-semibold text-slate-900 mb-1">
+                Step {currentStep} of {steps.length}
+              </div>
+              <div className="text-xs text-slate-600 mb-3">
+                {steps[currentStep - 1]?.title}
+              </div>
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <motion.div
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(currentStep / steps.length) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet Layout (sm to lg) */}
+          <div className="hidden sm:flex lg:hidden justify-center items-center space-x-3 overflow-x-auto pb-4">
             {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center">
-                <div
+              <div
+                key={step.number}
+                className="flex items-center flex-shrink-0"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
                   className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
                     currentStep >= step.number
                       ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
-                  <step.icon className="h-6 w-6" />
+                  <step.icon className="h-5 w-5" />
                   {currentStep > step.number && (
-                    <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
+                    >
                       <CheckCircle className="h-3 w-3 text-white" />
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
 
-                <div className="ml-2 sm:ml-3 text-left">
+                <div className="ml-2 text-left">
                   <div
-                    className={`text-xs sm:text-sm font-semibold ${
+                    className={`text-xs font-semibold ${
                       currentStep >= step.number
                         ? "text-slate-900"
                         : "text-slate-500"
@@ -482,8 +530,8 @@ export default function EditStudentPage() {
                 </div>
 
                 {index < steps.length - 1 && (
-                  <div
-                    className={`mx-2 sm:mx-4 lg:mx-6 h-0.5 w-8 sm:w-12 lg:w-16 transition-all duration-300 ${
+                  <motion.div
+                    className={`mx-3 h-0.5 w-8 transition-all duration-300 ${
                       currentStep > step.number
                         ? "bg-green-400"
                         : "bg-slate-200"
@@ -493,7 +541,65 @@ export default function EditStudentPage() {
               </div>
             ))}
           </div>
-        </div>
+
+          {/* Desktop Layout (lg+) */}
+          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto pb-4">
+            {steps.map((step, index) => (
+              <div key={step.number} className="flex items-center">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 ${
+                    currentStep >= step.number
+                      ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
+                      : "bg-slate-200 text-slate-500"
+                  }`}
+                >
+                  <step.icon className="h-6 w-6" />
+                  {currentStep > step.number && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
+                    >
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                <div className="ml-4 text-left">
+                  <div
+                    className={`text-sm font-semibold ${
+                      currentStep >= step.number
+                        ? "text-slate-900"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    Step {step.number}
+                  </div>
+                  <div
+                    className={`text-sm ${
+                      currentStep >= step.number
+                        ? "text-slate-600"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {step.title}
+                  </div>
+                </div>
+
+                {index < steps.length - 1 && (
+                  <motion.div
+                    className={`mx-6 h-0.5 w-16 transition-all duration-300 ${
+                      currentStep > step.number
+                        ? "bg-green-400"
+                        : "bg-slate-200"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Form Card */}
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -713,12 +819,12 @@ export default function EditStudentPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between pt-6">
-                        <div></div>
+                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
+                        <div className="order-2 sm:order-1"></div>
                         <Button
                           type="button"
                           onClick={nextStep}
-                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="order-1 sm:order-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                           Next Step
                           <ArrowRight className="h-4 w-4 ml-2" />
@@ -838,19 +944,19 @@ export default function EditStudentPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between pt-6">
+                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={prevStep}
-                          className="px-8 py-3 rounded-lg font-semibold"
+                          className="order-2 sm:order-1 w-full sm:w-auto px-8 py-3 rounded-lg font-semibold"
                         >
                           Previous
                         </Button>
                         <Button
                           type="button"
                           onClick={nextStep}
-                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="order-1 sm:order-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                           Next Step
                           <ArrowRight className="h-4 w-4 ml-2" />
@@ -896,30 +1002,30 @@ export default function EditStudentPage() {
                             >
                               Program/Major *
                             </Label>
-                            <Select
+                            <CustomSelect
                               id="program"
                               value={formData.programs[0] || ""}
-                              onChange={(e) =>
+                              onValueChange={(value) =>
                                 setFormData((prev) => ({
                                   ...prev,
-                                  programs: e.target.value
-                                    ? [e.target.value]
-                                    : [],
+                                  programs: value ? [value] : [],
                                 }))
                               }
                               placeholder="Select Program"
                               className={cn(
+                                "focus:border-green-500 focus:ring-2 focus:ring-green-100",
                                 formErrors.programs
                                   ? "border-red-500"
                                   : "border-slate-200"
                               )}
                             >
+                              <option value="">Select Program</option>
                               {programOptions.map((program) => (
                                 <option key={program} value={program}>
                                   {program}
                                 </option>
                               ))}
-                            </Select>
+                            </CustomSelect>
                             {formErrors.programs && (
                               <p className="text-sm text-red-500 flex items-center gap-1">
                                 <AlertCircle className="h-4 w-4" />
@@ -1034,28 +1140,27 @@ export default function EditStudentPage() {
                               >
                                 Class Name *
                               </Label>
-                              <Select
+                              <CustomSelect
                                 id="classSection"
                                 value={formData.classSection}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "classSection",
-                                    e.target.value
-                                  )
+                                onValueChange={(value) =>
+                                  handleInputChange("classSection", value)
                                 }
                                 placeholder="Select Class Section"
                                 className={cn(
+                                  "focus:border-green-500 focus:ring-2 focus:ring-green-100",
                                   formErrors.classSection
                                     ? "border-red-500"
                                     : "border-slate-200"
                                 )}
                               >
+                                <option value="">Select Class Section</option>
                                 {classSectionOptions.map((section) => (
                                   <option key={section} value={section}>
                                     {section}
                                   </option>
                                 ))}
-                              </Select>
+                              </CustomSelect>
                               {formErrors.classSection && (
                                 <p className="text-sm text-red-500 flex items-center gap-1">
                                   <AlertCircle className="h-4 w-4" />
@@ -1074,25 +1179,27 @@ export default function EditStudentPage() {
                               >
                                 Time Slot *
                               </Label>
-                              <Select
+                              <CustomSelect
                                 id="timeSlot"
                                 value={formData.timeSlot}
-                                onChange={(e) =>
-                                  handleInputChange("timeSlot", e.target.value)
+                                onValueChange={(value) =>
+                                  handleInputChange("timeSlot", value)
                                 }
                                 placeholder="Select Time Slot"
                                 className={cn(
+                                  "focus:border-green-500 focus:ring-2 focus:ring-green-100",
                                   formErrors.timeSlot
                                     ? "border-red-500"
                                     : "border-slate-200"
                                 )}
                               >
+                                <option value="">Select Time Slot</option>
                                 {timeSlotOptions.map((slot) => (
                                   <option key={slot.value} value={slot.value}>
                                     {slot.label}
                                   </option>
                                 ))}
-                              </Select>
+                              </CustomSelect>
                               {formErrors.timeSlot && (
                                 <p className="text-sm text-red-500 flex items-center gap-1">
                                   <AlertCircle className="h-4 w-4" />
@@ -1110,19 +1217,19 @@ export default function EditStudentPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between pt-6">
+                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={prevStep}
-                          className="px-8 py-3 rounded-lg font-semibold"
+                          className="order-2 sm:order-1 w-full sm:w-auto px-8 py-3 rounded-lg font-semibold"
                         >
                           Previous
                         </Button>
                         <Button
                           type="submit"
                           disabled={isSubmitting}
-                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                          className="order-1 sm:order-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                         >
                           {isSubmitting ? (
                             <>

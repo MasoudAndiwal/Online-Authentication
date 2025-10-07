@@ -14,7 +14,9 @@ import {
   X,
   Menu,
   ChevronRight,
-  Search
+  Search,
+  User,
+  LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -274,9 +276,9 @@ export function MobileNavigation({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="p-3 rounded-xl hover:bg-slate-100 transition-colors shadow-sm"
                 >
-                  <X className="h-5 w-5 text-slate-600" />
+                  <X className="h-6 w-6 text-slate-600" />
                 </motion.button>
               </div>
 
@@ -315,61 +317,94 @@ export function MobileNavigation({
                 ))}
               </nav>
 
-              {/* User Profile */}
+              {/* Modern User Profile */}
               {user && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
-                  className="p-4 border-t border-slate-200/50 bg-slate-50/50"
+                  className="p-4 border-t border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-blue-50/30 backdrop-blur-sm"
                 >
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className={cn(
-                      'h-12 w-12 rounded-full flex items-center justify-center text-white font-semibold shadow-lg',
-                      roleColors[user.role].bg
-                    )}>
-                      {user.avatar ? (
-                        <img 
-                          src={user.avatar} 
-                          alt={user.name}
-                          className="h-12 w-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        user.name.split(' ').map(n => n[0]).join('').toUpperCase()
-                      )}
-                    </div>
+                    <motion.div
+                      whileHover={{ scale: 1.05, rotateY: 5 }}
+                      className="relative"
+                    >
+                      <div className={cn(
+                        'h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-xl relative overflow-hidden',
+                        roleColors[user.role].bg
+                      )}>
+                        {/* Shine Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full hover:translate-x-[-200%] transition-transform duration-1000" />
+                        
+                        {user.avatar ? (
+                          <img 
+                            src={user.avatar} 
+                            alt={user.name}
+                            className="h-12 w-12 rounded-2xl object-cover relative z-10"
+                          />
+                        ) : (
+                          <span className="relative z-10 text-base">
+                            {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                    
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">
+                      <p className="text-sm font-bold text-slate-900 truncate">
                         {user.name}
+                      </p>
+                      <p className="text-xs text-slate-600 truncate mb-1">
+                        {user.email}
                       </p>
                       <Badge 
                         variant="outline" 
-                        className={cn('text-xs', roleColors[user.role].badge)}
+                        className={cn(
+                          'text-xs font-semibold border-0 px-2 py-1 rounded-lg',
+                          roleColors[user.role].badge
+                        )}
                       >
                         {user.role.toLowerCase()}
                       </Badge>
                     </div>
                   </div>
                   
-                  {onLogout && (
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
+                  {/* Quick Actions */}
+                  <div className="space-y-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
+                      className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/60 text-slate-700 hover:text-slate-900"
                     >
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <User className="h-4 w-4" />
+                      <span>My Profile</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/60 text-slate-700 hover:text-slate-900"
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Settings</span>
+                    </motion.button>
+                    
+                    {onLogout && (
+                      <motion.button
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           onLogout()
                           onClose()
                         }}
-                        className="w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
+                        className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-red-50/80 text-red-600 hover:text-red-700"
                       >
-                        <X className="h-4 w-4 mr-2" />
-                        Logout
-                      </Button>
-                    </motion.div>
-                  )}
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </motion.button>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </div>

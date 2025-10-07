@@ -36,6 +36,7 @@ interface ModernDashboardLayoutProps {
   onSearch?: (query: string) => void
   className?: string
   hideHeader?: boolean
+  hideSearch?: boolean
 }
 
 export function ModernDashboardLayout({
@@ -49,7 +50,8 @@ export function ModernDashboardLayout({
   onLogout,
   onSearch,
   className,
-  hideHeader = false
+  hideHeader = false,
+  hideSearch = false
 }: ModernDashboardLayoutProps) {
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false)
 
@@ -79,6 +81,7 @@ export function ModernDashboardLayout({
       onMenuClick={handleMenuClick}
       onLogout={onLogout}
       onSearch={onSearch}
+      hideSearch={hideSearch}
     />
   ) : null
 

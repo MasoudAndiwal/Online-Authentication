@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Mail, Phone, Edit, Trash2 } from "lucide-react";
+import { GraduationCap, Phone, Edit, Trash2 } from "lucide-react";
 
 interface Teacher {
   id: string;
@@ -112,10 +112,6 @@ export function TeacherCard({ teacher, index, onEdit, onDelete }: TeacherCardPro
             )}
 
             <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
-              <div className="flex items-center gap-1">
-                <Mail className="h-4 w-4" />
-                <span>{teacher.email}</span>
-              </div>
               <div className="flex items-center gap-1">
                 <Phone className="h-4 w-4" />
                 <span>{teacher.phone}</span>
