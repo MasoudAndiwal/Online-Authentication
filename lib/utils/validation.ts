@@ -17,10 +17,10 @@ export const ValidationPatterns = {
     date: /^\d{4}\/\d{2}\/\d{2}$/,
     // Year format YYYY
     year: /^\d{4}$/,
-    // Username (letters only)
-    username: /^[A-Za-z]*$/,
-    // Password (6-12 chars, uppercase, lowercase, number)
-    password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,12}$/,
+	// Username (letters only; supports English and Persian letters)
+	username: /^[A-Za-z\u0600-\u06FF]*$/,
+	// Password (6-20 chars, uppercase, lowercase, number)
+	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,20}$/,
 };
 
 export const ValidationMessages = {
@@ -112,9 +112,9 @@ export const ValidationMessages = {
     // Password
     password: {
         required: 'Password is required',
-        pattern: 'Password must be 6-12 characters with uppercase, lowercase, and number',
+		pattern: 'Password must be 6-20 characters with uppercase, lowercase, and number',
         minLength: 'Password must be at least 6 characters',
-        maxLength: 'Password must be 12 characters or less',
+		maxLength: 'Password must be 20 characters or less',
     },
 };
 
@@ -279,7 +279,7 @@ export const validatePassword = (value: string): string | undefined => {
         return ValidationMessages.password.minLength;
     }
 
-    if (value.length > 12) {
+	if (value.length > 20) {
         return ValidationMessages.password.maxLength;
     }
 

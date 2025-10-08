@@ -343,30 +343,40 @@ export default function AddTeacherPage() {
 
       if (!response.ok) {
         // Handle different error status codes
-        if (response.status === 400) {
-          // Validation error
-          setFormErrors({ 
-            ...formErrors, 
-            password: data.error || "Validation failed. Please check your inputs." 
-          });
-        } else if (response.status === 409) {
-          // Conflict error (duplicate teacherId or username)
-          const errorMessage = data.error || "Teacher ID or username already exists";
-          if (errorMessage.toLowerCase().includes("teacherid")) {
+        if (response.status === 409) {
+          // Unique constraint violation; map to specific field if provided
+          const conflictField = (data?.details?.field || '').toString().toLowerCase();
+          const errorMessage = data?.error || 'Duplicate value';
+          if (conflictField.includes('teacher_id') || conflictField.includes('teacherid')) {
             setFormErrors({ ...formErrors, teacherId: errorMessage });
             setCurrentStep(1);
-          } else if (errorMessage.toLowerCase().includes("username")) {
+          } else if (conflictField.includes('username')) {
             setFormErrors({ ...formErrors, username: errorMessage });
+            setCurrentStep(4);
+          } else if (conflictField.includes('phone')) {
+            setFormErrors({ ...formErrors, phone: errorMessage });
+            setCurrentStep(2);
+          } else if (conflictField.includes('password')) {
+            setFormErrors({ ...formErrors, password: errorMessage });
             setCurrentStep(4);
           } else {
             setFormErrors({ ...formErrors, teacherId: errorMessage });
             setCurrentStep(1);
           }
+        } else if (response.status === 400) {
+          // Zod validation errors: surface first field error if available
+          const firstIssue = Array.isArray(data?.details) ? data.details[0] : data?.details;
+          if (firstIssue?.field) {
+            const field = firstIssue.field.toString();
+            setFormErrors({ ...formErrors, [field as keyof FormErrors]: firstIssue.message || data?.error || 'Validation failed' });
+          } else {
+            setFormErrors({ ...formErrors, password: data?.error || 'Validation failed. Please check your inputs.' });
+          }
         } else {
           // Server error
           setFormErrors({ 
             ...formErrors, 
-            password: data.error || "An error occurred while creating the teacher. Please try again." 
+            password: data?.error || 'An error occurred while creating the teacher. Please try again.' 
           });
         }
         setIsSubmitting(false);
@@ -831,7 +841,7 @@ export default function AddTeacherPage() {
           </div>
 
           {/* Tablet Layout (sm to lg) */}
-          <div className="hidden sm:flex lg:hidden justify-center items-center space-x-3 overflow-x-auto pb-4">
+          <div className="hidden sm:flex lg:hidden justify-center items-center space-x-3 overflow-x-auto scrollbar-hide pb-4">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center flex-shrink-0">
                 <motion.div
@@ -897,7 +907,7 @@ export default function AddTeacherPage() {
           </div>
 
           {/* Desktop Layout (lg+) */}
-          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto pb-4">
+          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto scrollbar-hide pb-4">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
                 <motion.div
@@ -1018,7 +1028,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("firstName", e.target.value)
                             }
-                            placeholder="Enter first name (English or Persian: نام)"
+                            placeholder="Enter first name"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.firstName
@@ -1050,7 +1060,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("lastName", e.target.value)
                             }
-                            placeholder="Enter last name (English or Persian: تخلص)"
+                            placeholder="Enter last name."
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.lastName
@@ -1082,7 +1092,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("fatherName", e.target.value)
                             }
-                            placeholder="Enter father name (English or Persian: د پلار نوم)"
+                            placeholder="Enter father name "
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.fatherName
@@ -1117,7 +1127,7 @@ export default function AddTeacherPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="Enter grand father name (English or Persian: د نیکه نوم)"
+                            placeholder="Enter grand father name"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.grandFatherName
@@ -1149,7 +1159,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("teacherId", e.target.value)
                             }
-                            placeholder="e.g., TCH-2024-001"
+                            placeholder="exe... 03982"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.teacherId
@@ -1254,7 +1264,7 @@ export default function AddTeacherPage() {
                               onChange={(e) =>
                                 handleInputChange("phone", e.target.value)
                               }
-                              placeholder="+1 (555) 123-4567"
+                              placeholder="000-000-0000"
                               className={cn(
                                 "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                                 formErrors.phone
@@ -1289,7 +1299,7 @@ export default function AddTeacherPage() {
                                   e.target.value
                                 )
                               }
-                              placeholder="+1 (555) 987-6543"
+                              placeholder="000-000-0000"
                               className="h-12 border border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg"
                             />
                           </motion.div>
@@ -1311,7 +1321,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("address", e.target.value)
                             }
-                            placeholder="Enter full address (Safe symbols: -, _, ., ,, #, /)"
+                            placeholder="Enter full address"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.address
@@ -1378,7 +1388,7 @@ export default function AddTeacherPage() {
                                   e.target.value
                                 )
                               }
-                              placeholder="e.g., PhD in Computer Science"
+                              placeholder="exe... PhD in Computer Science"
                               className={cn(
                                 "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                                 formErrors.qualification
@@ -1413,7 +1423,7 @@ export default function AddTeacherPage() {
                               onChange={(e) =>
                                 handleInputChange("experience", e.target.value)
                               }
-                              placeholder="e.g., 5"
+                              placeholder="exe... 5"
                               className={cn(
                                 "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                                 formErrors.experience
@@ -1449,7 +1459,7 @@ export default function AddTeacherPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="Enter specialization (Safe symbols: -, _, ., ,, &, (, ))"
+                            placeholder="Enter specialization"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.specialization

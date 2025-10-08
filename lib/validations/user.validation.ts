@@ -1,14 +1,17 @@
 import { z } from 'zod';
 
-// Common validation patterns
-const namePattern = /^[A-Za-z\s]+$/;
+// Common validation patterns (updated to support Persian and align with frontend)
+const namePattern = /^[A-Za-z\u0600-\u06FF\s]+$/;
 const numbersOnlyPattern = /^\d+$/;
 const phonePattern = /^\d{10}$/;
-const datePattern = /^\d{4}\/\d{2}\/\d{2}$/;
+const datePattern = /^\d{4}\/\d{2}\/\d{2}$/; // YYYY/MM/DD
+const isoDatePrefixPattern = /^\d{4}-\d{2}-\d{2}T/; // ISO 8601
 const yearPattern = /^\d{4}$/;
-const alphanumericPattern = /^[A-Za-z0-9\s]+$/;
-const usernamePattern = /^[A-Za-z]+$/;
-const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,12}$/;
+const alphanumericPattern = /^[A-Za-z0-9\u0600-\u06FF\s]+$/;
+const addressSafePattern = /^[A-Za-z0-9\u0600-\u06FF\s\-_.#,\/]*$/;
+const specializationSafePattern = /^[A-Za-z0-9\u0600-\u06FF\s\-_.&,()]*$/;
+const usernamePattern = /^[A-Za-z\u0600-\u06FF]+$/;
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,20}$/;
 
 // Student validation schema
 export const StudentCreateSchema = z.object({
@@ -38,7 +41,7 @@ export const StudentCreateSchema = z.object({
         .regex(numbersOnlyPattern, 'Student ID must contain only numbers')
         .trim(),
     dateOfBirth: z.string()
-        .regex(datePattern, 'Date must be in YYYY/MM/DD format')
+        .refine((s) => datePattern.test(s) || isoDatePrefixPattern.test(s), 'Date must be in YYYY/MM/DD or ISO format')
         .optional()
         .nullable()
         .or(z.literal('')),
@@ -49,7 +52,7 @@ export const StudentCreateSchema = z.object({
         .regex(phonePattern, 'Father phone number must be exactly 10 digits')
         .trim(),
     address: z.string()
-        .regex(alphanumericPattern, 'Address must contain only letters and numbers')
+        .regex(addressSafePattern, 'Address must contain only letters, numbers, with these symbols (-, _, ., ,, #, /)')
         .optional()
         .or(z.literal('')),
     programs: z.array(z.string()).min(1, 'At least one program is required'),
@@ -65,12 +68,12 @@ export const StudentCreateSchema = z.object({
     timeSlot: z.string().min(1, 'Time slot is required').trim(),
     username: z.string()
         .min(1, 'Username is required')
-        .regex(usernamePattern, 'Username must contain only letters')
+        .regex(usernamePattern, 'Username must contain only letters ')
         .trim(),
     studentIdRef: z.string().min(1, 'Student ID reference is required').trim(),
     password: z.string()
-        .min(6, 'Password must be 6-12 characters')
-        .max(12, 'Password must be 6-12 characters')
+        .min(6, 'Password must be 6-20 characters')
+        .max(20, 'Password must be 6-20 characters')
         .regex(passwordPattern, 'Password must include uppercase, lowercase, and number'),
 });
 
@@ -102,7 +105,7 @@ export const TeacherCreateSchema = z.object({
         .regex(numbersOnlyPattern, 'Teacher ID must contain only numbers')
         .trim(),
     dateOfBirth: z.string()
-        .regex(datePattern, 'Date must be in YYYY/MM/DD format')
+        .refine((s) => datePattern.test(s) || isoDatePrefixPattern.test(s), 'Date must be in YYYY/MM/DD or ISO format')
         .optional()
         .nullable()
         .or(z.literal('')),
@@ -114,7 +117,7 @@ export const TeacherCreateSchema = z.object({
         .optional()
         .or(z.literal('')),
     address: z.string()
-        .regex(alphanumericPattern, 'Address must contain only letters and numbers')
+        .regex(addressSafePattern, 'Address must contain only letters, numbers, and safe symbols (-, _, ., ,, #, /)')
         .optional()
         .or(z.literal('')),
     departments: z.array(z.string()).min(1, 'At least one department is required'),
@@ -124,7 +127,7 @@ export const TeacherCreateSchema = z.object({
         .min(1, 'Experience is required')
         .trim(),
     specialization: z.string()
-        .regex(alphanumericPattern, 'Specialization must contain only letters and numbers')
+        .regex(specializationSafePattern, 'Specialization must contain only letters, numbers, and safe symbols (-, _, ., ,, &, (, ))')
         .min(1, 'Specialization is required')
         .trim(),
     subjects: z.array(z.string()).min(1, 'At least one subject is required'),
@@ -135,8 +138,8 @@ export const TeacherCreateSchema = z.object({
         .regex(usernamePattern, 'Username must contain only letters')
         .trim(),
     password: z.string()
-        .min(6, 'Password must be 6-12 characters')
-        .max(12, 'Password must be 6-12 characters')
+        .min(6, 'Password must be 6-20 characters')
+        .max(20, 'Password must be 6-20 characters')
         .regex(passwordPattern, 'Password must include uppercase, lowercase, and number'),
 });
 

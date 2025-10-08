@@ -338,16 +338,23 @@ export default function AddStudentPage() {
               data.error || "Validation failed. Please check your inputs.",
           });
         } else if (response.status === 409) {
-          // Conflict error (duplicate studentId or username)
+          // Conflict error (duplicate studentId, username, or phone)
           const errorMessage =
-            data.error || "Student ID or username already exists";
-          if (errorMessage.toLowerCase().includes("studentid")) {
+            data.error || "A record with this value already exists";
+          
+          // Check which field has the duplicate
+          if (errorMessage.toLowerCase().includes("studentid") || 
+              errorMessage.toLowerCase().includes("student id")) {
             setFormErrors({ ...formErrors, studentId: errorMessage });
             setCurrentStep(1);
           } else if (errorMessage.toLowerCase().includes("username")) {
             setFormErrors({ ...formErrors, username: errorMessage });
             setCurrentStep(4);
+          } else if (errorMessage.toLowerCase().includes("phone")) {
+            setFormErrors({ ...formErrors, phone: errorMessage });
+            setCurrentStep(2);
           } else {
+            // Default fallback - show on general error
             setFormErrors({ ...formErrors, studentId: errorMessage });
             setCurrentStep(1);
           }
@@ -985,7 +992,7 @@ export default function AddStudentPage() {
           </div>
 
           {/* Desktop Layout (lg+) */}
-          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto pb-4">
+          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto pb-4 scrollbar-hide">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
                 <motion.div
@@ -1106,7 +1113,7 @@ export default function AddStudentPage() {
                             onChange={(e) =>
                               handleInputChange("firstName", e.target.value)
                             }
-                            placeholder="Enter first name (English or Persian: نام)"
+                            placeholder="Enter first name "
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.firstName
@@ -1138,7 +1145,7 @@ export default function AddStudentPage() {
                             onChange={(e) =>
                               handleInputChange("lastName", e.target.value)
                             }
-                            placeholder="Enter last name (English or Persian: تخلص)"
+                            placeholder="Enter last name "
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.lastName
@@ -1170,7 +1177,7 @@ export default function AddStudentPage() {
                             onChange={(e) =>
                               handleInputChange("fatherName", e.target.value)
                             }
-                            placeholder="Enter father name (English or Persian: د پلار نوم)"
+                            placeholder="Enter father name"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.fatherName
@@ -1205,7 +1212,7 @@ export default function AddStudentPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="Enter grand father name (English or Persian: د نیکه نوم)"
+                            placeholder="Enter grand father"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.grandFatherName
@@ -1237,7 +1244,7 @@ export default function AddStudentPage() {
                             onChange={(e) =>
                               handleInputChange("studentId", e.target.value)
                             }
-                            placeholder="e.g., CS-2024-001"
+                            placeholder="exe.. 32930"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.studentId
@@ -1342,7 +1349,7 @@ export default function AddStudentPage() {
                               onChange={(e) =>
                                 handleInputChange("phone", e.target.value)
                               }
-                              placeholder="+1 (555) 123-4567"
+                              placeholder="000-000-0000"
                               className={cn(
                                 "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                                 formErrors.phone
@@ -1374,7 +1381,7 @@ export default function AddStudentPage() {
                               onChange={(e) =>
                                 handleInputChange("fatherPhone", e.target.value)
                               }
-                              placeholder="+1 (555) 987-6543"
+                              placeholder="000-000-0000"
                               className={cn(
                                 "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                                 formErrors.fatherPhone
@@ -1407,7 +1414,7 @@ export default function AddStudentPage() {
                             onChange={(e) =>
                               handleInputChange("address", e.target.value)
                             }
-                            placeholder="Enter full address (Safe symbols: -, _, ., ,, #, /)"
+                            placeholder="Enter full address "
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.address
@@ -1523,6 +1530,9 @@ export default function AddStudentPage() {
                               Current Semester *
                             </Label>
                             <Input
+                              type='number'
+                              min='1'
+                              max='4'
                               id="semester"
                               value={formData.semester}
                               onChange={(e) =>

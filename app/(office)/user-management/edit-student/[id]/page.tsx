@@ -54,14 +54,14 @@ const sampleStudentData = {
   lastName: "Hassan",
   fatherName: "Mohammad Hassan",
   grandFatherName: "Ali Hassan",
-  studentId: "CS-2024-001",
+  studentId: "8394",
   dateOfBirth: undefined,
-  phone: "+1 (555) 111-2222",
-  fatherPhone: "+1 (555) 111-3333",
+  phone: "0704382703",
+  fatherPhone: "0704382776",
   address: "123 Main Street, City, State",
   programs: [], // Empty to show placeholder
-  semester: "Fall 2024",
-  enrollmentYear: "2024",
+  semester: "5",
+  enrollmentYear: "1400",
   classSection: "", // Empty to show placeholder
   timeSlot: "morning",
 };

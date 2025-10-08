@@ -1,17 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createTeacher } from '@/lib/database/operations';
+import { createTeacher, findTeacherByTeacherId, findTeacherByUsername, findTeacherByField } from '@/lib/database/operations';
 import { TeacherCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
-import { DatabaseError, handleApiError } from '@/lib/database/errors';
+import { DatabaseError, handleApiError, createUniqueConstraintError } from '@/lib/database/errors';
 import { ZodError } from 'zod';
 
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
+    console.log(body)
 
     // Validate request body using TeacherCreateSchema
     const validatedData = TeacherCreateSchema.parse(body);
+
+    // Pre-check unique fields to return clear 409s before DB insert
+    const [existingById, existingByUsername, existingByPhone] = await Promise.all([
+      findTeacherByTeacherId(validatedData.teacherId),
+      findTeacherByUsername(validatedData.username),
+      findTeacherByField('phone' as any, validatedData.phone),
+    ]);
+
+    if (existingById) {
+      const { response, status } = createUniqueConstraintError('Teacher', 'teacherId');
+      return NextResponse.json(response, { status });
+    }
+
+    if (existingByUsername) {
+      const { response, status } = createUniqueConstraintError('Teacher', 'username');
+      return NextResponse.json(response, { status });
+    }
+
+    if (existingByPhone) {
+      const { response, status } = createUniqueConstraintError('Teacher', 'phone');
+      return NextResponse.json(response, { status });
+    }
 
     // Hash password before storing
     const hashedPassword = await hashPassword(validatedData.password);
