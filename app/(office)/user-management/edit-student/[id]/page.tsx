@@ -643,7 +643,7 @@ export default function EditStudentPage() {
                             onChange={(e) =>
                               handleInputChange("firstName", e.target.value)
                             }
-                            placeholder="Enter first name"
+                            placeholder="Enter first name (English or Persian: نام)"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
                               formErrors.firstName

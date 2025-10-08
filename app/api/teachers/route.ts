@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { createTeacher } from '@/lib/database/operations';
 import { TeacherCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
-import { Prisma } from '@/app/generated/prisma';
+import { DatabaseError, handleApiError } from '@/lib/database/errors';
 import { ZodError } from 'zod';
 
 export async function POST(request: NextRequest) {
@@ -21,28 +21,25 @@ export async function POST(request: NextRequest) {
       ? new Date(validatedData.dateOfBirth) 
       : null;
 
-    // Create teacher record using Prisma client
-    // Note: qualification field is validated but not stored in current schema
-    const teacher = await prisma.teacher.create({
-      data: {
-        firstName: validatedData.firstName,
-        lastName: validatedData.lastName,
-        fatherName: validatedData.fatherName,
-        grandFatherName: validatedData.grandFatherName,
-        teacherId: validatedData.teacherId,
-        dateOfBirth,
-        phone: validatedData.phone,
-        secondaryPhone: validatedData.secondaryPhone || null,
-        address: validatedData.address,
-        departments: validatedData.departments,
-        experience: validatedData.experience,
-        specialization: validatedData.specialization,
-        subjects: validatedData.subjects,
-        classes: validatedData.classes,
-        employmentType: validatedData.employmentType,
-        username: validatedData.username,
-        password: hashedPassword,
-      },
+    // Create teacher record using Supabase operations
+    const teacher = await createTeacher({
+      firstName: validatedData.firstName,
+      lastName: validatedData.lastName,
+      fatherName: validatedData.fatherName,
+      grandFatherName: validatedData.grandFatherName,
+      teacherId: validatedData.teacherId,
+      dateOfBirth,
+      phone: validatedData.phone,
+      secondaryPhone: validatedData.secondaryPhone || null,
+      address: validatedData.address || '',
+      departments: validatedData.departments,
+      qualification: validatedData.qualification,
+      experience: validatedData.experience,
+      specialization: validatedData.specialization,
+      subjects: validatedData.subjects,
+      classes: validatedData.classes,
+      username: validatedData.username,
+      password: hashedPassword,
     });
 
     // Return created teacher data excluding password field
@@ -65,19 +62,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Handle Prisma unique constraint violations (409)
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        const target = error.meta?.target as string[] | undefined;
-        const field = target?.[0] || 'field';
-        return NextResponse.json(
-          {
-            error: `A teacher with this ${field} already exists`,
-            details: { field, message: 'Duplicate value' },
-          },
-          { status: 409 }
-        );
-      }
+    // Handle database errors using Supabase error mapping
+    if (error instanceof DatabaseError) {
+      const { response, status } = handleApiError(error);
+      return NextResponse.json(response, { status });
     }
 
     // Handle server errors (500)

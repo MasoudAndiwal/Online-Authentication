@@ -1,12 +1,16 @@
 // Frontend validation utilities
 
 export const ValidationPatterns = {
-    // Letters only (with spaces)
-    lettersOnly: /^[A-Za-z\s]*$/,
+    // Letters only (with spaces) - Updated to support Persian characters
+    lettersOnly: /^[A-Za-z\u0600-\u06FF\s]*$/,
     // Numbers only
     numbersOnly: /^\d*$/,
-    // Alphanumeric (letters, numbers, spaces)
-    alphanumeric: /^[A-Za-z0-9\s]*$/,
+    // Alphanumeric (letters, numbers, spaces) - Updated to support Persian characters
+    alphanumeric: /^[A-Za-z0-9\u0600-\u06FF\s]*$/,
+    // Address pattern - Safe symbols for addresses
+    address: /^[A-Za-z0-9\u0600-\u06FF\s\-_.,#/]*$/,
+    // Specialization pattern - Safe symbols for specialization
+    specialization: /^[A-Za-z0-9\u0600-\u06FF\s\-_.,&()]*$/,
     // Phone number (10 digits)
     phone: /^\d{10}$/,
     // Date format YYYY/MM/DD
@@ -20,28 +24,28 @@ export const ValidationPatterns = {
 };
 
 export const ValidationMessages = {
-    // Name fields
+    // Name fields - Updated to support Persian characters
     firstName: {
         required: 'First name is required',
-        pattern: 'First name must contain only letters',
+        pattern: 'First name must contain only letters (English or Persian)',
         minLength: 'First name must be at least 1 character',
         maxLength: 'First name must be 30 characters or less',
     },
     lastName: {
         required: 'Last name is required',
-        pattern: 'Last name must contain only letters',
+        pattern: 'Last name must contain only letters (English or Persian)',
         minLength: 'Last name must be at least 1 character',
         maxLength: 'Last name must be 30 characters or less',
     },
     fatherName: {
         required: 'Father name is required',
-        pattern: 'Father name must contain only letters',
+        pattern: 'Father name must contain only letters (English or Persian)',
         minLength: 'Father name must be at least 1 character',
         maxLength: 'Father name must be 30 characters or less',
     },
     grandFatherName: {
         required: 'Grandfather name is required',
-        pattern: 'Grandfather name must contain only letters',
+        pattern: 'Grandfather name must contain only letters (English or Persian)',
         minLength: 'Grandfather name must be at least 1 character',
         maxLength: 'Grandfather name must be 30 characters or less',
     },
@@ -74,19 +78,19 @@ export const ValidationMessages = {
     secondaryPhone: {
         pattern: 'Secondary phone number must be exactly 10 digits',
     },
-    // Address
+    // Address - Updated to support safe symbols
     address: {
-        pattern: 'Address must contain only letters and numbers',
+        pattern: 'Address must contain only letters, numbers, and safe symbols (-, _, ., ,, #, /)',
     },
     // Experience
     experience: {
         required: 'Years of experience is required',
         pattern: 'Experience must contain only numbers',
     },
-    // Specialization
+    // Specialization - Updated to support safe symbols
     specialization: {
         required: 'Specialization is required',
-        pattern: 'Specialization must contain only letters and numbers',
+        pattern: 'Specialization must contain only letters, numbers, and safe symbols (-, _, ., ,, &, (, ))',
     },
     // Semester
     semester: {
@@ -119,11 +123,11 @@ export const validateName = (value: string, fieldName: keyof typeof ValidationMe
     const messages = ValidationMessages[fieldName];
 
     if (!value || value.trim() === '') {
-        return messages.required;
+        return 'required' in messages ? messages.required : 'This field is required';
     }
 
     if (value.length > 30) {
-        return messages.maxLength;
+        return 'maxLength' in messages ? messages.maxLength : 'Must be 30 characters or less';
     }
 
     if (!ValidationPatterns.lettersOnly.test(value)) {
@@ -176,7 +180,7 @@ export const validatePhone = (value: string, fieldName: 'phone' | 'fatherPhone' 
     }
 
     if (!value || value.trim() === '') {
-        return messages.required;
+        return 'required' in messages ? messages.required : 'This field is required';
     }
 
     if (!ValidationPatterns.phone.test(value)) {
@@ -191,7 +195,7 @@ export const validateAddress = (value: string): string | undefined => {
         return undefined; // Optional field
     }
 
-    if (!ValidationPatterns.alphanumeric.test(value)) {
+    if (!ValidationPatterns.address.test(value)) {
         return ValidationMessages.address.pattern;
     }
 
@@ -215,7 +219,7 @@ export const validateSpecialization = (value: string): string | undefined => {
         return ValidationMessages.specialization.required;
     }
 
-    if (!ValidationPatterns.alphanumeric.test(value)) {
+    if (!ValidationPatterns.specialization.test(value)) {
         return ValidationMessages.specialization.pattern;
     }
 
@@ -286,9 +290,9 @@ export const validatePassword = (value: string): string | undefined => {
     return undefined;
 };
 
-// Input sanitization functions
+// Input sanitization functions - Updated to support Persian characters
 export const sanitizeLettersOnly = (value: string): string => {
-    return value.replace(/[^A-Za-z\s]/g, '');
+    return value.replace(/[^A-Za-z\u0600-\u06FF\s]/g, '');
 };
 
 export const sanitizeNumbersOnly = (value: string): string => {
@@ -296,7 +300,15 @@ export const sanitizeNumbersOnly = (value: string): string => {
 };
 
 export const sanitizeAlphanumeric = (value: string): string => {
-    return value.replace(/[^A-Za-z0-9\s]/g, '');
+    return value.replace(/[^A-Za-z0-9\u0600-\u06FF\s]/g, '');
+};
+
+export const sanitizeAddress = (value: string): string => {
+    return value.replace(/[^A-Za-z0-9\u0600-\u06FF\s\-_.,#/]/g, '');
+};
+
+export const sanitizeSpecialization = (value: string): string => {
+    return value.replace(/[^A-Za-z0-9\u0600-\u06FF\s\-_.,&()]/g, '');
 };
 
 export const sanitizePhone = (value: string): string => {

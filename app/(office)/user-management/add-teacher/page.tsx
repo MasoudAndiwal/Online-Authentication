@@ -1018,7 +1018,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("firstName", e.target.value)
                             }
-                            placeholder="Enter first name"
+                            placeholder="Enter first name (English or Persian: نام)"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.firstName
@@ -1050,7 +1050,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("lastName", e.target.value)
                             }
-                            placeholder="Enter last name"
+                            placeholder="Enter last name (English or Persian: تخلص)"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.lastName
@@ -1082,7 +1082,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("fatherName", e.target.value)
                             }
-                            placeholder="Enter father name"
+                            placeholder="Enter father name (English or Persian: د پلار نوم)"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.fatherName
@@ -1117,7 +1117,7 @@ export default function AddTeacherPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="Enter grand father name"
+                            placeholder="Enter grand father name (English or Persian: د نیکه نوم)"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.grandFatherName
@@ -1311,7 +1311,7 @@ export default function AddTeacherPage() {
                             onChange={(e) =>
                               handleInputChange("address", e.target.value)
                             }
-                            placeholder="Enter full address"
+                            placeholder="Enter full address (Safe symbols: -, _, ., ,, #, /)"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.address
@@ -1449,7 +1449,7 @@ export default function AddTeacherPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="e.g., Machine Learning, Data Structures"
+                            placeholder="Enter specialization (Safe symbols: -, _, ., ,, &, (, ))"
                             className={cn(
                               "h-12 border bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-300 rounded-lg",
                               formErrors.specialization

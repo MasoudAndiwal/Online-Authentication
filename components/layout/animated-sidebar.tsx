@@ -20,10 +20,8 @@ import {
   User,
   LogOut,
   MoreHorizontal,
-  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -273,6 +271,30 @@ export function AnimatedSidebar({
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
   const navigationItems = user ? getNavigationItems(user.role) : [];
 
+  // Add global styles for dropdown positioning
+  React.useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      @media (max-width: 768px) {
+        [data-radix-popper-content-wrapper] {
+          z-index: 99999 !important;
+        }
+        
+        .sidebar-dropdown-content {
+          position: fixed !important;
+          z-index: 99999 !important;
+          max-height: calc(100vh - 100px) !important;
+          overflow-y: auto !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const toggleExpanded = (href: string) => {
     setExpandedItems((prev) =>
       prev.includes(href)
@@ -355,9 +377,7 @@ export function AnimatedSidebar({
       </nav>
 
       {/* Clean Modern User Info Section */}
-      {user && (
-        <UserProfileDropdown user={user} onLogout={onLogout} />
-      )}
+      {user && <UserProfileDropdown user={user} onLogout={onLogout} />}
     </div>
   );
 }
@@ -487,30 +507,26 @@ interface UserProfileDropdownProps {
 }
 
 function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
-  const roleColors = {
-    OFFICE: {
-      bg: "bg-gradient-to-r from-purple-500 to-purple-600",
-      badge: "bg-purple-100 text-purple-700 border-purple-200",
-      text: "text-purple-600",
-    },
-    TEACHER: {
-      bg: "bg-gradient-to-r from-orange-500 to-orange-600",
-      badge: "bg-orange-100 text-orange-700 border-orange-200",
-      text: "text-orange-600",
-    },
-    STUDENT: {
-      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
-      badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
-      text: "text-emerald-600",
-    },
-  };
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.3 }}
-      className="p-3"
+      className="p-3 relative border-b border-slate-200"
+      style={{ zIndex: 9999 }}
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -519,19 +535,26 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
             className="w-full h-auto p-3 justify-start hover:bg-slate-50/80 transition-all duration-300 rounded-xl border-0"
           >
             <div className="flex items-center space-x-3 w-full">
-              {/* Small, subtle avatar */}
-              <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="h-8 w-8 rounded-lg object-cover"
-                  />
-                ) : (
-                  user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                )}
-              </div>
-              
+              {/* Avatar - Hidden on mobile devices */}
+              {!isMobile && (
+                <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="h-8 w-8 rounded-lg object-cover"
+                    />
+                  ) : (
+                    user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()
+                  )}
+                </div>
+              )}
+
               {/* User info */}
               <div className="flex-1 min-w-0 text-left">
                 <p className="text-sm font-medium text-slate-900 truncate">
@@ -541,93 +564,40 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
                   {user.role.toLowerCase()}
                 </p>
               </div>
-              
+
               {/* Dropdown indicator */}
               <MoreHorizontal className="h-4 w-4 text-slate-400" />
             </div>
           </Button>
         </DropdownMenuTrigger>
-        
+
         <DropdownMenuContent
-          className="w-64 rounded-xl shadow-xl border-0 bg-white/95 backdrop-blur-xl"
-          side="right"
-          align="end"
+          className="w-48 rounded-lg shadow-xl border bg-white"
+          side="top"
+          align="center"
           sideOffset={8}
+          avoidCollisions={true}
+          collisionPadding={16}
         >
-          <DropdownMenuLabel className="p-4 pb-2">
-            <div className="flex items-center space-x-3">
-              <div className={cn(
-                'h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg',
-                roleColors[user.role].bg
-              )}>
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="h-10 w-10 rounded-xl object-cover"
-                  />
-                ) : (
-                  user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 truncate">
-                  {user.name}
-                </p>
-                <p className="text-xs text-slate-600 truncate">
-                  {user.email}
-                </p>
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    'text-xs font-semibold border-0 px-2 py-1 rounded-lg mt-1',
-                    roleColors[user.role].badge
-                  )}
-                >
-                  {user.role.toLowerCase()}
-                </Badge>
-              </div>
-            </div>
-          </DropdownMenuLabel>
-          
+          <DropdownMenuItem className="p-3 cursor-pointer hover:bg-slate-50">
+            <User className="h-4 w-4 mr-3 text-slate-600" />
+            <span className="text-sm font-medium text-slate-900">Profile</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem className="p-3 cursor-pointer hover:bg-slate-50">
+            <Settings className="h-4 w-4 mr-3 text-slate-600" />
+            <span className="text-sm font-medium text-slate-900">Settings</span>
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
-          
-          <DropdownMenuItem className="p-3 cursor-pointer">
-            <User className="h-4 w-4 mr-3" />
-            <div>
-              <p className="text-sm font-medium">My Profile</p>
-              <p className="text-xs text-slate-500">View and edit profile</p>
-            </div>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem className="p-3 cursor-pointer">
-            <Settings className="h-4 w-4 mr-3" />
-            <div>
-              <p className="text-sm font-medium">Settings</p>
-              <p className="text-xs text-slate-500">Preferences and configuration</p>
-            </div>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem className="p-3 cursor-pointer">
-            <HelpCircle className="h-4 w-4 mr-3" />
-            <div>
-              <p className="text-sm font-medium">Help & Support</p>
-              <p className="text-xs text-slate-500">Get help and documentation</p>
-            </div>
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
+
           {onLogout && (
-            <DropdownMenuItem 
-              className="p-3 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
+            <DropdownMenuItem
+              className="p-3 cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-700 focus:bg-red-50"
               onClick={onLogout}
             >
               <LogOut className="h-4 w-4 mr-3" />
-              <div>
-                <p className="text-sm font-medium">Sign Out</p>
-                <p className="text-xs text-red-500">Logout from your account</p>
-              </div>
+              <span className="text-sm font-medium">Logout</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

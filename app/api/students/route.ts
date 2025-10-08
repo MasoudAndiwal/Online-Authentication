@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { createStudent } from '@/lib/database/operations';
 import { StudentCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
-import { Prisma } from '@/app/generated/prisma';
+import { DatabaseError, handleApiError } from '@/lib/database/errors';
 import { ZodError } from 'zod';
 
 export async function POST(request: NextRequest) {
@@ -17,46 +17,32 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(validatedData.password);
 
     // Convert dateOfBirth string to Date if provided
-    const dateOfBirth = validatedData.dateOfBirth 
-      ? new Date(validatedData.dateOfBirth) 
+    const dateOfBirth = validatedData.dateOfBirth
+      ? new Date(validatedData.dateOfBirth)
       : null;
-
-    // Convert studentId to number
-    const studentIdNumber = parseInt(validatedData.studentId, 10);
-    if (isNaN(studentIdNumber)) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: [{ field: 'studentId', message: 'Student ID must be a valid number' }],
-        },
-        { status: 400 }
-      );
-    }
 
     // Convert programs array to comma-separated string
     const programsString = validatedData.programs.join(', ');
 
-    // Create student record using Prisma client
-    const student = await prisma.student.create({
-      data: {
-        firstName: validatedData.firstName,
-        lastName: validatedData.lastName,
-        fatherName: validatedData.fatherName,
-        grandFatherName: validatedData.grandFatherName,
-        studentId: studentIdNumber,
-        dateOfBirth,
-        phone: validatedData.phone,
-        fatherPhone: validatedData.fatherPhone,
-        address: validatedData.address,
-        programs: programsString,
-        CurrentSemester: validatedData.semester,
-        enrollmentYear: validatedData.enrollmentYear,
-        classSection: validatedData.classSection,
-        timeSlot: validatedData.timeSlot,
-        username: validatedData.username,
-        studentIdRef: validatedData.studentIdRef,
-        password: hashedPassword,
-      },
+    // Create student record using Supabase operations
+    const student = await createStudent({
+      firstName: validatedData.firstName,
+      lastName: validatedData.lastName,
+      fatherName: validatedData.fatherName,
+      grandFatherName: validatedData.grandFatherName,
+      studentId: validatedData.studentId,
+      dateOfBirth,
+      phone: validatedData.phone,
+      fatherPhone: validatedData.fatherPhone,
+      address: validatedData.address || '',
+      programs: programsString,
+      semester: validatedData.semester,
+      enrollmentYear: validatedData.enrollmentYear,
+      classSection: validatedData.classSection,
+      timeSlot: validatedData.timeSlot,
+      username: validatedData.username,
+      studentIdRef: validatedData.studentIdRef,
+      password: hashedPassword,
     });
 
     // Return created student data excluding password field
@@ -79,19 +65,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Handle Prisma unique constraint violations (409)
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        const target = error.meta?.target as string[] | undefined;
-        const field = target?.[0] || 'field';
-        return NextResponse.json(
-          {
-            error: `A student with this ${field} already exists`,
-            details: { field, message: 'Duplicate value' },
-          },
-          { status: 409 }
-        );
-      }
+    // Handle database errors using Supabase error mapping
+    if (error instanceof DatabaseError) {
+      const { response, status } = handleApiError(error);
+      return NextResponse.json(response, { status });
     }
 
     // Handle server errors (500)
