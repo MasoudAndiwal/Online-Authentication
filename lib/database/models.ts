@@ -72,6 +72,8 @@ export interface Office {
   lastName: string
   email: string
   phone: string
+  username: string
+  password: string
   role: OfficeRole
   supabaseUserId: string
   isActive: boolean
@@ -127,6 +129,8 @@ export interface OfficeCreateInput {
   lastName: string
   email: string
   phone: string
+  username: string
+  password: string
   role?: OfficeRole
   supabaseUserId: string
   isActive?: boolean
@@ -180,6 +184,8 @@ export interface OfficeUpdateInput {
   lastName?: string
   email?: string
   phone?: string
+  username?: string
+  password?: string
   role?: OfficeRole
   supabaseUserId?: string
   isActive?: boolean

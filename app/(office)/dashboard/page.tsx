@@ -8,6 +8,9 @@ import {
   PageHeader,
   GridLayout,
 } from "@/components/layout/modern-dashboard-layout";
+import { handleLogout } from "@/lib/auth/logout";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import {
   ModernCard,
   ModernCardHeader,
@@ -39,25 +42,36 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Sample user data
-const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
-
 export default function OfficeDashboardPage() {
   const router = useRouter();
+  const { user, isLoading } = useAuth({ requiredRole: 'OFFICE' });
   const [currentPath, setCurrentPath] = React.useState("/dashboard");
+
+  // Use authenticated user data
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+    avatar: undefined,
+  } : {
+    name: "Office Staff",
+    email: "",
+    role: "OFFICE" as const,
+    avatar: undefined,
+  };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
 
   const handleNavigation = (href: string) => {
     setCurrentPath(href);
     router.push(href);
   };
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogoutClick = async () => {
+    await handleLogout();
   };
 
   const handleSearch = (query: string) => {
@@ -66,12 +80,12 @@ export default function OfficeDashboardPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={displayUser}
       title="Office Dashboard"
       subtitle="University Attendance Management System"
       currentPath={currentPath}
       onNavigate={handleNavigation}
-      onLogout={handleLogout}
+      onLogout={handleLogoutClick}
       onSearch={handleSearch}
     >
       <PageContainer>
@@ -111,7 +125,7 @@ export default function OfficeDashboardPage() {
                       Welcome back, Dr. Sarah! 👋
                     </h1>
                     <p className="text-xl text-slate-600 font-medium mt-2">
-                      Here's what's happening at your university today
+                      Here&apos;s what&apos;s happening at your university today
                     </p>
                   </div>
                 </motion.div>

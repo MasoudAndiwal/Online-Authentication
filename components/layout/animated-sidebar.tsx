@@ -71,46 +71,46 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       ...baseItems,
       {
         label: "User Management",
-        href: "/user-management",
+        href: "/dashboard/teachers",
         icon: Users,
         children: [
           {
             label: "Add User",
-            href: "/user-management/add-user",
+            href: "/dashboard/add-teacher",
             icon: UserPlus,
             children: [
               {
                 label: "Add Teacher",
-                href: "/user-management/add-teacher",
+                href: "/dashboard/add-teacher",
                 icon: GraduationCap,
               },
               {
                 label: "Add Student",
-                href: "/user-management/add-student",
+                href: "/dashboard/add-student",
                 icon: User,
               },
             ],
           },
           {
             label: "All Users",
-            href: "/user-management/all-users",
+            href: "/dashboard/teachers",
             icon: Users,
             children: [
               {
                 label: "Teacher List",
-                href: "/user-management/teachers",
+                href: "/dashboard/teachers",
                 icon: GraduationCap,
               },
               {
                 label: "Student List",
-                href: "/user-management/students",
+                href: "/dashboard/students",
                 icon: User,
               },
             ],
           },
           {
             label: "Roles & Permissions",
-            href: "/user-management/roles",
+            href: "/dashboard/roles",
             icon: Shield,
           },
         ],

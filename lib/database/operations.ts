@@ -283,8 +283,14 @@ export async function updateTeacher(id: string, data: TeacherUpdateInput): Promi
 export async function createOffice(data: OfficeCreateInput): Promise<Office> {
     return handleDatabaseOperation(async () => {
         const officeData = {
-            ...data,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            username: data.username,
+            password: data.password,
             role: data.role || OfficeRole.STAFF,
+            supabase_user_id: data.supabaseUserId,
             is_active: data.isActive !== undefined ? data.isActive : true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -408,6 +414,8 @@ function transformOfficeFromDb(dbRecord: any): Office {
         lastName: dbRecord.last_name,
         email: dbRecord.email,
         phone: dbRecord.phone,
+        username: dbRecord.username,
+        password: dbRecord.password,
         role: dbRecord.role as OfficeRole,
         supabaseUserId: dbRecord.supabase_user_id,
         isActive: dbRecord.is_active,
@@ -416,7 +424,10 @@ function transformOfficeFromDb(dbRecord: any): Office {
     }
 }
 
-
+// Helper function to convert camelCase to snake_case
+function camelToSnakeCase(str: string): string {
+    return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+}
 
 // Additional utility functions for common queries
 export async function findStudentById(id: string): Promise<Student | null> {
@@ -453,4 +464,8 @@ export async function findOfficeByEmail(email: string): Promise<Office | null> {
 
 export async function findOfficeBySupabaseUserId(supabaseUserId: string): Promise<Office | null> {
     return findOfficeByField('supabaseUserId', supabaseUserId)
+}
+
+export async function findOfficeByUsername(username: string): Promise<Office | null> {
+    return findOfficeByField('username', username)
 }
