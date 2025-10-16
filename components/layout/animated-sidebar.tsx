@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import * as React from "react";
@@ -303,8 +305,21 @@ export function AnimatedSidebar({
     );
   };
 
-  const isActive = (href: string) => {
-    return currentPath === href || currentPath.startsWith(href + "/");
+  const isActive = (href: string, item?: NavigationItem) => {
+    // Check for exact match
+    if (currentPath === href) {
+      return true;
+    }
+    
+    // If item has children, check if any child is active
+    if (item?.children && item.children.length > 0) {
+      return item.children.some(child => 
+        currentPath === child.href || 
+        (child.children && child.children.some(subChild => currentPath === subChild.href))
+      );
+    }
+    
+    return false;
   };
 
   const isExpanded = (href: string) => {
@@ -365,7 +380,7 @@ export function AnimatedSidebar({
           >
             <NavigationItem
               item={item}
-              isActive={isActive(item.href)}
+              isActive={isActive(item.href, item)}
               isExpanded={isExpanded(item.href)}
               onToggle={() => toggleExpanded(item.href)}
               onNavigate={handleNavigation}

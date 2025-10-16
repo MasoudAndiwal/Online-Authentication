@@ -25,6 +25,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { DataLoading } from "@/components/ui/universal-loading";
 import {
   validateName,
   validateId,
@@ -115,11 +117,54 @@ export default function EditTeacherPage() {
   const params = useParams();
   const teacherId = params.id as string;
 
-  // Redirect to teacher list if no ID is provided
+  // Fetch teacher data from API
   React.useEffect(() => {
     if (!teacherId) {
       router.replace("/dashboard/teachers");
+      return;
     }
+
+    const fetchTeacher = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`/api/teachers/${teacherId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch teacher data');
+        }
+
+        const data = await response.json();
+        
+        // Transform data to match form structure
+        setFormData({
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          fatherName: data.fatherName || '',
+          grandFatherName: data.grandFatherName || '',
+          teacherId: data.teacherId || '',
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+          phone: data.phone || '',
+          secondaryPhone: data.secondaryPhone || '',
+          address: data.address || '',
+          departments: Array.isArray(data.departments) ? data.departments : data.departments ? data.departments.split(',').map((d: string) => d.trim()) : [],
+          qualification: data.qualification || '',
+          experience: data.experience || '',
+          specialization: data.specialization || '',
+          subjects: Array.isArray(data.subjects) ? data.subjects : data.subjects ? data.subjects.split(',').map((s: string) => s.trim()) : [],
+          classes: Array.isArray(data.classes) ? data.classes : data.classes ? data.classes.split(',').map((c: string) => c.trim()) : [],
+          employmentType: 'Full Time (Permanent)',
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching teacher:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeacher();
   }, [teacherId, router]);
 
   const [currentPath] = React.useState("/dashboard/edit-teacher");
@@ -145,6 +190,8 @@ export default function EditTeacherPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleNavigation = (href: string) => {
     try {
@@ -154,8 +201,8 @@ export default function EditTeacherPage() {
       window.location.href = href;
     }
   };
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await performLogout();
   };
 
   const handleSearch = (query: string) => {
@@ -300,15 +347,59 @@ export default function EditTeacherPage() {
     }
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Prepare data for API
+      const updateData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fatherName: formData.fatherName,
+        grandFatherName: formData.grandFatherName,
+        teacherId: formData.teacherId,
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : null,
+        phone: formData.phone,
+        secondaryPhone: formData.secondaryPhone,
+        address: formData.address,
+        departments: formData.departments.join(', '),
+        qualification: formData.qualification,
+        experience: formData.experience,
+        specialization: formData.specialization,
+        subjects: formData.subjects.join(', '),
+        classes: formData.classes.join(', '),
+      };
+
+      const response = await fetch(`/api/teachers/${teacherId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error Response:', errorData);
+        
+        // Show detailed validation errors if available
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const detailMessages = errorData.details.map((d: any) => `${d.field}: ${d.message}`).join(', ');
+          throw new Error(`${errorData.error}: ${detailMessages}`);
+        }
+        
+        throw new Error(errorData.error || errorData.details || 'Failed to update teacher');
+      }
 
       setIsSubmitting(false);
       setShowSuccess(true);
+      
+      // Redirect to teacher list after 2 seconds
+      setTimeout(() => {
+        router.push('/dashboard/teachers');
+      }, 2000);
     } catch (error) {
       setIsSubmitting(false);
+      setError(error instanceof Error ? error.message : 'An error occurred while updating teacher');
       console.error("Error updating teacher:", error);
     }
   };
@@ -554,6 +645,45 @@ export default function EditTeacherPage() {
                   onClick={() => window.location.reload()}
                 >
                   Edit Again
+                </Button>
+              </div>
+            </div>
+          </div>
+        </PageContainer>
+      </ModernDashboardLayout>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return <DataLoading message="Loading teacher information..." />;
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <ModernDashboardLayout
+        user={sampleUser}
+        title="Edit Teacher"
+        subtitle="Error loading teacher"
+        currentPath={currentPath}
+        onNavigate={handleNavigation}
+        onLogout={handleLogout}
+        onSearch={handleSearch}
+        hideSearch={true}
+      >
+        <PageContainer>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Error Loading Teacher</h3>
+              <p className="text-slate-600 mb-6">{error}</p>
+              <div className="flex justify-center gap-4">
+                <Button onClick={() => window.location.reload()} className="bg-orange-600 hover:bg-orange-700">
+                  Try Again
+                </Button>
+                <Button variant="outline" onClick={() => handleNavigation('/dashboard/teachers')}>
+                  Back to Teachers
                 </Button>
               </div>
             </div>

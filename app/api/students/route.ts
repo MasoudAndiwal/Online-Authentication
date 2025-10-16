@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-import { createStudent, findStudentByStudentId, findStudentByUsername, findStudentByField } from '@/lib/database/operations';
+import { createStudent, findStudentByStudentId, findStudentByUsername, findStudentByField, getAllStudents } from '@/lib/database/operations';
 import { StudentCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
 import { DatabaseError, handleApiError, createUniqueConstraintError } from '@/lib/database/errors';
@@ -124,6 +125,81 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'An unexpected error occurred while creating the student',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  console.log('=== GET /api/students called ===');
+  try {
+    // Get query parameters from URL
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') || undefined;
+    const program = searchParams.get('program') || undefined;
+    const classSection = searchParams.get('classSection') || undefined;
+    const status = searchParams.get('status') || undefined;
+
+    console.log('Filters:', { search, program, classSection, status });
+
+    // Check Supabase connection
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables');
+      return NextResponse.json(
+        {
+          error: 'Database configuration error. Please contact administrator.',
+          details: 'Missing Supabase credentials'
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log('Supabase URL configured:', !!supabaseUrl);
+    console.log('Fetching students from database...');
+
+    // Fetch all students with filters
+    const students = await getAllStudents({
+      search,
+      program,
+      classSection,
+      status,
+    });
+
+    console.log(`Successfully fetched ${students.length} students`);
+
+    // Remove password field from all students
+    const studentsWithoutPassword = students.map(({ password, ...student }) => student);
+
+    return NextResponse.json(studentsWithoutPassword, { status: 200 });
+
+  } catch (error) {
+    // Handle database errors
+    if (error instanceof DatabaseError) {
+      console.error('Database Error:', {
+        code: error.code,
+        message: error.message,
+        meta: error.meta,
+      });
+      const { response, status } = handleApiError(error);
+      return NextResponse.json(response, { status });
+    }
+
+    // Handle server errors (500)
+    console.error('Error fetching students:', error);
+    console.error('Error details:', {
+      name: (error as any)?.name,
+      message: (error as any)?.message,
+      stack: (error as any)?.stack,
+    });
+    
+    return NextResponse.json(
+      {
+        error: 'An unexpected error occurred while fetching students',
+        details: (error as any)?.message || 'Unknown error'
       },
       { status: 500 }
     );

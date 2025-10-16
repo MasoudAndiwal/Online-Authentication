@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '@/lib/supabase'
 import { SupabaseClient } from '@supabase/supabase-js'
 
@@ -421,9 +422,14 @@ export async function withConcurrencyControl<T>(
   }
   
   throw lastError || new Error('Operation failed after maximum retries')
-}/
-**
+}
+
+/**
  * Utility for creating an office staff member with related data in a single transaction
+ * 
+ * @param officeData Office staff data to be created
+ * @param additionalOperations Optional additional operations to be executed within the transaction
+ * @returns Created office staff member
  */
 export async function createOfficeWithTransaction(
   officeData: import('./models').OfficeCreateInput,

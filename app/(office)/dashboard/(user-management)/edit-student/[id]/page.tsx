@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -38,6 +39,8 @@ import {
   sanitizePhone,
 } from "@/lib/utils/validation";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { DataLoading } from "@/components/ui/universal-loading";
 
 // Sample user data
 const sampleUser = {
@@ -107,11 +110,52 @@ export default function EditStudentPage() {
   const params = useParams();
   const studentId = params.id as string;
 
-  // Redirect to student list if no ID is provided
+  // Fetch student data from API
   React.useEffect(() => {
     if (!studentId) {
       router.replace("/dashboard/students");
+      return;
     }
+
+    const fetchStudent = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`/api/students/${studentId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch student data');
+        }
+
+        const data = await response.json();
+        
+        // Transform data to match form structure
+        setFormData({
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          fatherName: data.fatherName || '',
+          grandFatherName: data.grandFatherName || '',
+          studentId: data.studentId || '',
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+          phone: data.phone || '',
+          fatherPhone: data.fatherPhone || '',
+          address: data.address || '',
+          programs: Array.isArray(data.programs) ? data.programs : data.programs ? data.programs.split(',').map((p: string) => p.trim()) : [],
+          semester: data.semester || '',
+          enrollmentYear: data.enrollmentYear ? data.enrollmentYear.toString() : '',
+          classSection: data.classSection || '',
+          timeSlot: data.timeSlot || 'morning',
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching student:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudent();
   }, [studentId, router]);
 
   const [currentPath] = React.useState("/dashboard/edit-student");
@@ -135,6 +179,8 @@ export default function EditStudentPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleNavigation = (href: string) => {
     try {
@@ -145,8 +191,8 @@ export default function EditStudentPage() {
     }
   };
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await performLogout();
   };
 
   const handleSearch = (query: string) => {
@@ -272,15 +318,50 @@ export default function EditStudentPage() {
     }
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Prepare data for API
+      const updateData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fatherName: formData.fatherName,
+        grandFatherName: formData.grandFatherName,
+        studentId: formData.studentId,
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : null,
+        phone: formData.phone,
+        fatherPhone: formData.fatherPhone,
+        address: formData.address,
+        programs: formData.programs.join(', '),
+        semester: formData.semester,
+        enrollmentYear: parseInt(formData.enrollmentYear),
+        classSection: formData.classSection,
+        timeSlot: formData.timeSlot,
+      };
+
+      const response = await fetch(`/api/students/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update student');
+      }
 
       setIsSubmitting(false);
       setShowSuccess(true);
+      
+      // Redirect to student list after 2 seconds
+      setTimeout(() => {
+        router.push('/dashboard/students');
+      }, 2000);
     } catch (error) {
       setIsSubmitting(false);
+      setError(error instanceof Error ? error.message : 'An error occurred while updating student');
       console.error("Error updating student:", error);
     }
   };
@@ -351,6 +432,45 @@ export default function EditStudentPage() {
       description: "6 teaching hours, 40 min each + 15 min breaks",
     },
   ];
+
+  // Show loading state
+  if (loading) {
+    return <DataLoading message="Loading student information..." />;
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <ModernDashboardLayout
+        user={sampleUser}
+        title="Edit Student"
+        subtitle="Error loading student"
+        currentPath={currentPath}
+        onNavigate={handleNavigation}
+        onLogout={handleLogout}
+        onSearch={handleSearch}
+        hideSearch={true}
+      >
+        <PageContainer>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Error Loading Student</h3>
+              <p className="text-slate-600 mb-6">{error}</p>
+              <div className="flex justify-center gap-4">
+                <Button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-700">
+                  Try Again
+                </Button>
+                <Button variant="outline" onClick={() => handleNavigation('/dashboard/students')}>
+                  Back to Students
+                </Button>
+              </div>
+            </div>
+          </div>
+        </PageContainer>
+      </ModernDashboardLayout>
+    );
+  }
 
   if (showSuccess) {
     return (

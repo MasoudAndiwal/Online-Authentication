@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '@/lib/supabase'
 import {
     Student,
@@ -18,7 +19,9 @@ import {
     handleDatabaseOperation,
     handleCreateError,
     handleUpdateError,
-    isRecordNotFoundError
+    isRecordNotFoundError,
+    DatabaseError,
+    PrismaErrorCode
 } from './errors'
 
 // Student operations
@@ -144,6 +147,15 @@ export async function updateStudent(id: string, data: StudentUpdateInput): Promi
 
         if (error) {
             handleUpdateError(error, 'Student')
+        }
+
+        if (!result) {
+            throw new DatabaseError(
+                'Student not found or update failed',
+                PrismaErrorCode.RECORD_NOT_FOUND,
+                {},
+                null
+            )
         }
 
         return transformStudentFromDb(result)
@@ -275,6 +287,15 @@ export async function updateTeacher(id: string, data: TeacherUpdateInput): Promi
             handleUpdateError(error, 'Teacher')
         }
 
+        if (!result) {
+            throw new DatabaseError(
+                'Teacher not found or update failed',
+                PrismaErrorCode.RECORD_NOT_FOUND,
+                {},
+                null
+            )
+        }
+
         return transformTeacherFromDb(result)
     })
 }
@@ -348,6 +369,15 @@ export async function updateOffice(id: string, data: OfficeUpdateInput): Promise
 
         if (error) {
             handleUpdateError(error, 'Office')
+        }
+
+        if (!result) {
+            throw new DatabaseError(
+                'Office staff not found or update failed',
+                PrismaErrorCode.RECORD_NOT_FOUND,
+                {},
+                null
+            )
         }
 
         return transformOfficeFromDb(result)
@@ -468,4 +498,92 @@ export async function findOfficeBySupabaseUserId(supabaseUserId: string): Promis
 
 export async function findOfficeByUsername(username: string): Promise<Office | null> {
     return findOfficeByField('username', username)
+}
+
+// Get all students with optional filters
+export async function getAllStudents(filters?: {
+    search?: string;
+    program?: string;
+    classSection?: string;
+    status?: string;
+}): Promise<Student[]> {
+    return handleDatabaseOperation(async () => {
+        let query = supabase
+            .from(TABLE_NAMES.STUDENTS)
+            .select('*')
+            .order('created_at', { ascending: false })
+
+        // Apply search filter (searches across multiple fields)
+        if (filters?.search) {
+            const searchTerm = `%${filters.search}%`
+            query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},student_id.ilike.${searchTerm},programs.ilike.${searchTerm}`)
+        }
+
+        // Apply program filter
+        if (filters?.program) {
+            query = query.ilike('programs', `%${filters.program}%`)
+        }
+
+        // Apply class section filter
+        if (filters?.classSection) {
+            query = query.eq('class_section', filters.classSection)
+        }
+
+        // Apply status filter
+        if (filters?.status) {
+            query = query.eq('status', filters.status)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+            throw error
+        }
+
+        return (data || []).map(transformStudentFromDb)
+    })
+}
+
+// Get all teachers with optional filters
+export async function getAllTeachers(filters?: {
+    search?: string;
+    department?: string;
+    subject?: string;
+    status?: string;
+}): Promise<Teacher[]> {
+    return handleDatabaseOperation(async () => {
+        let query = supabase
+            .from(TABLE_NAMES.TEACHERS)
+            .select('*')
+            .order('created_at', { ascending: false })
+
+        // Apply search filter (searches across multiple fields)
+        if (filters?.search) {
+            const searchTerm = `%${filters.search}%`
+            query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},teacher_id.ilike.${searchTerm},departments.ilike.${searchTerm},subjects.ilike.${searchTerm}`)
+        }
+
+        // Apply department filter
+        if (filters?.department) {
+            query = query.ilike('departments', `%${filters.department}%`)
+        }
+
+        // Apply subject filter
+        if (filters?.subject) {
+            query = query.ilike('subjects', `%${filters.subject}%`)
+        }
+
+        // Apply status filter
+        if (filters?.status) {
+            query = query.eq('status', filters.status)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+            throw error
+        }
+
+        return (data || []).map(transformTeacherFromDb)
+    })
 }

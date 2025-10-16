@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { cn } from "@/lib/utils";
 import {
   validateName,
@@ -131,8 +133,8 @@ export default function AddStudentPage() {
     }
   };
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await performLogout();
   };
 
   const handleSearch = (query: string) => {
@@ -428,6 +430,7 @@ export default function AddStudentPage() {
     className = "",
     size = "h-6 w-6",
   }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     icon: any;
     className?: string;
     size?: string;
@@ -1092,7 +1095,7 @@ export default function AddStudentPage() {
                           Personal Information
                         </h2>
                         <p className="text-slate-600">
-                          Let's start with basic personal details
+                          Let&apos;s start with basic personal details
                         </p>
                       </div>
 

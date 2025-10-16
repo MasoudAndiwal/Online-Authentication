@@ -98,7 +98,7 @@ export default function AddUserPage() {
       user={sampleUser}
       title="Add User"
       subtitle="User Management System"
-      currentPath="/dashboard/user-management/add-user"
+      currentPath="/dashboard/add-user"
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
@@ -112,7 +112,7 @@ export default function AddUserPage() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 variant="outline" 
-                onClick={() => handleNavigation('/dashboard/user-management/all-users')}
+                onClick={() => handleNavigation('/dashboard/all-users')}
                 className="rounded-2xl border-0 bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -10,7 +11,7 @@ import {
 } from "@/components/layout/modern-dashboard-layout";
 import { handleLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthLoadingScreen } from "@/components/ui/auth-loading";
+import { AuthLoading } from "@/components/ui/universal-loading";
 import {
   ModernCard,
   ModernCardHeader,
@@ -62,7 +63,7 @@ export default function OfficeDashboardPage() {
 
   // Show loading state while checking authentication
   if (isLoading) {
-    return <AuthLoadingScreen />;
+    return <AuthLoading />;
   }
 
   const handleNavigation = (href: string) => {

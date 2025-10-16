@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createTeacher, findTeacherByTeacherId, findTeacherByUsername, findTeacherByField } from '@/lib/database/operations';
+import { createTeacher, findTeacherByTeacherId, findTeacherByUsername, findTeacherByField, getAllTeachers } from '@/lib/database/operations';
 import { TeacherCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
 import { DatabaseError, handleApiError, createUniqueConstraintError } from '@/lib/database/errors';
@@ -96,6 +96,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'An unexpected error occurred while creating the teacher',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Get query parameters from URL
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') || undefined;
+    const department = searchParams.get('department') || undefined;
+    const subject = searchParams.get('subject') || undefined;
+    const status = searchParams.get('status') || undefined;
+
+    // Fetch all teachers with filters
+    const teachers = await getAllTeachers({
+      search,
+      department,
+      subject,
+      status,
+    });
+
+    // Remove password field from all teachers
+    const teachersWithoutPassword = teachers.map(({ password, ...teacher }) => teacher);
+
+    return NextResponse.json(teachersWithoutPassword, { status: 200 });
+
+  } catch (error) {
+    // Handle database errors
+    if (error instanceof DatabaseError) {
+      const { response, status } = handleApiError(error);
+      return NextResponse.json(response, { status });
+    }
+
+    // Handle server errors (500)
+    console.error('Error fetching teachers:', error);
+    return NextResponse.json(
+      {
+        error: 'An unexpected error occurred while fetching teachers',
       },
       { status: 500 }
     );

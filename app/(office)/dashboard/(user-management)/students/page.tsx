@@ -24,8 +24,12 @@ import {
   UserCheck,
   HeartPulse,
   Filter,
+  AlertCircle,
 } from "lucide-react";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { ViewStudentDialog } from "@/components/shared/view-student-dialog";
+import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { DataLoading } from "@/components/ui/universal-loading";
 
 // Sample user data
 const sampleUser = {
@@ -35,63 +39,19 @@ const sampleUser = {
   avatar: undefined,
 };
 
-// Sample students data
-const sampleStudents = [
-  {
-    id: "CS-2024-001",
-    name: "Ahmad Hassan",
-    program: "Computer Science",
-    phone: "+1 (555) 111-2222",
-    semester: "Fall 2024",
-    status: "Active",
-    classSection: "class A",
-  },
-  {
-    id: "CS-2024-002",
-    name: "Sara Khan",
-    program: "Computer Science",
-    phone: "+1 (555) 222-3333",
-    semester: "Fall 2024",
-    status: "Active",
-    classSection: "class B",
-  },
-  {
-    id: "MATH-2024-001",
-    name: "Omar Ali",
-    program: "Mathematics",
-    phone: "+1 (555) 333-4444",
-    semester: "Fall 2024",
-    status: "Active",
-    classSection: "class A",
-  },
-  {
-    id: "PHY-2024-001",
-    name: "Layla Ahmed",
-    program: "Physics",
-    phone: "+1 (555) 444-5555",
-    semester: "Fall 2024",
-    status: "Sick",
-    classSection: "class C",
-  },
-  {
-    id: "CS-2024-003",
-    name: "Yusuf Rahman",
-    program: "Computer Science",
-    phone: "+1 (555) 555-6666",
-    semester: "Fall 2024",
-    status: "Active",
-    classSection: "class A",
-  },
-  {
-    id: "ENG-2024-001",
-    name: "Fatima Ali",
-    program: "Engineering",
-    phone: "+1 (555) 666-7777",
-    semester: "Fall 2024",
-    status: "Sick",
-    classSection: "class D",
-  },
-];
+// Student interface
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  studentId: string;
+  phone: string;
+  fatherPhone: string;
+  programs: string;
+  semester: string;
+  classSection: string;
+  status: string;
+}
 
 export default function StudentListPage() {
   const router = useRouter();
@@ -100,6 +60,11 @@ export default function StudentListPage() {
   const [programFilter, setProgramFilter] = React.useState("");
   const [classFilter, setClassFilter] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [viewStudentId, setViewStudentId] = React.useState<string | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
 
   const handleNavigation = (href: string) => {
     try {
@@ -110,43 +75,96 @@ export default function StudentListPage() {
     }
   };
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await performLogout();
   };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
+  // Fetch students from API
+  const fetchStudents = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (programFilter) params.append('program', programFilter);
+      if (classFilter) params.append('classSection', classFilter);
+      if (statusFilter) params.append('status', statusFilter);
+
+      const response = await fetch(`/api/students?${params.toString()}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Failed to fetch students (Status: ${response.status})`);
+      }
+
+      const data = await response.json();
+      setStudents(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching students:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, programFilter, classFilter, statusFilter]);
+
+  // Fetch students on component mount and when filters change
+  React.useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
   // Get unique programs and classes for filter options
-  const programs = [
-    ...new Set(sampleStudents.map((student) => student.program)),
-  ];
-  const classes = [
-    ...new Set(sampleStudents.map((student) => student.classSection)),
-  ];
+  const programs = React.useMemo(() => {
+    const progs = new Set<string>();
+    students.forEach(student => {
+      if (student.programs) {
+        // Handle both array and string formats
+        const progList = Array.isArray(student.programs)
+          ? student.programs
+          : student.programs.split(',');
+        progList.forEach(p => progs.add(typeof p === 'string' ? p.trim() : p));
+      }
+    });
+    return Array.from(progs);
+  }, [students]);
 
-  const filteredStudents = sampleStudents.filter((student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.program.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.id.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesProgram = !programFilter || student.program === programFilter;
-    const matchesClass = !classFilter || student.classSection === classFilter;
-    const matchesStatus = !statusFilter || student.status === statusFilter;
-
-    return matchesSearch && matchesProgram && matchesClass && matchesStatus;
-  });
+  const classes = React.useMemo(() => {
+    return [...new Set(students.map(student => student.classSection).filter(Boolean))];
+  }, [students]);
 
   // Calculate statistics
-  const totalStudents = sampleStudents.length;
-  const activeStudents = sampleStudents.filter(
-    (student) => student.status === "Active"
-  ).length;
-  const sickStudents = sampleStudents.filter(
-    (student) => student.status === "Sick"
-  ).length;
+  const totalStudents = students.length;
+  const activeStudents = students.filter(student => student.status === "ACTIVE").length;
+  const sickStudents = students.filter(student => student.status === "SICK").length;
+
+  // Transform students for display
+  const displayStudents = students.map(student => {
+    // Handle programs - can be array or string
+    const progStr = Array.isArray(student.programs)
+      ? student.programs.join(', ')
+      : student.programs || '';
+    
+    return {
+      id: student.id, // Database UUID for API calls
+      studentId: student.studentId, // Custom student ID for display
+      name: `${student.firstName} ${student.lastName}`,
+      program: progStr,
+      phone: student.phone,
+      semester: student.semester || '',
+      status: student.status === 'ACTIVE' ? 'Active' : student.status === 'SICK' ? 'Sick' : 'Inactive',
+      classSection: student.classSection || '',
+    };
+  });
+
+  const handleView = (id: string) => {
+    setViewStudentId(id);
+    setViewDialogOpen(true);
+  };
 
   return (
     <ModernDashboardLayout
@@ -296,7 +314,7 @@ export default function StudentListPage() {
                   </span>
                   {searchQuery && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Search: "{searchQuery}"
+                      Search: &quot;{searchQuery}&rdquo;
                       <button
                         onClick={() => setSearchQuery("")}
                         className="ml-2 hover:text-green-900"
@@ -362,7 +380,22 @@ export default function StudentListPage() {
           <Card className="rounded-2xl shadow-lg border-slate-200/60">
             <CardContent className="p-6">
               <div className="space-y-4">
-                {filteredStudents.map((student) => (
+                {loading && (
+                  <DataLoading message="Loading students..." />
+                )}
+                
+                {error && (
+                  <div className="text-center py-12">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Error loading students</h3>
+                    <p className="text-slate-600 mb-4">{error}</p>
+                    <Button onClick={fetchStudents} className="bg-green-600 hover:bg-green-700">
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {!loading && !error && displayStudents.map((student) => (
                   <div
                     key={student.id}
                     className="p-6 border border-slate-200 rounded-xl hover:shadow-md transition-shadow duration-200 bg-white"
@@ -379,7 +412,7 @@ export default function StudentListPage() {
                               {student.name}
                             </h3>
                             <p className="text-sm text-slate-500">
-                              {student.id}
+                              {student.studentId || student.id}
                             </p>
                           </div>
                         </div>
@@ -414,6 +447,7 @@ export default function StudentListPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleView(student.id)}
                           className="flex-1 border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
                         >
                           <Eye className="h-4 w-4 mr-1" />
@@ -455,7 +489,7 @@ export default function StudentListPage() {
                               {student.name}
                             </h3>
                             <p className="text-sm text-slate-500">
-                              {student.id}
+                              {student.studentId || student.id}
                             </p>
                           </div>
                           <Badge
@@ -473,6 +507,7 @@ export default function StudentListPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleView(student.id)}
                             className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4"
                           >
                             <Eye className="h-4 w-4" />
@@ -545,7 +580,7 @@ export default function StudentListPage() {
                                 {student.name}
                               </h3>
                               <p className="text-sm text-slate-500">
-                                {student.id}
+                                {student.studentId || student.id}
                               </p>
                             </div>
                             <Badge
@@ -597,6 +632,7 @@ export default function StudentListPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleView(student.id)}
                             className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
                           >
                             <Eye className="h-4 w-4 mr-2" />
@@ -629,7 +665,7 @@ export default function StudentListPage() {
                   </div>
                 ))}
 
-                {filteredStudents.length === 0 && (
+                {!loading && !error && displayStudents.length === 0 && (
                   <div className="text-center py-12">
                     <User className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -656,6 +692,15 @@ export default function StudentListPage() {
           </Card>
         </div>
       </PageContainer>
+
+      {/* View Student Dialog */}
+      {viewStudentId && (
+        <ViewStudentDialog
+          studentId={viewStudentId}
+          open={viewDialogOpen}
+          onOpenChange={setViewDialogOpen}
+        />
+      )}
     </ModernDashboardLayout>
   );
 }

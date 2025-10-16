@@ -8,11 +8,14 @@ import {
 } from "@/components/layout/modern-dashboard-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX } from "lucide-react";
+import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { motion } from "framer-motion";
 import { TeacherCard } from "@/components/shared/teacher-card";
+import { ViewTeacherDialog } from "@/components/shared/view-teacher-dialog";
+import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { DataLoading } from "@/components/ui/universal-loading";
 
 // Sample user data
 const sampleUser = {
@@ -22,75 +25,23 @@ const sampleUser = {
   avatar: undefined,
 };
 
-// Sample teachers data
-const sampleTeachers = [
-  {
-    id: "TCH-2024-001",
-    name: "Dr. Mohammad Ali",
-    department: "Computer Science",
-    phone: "+1 (555) 123-4567",
-    qualification: "PhD in Computer Science",
-    experience: "8 years",
-    status: "Active" as const,
-    classes: 5,
-    subjects: ["Data Structures", "Algorithms", "Programming"],
-  },
-  {
-    id: "TCH-2024-002",
-    name: "Prof. Fatima Khan",
-    department: "Mathematics",
-    phone: "+1 (555) 234-5678",
-    qualification: "PhD in Mathematics",
-    experience: "12 years",
-    status: "Active" as const,
-    classes: 4,
-    subjects: ["Calculus", "Linear Algebra", "Statistics"],
-  },
-  {
-    id: "TCH-2024-003",
-    name: "Dr. Ahmed Hassan",
-    department: "Physics",
-    phone: "+1 (555) 345-6789",
-    qualification: "PhD in Physics",
-    experience: "6 years",
-    status: "Active" as const,
-    classes: 3,
-    subjects: ["Quantum Physics", "Thermodynamics"],
-  },
-  {
-    id: "TCH-2024-004",
-    name: "Dr. Aisha Rahman",
-    department: "Chemistry",
-    phone: "+1 (555) 456-7890",
-    qualification: "PhD in Chemistry",
-    experience: "10 years",
-    status: "Inactive" as const,
-    classes: 0,
-    subjects: ["Organic Chemistry", "Biochemistry"],
-  },
-  {
-    id: "TCH-2024-005",
-    name: "Dr. Omar Malik",
-    department: "Engineering",
-    phone: "+1 (555) 567-8901",
-    qualification: "PhD in Engineering",
-    experience: "5 years",
-    status: "Active" as const,
-    classes: 3,
-    subjects: ["Circuit Design", "Electronics"],
-  },
-  {
-    id: "TCH-2024-006",
-    name: "Prof. Zara Ahmed",
-    department: "Computer Science",
-    phone: "+1 (555) 678-9012",
-    qualification: "PhD in Computer Science",
-    experience: "15 years",
-    status: "Inactive" as const,
-    classes: 0,
-    subjects: ["Machine Learning", "AI"],
-  },
-];
+// Teacher interface from API
+interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  teacherId: string;
+  phone: string;
+  secondaryPhone?: string;
+  departments: string;
+  qualification: string;
+  experience: string;
+  specialization: string;
+  subjects: string;
+  classes: string;
+  status: string;
+  email?: string;
+}
 
 export default function TeacherListPage() {
   const router = useRouter();
@@ -99,6 +50,11 @@ export default function TeacherListPage() {
   const [subjectFilter, setSubjectFilter] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
   const [currentPath] = React.useState("/dashboard/teachers");
+  const [teachers, setTeachers] = React.useState<Teacher[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [viewTeacherId, setViewTeacherId] = React.useState<string | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
 
   const handleNavigation = (href: string) => {
     try {
@@ -109,36 +65,118 @@ export default function TeacherListPage() {
     }
   };
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await performLogout();
   };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
+  const handleView = (id: string) => {
+    setViewTeacherId(id);
+    setViewDialogOpen(true);
+  };
+
+  // Fetch teachers from API
+  const fetchTeachers = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (departmentFilter) params.append('department', departmentFilter);
+      if (subjectFilter) params.append('subject', subjectFilter);
+      if (statusFilter) params.append('status', statusFilter);
+
+      const response = await fetch(`/api/teachers?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch teachers');
+      }
+
+      const data = await response.json();
+      setTeachers(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching teachers:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, departmentFilter, subjectFilter, statusFilter]);
+
+  // Fetch teachers on component mount and when filters change
+  React.useEffect(() => {
+    fetchTeachers();
+  }, [fetchTeachers]);
+
   // Get unique departments and subjects for filter options
-  const departments = [...new Set(sampleTeachers.map(teacher => teacher.department))];
-  const subjects = [...new Set(sampleTeachers.flatMap(teacher => teacher.subjects))];
+  const departments = React.useMemo(() => {
+    const depts = new Set<string>();
+    teachers.forEach(teacher => {
+      if (teacher.departments) {
+        // Handle both array and string formats
+        const deptList = Array.isArray(teacher.departments) 
+          ? teacher.departments 
+          : teacher.departments.split(',');
+        deptList.forEach(d => depts.add(typeof d === 'string' ? d.trim() : d));
+      }
+    });
+    return Array.from(depts);
+  }, [teachers]);
 
-  const filteredTeachers = sampleTeachers.filter((teacher) => {
-    const matchesSearch = 
-      teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      teacher.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      teacher.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      teacher.subjects.some(subject => subject.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesDepartment = !departmentFilter || teacher.department === departmentFilter;
-    const matchesSubject = !subjectFilter || teacher.subjects.includes(subjectFilter);
-    const matchesStatus = !statusFilter || teacher.status === statusFilter;
-
-    return matchesSearch && matchesDepartment && matchesSubject && matchesStatus;
-  });
+  const subjects = React.useMemo(() => {
+    const subjs = new Set<string>();
+    teachers.forEach(teacher => {
+      if (teacher.subjects) {
+        // Handle both array and string formats
+        const subjList = Array.isArray(teacher.subjects)
+          ? teacher.subjects
+          : teacher.subjects.split(',');
+        subjList.forEach(s => subjs.add(typeof s === 'string' ? s.trim() : s));
+      }
+    });
+    return Array.from(subjs);
+  }, [teachers]);
 
   // Calculate statistics
-  const totalTeachers = sampleTeachers.length;
-  const activeTeachers = sampleTeachers.filter(teacher => teacher.status === "Active").length;
-  const inactiveTeachers = sampleTeachers.filter(teacher => teacher.status === "Inactive").length;
+  const totalTeachers = teachers.length;
+  const activeTeachers = teachers.filter(teacher => teacher.status === "ACTIVE").length;
+  const inactiveTeachers = teachers.filter(teacher => teacher.status === "INACTIVE").length;
+
+  // Transform teachers for display
+  const displayTeachers = teachers.map(teacher => {
+    // Handle departments - can be array or string
+    const deptStr = Array.isArray(teacher.departments)
+      ? teacher.departments.join(', ')
+      : teacher.departments || '';
+    
+    // Handle subjects - can be array or string
+    const subjList = Array.isArray(teacher.subjects)
+      ? teacher.subjects
+      : teacher.subjects ? teacher.subjects.split(',').map(s => s.trim()) : [];
+    
+    // Handle classes - can be array or string
+    const classCount = Array.isArray(teacher.classes)
+      ? teacher.classes.length
+      : teacher.classes ? teacher.classes.split(',').length : 0;
+    
+    return {
+      id: teacher.id, // Database UUID for API calls
+      teacherId: teacher.teacherId, // Custom teacher ID for display
+      name: `${teacher.firstName} ${teacher.lastName}`,
+      department: deptStr,
+      phone: teacher.phone,
+      qualification: teacher.qualification,
+      experience: teacher.experience,
+      status: (teacher.status === 'ACTIVE' ? 'Active' : 'Inactive') as 'Active' | 'Inactive' | 'On Leave',
+      classes: classCount,
+      subjects: subjList,
+      email: teacher.email || '',
+    };
+  });
 
   return (
     <ModernDashboardLayout
@@ -291,7 +329,7 @@ export default function TeacherListPage() {
                   <span className="text-sm text-slate-600 font-medium">Active filters:</span>
                   {searchQuery && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                      Search: "{searchQuery}"
+                      Search: &quot;{searchQuery}&rdquo;
                       <button
                         onClick={() => setSearchQuery("")}
                         className="ml-2 hover:text-orange-900"
@@ -354,16 +392,32 @@ export default function TeacherListPage() {
                 >
                   <GraduationCap className="h-6 w-6 text-orange-600" />
                 </motion.div>
-                Teachers ({filteredTeachers.length})
+                Teachers ({displayTeachers.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {filteredTeachers.map((teacher, index) => (
+                {loading && (
+                  <DataLoading message="Loading teachers..." />
+                )}
+                
+                {error && (
+                  <div className="text-center py-12">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Error loading teachers</h3>
+                    <p className="text-slate-600 mb-4">{error}</p>
+                    <Button onClick={fetchTeachers} className="bg-orange-600 hover:bg-orange-700">
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {!loading && !error && displayTeachers.map((teacher, index) => (
                   <TeacherCard
                     key={teacher.id}
                     teacher={teacher}
                     index={index}
+                    onView={handleView}
                     onEdit={(id) =>
                       handleNavigation(`/dashboard/edit-teacher/${id}`)
                     }
@@ -371,7 +425,7 @@ export default function TeacherListPage() {
                   />
                 ))}
 
-                {filteredTeachers.length === 0 && (
+                {!loading && !error && displayTeachers.length === 0 && (
                   <div className="text-center py-12">
                     <GraduationCap className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -398,6 +452,15 @@ export default function TeacherListPage() {
           </Card>
         </motion.div>
       </PageContainer>
+
+      {/* View Teacher Dialog */}
+      {viewTeacherId && (
+        <ViewTeacherDialog
+          teacherId={viewTeacherId}
+          open={viewDialogOpen}
+          onOpenChange={setViewDialogOpen}
+        />
+      )}
     </ModernDashboardLayout>
   );
 }

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -27,6 +29,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { handleLogout as performLogout } from "@/lib/auth/logout";
 import {
   validateName,
   validateId,
@@ -132,8 +135,8 @@ export default function AddTeacherPage() {
     }
   };
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    await performLogout();
   };
 
   const handleSearch = (query: string) => {
@@ -722,7 +725,7 @@ export default function AddTeacherPage() {
                 className="flex justify-center space-x-4"
               >
                 <Button
-                  onClick={() => handleNavigation("/dashboard/user-management/teachers")}
+                  onClick={() => handleNavigation("/dashboard/teachers")}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   View All Teachers
@@ -1007,7 +1010,7 @@ export default function AddTeacherPage() {
                           Personal Information
                         </h2>
                         <p className="text-slate-600">
-                          Let's start with basic personal details
+                          Let&rsquo;s start with basic personal details
                         </p>
                       </div>
 

@@ -5,10 +5,11 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Phone, Edit, Trash2 } from "lucide-react";
+import { GraduationCap, Phone, Edit, Trash2, Eye } from "lucide-react";
 
 interface Teacher {
-  id: string;
+  id: string; // Database UUID
+  teacherId?: string; // Custom teacher ID for display
   name: string;
   email: string;
   department: string;
@@ -23,11 +24,12 @@ interface Teacher {
 interface TeacherCardProps {
   teacher: Teacher;
   index: number;
+  onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export function TeacherCard({ teacher, index, onEdit, onDelete }: TeacherCardProps) {
+export function TeacherCard({ teacher, index, onView, onEdit, onDelete }: TeacherCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -46,7 +48,7 @@ export function TeacherCard({ teacher, index, onEdit, onDelete }: TeacherCardPro
                   {teacher.name}
                 </h3>
                 <p className="text-sm text-slate-500">
-                  {teacher.id}
+                  {teacher.teacherId || teacher.id}
                 </p>
               </div>
               <Badge
@@ -120,6 +122,15 @@ export function TeacherCard({ teacher, index, onEdit, onDelete }: TeacherCardPro
           </div>
 
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              onClick={() => onView?.(teacher.id)}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              View
+            </Button>
             <Button
               variant="outline"
               size="sm"
