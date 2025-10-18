@@ -129,7 +129,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
           },
           {
             label: "Schedule Builder",
-            href: "/classes/schedule-builder",
+            href: "/dashboard/schedule",
             icon: Calendar,
           },
           {

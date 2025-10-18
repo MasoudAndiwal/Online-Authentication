@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 // Using CDN fonts as fallback for Turbopack compatibility
 // const inter = Inter({
@@ -38,6 +39,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans antialiased">
+        <Toaster position="top-right" richColors expand={false} />
         <div id="root">{children}</div>
       </body>
     </html>

@@ -40,7 +40,6 @@ import {
 } from "@/lib/utils/validation";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
-import { DataLoading } from "@/components/ui/universal-loading";
 
 // Sample user data
 const sampleUser = {
@@ -435,7 +434,27 @@ export default function EditStudentPage() {
 
   // Show loading state
   if (loading) {
-    return <DataLoading message="Loading student information..." />;
+    return (
+      <ModernDashboardLayout
+        user={sampleUser}
+        title="Edit Student"
+        subtitle="Loading student information..."
+        currentPath={currentPath}
+        onNavigate={handleNavigation}
+        onLogout={handleLogout}
+        onSearch={handleSearch}
+        hideSearch={true}
+      >
+        <PageContainer>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent mb-4"></div>
+              <p className="text-slate-600 text-lg">Loading student information...</p>
+            </div>
+          </div>
+        </PageContainer>
+      </ModernDashboardLayout>
+    );
   }
 
   // Show error state

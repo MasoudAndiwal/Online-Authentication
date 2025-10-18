@@ -11,7 +11,7 @@ import {
 } from "@/components/layout/modern-dashboard-layout";
 import { handleLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthLoading } from "@/components/ui/universal-loading";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import {
   ModernCard,
   ModernCardHeader,
@@ -63,7 +63,7 @@ export default function OfficeDashboardPage() {
 
   // Show loading state while checking authentication
   if (isLoading) {
-    return <AuthLoading />;
+    return <AuthLoadingScreen />;
   }
 
   const handleNavigation = (href: string) => {

@@ -26,7 +26,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
-import { DataLoading } from "@/components/ui/universal-loading";
 import {
   validateName,
   validateId,
@@ -656,7 +655,27 @@ export default function EditTeacherPage() {
 
   // Show loading state
   if (loading) {
-    return <DataLoading message="Loading teacher information..." />;
+    return (
+      <ModernDashboardLayout
+        user={sampleUser}
+        title="Edit Teacher"
+        subtitle="Loading teacher information..."
+        currentPath={currentPath}
+        onNavigate={handleNavigation}
+        onLogout={handleLogout}
+        onSearch={handleSearch}
+        hideSearch={true}
+      >
+        <PageContainer>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent mb-4"></div>
+              <p className="text-slate-600 text-lg">Loading teacher information...</p>
+            </div>
+          </div>
+        </PageContainer>
+      </ModernDashboardLayout>
+    );
   }
 
   // Show error state

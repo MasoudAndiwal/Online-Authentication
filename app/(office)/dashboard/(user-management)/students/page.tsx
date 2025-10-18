@@ -29,7 +29,6 @@ import {
 import { CustomSelect } from "@/components/ui/custom-select";
 import { ViewStudentDialog } from "@/components/shared/view-student-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
-import { DataLoading } from "@/components/ui/universal-loading";
 
 // Sample user data
 const sampleUser = {
@@ -381,7 +380,10 @@ export default function StudentListPage() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 {loading && (
-                  <DataLoading message="Loading students..." />
+                  <div className="text-center py-12">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"></div>
+                    <p className="mt-4 text-slate-600">Loading students...</p>
+                  </div>
                 )}
                 
                 {error && (

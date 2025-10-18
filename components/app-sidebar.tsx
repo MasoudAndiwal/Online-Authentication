@@ -431,7 +431,7 @@ const getNavigationItems = (role: UserProfile["role"]): NavigationItem[] => {
           },
           {
             label: "Schedule Builder",
-            href: "/classes/schedule-builder",
+            href: "/dashboard/schedule",
             icon: ModernCleanIcons.calendar,
           },
           {
