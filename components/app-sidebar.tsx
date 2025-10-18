@@ -426,7 +426,7 @@ const getNavigationItems = (role: UserProfile["role"]): NavigationItem[] => {
         children: [
           {
             label: "All Classes",
-            href: "/classes/all-classes",
+            href: "/dashboard/all-classes",
             icon: ModernCleanIcons.project,
           },
           {

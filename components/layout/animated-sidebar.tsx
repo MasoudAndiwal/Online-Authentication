@@ -124,7 +124,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         children: [
           {
             label: "All Classes",
-            href: "/classes/all-classes",
+            href: "/dashboard/all-classes",
             icon: BookOpen,
           },
           {

@@ -77,7 +77,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: '/classes',
         icon: Calendar,
         children: [
-          { label: 'All Classes', href: '/classes/all-classes', icon: BookOpen },
+          { label: 'All Classes', href: '/dashboard/all-classes', icon: BookOpen },
           { label: 'Schedule Builder', href: '/dashboard/schedule', icon: Calendar },
           { label: 'Class Management', href: '/classes/management', icon: Settings }
         ]
