@@ -21,8 +21,8 @@ export function ClassListItem({ classData, isSelected, onClick }: ClassListItemP
       variant="ghost"
       onClick={onClick}
       className={cn(
-        "w-full justify-start h-auto p-4 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200 rounded-xl border-2 border-transparent",
-        isSelected && "bg-gradient-to-r from-purple-100 to-blue-100 border-purple-400 shadow-md hover:from-purple-100 hover:to-blue-100"
+        "w-full justify-start h-auto p-4 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 transition-all duration-200 rounded-xl border-0",
+        isSelected && "bg-gradient-to-r from-orange-100 to-amber-100 shadow-md hover:from-orange-100 hover:to-amber-100"
       )}
     >
       <div className="flex items-center gap-3 w-full">

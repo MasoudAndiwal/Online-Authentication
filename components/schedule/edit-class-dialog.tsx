@@ -60,7 +60,7 @@ export function EditClassDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 py-6">
+          <div className="grid gap-4 py-6">
             <div className="grid gap-2">
               <Label htmlFor="className" className="text-slate-700 font-semibold">
                 Class Name
@@ -76,15 +76,6 @@ export function EditClassDialog({
               />
               <p className="text-xs text-slate-500">
                 Current name: <span className="font-semibold">{currentClassName}</span>
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-200 shadow-sm">
-              <p className="text-sm text-orange-900 font-bold mb-2">
-                ℹ️ Note:
-              </p>
-              <p className="text-xs text-orange-800">
-                Changing the class name will update it everywhere in the system, but all schedule entries will remain unchanged.
               </p>
             </div>
           </div>

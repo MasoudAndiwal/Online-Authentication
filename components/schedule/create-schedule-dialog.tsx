@@ -45,7 +45,7 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+        <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 py-6">
           <Plus className="h-4 w-4 mr-2" />
           Create Schedule
         </Button>
@@ -59,9 +59,6 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
               </div>
               <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Create New Class Schedule</DialogTitle>
             </div>
-            <DialogDescription className="text-slate-600">
-              Add a new class and create its schedule. Each class can have separate morning and afternoon sessions.
-            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-6 py-6">
@@ -69,15 +66,12 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
               <Label htmlFor="className" className="text-slate-700 font-semibold">Class Name</Label>
               <Input
                 id="className"
-                placeholder="e.g., Class A, Class B, Class C..."
+                placeholder="e.g., database semister 4"
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
                 className="h-11 border-slate-300 focus:border-purple-400 focus:ring-purple-400"
                 required
               />
-              <p className="text-xs text-slate-500">
-                Enter the name of the class (not the major name)
-              </p>
             </div>
 
             <div className="grid gap-2">
@@ -88,27 +82,13 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
                 className="h-11 border-slate-300 focus:border-purple-400"
               >
                 <option value="MORNING">
-                  ☀️ Morning (08:00 - 12:00)
+                   Morning (08:00 - 12:00)
                 </option>
                 <option value="AFTERNOON">
-                  🌙 Afternoon (13:00 - 17:00)
+                   Afternoon (13:00 - 17:00)
                 </option>
               </CustomSelect>
-              <p className="text-xs text-slate-500">
-                Select whether this is a morning or afternoon class
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-xl border border-purple-200 shadow-sm">
-              <p className="text-sm text-purple-900 font-bold mb-2 flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                What happens next:
-              </p>
-              <ul className="text-xs text-purple-800 space-y-1.5 ml-1">
-                <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <span>A new empty schedule will be created for this class</span></li>
-                <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <span>You can then add teachers and subjects to each day</span></li>
-                <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <span>Each class has its own unique schedule</span></li>
-              </ul>
+             
             </div>
           </div>
 

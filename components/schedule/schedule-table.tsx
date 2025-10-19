@@ -46,7 +46,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
 
   if (!classData) {
     return (
-      <Card className="rounded-2xl shadow-sm border-slate-200">
+      <Card className="rounded-2xl shadow-sm border-0">
         <CardContent className="p-12 text-center">
           <Calendar className="h-16 w-16 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -61,11 +61,11 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
   }
 
   return (
-    <Card className="rounded-2xl shadow-lg border-slate-200 bg-white overflow-hidden">
-      <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-purple-50 via-white to-blue-50">
+    <Card className="rounded-2xl shadow-lg border-0 bg-white overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-orange-50 via-white to-amber-50">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg">
               <Calendar className="h-5 w-5 text-white" />
             </div>
             {classData.name} Schedule
@@ -84,7 +84,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                 variant="outline"
                 size="sm"
                 onClick={onEditClass}
-                className="h-9 px-4 border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm transition-all duration-200"
+                className="h-9 px-4 border-0 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm transition-all duration-200"
               >
                 <Edit className="h-3.5 w-3.5 mr-1.5" />
                 Edit Class
@@ -95,7 +95,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                 variant="outline"
                 size="sm"
                 onClick={onDeleteClass}
-                className="h-9 px-4 border-red-300 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-400 shadow-sm transition-all duration-200"
+                className="h-9 px-4 border-0 bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 shadow-sm transition-all duration-200"
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                 Delete Class
@@ -143,7 +143,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                       variant="outline"
                       size="sm"
                       onClick={() => onAddEntry(day.key)}
-                      className="ml-auto text-xs h-8 px-3 border-orange-300 text-orange-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:border-orange-400 shadow-sm transition-all duration-200"
+                      className="ml-auto text-xs h-8 px-3 border-0 bg-orange-50 text-orange-700 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 shadow-sm transition-all duration-200"
                     >
                       <Plus className="h-3.5 w-3.5 mr-1" />
                       Add Class
@@ -191,7 +191,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                               variant="outline"
                               size="sm"
                               onClick={() => onEdit(entry)}
-                              className="h-9 px-3 sm:px-4 flex-1 sm:flex-none bg-white hover:bg-orange-50 border-orange-300 text-orange-700 hover:border-orange-400 shadow-sm transition-all duration-200"
+                              className="h-9 px-3 sm:px-4 flex-1 sm:flex-none border-0 bg-orange-50 hover:bg-orange-100 text-orange-700 shadow-sm transition-all duration-200"
                             >
                               <Edit className="h-3.5 w-3.5 mr-1.5" />
                               Edit
@@ -202,7 +202,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                               variant="outline"
                               size="sm"
                               onClick={() => onDelete(entry.id)}
-                              className="h-9 px-3 sm:px-4 flex-1 sm:flex-none bg-white hover:bg-red-50 border-red-300 text-red-600 hover:text-red-700 hover:border-red-400 shadow-sm transition-all duration-200"
+                              className="h-9 px-3 sm:px-4 flex-1 sm:flex-none border-0 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 shadow-sm transition-all duration-200"
                             >
                               <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                               Delete

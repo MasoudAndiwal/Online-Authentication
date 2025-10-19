@@ -1,5 +1,6 @@
 import supabase from "@/lib/supabase";
 import { Class, ScheduleEntry } from "@/lib/data/schedule-data";
+import { doTimeSlotsOverlap } from "@/lib/data/teaching-times";
 
 // ================================================
 // Schedule API Functions
@@ -43,6 +44,7 @@ export async function fetchClasses(): Promise<Class[]> {
       }
       entriesByClass[entry.class_id].push({
         id: entry.id,
+        teacherId: entry.teacher_id,
         teacherName: entry.teacher_name,
         subject: entry.subject,
         hours: entry.hours,
@@ -145,10 +147,25 @@ export async function createScheduleEntry(
   data: Omit<ScheduleEntry, "id">
 ): Promise<ScheduleEntry> {
   try {
+    // Check for teacher conflict if teacherId is provided
+    if (data.teacherId) {
+      const conflict = await checkTeacherConflict(
+        data.teacherId,
+        data.dayOfWeek,
+        data.startTime,
+        data.endTime
+      );
+
+      if (conflict.hasConflict) {
+        throw new Error(`Schedule Conflict: ${conflict.conflictDetails}`);
+      }
+    }
+
     const { data: newEntry, error } = await supabase
       .from("schedule_entries")
       .insert({
         class_id: classId,
+        teacher_id: data.teacherId,
         teacher_name: data.teacherName,
         subject: data.subject,
         hours: data.hours,
@@ -163,6 +180,7 @@ export async function createScheduleEntry(
 
     return {
       id: newEntry.id,
+      teacherId: newEntry.teacher_id,
       teacherName: newEntry.teacher_name,
       subject: newEntry.subject,
       hours: newEntry.hours,
@@ -184,9 +202,25 @@ export async function updateScheduleEntry(
   data: Omit<ScheduleEntry, "id">
 ): Promise<void> {
   try {
+    // Check for teacher conflict if teacherId is provided
+    if (data.teacherId) {
+      const conflict = await checkTeacherConflict(
+        data.teacherId,
+        data.dayOfWeek,
+        data.startTime,
+        data.endTime,
+        entryId // Exclude current entry from conflict check
+      );
+
+      if (conflict.hasConflict) {
+        throw new Error(`Schedule Conflict: ${conflict.conflictDetails}`);
+      }
+    }
+
     const { error } = await supabase
       .from("schedule_entries")
       .update({
+        teacher_id: data.teacherId,
         teacher_name: data.teacherName,
         subject: data.subject,
         hours: data.hours,
@@ -247,6 +281,87 @@ export async function getScheduleStats() {
     };
   } catch (error) {
     console.error("Error fetching stats:", error);
+    throw error;
+  }
+}
+
+// ================================================
+// Teacher Functions
+// ================================================
+
+/**
+ * Fetch all teachers
+ */
+export async function fetchTeachers() {
+  try {
+    const { data, error } = await supabase
+      .from("teachers")
+      .select("id, first_name, last_name, subjects")
+      .eq("status", "ACTIVE")
+      .order("first_name", { ascending: true });
+
+    if (error) throw error;
+    
+    // Transform data to include full name
+    const teachers = data?.map(teacher => ({
+      id: teacher.id,
+      name: `${teacher.first_name} ${teacher.last_name}`,
+      subjects: teacher.subjects || []
+    })) || [];
+    
+    return teachers;
+  } catch (error) {
+    console.error("Error fetching teachers:", error);
+    throw error;
+  }
+}
+
+/**
+ * Check if teacher has conflicting schedule
+ * Returns true if conflict exists
+ */
+export async function checkTeacherConflict(
+  teacherId: string,
+  dayOfWeek: string,
+  startTime: string,
+  endTime: string,
+  excludeEntryId?: string
+): Promise<{ hasConflict: boolean; conflictDetails?: string }> {
+  try {
+    // Fetch all schedule entries for this teacher on the same day
+    const { data: entries, error } = await supabase
+      .from("schedule_entries")
+      .select("*, classes(name, session)")
+      .eq("teacher_id", teacherId)
+      .eq("day_of_week", dayOfWeek);
+
+    if (error) throw error;
+
+    if (!entries || entries.length === 0) {
+      return { hasConflict: false };
+    }
+
+    // Check for time conflicts
+    for (const entry of entries) {
+      // Skip if this is the entry we're editing
+      if (excludeEntryId && entry.id === excludeEntryId) {
+        continue;
+      }
+
+      // Check if times overlap
+      if (doTimeSlotsOverlap(startTime, endTime, entry.start_time, entry.end_time)) {
+        const className = entry.classes?.name || "Unknown Class";
+        const session = entry.classes?.session || "Unknown Session";
+        return {
+          hasConflict: true,
+          conflictDetails: `Teacher already teaching in ${className} (${session}) from ${entry.start_time} to ${entry.end_time}`,
+        };
+      }
+    }
+
+    return { hasConflict: false };
+  } catch (error) {
+    console.error("Error checking teacher conflict:", error);
     throw error;
   }
 }

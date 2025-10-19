@@ -90,6 +90,7 @@ export default function SchedulePage() {
       setSelectedClassId(newClass.id);
       toast.success(`Class "${data.className}" created successfully!`, {
         description: "You can now add schedule entries to this class.",
+        className: "bg-green-50 border-green-200 text-green-900",
       });
     } catch (error) {
       console.error("Error creating class:", error);
@@ -127,6 +128,7 @@ export default function SchedulePage() {
       }));
       toast.success("Schedule entry deleted", {
         description: "The entry has been removed from the schedule.",
+        className: "bg-red-50 border-red-200 text-red-900",
       });
     } catch (error) {
       console.error("Error deleting entry:", error);
@@ -137,7 +139,12 @@ export default function SchedulePage() {
   };
 
   const handleSaveEntry = async (entry: Omit<ScheduleEntry, "id">) => {
-    if (!selectedClassId) return;
+    if (!selectedClassId) {
+      toast.error("No class selected", {
+        description: "Please select a class first.",
+      });
+      return;
+    }
 
     try {
       if (editingEntry) {
@@ -156,6 +163,7 @@ export default function SchedulePage() {
         }));
         toast.success("Schedule entry updated", {
           description: "Changes have been saved successfully.",
+          className: "bg-green-50 border-green-200 text-green-900",
         });
       } else {
         // Add new entry
@@ -170,14 +178,41 @@ export default function SchedulePage() {
           return cls;
         }));
         toast.success("Schedule entry added", {
-          description: "New entry has been added to the schedule.",
+          description: `${entry.teacherName} assigned to teach ${entry.subject} on ${entry.dayOfWeek}.`,
+          className: "bg-green-50 border-green-200 text-green-900",
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving entry:", error);
-      toast.error("Failed to save entry", {
-        description: "Please check your input and try again.",
-      });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
+      // Check for specific error types
+      if (errorMessage.includes("Schedule Conflict")) {
+        toast.error("Teacher Schedule Conflict", {
+          description: errorMessage.replace("Schedule Conflict: ", ""),
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("exceed")) {
+        toast.error("Hours Limit Exceeded", {
+          description: errorMessage,
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+        toast.error("Network Error", {
+          description: "Unable to connect to the server. Please check your internet connection.",
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("duplicate") || errorMessage.includes("unique")) {
+        toast.error("Duplicate Entry", {
+          description: "This schedule entry already exists.",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Failed to save entry", {
+          description: errorMessage || "Please check your input and try again.",
+          duration: 5000,
+        });
+      }
     }
   };
 
@@ -196,6 +231,7 @@ export default function SchedulePage() {
       ));
       toast.success("Class name updated", {
         description: `Class renamed to "${newName}".`,
+        className: "bg-green-50 border-green-200 text-green-900",
       });
     } catch (error) {
       console.error("Error updating class:", error);
@@ -215,6 +251,7 @@ export default function SchedulePage() {
       setSelectedClassId(null);
       toast.success("Class deleted", {
         description: "The class and all its entries have been removed.",
+        className: "bg-red-50 border-red-200 text-red-900",
       });
     } catch (error) {
       console.error("Error deleting class:", error);
@@ -258,25 +295,25 @@ export default function SchedulePage() {
       <PageContainer>
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="rounded-2xl shadow-lg border-purple-200 bg-gradient-to-br from-purple-50 via-purple-100 to-blue-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-purple-600 mb-2 uppercase tracking-wide">
+                  <p className="text-sm font-semibold text-orange-600 mb-2 uppercase tracking-wide">
                     Total Classes
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                     {totalScheduleEntries}
                   </p>
                 </div>
-                <div className="p-3.5 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl shadow-lg">
+                <div className="p-3.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg">
                   <Calendar className="h-7 w-7 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-amber-200 bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -294,7 +331,7 @@ export default function SchedulePage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-indigo-200 bg-gradient-to-br from-indigo-50 via-indigo-100 to-purple-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-indigo-50 via-indigo-100 to-purple-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -315,9 +352,9 @@ export default function SchedulePage() {
 
         {/* Loading State */}
         {loading && (
-          <Card className="rounded-2xl shadow-sm border-slate-200 mb-6">
+          <Card className="rounded-2xl shadow-sm border-0 mb-6">
             <CardContent className="p-12 text-center">
-              <Loader2 className="h-12 w-12 text-purple-600 mx-auto mb-4 animate-spin" />
+              <Loader2 className="h-12 w-12 text-orange-600 mx-auto mb-4 animate-spin" />
               <p className="text-slate-600">Loading classes...</p>
             </CardContent>
           </Card>
@@ -325,7 +362,7 @@ export default function SchedulePage() {
 
         {/* Search and Filter Bar */}
         {!loading && (
-        <Card className="rounded-2xl shadow-sm border-slate-200 mb-6">
+        <Card className="rounded-2xl shadow-sm border border-slate-200 mb-6">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
@@ -334,7 +371,7 @@ export default function SchedulePage() {
                   placeholder="Search classes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 border-slate-200"
+                  className="pl-10 h-11 border-0 bg-slate-50"
                 />
               </div>
 
@@ -343,7 +380,7 @@ export default function SchedulePage() {
                 <CustomSelect
                   value={sessionFilter}
                   onValueChange={(value) => setSessionFilter(value as TimeSession)}
-                  className="pl-10 h-11 border-slate-200"
+                  className="pl-10 h-11 border-0 bg-slate-50"
                 >
                   <option value="ALL">All Sessions</option>
                   <option value="MORNING">Morning</option>
@@ -362,7 +399,7 @@ export default function SchedulePage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Class List - Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="rounded-2xl shadow-sm border-slate-200">
+            <Card className="rounded-2xl shadow-sm border-0">
               <CardContent className="p-4">
                 <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -410,6 +447,9 @@ export default function SchedulePage() {
           onSave={handleSaveEntry}
           editEntry={editingEntry}
           defaultDay={defaultDay}
+          classSession={selectedClass?.session as "MORNING" | "AFTERNOON" || "MORNING"}
+          classId={selectedClass?.id}
+          existingEntries={selectedClass?.schedule || []}
         />
 
         {/* Edit Class Name Dialog */}

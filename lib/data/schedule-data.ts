@@ -4,6 +4,7 @@ export type TimeSession = "MORNING" | "AFTERNOON" | "ALL";
 // Individual schedule entry for a class
 export interface ScheduleEntry {
   id: string;
+  teacherId?: string; // Foreign key to teacher table
   teacherName: string;
   subject: string;
   hours: number;
