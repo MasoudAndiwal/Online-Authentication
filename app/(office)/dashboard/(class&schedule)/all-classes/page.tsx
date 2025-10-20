@@ -7,13 +7,14 @@ import {
   PageContainer,
 } from "@/components/layout/modern-dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { CreateClassDialog } from "@/components/classes/create-class-dialog";
+import { EditClassDialog } from "@/components/classes/edit-class-dialog";
 import { ClassCard } from "@/components/classes/class-card";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { toast } from "sonner";
 import { 
   Search, 
   Plus, 
@@ -22,8 +23,6 @@ import {
   Moon, 
   Users,
   Filter,
-  TrendingUp,
-  Calendar,
   BookOpen
 } from "lucide-react";
 
@@ -80,6 +79,8 @@ export default function AllClassesPage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sessionFilter, setSessionFilter] = React.useState<"ALL" | "MORNING" | "AFTERNOON">("ALL");
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [selectedClass, setSelectedClass] = React.useState<typeof sampleClasses[0] | null>(null);
   const [classes, setClasses] = React.useState(sampleClasses);
 
   const handleSearch = (query: string) => {
@@ -95,7 +96,12 @@ export default function AllClassesPage() {
     router.push("/login");
   };
 
-  const handleCreateClass = (data: { name: string; session: "MORNING" | "AFTERNOON" }) => {
+  const handleCreateClass = (data: { 
+    name: string; 
+    session: "MORNING" | "AFTERNOON";
+    major: string;
+    semester: number;
+  }) => {
     // TODO: Add backend logic later
     const newClass = {
       id: String(classes.length + 1),
@@ -103,10 +109,67 @@ export default function AllClassesPage() {
       session: data.session,
       studentCount: 0,
       scheduleCount: 0,
-      major: "Not Assigned",
-      semester: 1,
+      major: data.major,
+      semester: data.semester,
     };
     setClasses([...classes, newClass]);
+    toast.success("Class created successfully!", {
+      description: `${data.name} has been added to the system.`,
+      className: "bg-green-50 border-green-200 text-green-900",
+    });
+  };
+
+  const handleEditClass = (id: string) => {
+    const classToEdit = classes.find(c => c.id === id);
+    if (classToEdit) {
+      setSelectedClass(classToEdit);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleSaveClass = (data: {
+    name: string;
+    session: "MORNING" | "AFTERNOON";
+    major: string;
+    semester: number;
+  }) => {
+    if (!selectedClass) return;
+    
+    setClasses(classes.map(cls => 
+      cls.id === selectedClass.id 
+        ? { ...cls, ...data }
+        : cls
+    ));
+    
+    toast.success("Class updated successfully!", {
+      description: `Changes to ${data.name} have been saved.`,
+      className: "bg-green-50 border-green-200 text-green-900",
+    });
+  };
+
+  const handleDeleteClass = (id: string) => {
+    const classToDelete = classes.find(c => c.id === id);
+    if (!classToDelete) return;
+    
+    toast.error(`Delete ${classToDelete.name}?`, {
+      description: 'This action cannot be undone.',
+      position: 'bottom-center',
+      className: 'bg-red-100 border-red-200 text-red-900',
+      action: {
+        label: 'Delete',
+        onClick: () => {
+          setClasses(classes.filter(cls => cls.id !== id));
+          toast.success('Class deleted', {
+            description: `${classToDelete.name} has been removed from the system.`,
+            className: 'bg-green-50 border-green-200 text-green-900',
+          });
+        }
+      },
+      cancel: {
+        label: 'Cancel',
+        onClick: () => {}
+      }
+    });
   };
 
   // Filter classes based on search and session
@@ -263,7 +326,11 @@ export default function AllClassesPage() {
                 className="animate-in slide-in-from-bottom-4 duration-500"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <ClassCard classData={classData} />
+                <ClassCard 
+                  classData={classData}
+                  onEdit={handleEditClass}
+                  onDelete={handleDeleteClass}
+                />
               </div>
             ))}
           </div>
@@ -294,11 +361,18 @@ export default function AllClassesPage() {
           </Card>
         )}
 
-        {/* Create Class Dialog */}
+        {/* Dialogs */}
         <CreateClassDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
           onCreateClass={handleCreateClass}
+        />
+        
+        <EditClassDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          classData={selectedClass}
+          onSaveClass={handleSaveClass}
         />
       </PageContainer>
     </ModernDashboardLayout>

@@ -371,7 +371,7 @@ export default function SchedulePage() {
                   placeholder="Search classes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 border-0 bg-slate-50"
+                  className="pl-10 h-11 border border-slate-900 bg-slate-50 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
 

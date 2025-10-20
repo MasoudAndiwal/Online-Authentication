@@ -21,6 +21,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -669,7 +670,7 @@ export default function EditTeacherPage() {
         <PageContainer>
           <div className="min-h-[60vh] flex items-center justify-center">
             <div className="text-center">
-              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent mb-4"></div>
+              <Loader2 className="h-12 w-12 text-orange-600 mx-auto mb-4 animate-spin" />
               <p className="text-slate-600 text-lg">Loading teacher information...</p>
             </div>
           </div>

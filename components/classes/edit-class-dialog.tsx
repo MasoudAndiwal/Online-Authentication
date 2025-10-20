@@ -13,64 +13,94 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { Plus, GraduationCap } from "lucide-react";
+import { Save, GraduationCap } from "lucide-react";
 
-interface CreateClassDialogProps {
+interface EditClassDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateClass: (data: { 
-    name: string; 
+  classData: {
+    id: string;
+    name: string;
+    session: "MORNING" | "AFTERNOON";
+    major: string;
+    semester: number;
+  } | null;
+  onSaveClass: (data: {
+    name: string;
     session: "MORNING" | "AFTERNOON";
     major: string;
     semester: number;
   }) => void;
 }
 
-export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateClassDialogProps) {
+export function EditClassDialog({ 
+  open, 
+  onOpenChange, 
+  classData,
+  onSaveClass 
+}: EditClassDialogProps) {
   const [className, setClassName] = React.useState("");
   const [session, setSession] = React.useState<"MORNING" | "AFTERNOON">("MORNING");
   const [major, setMajor] = React.useState("");
-  const [semester, setSemester] = React.useState("");
+  const [semester, setSemester] = React.useState<number>(1);
+
+  // Update form when classData changes
+  React.useEffect(() => {
+    if (classData) {
+      setClassName(classData.name);
+      setSession(classData.session);
+      setMajor(classData.major);
+      setSemester(classData.semester);
+    }
+  }, [classData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!className.trim() || !major.trim() || !semester.trim()) return;
+    if (!className.trim() || !major.trim()) return;
 
-    onCreateClass({
+    onSaveClass({
       name: className.trim(),
       session,
       major: major.trim(),
-      semester: parseInt(semester),
+      semester,
     });
 
-    // Reset form
-    setClassName("");
-    setSession("MORNING");
-    setMajor("");
-    setSemester("");
     onOpenChange(false);
   };
 
+  const handleCancel = () => {
+    // Reset to original values
+    if (classData) {
+      setClassName(classData.name);
+      setSession(classData.session);
+      setMajor(classData.major);
+      setSemester(classData.semester);
+    }
+    onOpenChange(false);
+  };
+
+  if (!classData) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] border-orange-200">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="pb-2">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden p-0">
+        <form onSubmit={handleSubmit} className="flex flex-col max-h-[90vh] h-full">
+          <DialogHeader className="pb-2 px-6 pt-6 flex-shrink-0">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2.5 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl shadow-md">
                 <GraduationCap className="h-6 w-6 text-orange-600" />
               </div>
               <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                Create New Class
+                Edit Class
               </DialogTitle>
             </div>
             <DialogDescription className="text-slate-600 text-base">
-              Add a new class to the system. Students will be assigned to this class later.
+              Update class information. Changes will be applied immediately.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-5 py-6">
-            {/* Class Name Input */}
+          <div className="grid gap-5 py-6 px-6 overflow-y-auto flex-1 min-h-0">
+            {/* Class Name */}
             <div className="grid gap-2">
               <Label htmlFor="className" className="text-slate-700 font-semibold flex items-center gap-2">
                 <span>Class Name</span>
@@ -78,16 +108,15 @@ export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateC
               </Label>
               <Input
                 id="className"
-                placeholder="e.g., Class A, Class B, Class 1, Class 2..."
+                placeholder="e.g., Class A, Class B..."
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
                 className="h-12 border-slate-300 focus:border-orange-400 focus:ring-orange-400 text-base"
                 required
-                autoFocus
               />
             </div>
 
-            {/* Program/Major Input */}
+            {/* Major/Program */}
             <div className="grid gap-2">
               <Label htmlFor="major" className="text-slate-700 font-semibold flex items-center gap-2">
                 <span>Program / Major</span>
@@ -103,7 +132,7 @@ export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateC
               />
             </div>
 
-            {/* Semester Input */}
+            {/* Semester */}
             <div className="grid gap-2">
               <Label htmlFor="semester" className="text-slate-700 font-semibold flex items-center gap-2">
                 <span>Semester</span>
@@ -114,7 +143,7 @@ export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateC
                 type="test"
                 placeholder="e.g.,Computer Science"
                 value={semester}
-                onChange={(e) => setSemester(e.target.value)}
+                onChange={(e) => setSemester(parseInt(e.target.value) || 1)}
                 className="h-12 border-slate-300 focus:border-orange-400 focus:ring-orange-400 text-base"
                 required
               />
@@ -131,7 +160,7 @@ export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateC
                 onValueChange={(value) => setSession(value as "MORNING" | "AFTERNOON")}
                 className="h-12 border-slate-300 focus:border-orange-400 text-base"
               >
-                <option value="MORNING">
+                 <option value="MORNING">
                    Morning (08:30 AM - 12:30 PM)
                 </option>
                 <option value="AFTERNOON">
@@ -141,11 +170,11 @@ export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateC
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 px-6 py-4 border-t bg-white flex-shrink-0">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleCancel}
               className="border-slate-300 hover:bg-slate-50"
             >
               Cancel
@@ -153,10 +182,10 @@ export function CreateClassDialog({ open, onOpenChange, onCreateClass }: CreateC
             <Button
               type="submit"
               className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md hover:shadow-lg transition-all duration-200"
-              disabled={!className.trim() || !major.trim() || !semester.trim()}
+              disabled={!className.trim() || !major.trim()}
             >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Create Class
+              <Save className="h-4 w-4 mr-1.5" />
+              Save Changes
             </Button>
           </DialogFooter>
         </form>

@@ -25,10 +25,12 @@ import {
   HeartPulse,
   Filter,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { ViewStudentDialog } from "@/components/shared/view-student-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { toast } from "sonner";
 
 // Sample user data
 const sampleUser = {
@@ -163,6 +165,55 @@ export default function StudentListPage() {
   const handleView = (id: string) => {
     setViewStudentId(id);
     setViewDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    // Find the student to show confirmation
+    const student = students.find(s => s.id === id);
+    if (!student) return;
+
+    // Show confirmation toast (destructive)
+    toast.error(
+      `Delete ${student.firstName} ${student.lastName}?`,
+      {
+        description: 'This action cannot be undone.',
+        position: 'bottom-center',
+        className: 'bg-red-100 border-red-200 text-red-900',
+        action: {
+          label: 'Delete',
+          onClick: async () => {
+            try {
+              const response = await fetch(`/api/students/${id}`, {
+                method: 'DELETE',
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to delete student');
+              }
+
+              // Remove student from local state
+              setStudents(students.filter(s => s.id !== id));
+              
+              // Show success message
+              toast.success('Student deleted successfully', {
+                description: `${student.firstName} ${student.lastName} has been removed.`,
+                className: 'bg-green-50 border-green-200 text-green-900',
+              });
+            } catch (err) {
+              console.error('Error deleting student:', err);
+              toast.error('Failed to delete student', {
+                description: 'Please try again later.',
+                className: 'bg-red-50 border-red-200 text-red-900',
+              });
+            }
+          },
+        },
+        cancel: {
+          label: 'Cancel',
+          onClick: () => {},
+        },
+      }
+    );
   };
 
   return (
@@ -381,8 +432,8 @@ export default function StudentListPage() {
               <div className="space-y-4">
                 {loading && (
                   <div className="text-center py-12">
-                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"></div>
-                    <p className="mt-4 text-slate-600">Loading students...</p>
+                    <Loader2 className="h-12 w-12 text-green-600 mx-auto mb-4 animate-spin" />
+                    <p className="text-slate-600">Loading students...</p>
                   </div>
                 )}
                 
@@ -471,6 +522,7 @@ export default function StudentListPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleDelete(student.id)}
                           className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
@@ -529,6 +581,7 @@ export default function StudentListPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleDelete(student.id)}
                             className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 transition-all duration-200 rounded-xl font-medium px-4"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -656,6 +709,7 @@ export default function StudentListPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleDelete(student.id)}
                             className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />

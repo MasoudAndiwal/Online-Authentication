@@ -82,10 +82,10 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
                 className="h-11 border-slate-300 focus:border-purple-400"
               >
                 <option value="MORNING">
-                   Morning (08:00 - 12:00)
+                   Morning (08:30 AM - 12:30 AM)
                 </option>
                 <option value="AFTERNOON">
-                   Afternoon (13:00 - 17:00)
+                   Afternoon (1:15 PM - 5:30 PM)
                 </option>
               </CustomSelect>
              

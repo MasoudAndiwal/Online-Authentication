@@ -8,13 +8,14 @@ import {
 } from "@/components/layout/modern-dashboard-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX, AlertCircle } from "lucide-react";
+import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX, AlertCircle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { motion } from "framer-motion";
 import { TeacherCard } from "@/components/shared/teacher-card";
 import { ViewTeacherDialog } from "@/components/shared/view-teacher-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { toast } from "sonner";
 
 // Sample user data
 const sampleUser = {
@@ -75,6 +76,55 @@ export default function TeacherListPage() {
   const handleView = (id: string) => {
     setViewTeacherId(id);
     setViewDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    // Find the teacher to show confirmation
+    const teacher = teachers.find(t => t.id === id);
+    if (!teacher) return;
+
+    // Show confirmation toast (destructive)
+    toast.error(
+      `Delete ${teacher.firstName} ${teacher.lastName}?`,
+      {
+        description: 'This action cannot be undone.',
+        position: 'bottom-center',
+        className: 'bg-red-100 border-red-200 text-red-900',
+        action: {
+          label: 'Delete',
+          onClick: async () => {
+            try {
+              const response = await fetch(`/api/teachers/${id}`, {
+                method: 'DELETE',
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to delete teacher');
+              }
+
+              // Remove teacher from local state
+              setTeachers(teachers.filter(t => t.id !== id));
+              
+              // Show success message
+              toast.success('Teacher deleted successfully', {
+                description: `${teacher.firstName} ${teacher.lastName} has been removed.`,
+                className: 'bg-green-50 border-green-200 text-green-900',
+              });
+            } catch (err) {
+              console.error('Error deleting teacher:', err);
+              toast.error('Failed to delete teacher', {
+                description: 'Please try again later.',
+                className: 'bg-red-50 border-red-200 text-red-900',
+              });
+            }
+          },
+        },
+        cancel: {
+          label: 'Cancel',
+          onClick: () => {},
+        },
+      }
+    );
   };
 
   // Fetch teachers from API
@@ -398,8 +448,8 @@ export default function TeacherListPage() {
               <div className="space-y-4">
                 {loading && (
                   <div className="text-center py-12">
-                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent"></div>
-                    <p className="mt-4 text-slate-600">Loading teachers...</p>
+                    <Loader2 className="h-12 w-12 text-orange-600 mx-auto mb-4 animate-spin" />
+                    <p className="text-slate-600">Loading teachers...</p>
                   </div>
                 )}
                 
@@ -423,7 +473,7 @@ export default function TeacherListPage() {
                     onEdit={(id) =>
                       handleNavigation(`/dashboard/edit-teacher/${id}`)
                     }
-                    onDelete={(id) => console.log("Delete teacher:", id)}
+                    onDelete={handleDelete}
                   />
                 ))}
 

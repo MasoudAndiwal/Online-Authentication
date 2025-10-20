@@ -9,12 +9,9 @@ import {
   Sun, 
   Moon, 
   Users, 
-  Calendar,
   BookOpen,
-  Eye,
   Edit,
-  Trash2,
-  TrendingUp
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,35 +25,35 @@ interface ClassCardProps {
     major: string;
     semester: number;
   };
-  onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export function ClassCard({ classData, onView, onEdit, onDelete }: ClassCardProps) {
+export function ClassCard({ classData, onEdit, onDelete }: ClassCardProps) {
   const SessionIcon = classData.session === "MORNING" ? Sun : Moon;
-  const sessionColor = classData.session === "MORNING"
-    ? "from-amber-500 to-orange-500"
-    : "from-indigo-500 to-blue-500";
   
-  const sessionBadgeColor = classData.session === "MORNING"
-    ? "bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border-amber-200"
-    : "bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700 border-indigo-200";
+  const iconBgColor = classData.session === "MORNING" 
+    ? "bg-orange-500" 
+    : "bg-indigo-500";
+  
+  const sessionBadgeStyle = classData.session === "MORNING"
+    ? "bg-orange-50 text-orange-700 border-orange-200"
+    : "bg-indigo-50 text-indigo-700 border-indigo-200";
 
   return (
-    <Card className="group rounded-2xl shadow-md border-orange-200 bg-gradient-to-br from-white via-orange-50/30 to-amber-50/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-      <CardContent className="p-6">
+    <Card className="rounded-2xl shadow-sm border-slate-200 bg-white hover:shadow-lg transition-all duration-200">
+      <CardContent className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "p-3 rounded-xl shadow-lg bg-gradient-to-br",
-              sessionColor
+              "p-3 rounded-xl",
+              iconBgColor
             )}>
-              <GraduationCap className="h-6 w-6 text-white" />
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900">
                 {classData.name}
               </h3>
               <p className="text-sm text-slate-600">{classData.major}</p>
@@ -64,35 +61,25 @@ export function ClassCard({ classData, onView, onEdit, onDelete }: ClassCardProp
           </div>
           <Badge 
             variant="outline" 
-            className={cn("font-semibold shadow-sm", sessionBadgeColor)}
+            className={cn("font-medium text-xs px-2.5 py-1", sessionBadgeStyle)}
           >
-            <SessionIcon className="h-3.5 w-3.5 mr-1" />
+            <SessionIcon className="h-3 w-3 mr-1" />
             {classData.session}
           </Badge>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="h-4 w-4 text-orange-600" />
-              <span className="text-xs font-semibold text-slate-600">Students</span>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{classData.studentCount}</p>
+        {/* Stats */}
+        <div className="bg-slate-50 rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Users className="h-4 w-4 text-orange-600" />
+            <span className="text-xs font-semibold text-slate-600">Students</span>
           </div>
-          
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <Calendar className="h-4 w-4 text-orange-600" />
-              <span className="text-xs font-semibold text-slate-600">Schedules</span>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{classData.scheduleCount}</p>
-          </div>
+          <p className="text-3xl font-bold text-slate-900">{classData.studentCount}</p>
         </div>
 
-        {/* Semester Badge */}
-        <div className="flex items-center gap-2 mb-5">
-          <div className="p-1.5 bg-gradient-to-br from-orange-100 to-amber-100 rounded-lg">
+        {/* Semester */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 bg-orange-100 rounded-lg">
             <BookOpen className="h-3.5 w-3.5 text-orange-600" />
           </div>
           <span className="text-sm text-slate-600">
@@ -101,25 +88,16 @@ export function ClassCard({ classData, onView, onEdit, onDelete }: ClassCardProp
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-4 border-t border-slate-200">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onView?.(classData.id)}
-            className="flex-1 h-9 border-orange-300 text-orange-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:border-orange-400 shadow-sm transition-all duration-200"
-          >
-            <Eye className="h-3.5 w-3.5 mr-1.5" />
-            View
-          </Button>
-          
+        <div className="flex gap-2 pt-4 border-t border-slate-100">
           {onEdit && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => onEdit(classData.id)}
-              className="h-9 px-3 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 shadow-sm transition-all duration-200"
+              className="flex-1 h-9 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
             >
-              <Edit className="h-3.5 w-3.5" />
+              <Edit className="h-3.5 w-3.5 mr-1.5" />
+              Edit
             </Button>
           )}
           
@@ -128,15 +106,13 @@ export function ClassCard({ classData, onView, onEdit, onDelete }: ClassCardProp
               variant="outline"
               size="sm"
               onClick={() => onDelete(classData.id)}
-              className="h-9 px-3 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm transition-all duration-200"
+              className="flex-1 h-9 border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-300"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+              Delete
             </Button>
           )}
         </div>
-
-        {/* Hover Effect Indicator */}
-        <div className="mt-3 h-1 w-0 group-hover:w-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-300" />
       </CardContent>
     </Card>
   );

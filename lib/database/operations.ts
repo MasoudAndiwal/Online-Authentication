@@ -587,3 +587,31 @@ export async function getAllTeachers(filters?: {
         return (data || []).map(transformTeacherFromDb)
     })
 }
+
+// Delete teacher by ID
+export async function deleteTeacher(id: string): Promise<void> {
+    return handleDatabaseOperation(async () => {
+        const { error } = await supabase
+            .from(TABLE_NAMES.TEACHERS)
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            throw error
+        }
+    })
+}
+
+// Delete student by ID
+export async function deleteStudent(id: string): Promise<void> {
+    return handleDatabaseOperation(async () => {
+        const { error } = await supabase
+            .from(TABLE_NAMES.STUDENTS)
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            throw error
+        }
+    })
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findTeacherById, updateTeacher } from '@/lib/database/operations';
+import { findTeacherById, updateTeacher, deleteTeacher } from '@/lib/database/operations';
+import type { Teacher } from '@/lib/database/models';
 import { DatabaseError, handleApiError } from '@/lib/database/errors';
 import { ZodError } from 'zod';
 import { hashPassword } from '@/lib/utils/password';
@@ -21,8 +22,9 @@ export async function GET(
       );
     }
 
-    // Remove password field
-    const { password, ...teacherWithoutPassword } = teacher;
+    // Remove password field and keep strong typing
+    const { password: _p, ...teacherWithoutPassword } = teacher as Teacher;
+    void _p;
 
     return NextResponse.json(teacherWithoutPassword, { status: 200 });
 
@@ -114,8 +116,9 @@ export async function PUT(
     console.log('Updating teacher with data:', JSON.stringify(updateData, null, 2));
     const updatedTeacher = await updateTeacher(id, updateData);
 
-    // Remove password field
-    const { password, ...teacherWithoutPassword } = updatedTeacher;
+    // Remove password field and keep strong typing
+    const { password: _p2, ...teacherWithoutPassword } = updatedTeacher as Teacher;
+    void _p2;
 
     return NextResponse.json(teacherWithoutPassword, { status: 200 });
 
@@ -169,4 +172,44 @@ export async function PATCH(
 ) {
   // PATCH is the same as PUT for partial updates
   return PUT(request, { params });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Check if teacher exists
+    const existingTeacher = await findTeacherById(id);
+    if (!existingTeacher) {
+      return NextResponse.json(
+        { error: 'Teacher not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete teacher
+    await deleteTeacher(id);
+
+    return NextResponse.json(
+      { message: 'Teacher deleted successfully' },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    // Handle database errors
+    if (error instanceof DatabaseError) {
+      const { response, status } = handleApiError(error);
+      return NextResponse.json(response, { status });
+    }
+
+    // Handle server errors (500)
+    console.error('Error deleting teacher:', error);
+    return NextResponse.json(
+      { error: 'An unexpected error occurred while deleting the teacher' },
+      { status: 500 }
+    );
+  }
 }
