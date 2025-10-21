@@ -383,7 +383,10 @@ export default function EditTeacherPage() {
         
         // Show detailed validation errors if available
         if (errorData.details && Array.isArray(errorData.details)) {
-          const detailMessages = errorData.details.map((d: any) => `${d.field}: ${d.message}`).join(', ');
+          type Issue = { field: string; message: string }
+          const detailMessages = (errorData.details as Issue[])
+            .map((d) => `${d.field}: ${d.message}`)
+            .join(', ');
           throw new Error(`${errorData.error}: ${detailMessages}`);
         }
         

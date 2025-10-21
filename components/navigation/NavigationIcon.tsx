@@ -42,7 +42,7 @@ const iconAnimations = {
       damping: 15,
     },
   },
-};
+} as const;
 
 const glowAnimations = {
   hidden: { opacity: 0, scale: 0.8 },
@@ -62,7 +62,7 @@ const glowAnimations = {
       ease: "easeIn",
     },
   },
-};
+} as const;
 
 export const NavigationIcon: React.FC<NavigationIconProps> = ({
   icon: Icon,

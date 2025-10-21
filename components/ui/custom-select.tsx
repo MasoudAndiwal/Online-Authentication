@@ -18,6 +18,7 @@ export interface CustomSelectProps {
   className?: string;
   children: React.ReactNode;
   disabled?: boolean;
+  required?: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export function CustomSelect({
   className,
   children,
   disabled = false,
+  required = false,
 }: CustomSelectProps) {
   // Extract options from children
   const { options, emptyLabel } = React.useMemo(() => {
@@ -86,6 +88,8 @@ export function CustomSelect({
     >
       <SelectTrigger
         id={id}
+        aria-required={required}
+        aria-invalid={required && !selectValue ? true : undefined}
         className={cn(
           "h-12 border bg-white transition-all duration-300 rounded-lg",
           className

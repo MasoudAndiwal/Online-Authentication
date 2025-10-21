@@ -119,7 +119,7 @@ export default function Home() {
           </h1>
 
           <p className="text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto mb-12 leading-relaxed">
-            Streamline your university's attendance management with our
+            Streamline your university&#39;s attendance management with our
             comprehensive digital platform.
             <span className="font-semibold text-slate-700">
               Built for administrators, teachers, and students.

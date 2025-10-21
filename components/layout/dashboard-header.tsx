@@ -23,7 +23,7 @@ interface UserProfile {
   avatar?: string;
 }
 
-interface DashboardHeaderProps {
+export interface DashboardHeaderProps {
   title?: string;
   subtitle?: string;
   user?: UserProfile;

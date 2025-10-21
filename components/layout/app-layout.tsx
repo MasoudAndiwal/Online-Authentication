@@ -29,7 +29,6 @@ interface AppLayoutProps {
   title?: string
   subtitle?: string
   notifications?: Notification[]
-  currentPath?: string
   onNavigate?: (href: string) => void
   onLogout?: () => void
   onSearch?: (query: string) => void
@@ -42,7 +41,6 @@ export function AppLayout({
   title,
   subtitle,
   notifications = [],
-  currentPath,
   onNavigate,
   onLogout,
   onSearch,
@@ -52,7 +50,6 @@ export function AppLayout({
     <SidebarProvider>
       <AppSidebar
         user={user}
-        currentPath={currentPath}
         onNavigate={onNavigate}
         onLogout={onLogout}
       />

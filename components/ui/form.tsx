@@ -26,8 +26,10 @@ export function Form<T extends FieldValues>({
   className
 }: FormProps<T>) {
   const methods = useForm<T>({
-    resolver: zodResolver(schema),
-    defaultValues,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema as any) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    defaultValues: defaultValues as any,
     mode: 'onChange'
   })
 
@@ -102,8 +104,6 @@ export function FormField<T extends FieldValues>({
           id={name}
           type={type}
           placeholder={placeholder}
-          error={error}
-          animate={animate}
           className={cn(
             'transition-all duration-200',
             value && 'border-primary/50 bg-primary/5',
@@ -231,12 +231,10 @@ export function FormSubmit({
     <Button
       type="submit"
       variant={variant}
-      loading={loading || isSubmitting}
-      disabled={!isValid || isSubmitting}
+      disabled={loading || !isValid || isSubmitting}
       className={cn('w-full', className)}
-      animate={true}
     >
-      {children}
+      {loading || isSubmitting ? 'Loading...' : children}
     </Button>
   )
 }
@@ -251,9 +249,7 @@ export const UserFormSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  role: z.enum(['OFFICE', 'TEACHER', 'STUDENT'], {
-    required_error: 'Please select a role'
-  }),
+  role: z.enum(['OFFICE', 'TEACHER', 'STUDENT']),
   phone: z.string().optional(),
 })
 

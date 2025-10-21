@@ -1,4 +1,4 @@
-import { PostgrestError } from '@supabase/supabase-js'
+// Types intentionally not imported to avoid unused imports
 
 // Prisma-equivalent error codes for compatibility
 export enum PrismaErrorCode {
@@ -23,14 +23,14 @@ export enum PostgreSQLErrorCode {
 // Custom error class for database operations
 export class DatabaseError extends Error {
   public readonly code: string
-  public readonly meta?: Record<string, any>
-  public readonly originalError?: any
+  public readonly meta?: Record<string, unknown>
+  public readonly originalError?: unknown
 
   constructor(
     message: string,
     code: string,
-    meta?: Record<string, any>,
-    originalError?: any
+    meta?: Record<string, unknown>,
+    originalError?: unknown
   ) {
     super(message)
     this.name = 'DatabaseError'
@@ -53,17 +53,21 @@ export interface ErrorResponse {
 }
 
 // Map Supabase errors to Prisma-equivalent error codes
-export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
+export function mapSupabaseError(error: unknown): DatabaseError {
+  const hasCode = (e: unknown): e is { code: string; message?: string } =>
+    typeof e === 'object' && e !== null && 'code' in e;
+  const hasMessage = (e: unknown): e is { message: string } =>
+    typeof e === 'object' && e !== null && 'message' in e;
   // Handle PostgrestError (Supabase API errors)
-  if (error.code) {
+  if (hasCode(error)) {
     switch (error.code) {
       case PostgreSQLErrorCode.UNIQUE_VIOLATION:
         return new DatabaseError(
           'Unique constraint violation',
           PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION,
           {
-            target: extractUniqueConstraintTarget(error.message),
-            constraint: extractConstraintName(error.message)
+            target: extractUniqueConstraintTarget(error.message || ''),
+            constraint: extractConstraintName(error.message || '')
           },
           error
         )
@@ -73,7 +77,7 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
           'Foreign key constraint violation',
           PrismaErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION,
           {
-            constraint: extractConstraintName(error.message)
+            constraint: extractConstraintName(error.message || '')
           },
           error
         )
@@ -83,7 +87,7 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
           'Required field missing',
           PrismaErrorCode.INVALID_DATA,
           {
-            field: extractFieldName(error.message)
+            field: extractFieldName(error.message || '')
           },
           error
         )
@@ -93,7 +97,7 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
           'Data validation failed',
           PrismaErrorCode.INVALID_DATA,
           {
-            constraint: extractConstraintName(error.message)
+            constraint: extractConstraintName(error.message || '')
           },
           error
         )
@@ -103,7 +107,7 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
           'Invalid data format',
           PrismaErrorCode.INVALID_DATA,
           {
-            field: extractFieldName(error.message)
+            field: extractFieldName(error.message || '')
           },
           error
         )
@@ -118,7 +122,7 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
 
       default:
         return new DatabaseError(
-          error.message || 'Database operation failed',
+          (error.message as string) || 'Database operation failed',
           error.code,
           {},
           error
@@ -127,11 +131,14 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
   }
 
   // Handle connection errors
-  if (error.message && (
-    error.message.includes('connection') ||
-    error.message.includes('network') ||
-    error.message.includes('timeout')
-  )) {
+  if (
+    hasMessage(error) &&
+    (
+      error.message.includes('connection') ||
+      error.message.includes('network') ||
+      error.message.includes('timeout')
+    )
+  ) {
     return new DatabaseError(
       'Database connection failed',
       PrismaErrorCode.CONNECTION_ERROR,
@@ -141,8 +148,9 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
   }
 
   // Handle generic errors
+  const msg = hasMessage(error) ? error.message : 'Unknown database error'
   return new DatabaseError(
-    error.message || 'Unknown database error',
+    msg,
     'UNKNOWN',
     {},
     error
@@ -150,42 +158,42 @@ export function mapSupabaseError(error: PostgrestError | any): DatabaseError {
 }
 
 // Check if error is a unique constraint violation
-export function isUniqueConstraintViolation(error: any): boolean {
+export function isUniqueConstraintViolation(error: unknown): boolean {
   if (error instanceof DatabaseError) {
     return error.code === PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION
   }
-  
-  return error?.code === PostgreSQLErrorCode.UNIQUE_VIOLATION
+  const e = error as { code?: string }
+  return e?.code === PostgreSQLErrorCode.UNIQUE_VIOLATION
 }
 
 // Check if error is a foreign key constraint violation
-export function isForeignKeyConstraintViolation(error: any): boolean {
+export function isForeignKeyConstraintViolation(error: unknown): boolean {
   if (error instanceof DatabaseError) {
     return error.code === PrismaErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION
   }
-  
-  return error?.code === PostgreSQLErrorCode.FOREIGN_KEY_VIOLATION
+  const e = error as { code?: string }
+  return e?.code === PostgreSQLErrorCode.FOREIGN_KEY_VIOLATION
 }
 
 // Check if error is a record not found error
-export function isRecordNotFoundError(error: any): boolean {
+export function isRecordNotFoundError(error: unknown): boolean {
   if (error instanceof DatabaseError) {
     return error.code === PrismaErrorCode.RECORD_NOT_FOUND
   }
-  
-  return error?.code === 'PGRST116'
+  const e = error as { code?: string }
+  return e?.code === 'PGRST116'
 }
 
 // Format error response for API consistency
-export function formatErrorResponse(error: DatabaseError | any): ErrorResponse {
+export function formatErrorResponse(error: unknown): ErrorResponse {
   if (error instanceof DatabaseError) {
     switch (error.code) {
       case PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION:
         return {
           error: 'Unique constraint violation',
           details: {
-            field: error.meta?.target || 'unknown',
-            message: `A record with this ${error.meta?.target || 'value'} already exists`
+            field: String(error.meta?.target ?? 'unknown'),
+            message: `A record with this ${String(error.meta?.target ?? 'value')} already exists`
           }
         }
 
@@ -193,7 +201,7 @@ export function formatErrorResponse(error: DatabaseError | any): ErrorResponse {
         return {
           error: 'Invalid reference',
           details: {
-            field: error.meta?.constraint || 'unknown',
+            field: String(error.meta?.constraint ?? 'unknown'),
             message: 'Referenced record does not exist'
           }
         }
@@ -211,7 +219,7 @@ export function formatErrorResponse(error: DatabaseError | any): ErrorResponse {
         return {
           error: 'Invalid data',
           details: {
-            field: error.meta?.field || 'unknown',
+            field: String(error.meta?.field ?? 'unknown'),
             message: 'The provided data is invalid'
           }
         }
@@ -233,8 +241,9 @@ export function formatErrorResponse(error: DatabaseError | any): ErrorResponse {
   }
 
   // Handle non-DatabaseError instances
+  const e = error as { message?: string }
   return {
-    error: error?.message || 'An unexpected error occurred'
+    error: e?.message || 'An unexpected error occurred'
   }
 }
 
@@ -292,7 +301,7 @@ export async function handleDatabaseOperation<T>(
 }
 
 // Specific error handling for common operations
-export function handleCreateError(error: any, entityType: string): never {
+export function handleCreateError(error: unknown, entityType: string): never {
   const mappedError = mapSupabaseError(error)
   
   if (isUniqueConstraintViolation(mappedError)) {
@@ -308,7 +317,7 @@ export function handleCreateError(error: any, entityType: string): never {
   throw mappedError
 }
 
-export function handleUpdateError(error: any, entityType: string): never {
+export function handleUpdateError(error: unknown, entityType: string): never {
   const mappedError = mapSupabaseError(error)
   
   if (isRecordNotFoundError(mappedError)) {
@@ -333,7 +342,7 @@ export function handleUpdateError(error: any, entityType: string): never {
   throw mappedError
 }
 
-export function handleFindError(error: any, entityType: string): never {
+export function handleFindError(error: unknown, entityType: string): never {
   const mappedError = mapSupabaseError(error)
   
   if (isRecordNotFoundError(mappedError)) {
@@ -351,14 +360,16 @@ export function handleFindError(error: any, entityType: string): never {
 }
 
 // API-specific error handling functions for maintaining exact compatibility
-export function handleApiError(error: any): { 
+export function handleApiError(error: unknown): { 
   response: ErrorResponse, 
   status: number 
 } {
   if (error instanceof DatabaseError) {
     switch (error.code) {
       case PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION:
-        const field = Array.isArray(error.meta?.target) ? error.meta.target[0] : error.meta?.target || 'field'
+        const field = Array.isArray(error.meta?.target)
+          ? String(error.meta.target[0])
+          : String(error.meta?.target ?? 'field')
         return {
           response: {
             error: `A record with this ${field} already exists`,
@@ -381,7 +392,7 @@ export function handleApiError(error: any): {
           response: {
             error: 'Invalid data',
             details: {
-              field: error.meta?.field || 'unknown',
+              field: String(error.meta?.field ?? 'unknown'),
               message: 'The provided data is invalid'
             }
           },
@@ -430,7 +441,7 @@ export function createUniqueConstraintError(entityType: string, field: string): 
 }
 
 // Helper to check if an error should be treated as a validation error
-export function isValidationError(error: any): boolean {
+export function isValidationError(error: unknown): boolean {
   if (error instanceof DatabaseError) {
     return error.code === PrismaErrorCode.INVALID_DATA ||
            error.code === PrismaErrorCode.UNIQUE_CONSTRAINT_VIOLATION
@@ -439,7 +450,7 @@ export function isValidationError(error: any): boolean {
 }
 
 // Helper to check if an error should be treated as a server error
-export function isServerError(error: any): boolean {
+export function isServerError(error: unknown): boolean {
   if (error instanceof DatabaseError) {
     return error.code === PrismaErrorCode.CONNECTION_ERROR ||
            error.code === PrismaErrorCode.TIMEOUT_ERROR ||
@@ -449,13 +460,14 @@ export function isServerError(error: any): boolean {
 }
 
 // Helper function to extract field name from Supabase unique constraint errors
-export function extractFieldFromUniqueError(error: any): string {
+export function extractFieldFromUniqueError(error: unknown): string {
   if (error instanceof DatabaseError && error.meta?.target) {
-    return error.meta.target
+    return error.meta.target as string
   }
   
   // Try to extract from original error message
-  if (error?.message) {
+  const e = error as { message?: string }
+  if (e?.message) {
     const patterns = [
       /Key \(([^)]+)\)=/,
       /constraint "(\w+)_(\w+)_key"/,
@@ -463,7 +475,7 @@ export function extractFieldFromUniqueError(error: any): string {
     ]
     
     for (const pattern of patterns) {
-      const match = error.message.match(pattern)
+      const match = e.message.match(pattern)
       if (match) {
         // For constraint patterns, return the field name (second capture group)
         return match[2] || match[1]

@@ -140,19 +140,20 @@ export function AddScheduleEntryDialog({
   };
 
   // Get subjects for selected teacher
-  const availableSubjects = React.useMemo(() => {
-    const teacher = teachers.find(t => t.id === selectedTeacherId);
+  const availableSubjects = React.useMemo<string[]>(() => {
+    const teacher = teachers.find((t) => t.id === selectedTeacherId);
     if (!teacher) return [];
-    
+
     // Handle both string and array format
     if (typeof teacher.subjects === 'string') {
       try {
-        return JSON.parse(teacher.subjects);
+        const parsed = JSON.parse(teacher.subjects) as string[];
+        return Array.isArray(parsed) ? parsed : teacher.subjects.split(',').map((s) => s.trim());
       } catch {
-        return teacher.subjects.split(',').map(s => s.trim());
+        return teacher.subjects.split(',').map((s) => s.trim());
       }
     }
-    return teacher.subjects || [];
+    return Array.isArray(teacher.subjects) ? teacher.subjects : [];
   }, [selectedTeacherId, teachers]);
 
   // Populate form when editing

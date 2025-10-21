@@ -12,14 +12,14 @@ import {
   ClipboardList,
   FileText,
   X,
-  Menu,
   ChevronRight,
   Search,
   User,
   LogOut
 } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 
@@ -209,7 +209,7 @@ export function MobileNavigation({
     onClose()
   }
 
-  const handleDragEnd = (event: any, info: PanInfo) => {
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
     if (info.offset.x < -100) {
       onClose()
     }

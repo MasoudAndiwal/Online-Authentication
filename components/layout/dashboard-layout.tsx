@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import * as React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import type { DashboardHeaderProps } from './dashboard-header'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -91,7 +93,7 @@ export function DashboardLayout({
             transition={{ duration: 0.3 }}
             className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm"
           >
-            {React.cloneElement(header as React.ReactElement, {
+            {React.cloneElement(header as React.ReactElement<DashboardHeaderProps>, {
               onMenuClick: () => setSidebarOpen(true),
               isMobile
             })}

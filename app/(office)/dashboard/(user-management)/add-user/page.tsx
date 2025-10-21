@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { AppLayout, PageContainer, PageHeader } from '@/components/layout/app-layout'
 import { ModernCard, ModernCardHeader, ModernCardTitle, ModernCardContent } from '@/components/ui/modern-card'
@@ -34,7 +35,7 @@ const sampleUser = {
 
 type UserType = 'student' | 'teacher' | null
 
-export default function AddUserPage() {
+function AddUserContent() {
   const searchParams = useSearchParams()
   const userTypeFromUrl = searchParams.get('type') as UserType
   const [selectedUserType, setSelectedUserType] = React.useState<UserType>(userTypeFromUrl)
@@ -98,7 +99,6 @@ export default function AddUserPage() {
       user={sampleUser}
       title="Add User"
       subtitle="User Management System"
-      currentPath="/dashboard/add-user"
       onNavigate={handleNavigation}
       onLogout={handleLogout}
       onSearch={handleSearch}
@@ -473,5 +473,13 @@ export default function AddUserPage() {
         )}
       </PageContainer>
     </AppLayout>
+  )
+}
+
+export default function AddUserPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddUserContent />
+    </Suspense>
   )
 }

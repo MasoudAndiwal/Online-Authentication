@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { createStudent, findStudentByStudentId, findStudentByUsername, findStudentByField, getAllStudents } from '@/lib/database/operations';
 import { StudentCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
 import { DatabaseError, handleApiError, createUniqueConstraintError } from '@/lib/database/errors';
-import { ZodError } from 'zod';
+import { ZodError, ZodIssue } from 'zod';
+import type { Student } from '@/lib/database/models';
 
 export async function POST(request: NextRequest) {
   console.log('=== POST /api/students called ===');
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const [existingById, existingByUsername, existingByPhone] = await Promise.all([
       findStudentByStudentId(validatedData.studentId),
       findStudentByUsername(validatedData.username),
-      findStudentByField('phone' as any, validatedData.phone),
+      findStudentByField('phone' as keyof Student, validatedData.phone),
     ]);
     console.log('Unique checks completed');
 
@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
     console.log('Student created successfully');
 
     // Return created student data excluding password field
-    const { password, ...studentWithoutPassword } = student;
+    const { password: _password, ...studentWithoutPassword } = student;
+    void _password;
 
     return NextResponse.json(studentWithoutPassword, { status: 201 });
 
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          details: error.issues.map((err: any) => ({
+          details: error.issues.map((err: ZodIssue) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -116,12 +117,6 @@ export async function POST(request: NextRequest) {
 
     // Handle server errors (500)
     console.error('Unexpected Error creating student:', error);
-    console.error('Error details:', {
-      name: (error as any)?.name,
-      message: (error as any)?.message,
-      stack: (error as any)?.stack,
-      error: error
-    });
     return NextResponse.json(
       {
         error: 'An unexpected error occurred while creating the student',
@@ -172,7 +167,10 @@ export async function GET(request: NextRequest) {
     console.log(`Successfully fetched ${students.length} students`);
 
     // Remove password field from all students
-    const studentsWithoutPassword = students.map(({ password, ...student }) => student);
+    const studentsWithoutPassword = students.map(({ password: _p, ...student }) => {
+      void _p;
+      return student;
+    });
 
     return NextResponse.json(studentsWithoutPassword, { status: 200 });
 
@@ -190,16 +188,11 @@ export async function GET(request: NextRequest) {
 
     // Handle server errors (500)
     console.error('Error fetching students:', error);
-    console.error('Error details:', {
-      name: (error as any)?.name,
-      message: (error as any)?.message,
-      stack: (error as any)?.stack,
-    });
+    // Error details omitted in production
     
     return NextResponse.json(
       {
-        error: 'An unexpected error occurred while fetching students',
-        details: (error as any)?.message || 'Unknown error'
+        error: 'An unexpected error occurred while fetching students'
       },
       { status: 500 }
     );

@@ -3,7 +3,8 @@ import { createTeacher, findTeacherByTeacherId, findTeacherByUsername, findTeach
 import { TeacherCreateSchema } from '@/lib/validations/user.validation';
 import { hashPassword } from '@/lib/utils/password';
 import { DatabaseError, handleApiError, createUniqueConstraintError } from '@/lib/database/errors';
-import { ZodError } from 'zod';
+import { ZodError, ZodIssue } from 'zod';
+import type { Teacher } from '@/lib/database/models';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     const [existingById, existingByUsername, existingByPhone] = await Promise.all([
       findTeacherByTeacherId(validatedData.teacherId),
       findTeacherByUsername(validatedData.username),
-      findTeacherByField('phone' as any, validatedData.phone),
+      findTeacherByField('phone' as keyof Teacher, validatedData.phone),
     ]);
 
     if (existingById) {
@@ -66,7 +67,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Return created teacher data excluding password field
-    const { password, ...teacherWithoutPassword } = teacher;
+    const { password: _password, ...teacherWithoutPassword } = teacher;
+    void _password;
 
     return NextResponse.json(teacherWithoutPassword, { status: 201 });
 
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          details: error.issues.map((err: any) => ({
+          details: error.issues.map((err: ZodIssue) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -120,7 +122,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Remove password field from all teachers
-    const teachersWithoutPassword = teachers.map(({ password, ...teacher }) => teacher);
+    const teachersWithoutPassword = teachers.map(({ password: _p, ...teacher }) => {
+      void _p;
+      return teacher;
+    });
 
     return NextResponse.json(teachersWithoutPassword, { status: 200 });
 

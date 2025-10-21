@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
 
     // Generate verification token for password reset
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = hashToken(verificationToken);
 
     return NextResponse.json(
       {

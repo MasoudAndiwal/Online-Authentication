@@ -124,6 +124,7 @@ export default function EditStudentPage() {
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [classes, setClasses] = React.useState<Array<{ id: string; name: string; session: string }>>([]);
