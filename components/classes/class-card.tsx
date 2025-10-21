@@ -21,6 +21,7 @@ interface ClassCardProps {
     name: string;
     session: "MORNING" | "AFTERNOON";
     studentCount: number;
+    teacherCount: number;
     scheduleCount: number;
     major: string;
     semester: number;
@@ -69,12 +70,21 @@ export function ClassCard({ classData, onEdit, onDelete }: ClassCardProps) {
         </div>
 
         {/* Stats */}
-        <div className="bg-slate-50 rounded-xl p-4 mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Users className="h-4 w-4 text-orange-600" />
-            <span className="text-xs font-semibold text-slate-600">Students</span>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-slate-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="h-4 w-4 text-orange-600" />
+              <span className="text-xs font-semibold text-slate-600">Students</span>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{classData.studentCount}</p>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{classData.studentCount}</p>
+          <div className="bg-blue-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <GraduationCap className="h-4 w-4 text-blue-600" />
+              <span className="text-xs font-semibold text-slate-600">Teachers</span>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{classData.teacherCount}</p>
+          </div>
         </div>
 
         {/* Semester */}

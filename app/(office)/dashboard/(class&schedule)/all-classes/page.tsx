@@ -14,6 +14,7 @@ import { CreateClassDialog } from "@/components/classes/create-class-dialog";
 import { EditClassDialog } from "@/components/classes/edit-class-dialog";
 import { ClassCard } from "@/components/classes/class-card";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { 
   Search, 
@@ -27,18 +28,12 @@ import {
   Loader2
 } from "lucide-react";
 
-const sampleUser = {
-  name: "Admin User",
-  email: "admin@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
-
 type ClassItem = {
   id: string;
   name: string;
   session: "MORNING" | "AFTERNOON";
   studentCount: number;
+  teacherCount: number;
   scheduleCount: number;
   major: string;
   semester: number;
@@ -46,6 +41,7 @@ type ClassItem = {
 
 export default function AllClassesPage() {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const [currentPath] = React.useState("/dashboard/all-classes");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sessionFilter, setSessionFilter] = React.useState<"ALL" | "MORNING" | "AFTERNOON">("ALL");
@@ -216,7 +212,7 @@ export default function AllClassesPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
       title="All Classes"
       subtitle="Manage all classes in the system"
       currentPath={currentPath}

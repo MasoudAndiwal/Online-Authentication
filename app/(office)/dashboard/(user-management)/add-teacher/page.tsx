@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   validateName,
   validateId,
@@ -45,14 +46,6 @@ import {
   sanitizeAlphanumeric,
   sanitizePhone,
 } from "@/lib/utils/validation";
-
-// Sample user data
-const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
 
 // Form state interface
 interface FormData {
@@ -100,6 +93,7 @@ interface FormErrors {
 
 export default function AddTeacherPage() {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const [currentPath] = React.useState("/dashboard/add-teacher");
   const [formData, setFormData] = React.useState<FormData>({
     firstName: "",
@@ -125,6 +119,8 @@ export default function AddTeacherPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [classes, setClasses] = React.useState<Array<{ id: string; name: string; session: string }>>([]);
+  const [loadingClasses, setLoadingClasses] = React.useState(false);
 
   const handleNavigation = (href: string) => {
     try {
@@ -142,6 +138,25 @@ export default function AddTeacherPage() {
   const handleSearch = (query: string) => {
     console.log("Search:", query);
   };
+
+  // Fetch classes from database
+  React.useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        const response = await fetch('/api/classes');
+        if (response.ok) {
+          const data = await response.json();
+          setClasses(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   const handleInputChange = (
     field: keyof FormData,
@@ -470,16 +485,9 @@ export default function AddTeacherPage() {
     "Islamic Studies",
   ];
 
-  // Class options
-  const classOptions = [
-    "Section A",
-    "Section B",
-    "Section C",
-    "Section D",
-    "Morning Batch",
-    "Afternoon Batch",
-    "Evening Batch",
-  ];
+  // Class options - dynamically loaded from database
+  // Format: "Class Name - Session" (e.g., "CS-101-A - Morning")
+  const classOptions = classes.map((cls) => `${cls.name} - ${cls.session}`);
 
   // 3D Icon Component
   const Icon3D = ({
@@ -644,7 +652,7 @@ export default function AddTeacherPage() {
   if (showSuccess) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
         title="Add Teacher"
         subtitle="Create a new teacher account"
         currentPath={currentPath}
@@ -746,7 +754,7 @@ export default function AddTeacherPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
       title="Add Teacher"
       subtitle="Create a new teacher account"
       currentPath={currentPath}

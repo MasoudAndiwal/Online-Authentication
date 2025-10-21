@@ -237,28 +237,6 @@ export default function NotFound() {
             transition={{ delay: 0.9, duration: 0.5 }}
             className="pt-8"
           >
-            <p className="text-sm text-slate-500 mb-4">Quick Links:</p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              {[
-                { label: "Home", path: "/" },
-                { label: "Dashboard", path: "/dashboard" },
-                { label: "Teachers", path: "/dashboard/teachers" },
-                { label: "Students", path: "/dashboard/students" },
-              ].map((link, index) => (
-                <motion.button
-                  key={link.path}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 + index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => router.push(link.path)}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 bg-white/60 hover:bg-white backdrop-blur-sm rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
-                >
-                  {link.label}
-                </motion.button>
-              ))}
-            </div>
           </motion.div>
 
           {/* Footer Info */}

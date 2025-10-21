@@ -12,13 +12,15 @@ type DbClassRow = {
 }
 type DbEntryRow = { class_id: string }
 type DbStudentRow = { class_section: string }
+type DbTeacherRow = { classes: string[] | null }
 
 function mapClassRow(
   cls: DbClassRow, 
   scheduleCountByClass: Record<string, number>,
-  studentCountByClass: Record<string, number>
+  studentCountByClass: Record<string, number>,
+  teacherCountByClass: Record<string, number>
 ) {
-  // Create a key that matches how students are stored (ClassName - Session)
+  // Create a key that matches how students/teachers are stored (ClassName - Session)
   const classKey = `${cls.name} - ${cls.session || 'MORNING'}`
   
   return {
@@ -28,6 +30,7 @@ function mapClassRow(
     major: cls.major ?? '',
     semester: Number(cls.semester ?? 1),
     studentCount: studentCountByClass[classKey] || 0, // Dynamic count from students table
+    teacherCount: teacherCountByClass[classKey] || 0, // Dynamic count from teachers table
     scheduleCount: scheduleCountByClass[cls.id] || 0,
   }
 }
@@ -75,8 +78,24 @@ export async function GET() {
       }, {} as Record<string, number>)
     }
 
+    // Fetch teachers and count by classes array
+    let teacherCountByClass: Record<string, number> = {}
+    const { data: teachers, error: teachersError } = await supabase
+      .from('teachers')
+      .select('classes')
+
+    if (!teachersError && teachers) {
+      teacherCountByClass = (teachers as DbTeacherRow[]).reduce((acc, t) => {
+        const classesArray = t.classes || []
+        classesArray.forEach((className) => {
+          acc[className] = (acc[className] || 0) + 1
+        })
+        return acc
+      }, {} as Record<string, number>)
+    }
+
     const payload = (classes as DbClassRow[] | null || []).map((cls) => 
-      mapClassRow(cls, scheduleCountByClass, studentCountByClass)
+      mapClassRow(cls, scheduleCountByClass, studentCountByClass, teacherCountByClass)
     )
     return NextResponse.json(payload, { status: 200 })
   } catch (error) {
@@ -117,7 +136,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For newly created class, counts are 0
-    const payload = mapClassRow(inserted, {}, {})
+    const payload = mapClassRow(inserted, {}, {}, {})
     return NextResponse.json(payload, { status: 201 })
   } catch (error) {
     console.error('Error creating class:', error)

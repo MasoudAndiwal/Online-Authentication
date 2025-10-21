@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   validateName,
   validateId,
@@ -42,14 +43,6 @@ import {
   sanitizeAlphanumeric,
   sanitizePhone,
 } from "@/lib/utils/validation";
-
-// Sample user data
-const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
 
 // Sample teacher data for editing
 const sampleTeacherData = {
@@ -116,6 +109,10 @@ export default function EditTeacherPage() {
   const router = useRouter();
   const params = useParams();
   const teacherId = params.id as string;
+  const { user } = useCurrentUser();
+  
+  const [classes, setClasses] = React.useState<Array<{ id: string; name: string; session: string }>>([]);
+  const [loadingClasses, setLoadingClasses] = React.useState(false);
 
   // Fetch teacher data from API
   React.useEffect(() => {
@@ -166,6 +163,25 @@ export default function EditTeacherPage() {
 
     fetchTeacher();
   }, [teacherId, router]);
+
+  // Fetch classes from database
+  React.useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        const response = await fetch('/api/classes');
+        if (response.ok) {
+          const data = await response.json();
+          setClasses(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   const [currentPath] = React.useState("/dashboard/edit-teacher");
   const [formData, setFormData] = React.useState<FormData>({
@@ -466,16 +482,9 @@ export default function EditTeacherPage() {
     "Islamic Studies",
   ];
 
-  // Class options
-  const classOptions = [
-    "Section A",
-    "Section B",
-    "Section C",
-    "Section D",
-    "Morning Batch",
-    "Afternoon Batch",
-    "Evening Batch",
-  ];
+  // Class options - dynamically loaded from database
+  // Format: "Class Name - Session" (e.g., "CS-101-A - Morning")
+  const classOptions = classes.map((cls) => `${cls.name} - ${cls.session}`);
 
   // Multi-Select Component
   const MultiSelect = ({
@@ -609,7 +618,7 @@ export default function EditTeacherPage() {
   if (showSuccess) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
         title="Edit Teacher"
         subtitle="Update teacher account information"
         currentPath={currentPath}
@@ -661,7 +670,7 @@ export default function EditTeacherPage() {
   if (loading) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
         title="Edit Teacher"
         subtitle="Loading teacher information..."
         currentPath={currentPath}
@@ -686,7 +695,7 @@ export default function EditTeacherPage() {
   if (error) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
         title="Edit Teacher"
         subtitle="Error loading teacher"
         currentPath={currentPath}
@@ -718,7 +727,7 @@ export default function EditTeacherPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
       title="Edit Teacher"
       subtitle="Update teacher account information"
       currentPath={currentPath}
