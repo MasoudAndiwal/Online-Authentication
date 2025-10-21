@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { use } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   ModernDashboardLayout,
@@ -27,7 +28,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import {
   validateName,
   validateId,
@@ -105,11 +107,15 @@ interface FormErrors {
   employmentType?: string;
 }
 
-export default function EditTeacherPage() {
+interface EditTeacherPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function EditTeacherPage({ params }: EditTeacherPageProps) {
   const router = useRouter();
-  const params = useParams();
-  const teacherId = params.id as string;
-  const { user } = useCurrentUser();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
+  const resolvedParams = use(params);
+  const teacherId = resolvedParams.id as string;
   
   const [classes, setClasses] = React.useState<Array<{ id: string; name: string; session: string }>>([]);
   const [loadingClasses, setLoadingClasses] = React.useState(false);
@@ -486,6 +492,18 @@ export default function EditTeacherPage() {
   // Format: "Class Name - Session" (e.g., "CS-101-A - Morning")
   const classOptions = classes.map((cls) => `${cls.name} - ${cls.session}`);
 
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   // Multi-Select Component
   const MultiSelect = ({
     id,
@@ -618,7 +636,7 @@ export default function EditTeacherPage() {
   if (showSuccess) {
     return (
       <ModernDashboardLayout
-        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+        user={displayUser}
         title="Edit Teacher"
         subtitle="Update teacher account information"
         currentPath={currentPath}
@@ -670,7 +688,7 @@ export default function EditTeacherPage() {
   if (loading) {
     return (
       <ModernDashboardLayout
-        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+        user={displayUser}
         title="Edit Teacher"
         subtitle="Loading teacher information..."
         currentPath={currentPath}
@@ -695,7 +713,7 @@ export default function EditTeacherPage() {
   if (error) {
     return (
       <ModernDashboardLayout
-        user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+        user={displayUser}
         title="Edit Teacher"
         subtitle="Error loading teacher"
         currentPath={currentPath}
@@ -727,7 +745,7 @@ export default function EditTeacherPage() {
 
   return (
     <ModernDashboardLayout
-      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+      user={displayUser}
       title="Edit Teacher"
       subtitle="Update teacher account information"
       currentPath={currentPath}

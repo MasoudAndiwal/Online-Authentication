@@ -31,7 +31,8 @@ import { CustomSelect } from "@/components/ui/custom-select";
 import { ViewStudentDialog } from "@/components/shared/view-student-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { toast } from "sonner";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 
 // Student interface
 interface Student {
@@ -49,7 +50,7 @@ interface Student {
 
 export default function StudentListPage() {
   const router = useRouter();
-  const { user } = useCurrentUser();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
   const [currentPath] = React.useState("/dashboard/students");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [programFilter, setProgramFilter] = React.useState("");
@@ -210,9 +211,21 @@ export default function StudentListPage() {
     );
   };
 
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   return (
     <ModernDashboardLayout
-      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+      user={displayUser}
       title="Student List"
       subtitle="Manage all student accounts"
       currentPath={currentPath}

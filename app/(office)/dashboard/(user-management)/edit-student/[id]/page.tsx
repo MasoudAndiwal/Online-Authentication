@@ -34,14 +34,8 @@ import {
 } from "@/lib/utils/validation";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
-
-// Sample user data
-const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 
 // Sample student data for editing
 const sampleStudentData = {
@@ -100,6 +94,7 @@ interface FormErrors {
 
 export default function EditStudentPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
   const params = useParams();
   const studentId = params.id as string;
 
@@ -483,10 +478,22 @@ export default function EditStudentPage() {
     </motion.div>
   );
 
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   if (loading) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={displayUser}
         title="Edit Student"
         subtitle="Update student information"
         currentPath={currentPath}
@@ -537,7 +544,7 @@ export default function EditStudentPage() {
   if (error) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={displayUser}
         title="Edit Student"
         subtitle="Update student information"
         currentPath={currentPath}
@@ -560,7 +567,7 @@ export default function EditStudentPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={displayUser}
       title="Edit Student"
       subtitle="Update student information"
       currentPath={currentPath}

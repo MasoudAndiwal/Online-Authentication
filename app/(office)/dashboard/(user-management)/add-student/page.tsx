@@ -30,6 +30,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { cn } from "@/lib/utils";
 import {
   validateName,
@@ -46,14 +48,6 @@ import {
   sanitizeAlphanumeric,
   sanitizePhone,
 } from "@/lib/utils/validation";
-
-// Sample user data
-const sampleUser = {
-  name: "AN. Masoud Andiwal",
-  email: "MasoudAndiwal@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
 
 // Form state interface
 interface FormData {
@@ -99,6 +93,7 @@ interface FormErrors {
 
 export default function AddStudentPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
   const [currentPath] = React.useState("/dashboard/add-student");
   const [formData, setFormData] = React.useState<FormData>({
     firstName: "",
@@ -752,10 +747,23 @@ export default function AddStudentPage() {
       description: "6 teaching hours, 40 min each",
     },
   ];
+
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   if (showSuccess) {
     return (
       <ModernDashboardLayout
-        user={sampleUser}
+        user={displayUser}
         title="Add Student"
         subtitle="Create a new student account"
         currentPath={currentPath}
@@ -852,7 +860,7 @@ export default function AddStudentPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={displayUser}
       title="Add Student"
       subtitle="Create a new student account"
       currentPath={currentPath}

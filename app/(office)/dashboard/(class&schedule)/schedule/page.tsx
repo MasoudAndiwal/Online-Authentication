@@ -15,20 +15,16 @@ import { CreateScheduleDialog } from "@/components/schedule/create-schedule-dial
 import { AddScheduleEntryDialog } from "@/components/schedule/add-schedule-entry-dialog";
 import { EditClassDialog } from "@/components/schedule/edit-class-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { Class, ScheduleEntry, TimeSession } from "@/lib/data/schedule-data";
 import { Search, Filter, Calendar, Sun, Moon, Loader2 } from "lucide-react";
 import * as scheduleApi from "@/app/api/schedule/schedule-api";
 import { toast } from "sonner";
 
-const sampleUser = {
-  name: "Admin User",
-  email: "admin@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
-
 export default function SchedulePage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
   const [currentPath] = React.useState("/dashboard/schedule");
   const [classes, setClasses] = React.useState<Class[]>([]);
   const [selectedClassId, setSelectedClassId] = React.useState<string | null>(null);
@@ -281,9 +277,21 @@ export default function SchedulePage() {
   const afternoonClasses = classes.filter(c => c.session === "AFTERNOON").length;
   const totalScheduleEntries = classes.reduce((sum, c) => sum + c.schedule.length, 0);
 
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={displayUser}
       title="Class Schedule"
       subtitle="Manage class schedules and timetables"
       currentPath={currentPath}

@@ -16,7 +16,8 @@ import { TeacherCard } from "@/components/shared/teacher-card";
 import { ViewTeacherDialog } from "@/components/shared/view-teacher-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { toast } from "sonner";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 
 // Teacher interface from API
 interface Teacher {
@@ -38,7 +39,7 @@ interface Teacher {
 
 export default function TeacherListPage() {
   const router = useRouter();
-  const { user } = useCurrentUser();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
   const [searchQuery, setSearchQuery] = React.useState("");
   const [departmentFilter, setDepartmentFilter] = React.useState("");
   const [subjectFilter, setSubjectFilter] = React.useState("");
@@ -221,9 +222,21 @@ export default function TeacherListPage() {
     };
   });
 
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   return (
     <ModernDashboardLayout
-      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+      user={displayUser}
       title="Teacher List"
       subtitle="Manage all teacher accounts"
       currentPath={currentPath}

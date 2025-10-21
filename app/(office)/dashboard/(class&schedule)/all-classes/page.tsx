@@ -14,7 +14,8 @@ import { CreateClassDialog } from "@/components/classes/create-class-dialog";
 import { EditClassDialog } from "@/components/classes/edit-class-dialog";
 import { ClassCard } from "@/components/classes/class-card";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { toast } from "sonner";
 import { 
   Search, 
@@ -41,7 +42,7 @@ type ClassItem = {
 
 export default function AllClassesPage() {
   const router = useRouter();
-  const { user } = useCurrentUser();
+  const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
   const [currentPath] = React.useState("/dashboard/all-classes");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sessionFilter, setSessionFilter] = React.useState<"ALL" | "MORNING" | "AFTERNOON">("ALL");
@@ -204,6 +205,18 @@ export default function AllClassesPage() {
     return matchesSearch && matchesSession;
   });
 
+  // Create display user
+  const displayUser = user ? {
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: user.role,
+  } : { name: 'User', email: '', role: 'OFFICE' as const };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return <AuthLoadingScreen />;
+  }
+
   // Calculate statistics
   const totalClasses = classes.length;
   const morningClasses = classes.filter(c => c.session === "MORNING").length;
@@ -212,7 +225,7 @@ export default function AllClassesPage() {
 
   return (
     <ModernDashboardLayout
-      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
+      user={displayUser}
       title="All Classes"
       subtitle="Manage all classes in the system"
       currentPath={currentPath}
