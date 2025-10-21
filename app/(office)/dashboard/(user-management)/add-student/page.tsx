@@ -123,6 +123,8 @@ export default function AddStudentPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [classes, setClasses] = React.useState<Array<{ id: string; name: string; session: string }>>([]);
+  const [loadingClasses, setLoadingClasses] = React.useState(false);
 
   const handleNavigation = (href: string) => {
     try {
@@ -168,6 +170,25 @@ export default function AddStudentPage() {
       setFormData((prev) => ({ ...prev, studentIdRef: formData.studentId }));
     }
   }, [formData.studentId]);
+
+  // Fetch classes from database
+  React.useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        const response = await fetch('/api/classes');
+        if (response.ok) {
+          const data = await response.json();
+          setClasses(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   // Validation functions
   const validateStep1 = (): boolean => {
@@ -696,18 +717,13 @@ export default function AddStudentPage() {
     return "";
   };
 
-  // Class section options
-  const classSectionOptions = [
-    "class B",
-    "class C",
-    "class D",
-    "class E",
-    "class F",
-    "class G",
-    "class H",
-    "class I",
-    "class A",
-  ];
+  // Class section options - now dynamically loaded from database
+  // Format: "Class Name - Session" (e.g., "CS-101-A - Morning")
+  const classSectionOptions = classes.map((cls) => ({
+    value: `${cls.name} - ${cls.session}`,
+    label: `${cls.name} - ${cls.session}`,
+    classId: cls.id,
+  }));
 
   // Time slot options with detailed schedule
   const timeSlotOptions = [
@@ -815,7 +831,7 @@ export default function AddStudentPage() {
                 className="flex justify-center space-x-4"
               >
                 <Button
-                  onClick={() => handleNavigation("/dashboard/user-management/students")}
+                  onClick={() => handleNavigation("/dashboard/students")}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   View All Students
@@ -1618,18 +1634,25 @@ export default function AddStudentPage() {
                                 onValueChange={(value) =>
                                   handleInputChange("classSection", value)
                                 }
-                                placeholder="Select Class Section"
+                                placeholder={loadingClasses ? "Loading classes..." : "Select Class Section"}
                                 className={cn(
                                   formErrors.classSection
                                     ? "border-red-500"
                                     : "border-slate-200"
                                 )}
+                                disabled={loadingClasses}
                               >
-                                {classSectionOptions.map((section) => (
-                                  <option key={section} value={section}>
-                                    {section}
+                                {classSectionOptions.length === 0 && !loadingClasses ? (
+                                  <option value="" disabled>
+                                    No classes available
                                   </option>
-                                ))}
+                                ) : (
+                                  classSectionOptions.map((option) => (
+                                    <option key={option.classId} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))
+                                )}
                               </CustomSelect>
                               {formErrors.classSection && (
                                 <p className="text-sm text-red-500 flex items-center gap-1">

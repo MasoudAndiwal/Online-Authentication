@@ -23,7 +23,8 @@ import {
   Moon, 
   Users,
   Filter,
-  BookOpen
+  BookOpen,
+  Loader2
 } from "lucide-react";
 
 const sampleUser = {
@@ -33,45 +34,15 @@ const sampleUser = {
   avatar: undefined,
 };
 
-// Sample data - will be replaced with real data later
-const sampleClasses = [
-  {
-    id: "1",
-    name: "Class A",
-    session: "MORNING" as const,
-    studentCount: 45,
-    scheduleCount: 12,
-    major: "Computer Science",
-    semester: 3,
-  },
-  {
-    id: "2",
-    name: "Class B",
-    session: "AFTERNOON" as const,
-    studentCount: 38,
-    scheduleCount: 15,
-    major: "Electronics",
-    semester: 2,
-  },
-  {
-    id: "3",
-    name: "Class C",
-    session: "MORNING" as const,
-    studentCount: 42,
-    scheduleCount: 10,
-    major: "Computer Science",
-    semester: 4,
-  },
-  {
-    id: "4",
-    name: "Class D",
-    session: "AFTERNOON" as const,
-    studentCount: 35,
-    scheduleCount: 13,
-    major: "Civil Engineering",
-    semester: 1,
-  },
-];
+type ClassItem = {
+  id: string;
+  name: string;
+  session: "MORNING" | "AFTERNOON";
+  studentCount: number;
+  scheduleCount: number;
+  major: string;
+  semester: number;
+};
 
 export default function AllClassesPage() {
   const router = useRouter();
@@ -80,8 +51,35 @@ export default function AllClassesPage() {
   const [sessionFilter, setSessionFilter] = React.useState<"ALL" | "MORNING" | "AFTERNOON">("ALL");
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-  const [selectedClass, setSelectedClass] = React.useState<typeof sampleClasses[0] | null>(null);
-  const [classes, setClasses] = React.useState(sampleClasses);
+  const [selectedClass, setSelectedClass] = React.useState<ClassItem | null>(null);
+  const [classes, setClasses] = React.useState<ClassItem[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const loadClasses = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/classes');
+      if (!res.ok) throw new Error('Failed to fetch classes');
+      const data: ClassItem[] = await res.json();
+      setClasses(data);
+    } catch (e) {
+      console.error(e);
+      setError('Failed to load classes');
+      toast.error('Failed to load classes', {
+        description: 'Please try again later.',
+        className: 'bg-red-50 border-red-200 text-red-900',
+        position: 'bottom-center',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadClasses();
+  }, [loadClasses]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -96,27 +94,34 @@ export default function AllClassesPage() {
     router.push("/login");
   };
 
-  const handleCreateClass = (data: { 
+  const handleCreateClass = async (data: { 
     name: string; 
     session: "MORNING" | "AFTERNOON";
     major: string;
     semester: number;
   }) => {
-    // TODO: Add backend logic later
-    const newClass = {
-      id: String(classes.length + 1),
-      name: data.name,
-      session: data.session,
-      studentCount: 0,
-      scheduleCount: 0,
-      major: data.major,
-      semester: data.semester,
-    };
-    setClasses([...classes, newClass]);
-    toast.success("Class created successfully!", {
-      description: `${data.name} has been added to the system.`,
-      className: "bg-green-50 border-green-200 text-green-900",
-    });
+    try {
+      const res = await fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to create class');
+      const created: ClassItem = await res.json();
+      setClasses((prev) => [...prev, created]);
+      toast.success("Class created successfully!", {
+        description: `${data.name} has been added to the system.`,
+        className: "bg-green-50 border-green-200 text-green-900",
+        position: 'bottom-center',
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to create class', {
+        description: 'Please try again later.',
+        className: 'bg-red-50 border-red-200 text-red-900',
+        position: 'bottom-center',
+      });
+    }
   };
 
   const handleEditClass = (id: string) => {
@@ -127,24 +132,35 @@ export default function AllClassesPage() {
     }
   };
 
-  const handleSaveClass = (data: {
+  const handleSaveClass = async (data: {
     name: string;
     session: "MORNING" | "AFTERNOON";
     major: string;
     semester: number;
   }) => {
     if (!selectedClass) return;
-    
-    setClasses(classes.map(cls => 
-      cls.id === selectedClass.id 
-        ? { ...cls, ...data }
-        : cls
-    ));
-    
-    toast.success("Class updated successfully!", {
-      description: `Changes to ${data.name} have been saved.`,
-      className: "bg-green-50 border-green-200 text-green-900",
-    });
+    try {
+      const res = await fetch(`/api/classes/${selectedClass.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to update class');
+      const updated: ClassItem = await res.json();
+      setClasses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      toast.success("Class updated successfully!", {
+        description: `Changes to ${data.name} have been saved.`,
+        className: "bg-green-50 border-green-200 text-green-900",
+        position: 'bottom-center',
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update class', {
+        description: 'Please try again later.',
+        className: 'bg-red-50 border-red-200 text-red-900',
+        position: 'bottom-center',
+      });
+    }
   };
 
   const handleDeleteClass = (id: string) => {
@@ -157,12 +173,24 @@ export default function AllClassesPage() {
       className: 'bg-red-100 border-red-200 text-red-900',
       action: {
         label: 'Delete',
-        onClick: () => {
-          setClasses(classes.filter(cls => cls.id !== id));
-          toast.success('Class deleted', {
-            description: `${classToDelete.name} has been removed from the system.`,
-            className: 'bg-green-50 border-green-200 text-green-900',
-          });
+        onClick: async () => {
+          try {
+            const res = await fetch(`/api/classes/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete class');
+            setClasses((prev) => prev.filter((cls) => cls.id !== id));
+            toast.success('Class deleted', {
+              description: `${classToDelete.name} has been removed from the system.`,
+              className: 'bg-green-50 border-green-200 text-green-900',
+              position: 'bottom-center',
+            });
+          } catch (e) {
+            console.error(e);
+            toast.error('Failed to delete class', {
+              description: 'Please try again later.',
+              className: 'bg-red-50 border-red-200 text-red-900',
+              position: 'bottom-center',
+            });
+          }
         }
       },
       cancel: {
@@ -300,8 +328,8 @@ export default function AllClassesPage() {
                   className="h-12 w-40 border-slate-300 focus:border-orange-400"
                 >
                   <option value="ALL">All Sessions</option>
-                  <option value="MORNING">☀️ Morning</option>
-                  <option value="AFTERNOON">🌙 Afternoon</option>
+                  <option value="MORNING"> Morning</option>
+                  <option value="AFTERNOON"> Afternoon</option>
                 </CustomSelect>
               </div>
 
@@ -318,7 +346,20 @@ export default function AllClassesPage() {
         </Card>
 
         {/* Classes Grid */}
-        {filteredClasses.length > 0 ? (
+        {loading ? (
+          <div className="py-20 text-center">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-600 mx-auto mb-3" />
+            <p className="text-slate-600">Loading classes...</p>
+          </div>
+        ) : error ? (
+          <Card className="rounded-2xl shadow-md border-red-200 bg-red-50">
+            <CardContent className="p-8 text-center">
+              <h3 className="text-xl font-semibold text-red-700 mb-2">Failed to load classes</h3>
+              <p className="text-red-700/80 mb-4">Please try again later.</p>
+              <Button onClick={loadClasses} variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">Retry</Button>
+            </CardContent>
+          </Card>
+        ) : filteredClasses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
             {filteredClasses.map((classData, index) => (
               <div

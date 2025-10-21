@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -32,12 +31,6 @@ import {
   validateAddress,
   validateSemester,
   validateEnrollmentYear,
-  validateUsername,
-  validatePassword,
-  sanitizeLettersOnly,
-  sanitizeNumbersOnly,
-  sanitizeAlphanumeric,
-  sanitizePhone,
 } from "@/lib/utils/validation";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
@@ -62,10 +55,10 @@ const sampleStudentData = {
   phone: "0704382703",
   fatherPhone: "0704382776",
   address: "123 Main Street, City, State",
-  programs: [], // Empty to show placeholder
+  programs: ["Computer Science"], // Default program
   semester: "5",
   enrollmentYear: "1400",
-  classSection: "", // Empty to show placeholder
+  classSection: "CS-101-A - Morning", // Default class
   timeSlot: "morning",
 };
 
@@ -110,6 +103,51 @@ export default function EditStudentPage() {
   const params = useParams();
   const studentId = params.id as string;
 
+  // State declarations - MUST come before useEffect hooks
+  const [currentPath] = React.useState("/dashboard/edit-student");
+  const [formData, setFormData] = React.useState<FormData>({
+    firstName: sampleStudentData.firstName,
+    lastName: sampleStudentData.lastName,
+    fatherName: sampleStudentData.fatherName,
+    grandFatherName: sampleStudentData.grandFatherName,
+    studentId: sampleStudentData.studentId,
+    dateOfBirth: sampleStudentData.dateOfBirth,
+    phone: sampleStudentData.phone,
+    fatherPhone: sampleStudentData.fatherPhone,
+    address: sampleStudentData.address,
+    programs: sampleStudentData.programs,
+    semester: sampleStudentData.semester,
+    enrollmentYear: sampleStudentData.enrollmentYear,
+    classSection: sampleStudentData.classSection,
+    timeSlot: sampleStudentData.timeSlot,
+  });
+  const [formErrors, setFormErrors] = React.useState<FormErrors>({});
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [classes, setClasses] = React.useState<Array<{ id: string; name: string; session: string }>>([]);
+  const [loadingClasses, setLoadingClasses] = React.useState(false);
+
+  // Fetch classes from database
+  React.useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        const response = await fetch('/api/classes');
+        if (response.ok) {
+          const data = await response.json();
+          setClasses(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, []);
+
   // Fetch student data from API
   React.useEffect(() => {
     if (!studentId) {
@@ -131,7 +169,13 @@ export default function EditStudentPage() {
         const data = await response.json();
         
         // Transform data to match form structure
-        setFormData({
+        const transformedPrograms = Array.isArray(data.programs) 
+          ? data.programs 
+          : data.programs 
+            ? data.programs.split(',').map((p: string) => p.trim()) 
+            : ['Computer Science']; // Default to Computer Science if no program
+        
+        const transformedData = {
           firstName: data.firstName || '',
           lastName: data.lastName || '',
           fatherName: data.fatherName || '',
@@ -141,12 +185,14 @@ export default function EditStudentPage() {
           phone: data.phone || '',
           fatherPhone: data.fatherPhone || '',
           address: data.address || '',
-          programs: Array.isArray(data.programs) ? data.programs : data.programs ? data.programs.split(',').map((p: string) => p.trim()) : [],
+          programs: transformedPrograms,
           semester: data.semester || '',
           enrollmentYear: data.enrollmentYear ? data.enrollmentYear.toString() : '',
           classSection: data.classSection || '',
           timeSlot: data.timeSlot || 'morning',
-        });
+        };
+        
+        setFormData(transformedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
         console.error('Error fetching student:', err);
@@ -157,30 +203,6 @@ export default function EditStudentPage() {
 
     fetchStudent();
   }, [studentId, router]);
-
-  const [currentPath] = React.useState("/dashboard/edit-student");
-  const [formData, setFormData] = React.useState<FormData>({
-    firstName: sampleStudentData.firstName,
-    lastName: sampleStudentData.lastName,
-    fatherName: sampleStudentData.fatherName,
-    grandFatherName: sampleStudentData.grandFatherName,
-    studentId: sampleStudentData.studentId,
-    dateOfBirth: sampleStudentData.dateOfBirth,
-    phone: sampleStudentData.phone,
-    fatherPhone: sampleStudentData.fatherPhone,
-    address: sampleStudentData.address,
-    programs: sampleStudentData.programs,
-    semester: sampleStudentData.semester,
-    enrollmentYear: sampleStudentData.enrollmentYear,
-    classSection: sampleStudentData.classSection,
-    timeSlot: sampleStudentData.timeSlot,
-  });
-  const [formErrors, setFormErrors] = React.useState<FormErrors>({});
-  const [currentStep, setCurrentStep] = React.useState(1);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showSuccess, setShowSuccess] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
 
   const handleNavigation = (href: string) => {
     try {
@@ -195,13 +217,9 @@ export default function EditStudentPage() {
     await performLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
-  };
-
   const handleInputChange = (
     field: keyof FormData,
-    value: string | Date | undefined
+    value: string | Date | undefined | string[]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
@@ -401,25 +419,22 @@ export default function EditStudentPage() {
     "Computer Science",
     "Electrical Engineering",
     "Building Engineering",
-    "Class 10",
-    "Class 11",
-    "Class 12",
   ];
 
-  // Class section options
-  const classSectionOptions = [
-    "Section A",
-    "Section B", 
-    "Section C",
-    "Section D",
-    "Section E",
-    "Section F",
-    "Section G",
-    "Section H",
-    "Section I",
-  ];
+  // Class section options - now dynamically loaded from database
+  // Format: "Class Name - Session" (e.g., "CS-101-A - Morning")
+  const classSectionOptions = classes.map((cls) => {
+    // Normalize session to uppercase to match database format
+    const sessionUpper = cls.session.toUpperCase();
+    const value = `${cls.name} - ${sessionUpper}`;
+    return {
+      value: value,
+      label: value,
+      classId: cls.id,
+    };
+  });
 
-  // Time slot options with detailed schedule
+  // Time slot options
   const timeSlotOptions = [
     {
       value: "morning",
@@ -433,110 +448,109 @@ export default function EditStudentPage() {
     },
   ];
 
-  // Show loading state
+  // 3D Icon Component
+  const Icon3D = ({
+    icon: IconComponent,
+    className = "",
+    size = "h-6 w-6",
+  }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon: any;
+    className?: string;
+    size?: string;
+  }) => (
+    <motion.div
+      whileHover={{
+        scale: 1.1,
+        rotateY: 15,
+        rotateX: 5,
+        transition: { type: "spring", stiffness: 300, damping: 20 },
+      }}
+      className={`relative ${className}`}
+      style={{
+        transformStyle: "preserve-3d",
+        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))",
+      }}
+    >
+      <IconComponent className={`${size} relative z-10`} />
+      <div
+        className={`absolute inset-0 ${size} opacity-30 blur-sm`}
+        style={{ transform: "translateZ(-2px) translateY(2px)" }}
+      >
+        <IconComponent className={size} />
+      </div>
+    </motion.div>
+  );
+
   if (loading) {
     return (
       <ModernDashboardLayout
         user={sampleUser}
         title="Edit Student"
-        subtitle="Loading student information..."
+        subtitle="Update student information"
         currentPath={currentPath}
         onNavigate={handleNavigation}
         onLogout={handleLogout}
-        onSearch={handleSearch}
+        onSearch={() => {}}
         hideSearch={true}
       >
         <PageContainer>
-          <div className="min-h-[60vh] flex items-center justify-center">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 text-green-600 mx-auto mb-4 animate-spin" />
-              <p className="text-slate-600 text-lg">Loading student information...</p>
-            </div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center min-h-[60vh]"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="mb-6"
+            >
+              <div className="relative">
+                <Loader2 className="h-16 w-16 text-green-600" />
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute inset-0 bg-green-400/30 rounded-full blur-xl"
+                />
+              </div>
+            </motion.div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Loading Student Data</h3>
+            <p className="text-slate-600 text-center max-w-md">
+              Please wait while we fetch the student information from the database...
+            </p>
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="mt-4 flex gap-2"
+            >
+              <div className="h-2 w-2 bg-green-600 rounded-full" />
+              <div className="h-2 w-2 bg-green-600 rounded-full" />
+              <div className="h-2 w-2 bg-green-600 rounded-full" />
+            </motion.div>
+          </motion.div>
         </PageContainer>
       </ModernDashboardLayout>
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <ModernDashboardLayout
         user={sampleUser}
         title="Edit Student"
-        subtitle="Error loading student"
+        subtitle="Update student information"
         currentPath={currentPath}
         onNavigate={handleNavigation}
         onLogout={handleLogout}
-        onSearch={handleSearch}
+        onSearch={() => {}}
         hideSearch={true}
       >
         <PageContainer>
-          <div className="min-h-[60vh] flex items-center justify-center">
-            <div className="text-center max-w-md">
-              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Error Loading Student</h3>
-              <p className="text-slate-600 mb-6">{error}</p>
-              <div className="flex justify-center gap-4">
-                <Button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-700">
-                  Try Again
-                </Button>
-                <Button variant="outline" onClick={() => handleNavigation('/dashboard/students')}>
-                  Back to Students
-                </Button>
-              </div>
-            </div>
-          </div>
-        </PageContainer>
-      </ModernDashboardLayout>
-    );
-  }
-
-  if (showSuccess) {
-    return (
-      <ModernDashboardLayout
-        user={sampleUser}
-        title="Edit Student"
-        subtitle="Update student account information"
-        currentPath={currentPath}
-        onNavigate={handleNavigation}
-        onLogout={handleLogout}
-        onSearch={handleSearch}
-        hideSearch={true}
-      >
-        <PageContainer>
-          <div className="min-h-[60vh] flex items-center justify-center">
-            <div className="text-center max-w-md">
-              <div className="mb-8">
-                <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
-                  <CheckCircle className="h-12 w-12 text-white" />
-                </div>
-              </div>
-
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                Student Updated Successfully! 🎉
-              </h2>
-
-              <p className="text-slate-600 mb-8">
-                {formData.firstName} {formData.lastName}&apos;s information has been
-                updated.
-              </p>
-
-              <div className="flex justify-center space-x-4">
-                <Button
-                  onClick={() => handleNavigation("/dashboard/students")}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  View All Students
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => window.location.reload()}
-                >
-                  Edit Again
-                </Button>
-              </div>
-            </div>
+          <div className="text-center py-12">
+            <p className="text-red-600">{error}</p>
+            <Button onClick={() => router.back()} className="mt-4">
+              Go Back
+            </Button>
           </div>
         </PageContainer>
       </ModernDashboardLayout>
@@ -547,143 +561,49 @@ export default function EditStudentPage() {
     <ModernDashboardLayout
       user={sampleUser}
       title="Edit Student"
-      subtitle="Update student account information"
+      subtitle="Update student information"
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogout}
-      onSearch={handleSearch}
+      onSearch={() => {}}
       hideSearch={true}
     >
+      <style jsx global>{`
+        ::-webkit-scrollbar {
+          width: 0px;
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: transparent;
+        }
+        html {
+          scrollbar-width: none;
+        }
+        body {
+          -ms-overflow-style: none;
+        }
+      `}</style>
       <PageContainer>
-        {/* Back Button */}
-        <div className="mb-6">
-          <Button
-            variant="outline"
-            onClick={() => handleNavigation("/dashboard/students")}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Students
-          </Button>
-        </div>
-
         {/* Hero Section */}
-        <div className="text-center mb-8">
-          <div className="relative inline-block">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800">
-              Edit Student Account
-            </h1>
-            <p className="text-slate-600 mt-2">
-              Update {formData.firstName} {formData.lastName}&apos;s information
-            </p>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800">
+            Edit Student Information
+          </h1>
+          <p className="text-slate-600 mt-2">Update student details</p>
+        </motion.div>
 
-        {/* Fully Responsive Progress Steps */}
+        {/* Progress Steps - Desktop */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          {/* Mobile Layout (< sm) */}
-          <div className="sm:hidden">
-            <div className="flex items-center justify-center mb-4">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 ${
-                  currentStep >= steps[currentStep - 1]?.number
-                    ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
-                    : "bg-slate-200 text-slate-500"
-                }`}
-              >
-                {React.createElement(steps[currentStep - 1]?.icon, {
-                  className: "h-8 w-8 text-white",
-                })}
-              </motion.div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm font-semibold text-slate-900 mb-1">
-                Step {currentStep} of {steps.length}
-              </div>
-              <div className="text-xs text-slate-600 mb-3">
-                {steps[currentStep - 1]?.title}
-              </div>
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-200 rounded-full h-2">
-                <motion.div
-                  className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(currentStep / steps.length) * 100}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Tablet Layout (sm to lg) */}
-          <div className="hidden sm:flex lg:hidden justify-center items-center space-x-3 overflow-x-auto pb-4">
-            {steps.map((step, index) => (
-              <div
-                key={step.number}
-                className="flex items-center flex-shrink-0"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
-                    currentStep >= step.number
-                      ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg"
-                      : "bg-slate-200 text-slate-500"
-                  }`}
-                >
-                  <step.icon className="h-5 w-5" />
-                  {currentStep > step.number && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
-                    >
-                      <CheckCircle className="h-3 w-3 text-white" />
-                    </motion.div>
-                  )}
-                </motion.div>
-
-                <div className="ml-2 text-left">
-                  <div
-                    className={`text-xs font-semibold ${
-                      currentStep >= step.number
-                        ? "text-slate-900"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    Step {step.number}
-                  </div>
-                  <div
-                    className={`text-xs ${
-                      currentStep >= step.number
-                        ? "text-slate-600"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {step.title}
-                  </div>
-                </div>
-
-                {index < steps.length - 1 && (
-                  <motion.div
-                    className={`mx-3 h-0.5 w-8 transition-all duration-300 ${
-                      currentStep > step.number
-                        ? "bg-green-400"
-                        : "bg-slate-200"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop Layout (lg+) */}
-          <div className="hidden lg:flex justify-center items-center space-x-8 overflow-x-auto pb-4">
+          <div className="hidden sm:flex justify-center items-center space-x-8">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
                 <motion.div
@@ -694,7 +614,11 @@ export default function EditStudentPage() {
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
-                  <step.icon className="h-6 w-6" />
+                  <Icon3D
+                    icon={step.icon}
+                    size="h-6 w-6"
+                    className={currentStep >= step.number ? "text-white" : "text-slate-500"}
+                  />
                   {currentStep > step.number && (
                     <motion.div
                       initial={{ scale: 0 }}
@@ -705,34 +629,18 @@ export default function EditStudentPage() {
                     </motion.div>
                   )}
                 </motion.div>
-
                 <div className="ml-4 text-left">
-                  <div
-                    className={`text-sm font-semibold ${
-                      currentStep >= step.number
-                        ? "text-slate-900"
-                        : "text-slate-500"
-                    }`}
-                  >
+                  <div className={`text-sm font-semibold ${currentStep >= step.number ? "text-slate-900" : "text-slate-500"}`}>
                     Step {step.number}
                   </div>
-                  <div
-                    className={`text-sm ${
-                      currentStep >= step.number
-                        ? "text-slate-600"
-                        : "text-slate-400"
-                    }`}
-                  >
+                  <div className={`text-sm ${currentStep >= step.number ? "text-slate-600" : "text-slate-400"}`}>
                     {step.title}
                   </div>
                 </div>
-
                 {index < steps.length - 1 && (
                   <motion.div
                     className={`mx-6 h-0.5 w-16 transition-all duration-300 ${
-                      currentStep > step.number
-                        ? "bg-green-400"
-                        : "bg-slate-200"
+                      currentStep > step.number ? "bg-green-400" : "bg-slate-200"
                     }`}
                   />
                 )}
@@ -742,12 +650,19 @@ export default function EditStudentPage() {
         </motion.div>
 
         {/* Form Card */}
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ModernCard className="overflow-visible bg-white border border-slate-200 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
+        >
+          <ModernCard className="overflow-hidden bg-white border border-slate-200 shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/30 to-white/50" />
+
             <ModernCardContent className="relative p-4 sm:p-6 lg:p-8">
               <form onSubmit={handleSubmit}>
                 <AnimatePresence mode="wait">
-                  {/* Step 1: Personal Information */}
+                  {/* Step 1: Personal Info */}
                   {currentStep === 1 && (
                     <motion.div
                       key="step1"
@@ -758,37 +673,29 @@ export default function EditStudentPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <div className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4">
+                        <motion.div
+                          whileHover={{ scale: 1.05, rotateY: 10 }}
+                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
+                        >
                           <User className="h-8 w-8 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-slate-900">
-                          Personal Information
-                        </h2>
-                        <p className="text-slate-600">
-                          Update basic personal details
-                        </p>
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-slate-900">Personal Information</h2>
+                        <p className="text-slate-600">Let&apos;s start with basic personal details</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="firstName"
-                            className="text-sm font-semibold text-slate-700"
-                          >
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="firstName" className="text-sm font-semibold text-slate-700">
                             First Name *
                           </Label>
                           <Input
                             id="firstName"
                             value={formData.firstName}
-                            onChange={(e) =>
-                              handleInputChange("firstName", e.target.value)
-                            }
-                            placeholder="Enter first name (English or Persian: نام)"
+                            onChange={(e) => handleInputChange("firstName", e.target.value)}
+                            placeholder="Enter first name"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.firstName
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.firstName ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.firstName && (
@@ -797,27 +704,20 @@ export default function EditStudentPage() {
                               {formErrors.firstName}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="lastName"
-                            className="text-sm font-semibold text-slate-700"
-                          >
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="lastName" className="text-sm font-semibold text-slate-700">
                             Last Name *
                           </Label>
                           <Input
                             id="lastName"
                             value={formData.lastName}
-                            onChange={(e) =>
-                              handleInputChange("lastName", e.target.value)
-                            }
+                            onChange={(e) => handleInputChange("lastName", e.target.value)}
                             placeholder="Enter last name"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.lastName
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.lastName ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.lastName && (
@@ -826,27 +726,20 @@ export default function EditStudentPage() {
                               {formErrors.lastName}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="fatherName"
-                            className="text-sm font-semibold text-slate-700"
-                          >
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="fatherName" className="text-sm font-semibold text-slate-700">
                             Father Name *
                           </Label>
                           <Input
                             id="fatherName"
                             value={formData.fatherName}
-                            onChange={(e) =>
-                              handleInputChange("fatherName", e.target.value)
-                            }
+                            onChange={(e) => handleInputChange("fatherName", e.target.value)}
                             placeholder="Enter father name"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.fatherName
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.fatherName ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.fatherName && (
@@ -855,30 +748,20 @@ export default function EditStudentPage() {
                               {formErrors.fatherName}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="grandFatherName"
-                            className="text-sm font-semibold text-slate-700"
-                          >
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="grandFatherName" className="text-sm font-semibold text-slate-700">
                             Grand Father Name *
                           </Label>
                           <Input
                             id="grandFatherName"
                             value={formData.grandFatherName}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "grandFatherName",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Enter grand father name"
+                            onChange={(e) => handleInputChange("grandFatherName", e.target.value)}
+                            placeholder="Enter grand father"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.grandFatherName
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.grandFatherName ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.grandFatherName && (
@@ -887,27 +770,20 @@ export default function EditStudentPage() {
                               {formErrors.grandFatherName}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="studentId"
-                            className="text-sm font-semibold text-slate-700"
-                          >
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="studentId" className="text-sm font-semibold text-slate-700">
                             Student ID *
                           </Label>
                           <Input
                             id="studentId"
                             value={formData.studentId}
-                            onChange={(e) =>
-                              handleInputChange("studentId", e.target.value)
-                            }
-                            placeholder="e.g., CS-2024-001"
+                            onChange={(e) => handleInputChange("studentId", e.target.value)}
+                            placeholder="exe.. 32930"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.studentId
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.studentId ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.studentId && (
@@ -916,38 +792,20 @@ export default function EditStudentPage() {
                               {formErrors.studentId}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="dateOfBirth"
-                            className="text-sm font-semibold text-slate-700"
-                          >
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="dateOfBirth" className="text-sm font-semibold text-slate-700">
                             Date of Birth
                           </Label>
                           <Input
                             id="dateOfBirth"
                             type="date"
-                            value={
-                              formData.dateOfBirth
-                                ? formData.dateOfBirth
-                                    .toISOString()
-                                    .split("T")[0]
-                                : ""
-                            }
-                            onChange={(e) =>
-                              handleInputChange(
-                                "dateOfBirth",
-                                e.target.value
-                                  ? new Date(e.target.value)
-                                  : undefined
-                              )
-                            }
+                            value={formData.dateOfBirth ? formData.dateOfBirth.toISOString().split("T")[0] : ""}
+                            onChange={(e) => handleInputChange("dateOfBirth", e.target.value ? new Date(e.target.value) : undefined)}
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.dateOfBirth
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.dateOfBirth ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.dateOfBirth && (
@@ -956,24 +814,23 @@ export default function EditStudentPage() {
                               {formErrors.dateOfBirth}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
-                        <div className="order-2 sm:order-1"></div>
+                      <div className="flex justify-end gap-4 pt-6">
                         <Button
                           type="button"
                           onClick={nextStep}
-                          className="order-1 sm:order-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-lg font-semibold"
                         >
-                          Next Step
-                          <ArrowRight className="h-4 w-4 ml-2" />
+                          Next
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Step 2: Contact & Address */}
+                  {/* Step 2: Contact Info */}
                   {currentStep === 2 && (
                     <motion.div
                       key="step2"
@@ -984,37 +841,29 @@ export default function EditStudentPage() {
                       className="space-y-8"
                     >
                       <div className="text-center mb-8">
-                        <div className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4">
+                        <motion.div
+                          whileHover={{ scale: 1.05, rotateY: 10 }}
+                          className="inline-block p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg mb-4"
+                        >
                           <Phone className="h-8 w-8 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-slate-900">
-                          Contact & Address
-                        </h2>
-                        <p className="text-slate-600">
-                          Update contact information and address
-                        </p>
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-slate-900">Contact & Address</h2>
+                        <p className="text-slate-600">How can we reach you?</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="phone"
-                            className="text-sm font-semibold text-slate-700"
-                          >
-                            Phone Number *
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="phone" className="text-sm font-semibold text-slate-700">
+                            Phone *
                           </Label>
                           <Input
                             id="phone"
                             value={formData.phone}
-                            onChange={(e) =>
-                              handleInputChange("phone", e.target.value)
-                            }
-                            placeholder="+1 (555) 123-4567"
+                            onChange={(e) => handleInputChange("phone", e.target.value)}
+                            placeholder="0700000000"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.phone
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.phone ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.phone && (
@@ -1023,27 +872,20 @@ export default function EditStudentPage() {
                               {formErrors.phone}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="fatherPhone"
-                            className="text-sm font-semibold text-slate-700"
-                          >
-                            Father Phone Number *
+                        <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                          <Label htmlFor="fatherPhone" className="text-sm font-semibold text-slate-700">
+                            Father Phone *
                           </Label>
                           <Input
                             id="fatherPhone"
                             value={formData.fatherPhone}
-                            onChange={(e) =>
-                              handleInputChange("fatherPhone", e.target.value)
-                            }
-                            placeholder="+1 (555) 987-6543"
+                            onChange={(e) => handleInputChange("fatherPhone", e.target.value)}
+                            placeholder="0700000000"
                             className={cn(
                               "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.fatherPhone
-                                ? "border-red-500"
-                                : "border-slate-200"
+                              formErrors.fatherPhone ? "border-red-500" : "border-slate-200"
                             )}
                           />
                           {formErrors.fatherPhone && (
@@ -1052,36 +894,20 @@ export default function EditStudentPage() {
                               {formErrors.fatherPhone}
                             </p>
                           )}
-                        </div>
+                        </motion.div>
 
-                        <div className="space-y-2 sm:col-span-2">
-                          <Label
-                            htmlFor="address"
-                            className="text-sm font-semibold text-slate-700"
-                          >
-                            Address *
+                        <motion.div whileHover={{ scale: 1.02 }} className="col-span-1 sm:col-span-2 space-y-2">
+                          <Label htmlFor="address" className="text-sm font-semibold text-slate-700">
+                            Address
                           </Label>
                           <Input
                             id="address"
                             value={formData.address}
-                            onChange={(e) =>
-                              handleInputChange("address", e.target.value)
-                            }
-                            placeholder="Enter full address"
-                            className={cn(
-                              "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                              formErrors.address
-                                ? "border-red-500"
-                                : "border-slate-200"
-                            )}
+                            onChange={(e) => handleInputChange("address", e.target.value)}
+                            placeholder="Enter address"
+                            className="h-12 border border-slate-200 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg"
                           />
-                          {formErrors.address && (
-                            <p className="text-sm text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-4 w-4" />
-                              {formErrors.address}
-                            </p>
-                          )}
-                        </div>
+                        </motion.div>
                       </div>
 
                       <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6">
@@ -1089,23 +915,24 @@ export default function EditStudentPage() {
                           type="button"
                           variant="outline"
                           onClick={prevStep}
-                          className="order-2 sm:order-1 w-full sm:w-auto px-8 py-3 rounded-lg font-semibold"
+                          className="order-2 sm:order-1 px-8 py-3 rounded-lg font-semibold"
                         >
+                          <ArrowLeft className="mr-2 h-4 w-4" />
                           Previous
                         </Button>
                         <Button
                           type="button"
                           onClick={nextStep}
-                          className="order-1 sm:order-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="order-1 sm:order-2 bg-green-600 hover:bg-green-700 px-8 py-3 rounded-lg font-semibold"
                         >
-                          Next Step
-                          <ArrowRight className="h-4 w-4 ml-2" />
+                          Next
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Step 3: Academic Information */}
+                  {/* Step 3: Academic Details */}
                   {currentStep === 3 && (
                     <motion.div
                       key="step3"
@@ -1122,44 +949,37 @@ export default function EditStudentPage() {
                         >
                           <GraduationCap className="h-8 w-8 text-white" />
                         </motion.div>
-                        <h2 className="text-2xl font-bold text-slate-900">
-                          Academic Details
-                        </h2>
-                        <p className="text-slate-600">
-                          Academic program and enrollment information
-                        </p>
+                        <h2 className="text-2xl font-bold text-slate-900">Academic Details</h2>
+                        <p className="text-slate-600">Academic program and enrollment information</p>
                       </div>
 
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="program"
-                              className="text-sm font-semibold text-slate-700"
-                            >
+                          <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                            <Label htmlFor="programs" className="text-sm font-semibold text-slate-700">
                               Program/Major *
                             </Label>
                             <CustomSelect
-                              id="program"
-                              value={formData.programs[0] || ""}
-                              onValueChange={(value) =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  programs: value ? [value] : [],
-                                }))
-                              }
+                              key={`program-select-${formData.programs?.[0] || 'empty'}`}
+                              id="programs"
+                              value={formData.programs && formData.programs.length > 0 ? formData.programs[0] : ""}
+                              onValueChange={(value) => {
+                                handleInputChange("programs", [value]);
+                              }}
                               placeholder="Select Program"
                               className={cn(
-                                "focus:border-green-500 focus:ring-2 focus:ring-green-100",
-                                formErrors.programs
-                                  ? "border-red-500"
-                                  : "border-slate-200"
+                                "h-12 focus:border-green-500 focus:ring-2 focus:ring-green-100",
+                                formErrors.programs ? "border-red-500" : "border-slate-200"
                               )}
                             >
-                              <option value="">Select Program</option>
+                              {/* Add current value if it's not in the standard options */}
+                              {formData.programs && formData.programs.length > 0 && 
+                               formData.programs[0] && 
+                               !programOptions.includes(formData.programs[0]) && (
+                                <option key={formData.programs[0]} value={formData.programs[0]}>
+                                  {formData.programs[0]}
+                                </option>
+                              )}
                               {programOptions.map((program) => (
                                 <option key={program} value={program}>
                                   {program}
@@ -1174,10 +994,7 @@ export default function EditStudentPage() {
                             )}
                           </motion.div>
 
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
+                          <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
                             <Label className="text-sm font-semibold text-slate-700">
                               Academic Year
                             </Label>
@@ -1186,35 +1003,26 @@ export default function EditStudentPage() {
                               disabled
                               className="h-12 border border-slate-200 bg-slate-50 text-slate-600 rounded-lg"
                             />
-                            <p className="text-xs text-slate-500">
-                              Default academic year
-                            </p>
+                            <p className="text-xs text-slate-500">Default academic year</p>
                           </motion.div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="semester"
-                              className="text-sm font-semibold text-slate-700"
-                            >
+                          <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                            <Label htmlFor="semester" className="text-sm font-semibold text-slate-700">
                               Current Semester *
                             </Label>
                             <Input
+                              type="number"
+                              min="1"
+                              max="4"
                               id="semester"
                               value={formData.semester}
-                              onChange={(e) =>
-                                handleInputChange("semester", e.target.value)
-                              }
+                              onChange={(e) => handleInputChange("semester", e.target.value)}
                               placeholder="e.g., Fall 2024"
                               className={cn(
                                 "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.semester
-                                  ? "border-red-500"
-                                  : "border-slate-200"
+                                formErrors.semester ? "border-red-500" : "border-slate-200"
                               )}
                             />
                             {formErrors.semester && (
@@ -1225,14 +1033,8 @@ export default function EditStudentPage() {
                             )}
                           </motion.div>
 
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            className="space-y-2"
-                          >
-                            <Label
-                              htmlFor="enrollmentDate"
-                              className="text-sm font-semibold text-slate-700"
-                            >
+                          <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                            <Label htmlFor="enrollmentDate" className="text-sm font-semibold text-slate-700">
                               Enrollment Date *
                             </Label>
                             <Input
@@ -1242,17 +1044,10 @@ export default function EditStudentPage() {
                               max="1404"
                               placeholder="YYYY"
                               value={formData.enrollmentYear}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "enrollmentYear",
-                                  e.target.value
-                                )
-                              }
+                              onChange={(e) => handleInputChange("enrollmentYear", e.target.value)}
                               className={cn(
                                 "h-12 border bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-300 rounded-lg",
-                                formErrors.enrollmentYear
-                                  ? "border-red-500"
-                                  : "border-slate-200"
+                                formErrors.enrollmentYear ? "border-red-500" : "border-slate-200"
                               )}
                             />
                             {formErrors.enrollmentYear && (
@@ -1266,41 +1061,37 @@ export default function EditStudentPage() {
 
                         {/* Class Schedule Section */}
                         <div className="border-t border-slate-200 pt-6 mt-6">
-                          <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                            Class Schedule
-                          </h3>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-4">Class Schedule</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
-                              className="space-y-2"
-                            >
-                              <Label
-                                htmlFor="classSection"
-                                className="text-sm font-semibold text-slate-700"
-                              >
+                            <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                              <Label htmlFor="classSection" className="text-sm font-semibold text-slate-700">
                                 Class Name *
                               </Label>
-                              <CustomSelect
-                                id="classSection"
-                                value={formData.classSection}
-                                onValueChange={(value) =>
-                                  handleInputChange("classSection", value)
-                                }
-                                placeholder="Select Class Section"
-                                className={cn(
-                                  "focus:border-green-500 focus:ring-2 focus:ring-green-100",
-                                  formErrors.classSection
-                                    ? "border-red-500"
-                                    : "border-slate-200"
-                                )}
-                              >
-                                <option value="">Select Class Section</option>
-                                {classSectionOptions.map((section) => (
-                                  <option key={section} value={section}>
-                                    {section}
-                                  </option>
-                                ))}
-                              </CustomSelect>
+                              {loadingClasses || classes.length === 0 ? (
+                                <div className="h-12 border border-slate-200 bg-slate-50 rounded-lg flex items-center px-3 text-slate-600">
+                                  {loadingClasses ? "Loading classes..." : "No classes available"}
+                                </div>
+                              ) : (
+                                <CustomSelect
+                                  key={`class-select-${classes.length}`}
+                                  id="classSection"
+                                  value={formData.classSection || ""}
+                                  onValueChange={(value) => {
+                                    handleInputChange("classSection", value);
+                                  }}
+                                  placeholder="Select Class Section"
+                                  className={cn(
+                                    "h-12 focus:border-green-500 focus:ring-2 focus:ring-green-100",
+                                    formErrors.classSection ? "border-red-500" : "border-slate-200"
+                                  )}
+                                >
+                                  {classSectionOptions.map((option) => (
+                                    <option key={option.classId} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </CustomSelect>
+                              )}
                               {formErrors.classSection && (
                                 <p className="text-sm text-red-500 flex items-center gap-1">
                                   <AlertCircle className="h-4 w-4" />
@@ -1309,28 +1100,18 @@ export default function EditStudentPage() {
                               )}
                             </motion.div>
 
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
-                              className="space-y-2"
-                            >
-                              <Label
-                                htmlFor="timeSlot"
-                                className="text-sm font-semibold text-slate-700"
-                              >
+                            <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
+                              <Label htmlFor="timeSlot" className="text-sm font-semibold text-slate-700">
                                 Time Slot *
                               </Label>
                               <CustomSelect
                                 id="timeSlot"
                                 value={formData.timeSlot}
-                                onValueChange={(value) =>
-                                  handleInputChange("timeSlot", value)
-                                }
+                                onValueChange={(value) => handleInputChange("timeSlot", value)}
                                 placeholder="Select Time Slot"
                                 className={cn(
-                                  "focus:border-green-500 focus:ring-2 focus:ring-green-100",
-                                  formErrors.timeSlot
-                                    ? "border-red-500"
-                                    : "border-slate-200"
+                                  "h-12 focus:border-green-500 focus:ring-2 focus:ring-green-100",
+                                  formErrors.timeSlot ? "border-red-500" : "border-slate-200"
                                 )}
                               >
                                 <option value="">Select Time Slot</option>
@@ -1346,12 +1127,6 @@ export default function EditStudentPage() {
                                   {formErrors.timeSlot}
                                 </p>
                               )}
-                              <p className="text-xs text-slate-500">
-                                {formData.timeSlot &&
-                                  timeSlotOptions.find(
-                                    (slot) => slot.value === formData.timeSlot
-                                  )?.description}
-                              </p>
                             </motion.div>
                           </div>
                         </div>
@@ -1362,18 +1137,19 @@ export default function EditStudentPage() {
                           type="button"
                           variant="outline"
                           onClick={prevStep}
-                          className="order-2 sm:order-1 w-full sm:w-auto px-8 py-3 rounded-lg font-semibold"
+                          className="order-2 sm:order-1 px-8 py-3 rounded-lg font-semibold"
                         >
+                          <ArrowLeft className="mr-2 h-4 w-4" />
                           Previous
                         </Button>
-                        <Button
-                          type="submit"
+                        <Button 
+                          type="submit" 
                           disabled={isSubmitting}
-                          className="order-1 sm:order-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                          className="order-1 sm:order-2 bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                         >
                           {isSubmitting ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                               Updating...
                             </>
                           ) : (
@@ -1390,7 +1166,7 @@ export default function EditStudentPage() {
               </form>
             </ModernCardContent>
           </ModernCard>
-        </div>
+        </motion.div>
       </PageContainer>
     </ModernDashboardLayout>
   );
