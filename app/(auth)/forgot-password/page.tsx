@@ -245,7 +245,7 @@ export default function ForgotPasswordPage() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center space-x-3"
+            className="hidden md:flex items-center space-x-3"
           >
             <div className="h-12 w-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
               <GraduationCap className="h-7 w-7 text-white" />

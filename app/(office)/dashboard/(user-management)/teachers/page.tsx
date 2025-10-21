@@ -16,14 +16,7 @@ import { TeacherCard } from "@/components/shared/teacher-card";
 import { ViewTeacherDialog } from "@/components/shared/view-teacher-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { toast } from "sonner";
-
-// Sample user data
-const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 // Teacher interface from API
 interface Teacher {
@@ -45,6 +38,7 @@ interface Teacher {
 
 export default function TeacherListPage() {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [departmentFilter, setDepartmentFilter] = React.useState("");
   const [subjectFilter, setSubjectFilter] = React.useState("");
@@ -229,7 +223,7 @@ export default function TeacherListPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
       title="Teacher List"
       subtitle="Manage all teacher accounts"
       currentPath={currentPath}

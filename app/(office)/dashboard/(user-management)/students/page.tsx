@@ -31,14 +31,7 @@ import { CustomSelect } from "@/components/ui/custom-select";
 import { ViewStudentDialog } from "@/components/shared/view-student-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { toast } from "sonner";
-
-// Sample user data
-const sampleUser = {
-  name: "Dr. Sarah Ahmed",
-  email: "sarah.ahmed@university.edu",
-  role: "OFFICE" as const,
-  avatar: undefined,
-};
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 // Student interface
 interface Student {
@@ -56,6 +49,7 @@ interface Student {
 
 export default function StudentListPage() {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const [currentPath] = React.useState("/dashboard/students");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [programFilter, setProgramFilter] = React.useState("");
@@ -218,7 +212,7 @@ export default function StudentListPage() {
 
   return (
     <ModernDashboardLayout
-      user={sampleUser}
+      user={user || { name: 'User', email: '', role: 'OFFICE' as const }}
       title="Student List"
       subtitle="Manage all student accounts"
       currentPath={currentPath}

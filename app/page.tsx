@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,8 +18,6 @@ import {
   BookOpen,
   Users,
   BarChart3,
-  CheckCircle,
-  XCircle,
   ArrowRight,
   Shield,
   Clock,
@@ -29,73 +28,135 @@ import {
   Mail,
   Phone,
   MapPin,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  
+  const toggleMenu = () => {
+    console.log('Toggle menu - current state:', mobileMenuOpen);
+    setMobileMenuOpen(prev => !prev);
+    console.log('Toggle menu - new state will be:', !mobileMenuOpen);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header */}
-      <header className="border-b border-slate-200/60 sticky top-0 z-50 bg-white/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-slate-200/60 sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm">
+        <div className="container mx-auto px-4 py-3 lg:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <GraduationCap className="h-6 w-6 text-white" />
+            {/* Logo */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <span className="text-xl font-bold text-slate-900">
+              <div className="flex flex-col sm:flex-row sm:items-baseline">
+                <span className="text-base sm:text-xl font-bold text-slate-900 leading-tight">
                   University
                 </span>
-                <span className="text-xl font-bold text-blue-600 ml-1">
+                <span className="text-base sm:text-xl font-bold text-blue-600 sm:ml-1 leading-tight">
                   AttendanceHub
                 </span>
               </div>
             </div>
-            <nav className="hidden md:flex items-center space-x-8">
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
               <a
                 href="#features"
-                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors text-sm xl:text-base"
               >
                 Features
               </a>
               <a
                 href="#roles"
-                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors text-sm xl:text-base"
               >
                 User Roles
               </a>
               <a
                 href="#benefits"
-                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors text-sm xl:text-base"
               >
                 Benefits
               </a>
               <a
                 href="/login"
-                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors text-sm xl:text-base"
               >
                 Login
               </a>
-              <a
-                href="/dashboard"
-                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
-              >
-                Dashboard Demo
-              </a>
-              <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg">
-                Contact Office
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 shadow-lg">
+                Contact
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </nav>
-            <Button variant="ghost" className="md:hidden">
-              <Users className="h-5 w-5" />
-            </Button>
+
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              className="lg:hidden p-2 rounded-md hover:bg-slate-100 active:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-300"
+              onClick={toggleMenu}
+              aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6 text-slate-700" />
+              ) : (
+                <Menu className="h-6 w-6 text-slate-700" />
+              )}
+            </button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden mt-4 pb-4 space-y-1 border-t border-slate-200 pt-4 bg-slate-50/50 -mx-4 px-4 rounded-b-lg">
+              <a
+                href="#features"
+                className="block text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-colors py-3 px-3 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Features
+              </a>
+              <a
+                href="#roles"
+                className="block text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-colors py-3 px-3 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                User Roles
+              </a>
+              <a
+                href="#benefits"
+                className="block text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-colors py-3 px-3 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Benefits
+              </a>
+              <a
+                href="/login"
+                className="block text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium transition-colors py-3 px-3 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </a>
+              <div className="pt-2">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg justify-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contact Office
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-24 px-4 overflow-hidden">
+      <section className="relative py-12 sm:py-16 md:py-24 px-4 overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-emerald-50/30"></div>
         <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100/30 rounded-full blur-3xl"></div>
@@ -104,13 +165,13 @@ export default function Home() {
         <div className="container mx-auto max-w-7xl text-center relative">
           <Badge
             variant="secondary"
-            className="mb-6 bg-blue-50 text-blue-700 border-blue-200 px-4 py-2 text-sm font-medium"
+            className="mb-4 sm:mb-6 bg-blue-50 text-blue-700 border-blue-200 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium inline-flex items-center"
           >
-            <Star className="w-4 h-4 mr-2" />
+            <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
             Modern University Management System
           </Badge>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight px-2">
             <span className="text-slate-900">Smart Attendance</span>
             <br />
             <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-emerald-600 bg-clip-text text-transparent">
@@ -118,30 +179,28 @@ export default function Home() {
             </span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto mb-12 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-600 max-w-4xl mx-auto mb-8 sm:mb-12 leading-relaxed px-4">
             Streamline your university&#39;s attendance management with our
-            comprehensive digital platform.
+            comprehensive digital platform.{" "}
             <span className="font-semibold text-slate-700">
               Built for administrators, teachers, and students.
             </span>
           </p>
 
-
-
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center px-4">
             <Button
               size="lg"
-              className="text-lg px-10 py-4 bg-blue-600 hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+              className="w-full sm:w-auto text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-4 bg-blue-600 hover:bg-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
             >
               Contact Administration
-              <ArrowRight className="ml-3 h-5 w-5" />
+              <ArrowRight className="ml-2 sm:ml-3 h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="text-lg px-10 py-4 border-2 border-slate-300 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300"
+              className="w-full sm:w-auto text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-4 border-2 border-slate-300 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300"
             >
-              <Calendar className="mr-3 h-5 w-5" />
+              <Calendar className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5" />
               View Demo
             </Button>
           </div>
@@ -780,7 +839,7 @@ export default function Home() {
 
           <div className="flex flex-col md:flex-row items-center justify-between">
             <p className="text-slate-400 mb-4 md:mb-0">
-              © 2024 University AttendanceHub. Built with modern technology for
+              © 2025 University AttendanceHub. Built with modern technology for
               educational excellence.
             </p>
             <div className="flex items-center gap-6">
