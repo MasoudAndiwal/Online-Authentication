@@ -63,16 +63,16 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
   return (
     <Card className="rounded-2xl shadow-lg border-0 bg-white overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-orange-50 via-white to-amber-50">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg">
-              <Calendar className="h-5 w-5 text-white" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex-shrink-0">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            {classData.name} Schedule
+            <span className="truncate">{classData.name} Schedule</span>
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className={cn(
-              "text-sm font-semibold px-3 py-1",
+              "text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1",
               classData.session === "MORNING" 
                 ? "bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border-amber-300 shadow-sm"
                 : "bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border-indigo-300 shadow-sm"
@@ -84,10 +84,11 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                 variant="outline"
                 size="sm"
                 onClick={onEditClass}
-                className="h-9 px-4 border-0 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm transition-all duration-200"
+                className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm border-0 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm transition-all duration-200"
               >
-                <Edit className="h-3.5 w-3.5 mr-1.5" />
-                Edit Class
+                <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                <span className="hidden xs:inline">Edit Class</span>
+                <span className="xs:hidden">Edit</span>
               </Button>
             )}
             {onDeleteClass && (
@@ -95,10 +96,11 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                 variant="outline"
                 size="sm"
                 onClick={onDeleteClass}
-                className="h-9 px-4 border-0 bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 shadow-sm transition-all duration-200"
+                className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm border-0 bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 shadow-sm transition-all duration-200"
               >
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                Delete Class
+                <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
+                <span className="hidden xs:inline">Delete</span>
+                <span className="xs:hidden">Del</span>
               </Button>
             )}
           </div>
@@ -132,10 +134,10 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
 
             return (
               <div key={day.key} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-1.5 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full shadow-sm" />
-                  <h3 className="font-bold text-lg text-slate-900">{day.label}</h3>
-                  <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 font-semibold shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="h-8 sm:h-10 w-1 sm:w-1.5 bg-gradient-to-b from-orange-500 to-amber-500 rounded-full shadow-sm flex-shrink-0" />
+                  <h3 className="font-bold text-base sm:text-lg text-slate-900">{day.label}</h3>
+                  <Badge variant="secondary" className="bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 font-semibold shadow-sm text-xs sm:text-sm">
                     {daySchedule.length} {daySchedule.length === 1 ? 'class' : 'classes'}
                   </Badge>
                   {onAddEntry && (
@@ -143,57 +145,58 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                       variant="outline"
                       size="sm"
                       onClick={() => onAddEntry(day.key)}
-                      className="ml-auto text-xs h-8 px-3 border-0 bg-orange-50 text-orange-700 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 shadow-sm transition-all duration-200"
+                      className="ml-auto text-xs h-7 sm:h-8 px-2 sm:px-3 border-0 bg-orange-50 text-orange-700 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 shadow-sm transition-all duration-200"
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      Add Class
+                      <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
+                      <span className="hidden sm:inline">Add Class</span>
+                      <span className="sm:hidden">Add</span>
                     </Button>
                   )}
                 </div>
 
                 {daySchedule.length > 0 ? (
-                  <div className="grid gap-3 ml-5">
+                  <div className="grid gap-3 ml-2 sm:ml-5">
                     {daySchedule.map((entry) => (
                     <div
                       key={entry.id}
                       className={cn(
-                        "p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 hover:scale-[1.01]",
+                        "p-3 sm:p-4 md:p-5 rounded-xl border-2 transition-all duration-200 hover:scale-[1.01]",
                         getSubjectColor(entry.subject)
                       )}
                     >
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex flex-col gap-3">
                         <div className="flex-1 space-y-2 w-full">
-                          <div className="flex items-center gap-3 mb-1">
-                            <div className="p-1.5 bg-white/80 rounded-lg">
-                              <BookOpen className="h-4 w-4" />
+                          <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                            <div className="p-1.5 bg-white/80 rounded-lg flex-shrink-0">
+                              <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
-                            <span className="font-bold text-base sm:text-lg">{entry.subject}</span>
+                            <span className="font-bold text-sm sm:text-base md:text-lg truncate">{entry.subject}</span>
                           </div>
                           
-                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm mt-3">
-                            <div className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-lg">
-                              <User className="h-3.5 w-3.5" />
-                              <span className="font-medium">{entry.teacherName}</span>
+                          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm mt-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
+                              <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                              <span className="font-medium truncate max-w-[120px] sm:max-w-none">{entry.teacherName}</span>
                             </div>
-                            <div className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-lg">
-                              <Clock className="h-3.5 w-3.5" />
-                              <span className="font-medium text-xs sm:text-sm">{entry.startTime} - {entry.endTime}</span>
+                            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
+                              <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                              <span className="font-medium text-xs whitespace-nowrap">{entry.startTime} - {entry.endTime}</span>
                             </div>
-                            <Badge variant="outline" className="bg-white/70 font-semibold shadow-sm">
+                            <Badge variant="outline" className="bg-white/70 font-semibold shadow-sm text-xs">
                               {entry.hours}h
                             </Badge>
                           </div>
                         </div>
 
-                        <div className="flex gap-2 w-full sm:w-auto">
+                        <div className="flex gap-2 w-full">
                           {onEdit && (
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => onEdit(entry)}
-                              className="h-9 px-3 sm:px-4 flex-1 sm:flex-none border-0 bg-orange-50 hover:bg-orange-100 text-orange-700 shadow-sm transition-all duration-200"
+                              className="h-8 sm:h-9 px-3 sm:px-4 flex-1 text-xs sm:text-sm border-0 bg-orange-50 hover:bg-orange-100 text-orange-700 shadow-sm transition-all duration-200"
                             >
-                              <Edit className="h-3.5 w-3.5 mr-1.5" />
+                              <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                               Edit
                             </Button>
                           )}
@@ -202,9 +205,9 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                               variant="outline"
                               size="sm"
                               onClick={() => onDelete(entry.id)}
-                              className="h-9 px-3 sm:px-4 flex-1 sm:flex-none border-0 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 shadow-sm transition-all duration-200"
+                              className="h-8 sm:h-9 px-3 sm:px-4 flex-1 text-xs sm:text-sm border-0 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 shadow-sm transition-all duration-200"
                             >
-                              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                              <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5" />
                               Delete
                             </Button>
                           )}

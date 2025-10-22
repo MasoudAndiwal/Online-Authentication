@@ -302,56 +302,56 @@ export default function SchedulePage() {
     >
       <PageContainer>
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 hover:shadow-xl transition-all duration-200">
-            <CardContent className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <Card className="rounded-xl sm:rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 hover:shadow-xl transition-all duration-200">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-orange-600 mb-2 uppercase tracking-wide">
+                  <p className="text-xs sm:text-sm font-semibold text-orange-600 mb-1 sm:mb-2 uppercase tracking-wide">
                     Total Classes
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                  <p className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                     {totalScheduleEntries}
                   </p>
                 </div>
-                <div className="p-3.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg">
-                  <Calendar className="h-7 w-7 text-white" />
+                <div className="p-2.5 sm:p-3.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg flex-shrink-0">
+                  <Calendar className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 hover:shadow-xl transition-all duration-200">
-            <CardContent className="p-6">
+          <Card className="rounded-xl sm:rounded-2xl shadow-lg border-0 bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 hover:shadow-xl transition-all duration-200">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-amber-700 mb-2 uppercase tracking-wide">
+                  <p className="text-xs sm:text-sm font-semibold text-amber-700 mb-1 sm:mb-2 uppercase tracking-wide">
                     Morning Classes
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                  <p className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                     {morningClasses}
                   </p>
                 </div>
-                <div className="p-3.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg">
-                  <Sun className="h-7 w-7 text-white" />
+                <div className="p-2.5 sm:p-3.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg flex-shrink-0">
+                  <Sun className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-indigo-50 via-indigo-100 to-purple-50 hover:shadow-xl transition-all duration-200">
-            <CardContent className="p-6">
+          <Card className="rounded-xl sm:rounded-2xl shadow-lg border-0 bg-gradient-to-br from-indigo-50 via-indigo-100 to-purple-50 hover:shadow-xl transition-all duration-200">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-indigo-700 mb-2 uppercase tracking-wide">
+                  <p className="text-xs sm:text-sm font-semibold text-indigo-700 mb-1 sm:mb-2 uppercase tracking-wide">
                     Afternoon Classes
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  <p className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                     {afternoonClasses}
                   </p>
                 </div>
-                <div className="p-3.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg">
-                  <Moon className="h-7 w-7 text-white" />
+                <div className="p-2.5 sm:p-3.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg flex-shrink-0">
+                  <Moon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -370,25 +370,25 @@ export default function SchedulePage() {
 
         {/* Search and Filter Bar */}
         {!loading && (
-        <Card className="rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <CardContent className="p-4">
+        <Card className="rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 mb-4 sm:mb-6">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" />
                 <Input
                   placeholder="Search classes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-11 border border-slate-900 bg-slate-50 focus:border-orange-500 focus:ring-orange-500"
+                  className="pl-9 sm:pl-10 h-10 sm:h-11 text-sm sm:text-base border border-slate-900 bg-slate-50 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
 
               <div className="relative w-full sm:w-48">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 pointer-events-none z-10" />
                 <CustomSelect
                   value={sessionFilter}
                   onValueChange={(value) => setSessionFilter(value as TimeSession)}
-                  className="pl-10 h-11 border-0 bg-slate-50"
+                  className="pl-9 sm:pl-10 h-10 sm:h-11 text-sm sm:text-base border-0 bg-slate-50"
                 >
                   <option value="ALL">All Sessions</option>
                   <option value="MORNING">Morning</option>
@@ -404,13 +404,13 @@ export default function SchedulePage() {
 
         {/* Main Content Grid */}
         {!loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Class List - Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="rounded-2xl shadow-sm border-0">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+            <Card className="rounded-xl sm:rounded-2xl shadow-sm border-0">
+              <CardContent className="p-3 sm:p-4">
+                <h3 className="font-semibold text-sm sm:text-base text-slate-900 mb-3 flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Classes
                 </h3>
                 <div className="space-y-2">
