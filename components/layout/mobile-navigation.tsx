@@ -88,7 +88,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         icon: ClipboardList,
         children: [
           { label: 'Overview', href: '/attendance/overview', icon: BarChart3 },
-          { label: 'Mark Attendance', href: '/attendance/mark', icon: ClipboardList },
+          { label: 'Mark Attendance', href: '/dashboard/mark-attendance', icon: ClipboardList },
           { label: 'Attendance History', href: '/attendance/history', icon: FileText }
         ]
       },
@@ -128,7 +128,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: '/attendance',
         icon: ClipboardList,
         children: [
-          { label: 'Mark Attendance', href: '/attendance/mark', icon: ClipboardList },
+          { label: 'Mark Attendance', href: '/dashboard/mark-attendance', icon: ClipboardList },
           { label: 'Attendance History', href: '/attendance/history', icon: FileText }
         ]
       },

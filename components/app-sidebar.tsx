@@ -453,7 +453,7 @@ const getNavigationItems = (role: UserProfile["role"]): NavigationItem[] => {
           },
           {
             label: "Mark Attendance",
-            href: "/attendance/mark",
+            href: "/dashboard/mark-attendance",
             icon: ModernCleanIcons.attendance,
           },
           {
@@ -503,7 +503,7 @@ const getNavigationItems = (role: UserProfile["role"]): NavigationItem[] => {
         children: [
           {
             label: "Mark Attendance",
-            href: "/attendance/mark",
+            href: "/dashboard/mark-attendance",
             icon: ModernCleanIcons.attendance,
           },
           {

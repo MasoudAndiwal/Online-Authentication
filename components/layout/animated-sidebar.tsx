@@ -147,7 +147,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
           { label: "Overview", href: "/attendance/overview", icon: BarChart3 },
           {
             label: "Mark Attendance",
-            href: "/attendance/mark",
+            href: "/dashboard/mark-attendance",
             icon: ClipboardList,
           },
           {
@@ -211,7 +211,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         children: [
           {
             label: "Mark Attendance",
-            href: "/attendance/mark",
+            href: "/dashboard/mark-attendance",
             icon: ClipboardList,
           },
           {
