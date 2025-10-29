@@ -18,10 +18,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CustomSelect } from "@/components/shared/custom-select";
+import { CustomSelect } from "@/components/ui/custom-select";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -106,8 +107,12 @@ function StudentAttendanceCard({ student, status, onStatusChange }: StudentAtten
   const fullName = `${student.firstName} ${student.lastName}`;
 
   return (
-    <Card className="rounded-xl shadow-md border-slate-200 hover:shadow-lg transition-all duration-200">
-      <CardContent className="p-4">
+    <motion.div
+      whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card className="rounded-xl shadow-md border-slate-200 transition-all duration-300">
+        <CardContent className="p-4">
         {/* Student Info */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -119,73 +124,91 @@ function StudentAttendanceCard({ student, status, onStatusChange }: StudentAtten
               <p className="text-xs text-slate-500">{student.studentId}</p>
             </div>
           </div>
-          
-          <Badge className={cn("flex items-center gap-1 border", badgeConfig.className)}>
-            <BadgeIcon className="h-3 w-3" />
-            <span className="text-xs">{badgeConfig.label}</span>
-          </Badge>
+
+          <motion.div
+            animate={status !== "NOT_MARKED" ? { scale: [1, 1.05, 1] } : {}}
+            transition={{ duration: 0.3, repeat: status !== "NOT_MARKED" ? 2 : 0 }}
+          >
+            <Badge className={cn(
+              "flex items-center gap-1 border transition-all duration-300",
+              badgeConfig.className,
+              status !== "NOT_MARKED" && "animate-badge-pulse"
+            )}>
+              <BadgeIcon className="h-3 w-3" />
+              <span className="text-xs">{badgeConfig.label}</span>
+            </Badge>
+          </motion.div>
         </div>
-        
+
         {/* Status Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            size="sm"
-            onClick={() => onStatusChange(student.id, "PRESENT")}
-            className={cn(
-              "h-10 rounded-lg transition-all duration-200",
-              status === "PRESENT"
-                ? "bg-green-600 text-white hover:bg-green-700 shadow-md"
-                : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-            )}
-          >
-            <CheckCircle className="h-4 w-4 mr-1" />
-            Present
-          </Button>
-          
-          <Button
-            size="sm"
-            onClick={() => onStatusChange(student.id, "ABSENT")}
-            className={cn(
-              "h-10 rounded-lg transition-all duration-200",
-              status === "ABSENT"
-                ? "bg-red-600 text-white hover:bg-red-700 shadow-md"
-                : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
-            )}
-          >
-            <XCircle className="h-4 w-4 mr-1" />
-            Absent
-          </Button>
-          
-          <Button
-            size="sm"
-            onClick={() => onStatusChange(student.id, "SICK")}
-            className={cn(
-              "h-10 rounded-lg transition-all duration-200",
-              status === "SICK"
-                ? "bg-amber-600 text-white hover:bg-amber-700 shadow-md"
-                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-            )}
-          >
-            <Heart className="h-4 w-4 mr-1" />
-            Sick
-          </Button>
-          
-          <Button
-            size="sm"
-            onClick={() => onStatusChange(student.id, "LEAVE")}
-            className={cn(
-              "h-10 rounded-lg transition-all duration-200",
-              status === "LEAVE"
-                ? "bg-cyan-600 text-white hover:bg-cyan-700 shadow-md"
-                : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200"
-            )}
-          >
-            <CalendarIcon className="h-4 w-4 mr-1" />
-            Leave
-          </Button>
+        <div className="grid grid-cols-2 gap-2.5">
+          <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.1 }}>
+            <Button
+              size="sm"
+              onClick={() => onStatusChange(student.id, "PRESENT")}
+              className={cn(
+                "h-11 rounded-lg transition-all duration-300 w-full touch-manipulation",
+                status === "PRESENT"
+                  ? "bg-green-600 text-white hover:bg-green-700 shadow-md"
+                  : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+              )}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Present
+            </Button>
+          </motion.div>
+
+          <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.1 }}>
+            <Button
+              size="sm"
+              onClick={() => onStatusChange(student.id, "ABSENT")}
+              className={cn(
+                "h-11 rounded-lg transition-all duration-300 w-full touch-manipulation",
+                status === "ABSENT"
+                  ? "bg-red-600 text-white hover:bg-red-700 shadow-md"
+                  : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+              )}
+            >
+              <XCircle className="h-4 w-4 mr-1" />
+              Absent
+            </Button>
+          </motion.div>
+
+          <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.1 }}>
+            <Button
+              size="sm"
+              onClick={() => onStatusChange(student.id, "SICK")}
+              className={cn(
+                "h-11 rounded-lg transition-all duration-300 w-full touch-manipulation",
+                status === "SICK"
+                  ? "bg-amber-600 text-white hover:bg-amber-700 shadow-md"
+                  : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+              )}
+            >
+              <Heart className="h-4 w-4 mr-1" />
+              Sick
+            </Button>
+          </motion.div>
+
+          <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.1 }}>
+            <Button
+              size="sm"
+              onClick={() => onStatusChange(student.id, "LEAVE")}
+              className={cn(
+                "h-11 rounded-lg transition-all duration-300 w-full touch-manipulation",
+                status === "LEAVE"
+                  ? "bg-cyan-600 text-white hover:bg-cyan-700 shadow-md"
+                  : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200"
+              )}
+            >
+              <CalendarIcon className="h-4 w-4 mr-1" />
+              Leave
+            </Button>
+          </motion.div>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -204,12 +227,12 @@ export default function MarkAttendanceClassPage() {
   >(new Map());
   const [showMarkAllDialog, setShowMarkAllDialog] = React.useState(false);
   const [showResetDialog, setShowResetDialog] = React.useState(false);
-  
+
   // Student data state
   const [students, setStudents] = React.useState<Student[]>([]);
   const [studentsLoading, setStudentsLoading] = React.useState(true);
   const [studentsError, setStudentsError] = React.useState<string | null>(null);
-  
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"ALL" | AttendanceStatus>("ALL");
@@ -243,13 +266,21 @@ export default function MarkAttendanceClassPage() {
   // Fetch students for the selected class
   const loadStudents = React.useCallback(async () => {
     if (!classData) return;
-    
+
     try {
       setStudentsLoading(true);
       setStudentsError(null);
-      const response = await fetch(`/api/students?classSection=${encodeURIComponent(classData.name)}`);
-      if (!response.ok) throw new Error("Failed to fetch students");
+      // Students are stored with format "ClassName - Session" in class_section field
+      const classSectionKey = `${classData.name} - ${classData.session}`;
+      console.log("Loading students for class:", classSectionKey);
+      const response = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to fetch students:", errorData);
+        throw new Error("Failed to fetch students");
+      }
       const data: Student[] = await response.json();
+      console.log(`Loaded ${data.length} students for class ${classSectionKey}:`, data);
       setStudents(data);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -347,7 +378,7 @@ export default function MarkAttendanceClassPage() {
       });
       return newRecords;
     });
-    
+
     // Show success toast
     toast.success("Attendance marked", {
       description: `Status updated to ${status}`,
@@ -360,13 +391,13 @@ export default function MarkAttendanceClassPage() {
   const filteredStudents = React.useMemo(() => {
     return students.filter(student => {
       const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         fullName.includes(searchQuery.toLowerCase()) ||
         student.studentId.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const studentStatus = attendanceRecords.get(student.id)?.status || "NOT_MARKED";
       const matchesStatus = statusFilter === "ALL" || studentStatus === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [students, searchQuery, statusFilter, attendanceRecords]);
@@ -402,10 +433,10 @@ export default function MarkAttendanceClassPage() {
   // Create display user
   const displayUser = user
     ? {
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email || "",
-        role: user.role,
-      }
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email || "",
+      role: user.role,
+    }
     : { name: "User", email: "", role: "OFFICE" as const };
 
   if (authLoading) {
@@ -487,13 +518,19 @@ export default function MarkAttendanceClassPage() {
       onSearch={handleSearch}
       hideSearch={true}
     >
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
       <PageContainer>
         {/* Back Button */}
         <div className="mb-6">
           <Button
             onClick={() => router.push("/dashboard/mark-attendance")}
             variant="outline"
-            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+            className="h-11 border-slate-300 text-slate-700 hover:bg-slate-50 touch-manipulation"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Classes
@@ -501,33 +538,32 @@ export default function MarkAttendanceClassPage() {
         </div>
 
         {/* Class Info Card */}
-        <Card className="rounded-2xl shadow-lg border-orange-200 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg">
-                  <GraduationCap className="h-8 w-8 text-white" />
+        <Card className="rounded-2xl shadow-lg border-orange-200 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 mb-6 md:mb-8">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+                <div className="p-3 md:p-4 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg flex-shrink-0">
+                  <GraduationCap className="h-6 w-6 md:h-8 md:w-8 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-1">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg md:text-2xl font-bold text-slate-900 mb-1 truncate">
                     {classData.name}
                   </h2>
-                  <p className="text-slate-700">
+                  <p className="text-sm md:text-base text-slate-700 truncate">
                     {classData.major} • Semester {classData.semester}
                   </p>
                 </div>
               </div>
               <div
-                className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 ${
-                  classData.session === "MORNING"
+                className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold flex items-center gap-1.5 md:gap-2 flex-shrink-0 ${classData.session === "MORNING"
                     ? "bg-amber-200 text-amber-800"
                     : "bg-indigo-200 text-indigo-800"
-                }`}
+                  }`}
               >
                 {classData.session === "MORNING" ? (
-                  <Sun className="h-4 w-4" />
+                  <Sun className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 ) : (
-                  <Moon className="h-4 w-4" />
+                  <Moon className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 )}
                 {classData.session}
               </div>
@@ -537,26 +573,26 @@ export default function MarkAttendanceClassPage() {
 
         {/* Date Selector */}
         <Card className="rounded-2xl shadow-md border-slate-200 mb-6">
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3 md:gap-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handlePreviousDay}
-                  className="border-slate-300 hover:bg-slate-50"
+                  className="h-11 border-slate-300 hover:bg-slate-50 touch-manipulation"
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
                 </Button>
 
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-orange-600" />
+                  <Calendar className="h-5 w-5 text-orange-600 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-slate-600">
                       Marking attendance for
                     </p>
-                    <p className="text-lg font-bold text-slate-900">
+                    <p className="text-base md:text-lg font-bold text-slate-900">
                       {format(selectedDate, "EEEE, MMMM dd, yyyy")}
                     </p>
                   </div>
@@ -567,7 +603,7 @@ export default function MarkAttendanceClassPage() {
                   size="sm"
                   onClick={handleNextDay}
                   disabled={isToday}
-                  className="border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 >
                   Next
                   <ChevronRight className="h-4 w-4 ml-1" />
@@ -583,7 +619,7 @@ export default function MarkAttendanceClassPage() {
                     position: "bottom-center",
                   });
                 }}
-                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                className="h-11 border-orange-300 text-orange-600 hover:bg-orange-50 touch-manipulation w-full md:w-auto"
               >
                 <Calendar className="h-4 w-4 mr-2" />
                 Change Date
@@ -593,127 +629,163 @@ export default function MarkAttendanceClassPage() {
         </Card>
 
         {/* Attendance Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
           {/* Total Students */}
-          <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-orange-50 to-orange-100/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-600 rounded-lg">
-                  <Users className="h-5 w-5 text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0 }}
+          >
+            <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-orange-50 to-orange-100/50">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-orange-600 rounded-lg flex-shrink-0">
+                    <Users className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-orange-600 truncate">Total</p>
+                    <p className="text-xl md:text-2xl font-bold text-orange-700">
+                      {totalStudents}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-orange-600">Total</p>
-                  <p className="text-2xl font-bold text-orange-700">
-                    {totalStudents}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Present */}
-          <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-green-50 to-green-100/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-600 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+          >
+            <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-green-50 to-green-100/50">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-green-600 rounded-lg flex-shrink-0">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-green-600 truncate">Present</p>
+                    <p className="text-xl md:text-2xl font-bold text-green-700">
+                      {presentCount}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-green-600">Present</p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {presentCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Absent */}
-          <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-red-50 to-red-100/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-600 rounded-lg">
-                  <XCircle className="h-5 w-5 text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-red-50 to-red-100/50">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-red-600 rounded-lg flex-shrink-0">
+                    <XCircle className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-red-600 truncate">Absent</p>
+                    <p className="text-xl md:text-2xl font-bold text-red-700">
+                      {absentCount}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-red-600">Absent</p>
-                  <p className="text-2xl font-bold text-red-700">
-                    {absentCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Sick */}
-          <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-amber-50 to-amber-100/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-600 rounded-lg">
-                  <Heart className="h-5 w-5 text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+          >
+            <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-amber-50 to-amber-100/50">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-amber-600 rounded-lg flex-shrink-0">
+                    <Heart className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-amber-600 truncate">Sick</p>
+                    <p className="text-xl md:text-2xl font-bold text-amber-700">
+                      {sickCount}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-amber-600">Sick</p>
-                  <p className="text-2xl font-bold text-amber-700">
-                    {sickCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Leave */}
-          <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-cyan-50 to-cyan-100/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-cyan-600 rounded-lg">
-                  <CalendarIcon className="h-5 w-5 text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-cyan-50 to-cyan-100/50">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-cyan-600 rounded-lg flex-shrink-0">
+                    <CalendarIcon className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-cyan-600 truncate">Leave</p>
+                    <p className="text-xl md:text-2xl font-bold text-cyan-700">
+                      {leaveCount}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-cyan-600">Leave</p>
-                  <p className="text-2xl font-bold text-cyan-700">
-                    {leaveCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Not Marked */}
-          <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-600 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-white" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+          >
+            <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100/50">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1.5 md:p-2 bg-slate-600 rounded-lg flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-slate-600 truncate">
+                      Not Marked
+                    </p>
+                    <p className="text-xl md:text-2xl font-bold text-slate-700">
+                      {notMarkedCount}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-600">
-                    Not Marked
-                  </p>
-                  <p className="text-2xl font-bold text-slate-700">
-                    {notMarkedCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Bulk Actions Bar */}
         <Card className="rounded-2xl shadow-md border-slate-200 mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <CardContent className="p-4 md:p-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-orange-600" />
-                <span className="font-semibold text-slate-900">
+                <Zap className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                <span className="font-semibold text-slate-900 text-base">
                   Quick Actions
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   onClick={() => setShowMarkAllDialog(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Mark All Present
@@ -722,7 +794,7 @@ export default function MarkAttendanceClassPage() {
                 <Button
                   variant="outline"
                   onClick={() => setShowResetDialog(true)}
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                  className="h-11 border-slate-300 text-slate-700 hover:bg-slate-50 touch-manipulation"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset All
@@ -734,33 +806,32 @@ export default function MarkAttendanceClassPage() {
 
         {/* Search and Filter Bar */}
         <Card className="rounded-2xl shadow-md border-slate-200 mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="Search by name or student ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 border-slate-300 focus:border-orange-500 focus:ring-orange-500"
+                  className="pl-10 h-11 border-slate-300 focus:border-orange-500 focus:ring-orange-500 text-base"
                 />
               </div>
               <div className="w-full md:w-64">
                 <CustomSelect
                   value={statusFilter}
-                  onValueChange={(value) => setStatusFilter(value as "ALL" | AttendanceStatus)}
-                  options={[
-                    { value: "ALL", label: "All Statuses" },
-                    { value: "PRESENT", label: "Present" },
-                    { value: "ABSENT", label: "Absent" },
-                    { value: "SICK", label: "Sick" },
-                    { value: "LEAVE", label: "Leave" },
-                    { value: "NOT_MARKED", label: "Not Marked" },
-                  ]}
+                  onValueChange={(value: string) => setStatusFilter(value as "ALL" | AttendanceStatus)}
                   placeholder="Filter by status"
-                  className="border-slate-300 focus:border-orange-500 focus:ring-orange-500"
-                />
+                  className="h-11 border-slate-300 focus:border-orange-500 focus:ring-orange-500 text-base"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="PRESENT">Present</option>
+                  <option value="ABSENT">Absent</option>
+                  <option value="SICK">Sick</option>
+                  <option value="LEAVE">Leave</option>
+                  <option value="NOT_MARKED">Not Marked</option>
+                </CustomSelect>
               </div>
             </div>
           </CardContent>
@@ -769,27 +840,34 @@ export default function MarkAttendanceClassPage() {
         {/* Student Attendance Grid */}
         {studentsLoading ? (
           // Loading skeleton
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="rounded-xl shadow-md border-slate-200">
-                <CardContent className="p-4">
-                  <div className="animate-pulse">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="h-10 w-10 bg-slate-200 rounded-full" />
-                      <div className="flex-1">
-                        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-                        <div className="h-3 bg-slate-200 rounded w-1/2" />
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+              >
+                <Card className="rounded-xl shadow-md border-slate-200">
+                  <CardContent className="p-4">
+                    <div className="animate-pulse">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-10 w-10 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full animate-shimmer" />
+                        <div className="flex-1">
+                          <div className="h-4 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-3/4 mb-2 animate-shimmer" />
+                          <div className="h-3 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-1/2 animate-shimmer" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="h-10 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-shimmer" />
+                        <div className="h-10 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-shimmer" />
+                        <div className="h-10 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-shimmer" />
+                        <div className="h-10 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-shimmer" />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="h-10 bg-slate-200 rounded-lg" />
-                      <div className="h-10 bg-slate-200 rounded-lg" />
-                      <div className="h-10 bg-slate-200 rounded-lg" />
-                      <div className="h-10 bg-slate-200 rounded-lg" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         ) : studentsError ? (
@@ -863,17 +941,23 @@ export default function MarkAttendanceClassPage() {
           </Card>
         ) : (
           // Student cards grid
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredStudents.map((student) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {filteredStudents.map((student, index) => {
               const studentStatus = attendanceRecords.get(student.id)?.status || "NOT_MARKED";
-              
+
               return (
-                <StudentAttendanceCard
+                <motion.div
                   key={student.id}
-                  student={student}
-                  status={studentStatus}
-                  onStatusChange={handleStatusChange}
-                />
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <StudentAttendanceCard
+                    student={student}
+                    status={studentStatus}
+                    onStatusChange={handleStatusChange}
+                  />
+                </motion.div>
               );
             })}
           </div>
@@ -937,6 +1021,7 @@ export default function MarkAttendanceClassPage() {
           </DialogContent>
         </Dialog>
       </PageContainer>
+      </motion.div>
     </ModernDashboardLayout>
   );
 }
