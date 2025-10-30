@@ -109,6 +109,17 @@ body {
   transition: all 0.2s ease-in-out;
 }
 
+/* Smooth layout transitions for responsive design */
+@media (prefers-reduced-motion: no-preference) {
+  .grid {
+    transition: grid-template-columns 0.3s ease-in-out;
+  }
+  
+  .flex {
+    transition: flex-direction 0.3s ease-in-out;
+  }
+}
+
 /* Professional card hover effects */
 .card-hover {
   transition: all 0.3s ease;
@@ -246,4 +257,40 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
+}
+
+/* Shimmer animation for loading skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    #f0f0f0 0%,
+    #e0e0e0 20%,
+    #f0f0f0 40%,
+    #f0f0f0 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Pulse animation for status badges */
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-badge-pulse {
+  animation: badge-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
