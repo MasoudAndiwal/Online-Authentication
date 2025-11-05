@@ -67,13 +67,19 @@ const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frid
 
 interface StudentAttendanceRowProps {
   student: Student;
-  schedule: ScheduleEntry[];
+  standardPeriods: {
+    periodNumber: number;
+    startTime: string;
+    endTime: string;
+    teacherName: string;
+    subject: string;
+  }[];
   attendanceRecords: Map<string, AttendanceRecord>;
   onStatusChange: (studentId: string, periodNumber: number, status: AttendanceStatus) => void;
   index: number;
 }
 
-function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusChange, index }: StudentAttendanceRowProps) {
+function StudentAttendanceRow({ student, standardPeriods, attendanceRecords, onStatusChange, index }: StudentAttendanceRowProps) {
   const fullName = `${student.firstName} ${student.lastName}`;
 
   const getRecordForPeriod = React.useCallback((periodNumber: number): AttendanceRecord | undefined => {
@@ -81,10 +87,21 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
     return attendanceRecords.get(key);
   }, [attendanceRecords, student.id]);
 
+  // Check if ALL periods are marked as SICK or LEAVE (for day status display and period button disabling)
   const isDaySickOrLeave = React.useMemo(() => {
     const firstPeriodRecord = getRecordForPeriod(1);
-    return firstPeriodRecord && (firstPeriodRecord.status === "SICK" || firstPeriodRecord.status === "LEAVE");
-  }, [getRecordForPeriod]);
+    if (!firstPeriodRecord || (firstPeriodRecord.status !== "SICK" && firstPeriodRecord.status !== "LEAVE")) {
+      return false;
+    }
+    
+    // Check if all 6 periods have the same SICK or LEAVE status
+    const allSameStatus = standardPeriods.every(period => {
+      const record = getRecordForPeriod(period.periodNumber);
+      return record && record.status === firstPeriodRecord.status;
+    });
+    
+    return allSameStatus;
+  }, [getRecordForPeriod, standardPeriods]);
 
   const daySickLeaveStatus = isDaySickOrLeave ? getRecordForPeriod(1)?.status : null;
 
@@ -123,7 +140,7 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
           <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }} transition={{ duration: 0.1 }}>
             <Button
               size="sm"
-              onClick={() => onStatusChange(student.id, 1, "SICK")}
+              onClick={() => onStatusChange(student.id, -1, "SICK")}
               className={cn(
                 "h-9 px-3 rounded-lg transition-all duration-300 w-full text-xs font-semibold shadow-sm",
                 daySickLeaveStatus === "SICK"
@@ -139,7 +156,7 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
           <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }} transition={{ duration: 0.1 }}>
             <Button
               size="sm"
-              onClick={() => onStatusChange(student.id, 1, "LEAVE")}
+              onClick={() => onStatusChange(student.id, -1, "LEAVE")}
               className={cn(
                 "h-9 px-3 rounded-lg transition-all duration-300 w-full text-xs font-semibold shadow-sm",
                 daySickLeaveStatus === "LEAVE"
@@ -155,7 +172,7 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
         </div>
       </td>
 
-      {schedule.map((period) => {
+      {standardPeriods.map((period) => {
         const record = getRecordForPeriod(period.periodNumber);
         const status = record?.status || "NOT_MARKED";
 
@@ -205,15 +222,32 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
                   disabled={isDaySickOrLeave}
                   className={cn(
                     "h-9 w-full px-2 rounded-lg transition-all duration-300 text-xs font-semibold",
-                    status === "ABSENT"
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-red-50 text-red-700 hover:bg-red-100",
-                    isDaySickOrLeave && "opacity-30 cursor-not-allowed"
+                    isDaySickOrLeave && daySickLeaveStatus === "SICK"
+                      ? "bg-amber-600 text-white cursor-not-allowed"
+                      : isDaySickOrLeave && daySickLeaveStatus === "LEAVE"
+                        ? "bg-cyan-600 text-white cursor-not-allowed"
+                        : status === "ABSENT"
+                          ? "bg-red-600 text-white hover:bg-red-700"
+                          : "bg-red-50 text-red-700 hover:bg-red-100"
                   )}
-                  title="Mark as Absent"
+                  title={isDaySickOrLeave ? `Marked as ${daySickLeaveStatus} for entire day` : "Mark as Absent"}
                 >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Absent
+                  {isDaySickOrLeave && daySickLeaveStatus === "SICK" ? (
+                    <>
+                      <Heart className="h-4 w-4 mr-1" />
+                      Sick
+                    </>
+                  ) : isDaySickOrLeave && daySickLeaveStatus === "LEAVE" ? (
+                    <>
+                      <CalendarIcon className="h-4 w-4 mr-1" />
+                      Leave
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Absent
+                    </>
+                  )}
                 </Button>
               </motion.div>
             </div>
@@ -253,6 +287,34 @@ export default function MarkAttendanceClassPage() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"ALL" | AttendanceStatus>("ALL");
+
+  // Generate 6 standard periods for display (always show 6 columns)
+  const standardPeriods = React.useMemo(() => {
+    const periods = [];
+    const morningTimes = [
+      { start: '08:30', end: '09:10' }, // Period 1
+      { start: '09:10', end: '09:50' }, // Period 2
+      { start: '09:50', end: '10:30' }, // Period 3
+      { start: '10:45', end: '11:25' }, // Period 4
+      { start: '11:25', end: '12:05' }, // Period 5
+      { start: '12:05', end: '12:45' }, // Period 6
+    ];
+
+    for (let i = 1; i <= 6; i++) {
+      // Find the actual schedule entry for this period
+      const scheduleEntry = schedule.find(s => s.periodNumber === i);
+      
+      periods.push({
+        periodNumber: i,
+        startTime: scheduleEntry?.startTime || morningTimes[i - 1].start,
+        endTime: scheduleEntry?.endTime || morningTimes[i - 1].end,
+        teacherName: scheduleEntry?.teacherName || `Teacher ${Math.ceil(i / 2)}`, // Default teacher names
+        subject: scheduleEntry?.subject || `Subject ${i}`,
+      });
+    }
+    
+    return periods;
+  }, [schedule]);
 
   const loadClassData = React.useCallback(async () => {
     try {
@@ -377,29 +439,32 @@ export default function MarkAttendanceClassPage() {
   }, [totalStudents, attendanceRecords]);
 
   const handleStatusChange = React.useCallback((studentId: string, periodNumber: number, status: AttendanceStatus) => {
-    const period = schedule.find(s => s.periodNumber === periodNumber);
-    if (status === "SICK" || status === "LEAVE") {
+    // periodNumber = -1 means "all periods" (used for Sick/Leave from Day Status)
+    if (periodNumber === -1 && (status === "SICK" || status === "LEAVE")) {
+      // Mark all 6 periods as SICK or LEAVE
       setAttendanceRecords(prev => {
         const newRecords = new Map(prev);
-        schedule.forEach(scheduleEntry => {
-          const key = `${studentId}-${scheduleEntry.periodNumber}`;
+        standardPeriods.forEach(standardPeriod => {
+          const key = `${studentId}-${standardPeriod.periodNumber}`;
           newRecords.set(key, {
             studentId,
             status,
-            periodNumber: scheduleEntry.periodNumber,
+            periodNumber: standardPeriod.periodNumber,
             markedAt: new Date(),
-            teacherName: scheduleEntry.teacherName,
-            subject: scheduleEntry.subject,
+            teacherName: standardPeriod.teacherName,
+            subject: standardPeriod.subject,
           });
         });
         return newRecords;
       });
       toast.success(`Student marked as ${status} for entire day`, {
-        description: `All ${totalPeriods} periods marked as ${status}`,
+        description: `All 6 periods marked as ${status}`,
         className: "bg-green-50 border-green-200 text-green-900",
         position: "top-center",
       });
     } else {
+      // Mark individual period
+      const period = standardPeriods.find(s => s.periodNumber === periodNumber);
       setAttendanceRecords(prev => {
         const newRecords = new Map(prev);
         const key = `${studentId}-${periodNumber}`;
@@ -419,41 +484,60 @@ export default function MarkAttendanceClassPage() {
         position: "top-center",
       });
     }
-  }, [schedule, totalPeriods]);
+  }, [standardPeriods]);
 
   const filteredStudents = React.useMemo(() => {
     return students.filter(student => {
       const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
       const matchesSearch = fullName.includes(searchQuery.toLowerCase()) || student.studentId.toLowerCase().includes(searchQuery.toLowerCase());
-      const studentStatus = attendanceRecords.get(student.id)?.status || "NOT_MARKED";
-      const matchesStatus = statusFilter === "ALL" || studentStatus === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      if (statusFilter === "ALL") {
+        return matchesSearch;
+      }
+      
+      // Check if student has any period with the filtered status
+      const hasStatus = standardPeriods.some(period => {
+        const key = `${student.id}-${period.periodNumber}`;
+        const record = attendanceRecords.get(key);
+        return record?.status === statusFilter;
+      });
+      
+      // For NOT_MARKED, check if student has no records at all
+      if (statusFilter === "NOT_MARKED") {
+        const hasAnyRecord = standardPeriods.some(period => {
+          const key = `${student.id}-${period.periodNumber}`;
+          return attendanceRecords.has(key);
+        });
+        return matchesSearch && !hasAnyRecord;
+      }
+      
+      return matchesSearch && hasStatus;
     });
-  }, [students, searchQuery, statusFilter, attendanceRecords]);
+  }, [students, searchQuery, statusFilter, attendanceRecords, standardPeriods]);
 
   const handleMarkAllPresent = React.useCallback(() => {
     const newRecords = new Map<string, AttendanceRecord>();
     students.forEach(student => {
-      schedule.forEach(scheduleEntry => {
-        const key = `${student.id}-${scheduleEntry.periodNumber}`;
+      standardPeriods.forEach(standardPeriod => {
+        const key = `${student.id}-${standardPeriod.periodNumber}`;
         newRecords.set(key, {
           studentId: student.id,
           status: "PRESENT",
-          periodNumber: scheduleEntry.periodNumber,
+          periodNumber: standardPeriod.periodNumber,
           markedAt: new Date(),
-          teacherName: scheduleEntry.teacherName,
-          subject: scheduleEntry.subject,
+          teacherName: standardPeriod.teacherName,
+          subject: standardPeriod.subject,
         });
       });
     });
     setAttendanceRecords(newRecords);
     setShowMarkAllDialog(false);
     toast.success("All students marked present", {
-      description: `${students.length} students × ${totalPeriods} periods marked as present`,
+      description: `${students.length} students × 6 periods marked as present`,
       className: "bg-green-50 border-green-200 text-green-900",
       position: "top-center",
     });
-  }, [students, schedule, totalPeriods]);
+  }, [students, standardPeriods]);
 
   const handleResetAll = React.useCallback(() => {
     setAttendanceRecords(new Map());
@@ -920,7 +1004,7 @@ export default function MarkAttendanceClassPage() {
                           <span className="text-[10px] font-normal text-slate-500">(Sick/Leave)</span>
                         </div>
                       </th>
-                      {schedule.map((period) => (
+                      {standardPeriods.map((period) => (
                         <th key={period.periodNumber} className="px-3 py-3 text-center bg-gradient-to-b from-orange-50 to-amber-50">
                           <div className="flex flex-col items-center gap-2 min-w-[100px]">
                             <div className="text-sm font-bold text-orange-600">{period.startTime}-{period.endTime}</div>
@@ -935,7 +1019,8 @@ export default function MarkAttendanceClassPage() {
                       <StudentAttendanceRow
                         key={student.id}
                         student={student}
-                        schedule={schedule}
+
+                        standardPeriods={standardPeriods}
                         attendanceRecords={attendanceRecords}
                         onStatusChange={handleStatusChange}
                         index={index}
@@ -948,7 +1033,7 @@ export default function MarkAttendanceClassPage() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-2 bg-gradient-to-r from-orange-100 to-amber-100 px-4 py-2 rounded-lg shadow-sm border border-orange-200">
                     <Users className="h-5 w-5 text-orange-600" />
-                    <span className="text-sm font-bold text-slate-700">Total Periods: <span className="text-orange-600">{totalPeriods}</span></span>
+                    <span className="text-sm font-bold text-slate-700">Total Periods: <span className="text-orange-600">6</span></span>
                   </div>
                 </div>
               </div>
