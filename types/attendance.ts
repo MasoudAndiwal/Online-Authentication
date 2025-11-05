@@ -65,14 +65,32 @@ export interface Student {
 // ============================================================================
 
 /**
- * Individual attendance record for a student
+ * Schedule entry for a class period
+ */
+export interface ScheduleEntry {
+  id: string;
+  teacherName: string;
+  subject: string;
+  hours: number;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  periodNumber: number; // Calculated period number (1, 2, 3, etc.)
+}
+
+/**
+ * Individual attendance record for a student for a specific period
  * Stores the attendance status and when it was marked
  */
 export interface AttendanceRecord {
   studentId: string;
   status: AttendanceStatus;
+  periodNumber?: number; // Which period this attendance is for
   markedAt: Date;
   markedBy?: string; // Optional: ID of the user who marked attendance
+  teacherName?: string; // Teacher responsible for this period
+  subject?: string; // Subject for this period
+  notes?: string; // Optional: Notes or considerations for this attendance record
 }
 
 /**
