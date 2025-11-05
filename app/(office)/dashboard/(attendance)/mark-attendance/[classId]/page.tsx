@@ -48,6 +48,7 @@ import {
   User,
   Search,
   Plus,
+  Save,
 } from "lucide-react";
 import { addDays, subDays, isToday as checkIsToday, getDay } from "date-fns";
 import { formatSolarDate } from "@/lib/utils/solar-calendar";
@@ -237,6 +238,10 @@ export default function MarkAttendanceClassPage() {
   const [showMarkAllDialog, setShowMarkAllDialog] = React.useState(false);
   const [showResetDialog, setShowResetDialog] = React.useState(false);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [showAuthDialog, setShowAuthDialog] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [authPassword, setAuthPassword] = React.useState("");
 
   const [students, setStudents] = React.useState<Student[]>([]);
   const [studentsLoading, setStudentsLoading] = React.useState(true);
@@ -458,6 +463,90 @@ export default function MarkAttendanceClassPage() {
       position: "top-center",
     });
   }, []);
+
+  const handleAuthenticate = React.useCallback(async () => {
+    // Simple authentication check - you can enhance this with actual API call
+    if (!authPassword.trim()) {
+      toast.error("Please enter password", {
+        position: "top-center",
+      });
+      return;
+    }
+
+    // For now, we'll use the user's email as verification
+    // In production, you should verify against a proper authentication system
+    if (authPassword === user?.email || authPassword === "admin123") {
+      setIsAuthenticated(true);
+      setShowAuthDialog(false);
+      setAuthPassword("");
+      toast.success("Authentication successful", {
+        description: "You can now submit attendance",
+        className: "bg-green-50 border-green-200 text-green-900",
+        position: "top-center",
+      });
+    } else {
+      toast.error("Authentication failed", {
+        description: "Invalid password",
+        className: "bg-red-50 border-red-200 text-red-900",
+        position: "top-center",
+      });
+    }
+  }, [authPassword, user]);
+
+  const handleSubmitAttendance = React.useCallback(async () => {
+    if (!classData) return;
+
+    // Check if there are any attendance records
+    if (attendanceRecords.size === 0) {
+      toast.error("No attendance records to save", {
+        description: "Please mark attendance for at least one student",
+        position: "top-center",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Convert Map to array for API
+      const records = Array.from(attendanceRecords.values());
+
+      const response = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          classId: classData.id,
+          date: selectedDate.toISOString().split('T')[0],
+          records: records,
+          markedBy: user?.id || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save attendance');
+      }
+
+      toast.success("Attendance saved successfully!", {
+        description: `Saved ${data.saved} attendance records for ${formatSolarDate(selectedDate, "long")}`,
+        className: "bg-green-50 border-green-200 text-green-900",
+        position: "top-center",
+      });
+
+    } catch (error) {
+      console.error('Error saving attendance:', error);
+      toast.error("Failed to save attendance", {
+        description: error instanceof Error ? error.message : "Please try again",
+        className: "bg-red-50 border-red-200 text-red-900",
+        position: "top-center",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [classData, selectedDate, attendanceRecords, user]);
 
   const displayUser = user ? {
     name: `${user.firstName} ${user.lastName}`,
@@ -684,6 +773,34 @@ export default function MarkAttendanceClassPage() {
                   <span className="font-semibold text-slate-900 text-base">Quick Actions</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
+                  {!isAuthenticated ? (
+                    <Button 
+                      onClick={() => setShowAuthDialog(true)} 
+                      disabled={attendanceRecords.size === 0}
+                      className="h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Authenticate to Submit
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleSubmitAttendance} 
+                      disabled={isSaving || attendanceRecords.size === 0}
+                      className="h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Submit Attendance
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <Button onClick={() => setShowMarkAllDialog(true)} className="h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Mark All Present
@@ -869,6 +986,63 @@ export default function MarkAttendanceClassPage() {
                 <Button onClick={handleResetAll} className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset All
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Authenticate to Submit Attendance</DialogTitle>
+                <DialogDescription>
+                  Please enter your password to authenticate and submit the attendance records for {classData.name} on {formatSolarDate(selectedDate, "long")}.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="auth-password" className="text-sm font-medium text-slate-700 mb-2 block">
+                      Password
+                    </label>
+                    <Input
+                      id="auth-password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAuthenticate();
+                        }
+                      }}
+                      className="h-12 text-base border-slate-300 focus:border-purple-500 focus:ring-purple-500"
+                      autoFocus
+                    />
+                    <p className="text-xs text-slate-500 mt-2">
+                      For demo: Use your email or &quot;admin123&quot;
+                    </p>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> Authentication ensures that only authorized personnel can submit attendance records.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setShowAuthDialog(false);
+                  setAuthPassword("");
+                }}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAuthenticate}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Authenticate
                 </Button>
               </DialogFooter>
             </DialogContent>

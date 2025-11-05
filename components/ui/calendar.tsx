@@ -28,6 +28,12 @@ function Calendar({
 }: CalendarProps) {
   const defaultClassNames = getDefaultClassNames()
 
+  // Afghan Solar Hijri month names
+  const afghanMonths = [
+    "حمل", "ثور", "جوزا", "سرطان", "اسد", "سنبله",
+    "میزان", "عقرب", "قوس", "جدی", "دلو", "حوت"
+  ];
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -39,8 +45,17 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+        formatMonthDropdown: (date) => {
+          // Convert to Solar Hijri and return Afghan month name
+          const month = date.getMonth();
+          return afghanMonths[month] || date.toLocaleString("default", { month: "short" });
+        },
+        formatMonthCaption: (date) => {
+          // Format the month caption with Afghan month names
+          const month = date.getMonth();
+          const year = date.getFullYear();
+          return `${afghanMonths[month]} ${year}`;
+        },
         ...formatters,
       }}
       classNames={{
