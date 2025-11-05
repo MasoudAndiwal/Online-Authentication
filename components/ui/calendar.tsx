@@ -11,6 +11,7 @@ import { DayPicker } from "react-day-picker/persian"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { gregorianToSolar } from "@/lib/utils/solar-calendar"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
@@ -47,14 +48,23 @@ function Calendar({
       formatters={{
         formatMonthDropdown: (date) => {
           // Convert to Solar Hijri and return Afghan month name
-          const month = date.getMonth();
-          return afghanMonths[month] || date.toLocaleString("default", { month: "short" });
+          const solar = gregorianToSolar(date);
+          return afghanMonths[solar.month - 1] || date.toLocaleString("default", { month: "short" });
         },
         formatMonthCaption: (date) => {
-          // Format the month caption with Afghan month names
-          const month = date.getMonth();
-          const year = date.getFullYear();
-          return `${afghanMonths[month]} ${year}`;
+          // Format the month caption with Afghan month names and Solar year
+          const solar = gregorianToSolar(date);
+          return `${afghanMonths[solar.month - 1]} ${solar.year}`;
+        },
+        formatYearDropdown: (date) => {
+          // Format year dropdown with Solar Hijri year
+          const solar = gregorianToSolar(date);
+          return solar.year.toString();
+        },
+        formatCaption: (date) => {
+          // Format the main caption with Solar Hijri date
+          const solar = gregorianToSolar(date);
+          return `${afghanMonths[solar.month - 1]} ${solar.year}`;
         },
         ...formatters,
       }}

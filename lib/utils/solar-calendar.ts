@@ -92,6 +92,68 @@ export function gregorianToSolar(date: Date): {
 }
 
 /**
+ * Convert Solar Hijri (Jalali) date to Gregorian date
+ */
+export function solarToGregorian(jy: number, jm: number, jd: number): Date {
+  let gy: number, gm: number, gd: number;
+
+  const j_d_m = [0, 31, 62, 93, 124, 155, 186, 216, 246, 276, 306, 336, 365];
+
+  if (jy > 979) {
+    gy = 1600;
+    jy -= 979;
+  } else {
+    gy = 621;
+  }
+
+  const jy2 = jm < 10 ? jy - 1 : jy;
+  let days = 365 * jy + Math.floor(jy2 / 33) * 8 + Math.floor(((jy2 % 33) + 3) / 4) + 78 + jd;
+
+  if (jm < 10) days += j_d_m[jm - 1];
+  else days += j_d_m[jm - 1] - 1;
+
+  gy += 400 * Math.floor(days / 146097);
+  days %= 146097;
+
+  let leap = true;
+  if (days >= 36525) {
+    days--;
+    gy += 100 * Math.floor(days / 36524);
+    days %= 36524;
+    if (days >= 365) days++;
+    else leap = false;
+  }
+
+  gy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+
+  if (days >= 366) {
+    leap = false;
+    days--;
+    gy += Math.floor(days / 365);
+    days = days % 365;
+  }
+
+  if (days === 0) {
+    gd = 31;
+    gm = 12;
+    gy--;
+  } else {
+    const sal_a = leap ? [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366] : [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365];
+    gm = 0;
+    while (gm < 13 && days >= sal_a[gm]) gm++;
+    if (gm > 1) {
+      gd = days - sal_a[gm - 1];
+      gm--;
+    } else {
+      gd = days;
+    }
+  }
+
+  return new Date(gy, gm - 1, gd);
+}
+
+/**
  * Format Solar date to readable string
  */
 export function formatSolarDate(
@@ -121,4 +183,53 @@ export function getSolarMonthName(monthIndex: number): string {
  */
 export function getSolarWeekdayName(weekDayIndex: number): string {
   return PERSIAN_WEEKDAYS[weekDayIndex] || "";
+}
+
+/**
+ * Get current Solar Hijri date
+ */
+export function getCurrentSolarDate(): {
+  year: number;
+  month: number;
+  day: number;
+  weekDay: number;
+} {
+  return gregorianToSolar(new Date());
+}
+
+/**
+ * Check if a date is today in Solar calendar
+ */
+export function isSolarToday(date: Date): boolean {
+  const today = getCurrentSolarDate();
+  const checkDate = gregorianToSolar(date);
+  
+  return (
+    today.year === checkDate.year &&
+    today.month === checkDate.month &&
+    today.day === checkDate.day
+  );
+}
+
+/**
+ * Format Solar date for display in calendar
+ */
+export function formatSolarDateForCalendar(date: Date): {
+  solarYear: number;
+  solarMonth: number;
+  solarDay: number;
+  monthName: string;
+  formattedDate: string;
+} {
+  const solar = gregorianToSolar(date);
+  const monthName = PERSIAN_MONTHS[solar.month - 1];
+  const formattedDate = `${solar.day} ${monthName} ${solar.year}`;
+  
+  return {
+    solarYear: solar.year,
+    solarMonth: solar.month,
+    solarDay: solar.day,
+    monthName,
+    formattedDate,
+  };
 }

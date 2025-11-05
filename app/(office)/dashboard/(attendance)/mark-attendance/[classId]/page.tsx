@@ -50,8 +50,8 @@ import {
   Plus,
   Save,
 } from "lucide-react";
-import { addDays, subDays, isToday as checkIsToday, getDay } from "date-fns";
-import { formatSolarDate } from "@/lib/utils/solar-calendar";
+import { addDays, subDays, getDay } from "date-fns";
+import { formatSolarDate, isSolarToday } from "@/lib/utils/solar-calendar";
 import type { AttendanceStatus, Student, AttendanceRecord, ScheduleEntry } from "@/types/attendance";
 
 type ClassItem = {
@@ -133,7 +133,7 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
               title="Mark as Sick for entire day"
             >
               <Heart className="h-4 w-4 mr-1.5" />
-              Sick (All Day)
+              Sick
             </Button>
           </motion.div>
           <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.02 }} transition={{ duration: 0.1 }}>
@@ -149,7 +149,7 @@ function StudentAttendanceRow({ student, schedule, attendanceRecords, onStatusCh
               title="Mark as Leave for entire day"
             >
               <CalendarIcon className="h-4 w-4 mr-1.5" />
-              Leave (All Day)
+              Leave
             </Button>
           </motion.div>
         </div>
@@ -353,9 +353,9 @@ export default function MarkAttendanceClassPage() {
   const handleSearch = () => { };
   const handlePreviousDay = () => setSelectedDate((prev) => subDays(prev, 1));
   const handleNextDay = () => {
-    if (!checkIsToday(selectedDate)) setSelectedDate((prev) => addDays(prev, 1));
+    if (!isSolarToday(selectedDate)) setSelectedDate((prev) => addDays(prev, 1));
   };
-  const isToday = checkIsToday(selectedDate);
+  const isToday = isSolarToday(selectedDate);
 
   const totalStudents = students.length;
   const getUniqueStudentsByStatus = React.useCallback((status: AttendanceStatus) => {
