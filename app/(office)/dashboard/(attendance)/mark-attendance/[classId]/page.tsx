@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -300,9 +301,15 @@ export default function MarkAttendanceClassPage() {
       { start: '12:05', end: '12:45' }, // Period 6
     ];
 
+    // Debug: Log the schedule data
+    console.log('[StandardPeriods] Schedule data:', schedule);
+    console.log('[StandardPeriods] Schedule length:', schedule.length);
+
     for (let i = 1; i <= 6; i++) {
       // Find the actual schedule entry for this period
       const scheduleEntry = schedule.find(s => s.periodNumber === i);
+      
+      console.log(`[StandardPeriods] Period ${i}:`, scheduleEntry);
       
       periods.push({
         periodNumber: i,
@@ -313,6 +320,7 @@ export default function MarkAttendanceClassPage() {
       });
     }
     
+    console.log('[StandardPeriods] Final periods:', periods);
     return periods;
   }, [schedule]);
 
@@ -351,9 +359,23 @@ export default function MarkAttendanceClassPage() {
         session: classData.session,
         dayOfWeek: dayOfWeek
       });
+      
+      console.log('[LoadSchedule] Fetching schedule with params:', {
+        classId: classData.id,
+        className: classData.name,
+        session: classData.session,
+        dayOfWeek: dayOfWeek
+      });
+      
       const response = await fetch(`/api/schedule?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch schedule");
       const result = await response.json();
+      
+      console.log('[LoadSchedule] API Response:', result);
+      console.log('[LoadSchedule] Schedule data:', result.data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      console.log('[LoadSchedule] Teacher names:', result.data?.map((s: any) => s.teacherName));
+      
       setSchedule(result.data);
       setTotalPeriods(result.totalPeriods);
     } catch (error) {

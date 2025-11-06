@@ -139,24 +139,61 @@ export async function GET(request: NextRequest) {
           end_time: string;
         };
 
-        const formattedSchedule = scheduleEntries.map((entry: DbScheduleEntry, index: number) => ({
-          id: entry.id,
-          teacherName: entry.teacher_name,
-          subject: entry.subject,
-          hours: entry.hours,
-          dayOfWeek: entry.day_of_week,
-          startTime: entry.start_time.substring(0, 5), // Convert "HH:MM:SS" to "HH:MM"
-          endTime: entry.end_time.substring(0, 5),
-          periodNumber: index + 1,
-        }));
+        // Define standard period times based on session
+        const morningTimes = [
+          { start: '08:30', end: '09:10' }, // Period 1
+          { start: '09:10', end: '09:50' }, // Period 2
+          { start: '09:50', end: '10:30' }, // Period 3
+          { start: '10:45', end: '11:25' }, // Period 4
+          { start: '11:25', end: '12:05' }, // Period 5
+          { start: '12:05', end: '12:45' }, // Period 6
+        ];
 
-        console.log('[Schedule API] Returning database schedule with teachers:', formattedSchedule.map(s => s.teacherName));
+        const afternoonTimes = [
+          { start: '13:15', end: '13:55' }, // Period 1
+          { start: '13:55', end: '14:35' }, // Period 2
+          { start: '14:35', end: '15:15' }, // Period 3
+          { start: '15:30', end: '16:10' }, // Period 4
+          { start: '16:10', end: '16:50' }, // Period 5
+          { start: '16:50', end: '17:30' }, // Period 6
+        ];
+
+        const standardTimes = session === 'MORNING' ? morningTimes : afternoonTimes;
+
+        // Expand entries that cover multiple periods (hours > 1) into individual period entries
+        const expandedSchedule: any[] = [];
+        
+        scheduleEntries.forEach((entry: DbScheduleEntry) => {
+          const hoursCount = entry.hours || 1;
+          
+          // If this entry covers multiple hours/periods, create separate entries for each
+          for (let i = 0; i < hoursCount; i++) {
+            const periodNumber = expandedSchedule.length + 1;
+            
+            // Use standard times for this period
+            const periodTimes = standardTimes[periodNumber - 1] || standardTimes[0];
+            
+            expandedSchedule.push({
+              id: `${entry.id}-period-${periodNumber}`,
+              teacherName: entry.teacher_name,
+              subject: entry.subject,
+              hours: 1, // Each expanded entry represents 1 period
+              dayOfWeek: entry.day_of_week,
+              startTime: periodTimes.start,
+              endTime: periodTimes.end,
+              periodNumber: periodNumber,
+            });
+          }
+        });
+
+        console.log('[Schedule API] Expanded schedule entries:', expandedSchedule.length);
+        console.log('[Schedule API] Returning database schedule with teachers:', expandedSchedule.map(s => s.teacherName));
 
         return NextResponse.json(
           {
             success: true,
-            data: formattedSchedule,
-            totalPeriods: formattedSchedule.length,
+            data: expandedSchedule,
+            totalPeriods: expandedSchedule.length,
             source: 'database'
           },
           {
