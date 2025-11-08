@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ModernDashboardLayout,
   PageContainer,
-  PageHeader,
   GridLayout,
 } from "@/components/layout/modern-dashboard-layout";
 import { handleLogout } from "@/lib/auth/logout";
@@ -17,23 +16,22 @@ import {
   ModernCardHeader,
   ModernCardTitle,
   ModernCardContent,
-  ModernMetricCard,
 } from "@/components/ui/modern-card";
+import { EnhancedMetricCard } from "@/components/ui/enhanced-metric-card";
 import { Modern3DIcons } from "@/components/ui/modern-3d-icons";
 import { Button } from "@/components/ui/button";
 import {
   Users,
   BookOpen,
   CheckCircle,
-  AlertTriangle,
   Plus,
-  Calendar,
   BarChart3,
   Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTeacherDashboardSelectors } from "@/lib/stores/teacher-dashboard-store";
 import { useInitializeTeacherDashboard } from "@/lib/hooks/use-teacher-dashboard";
+import { TeacherClassGrid } from "@/components/classes/teacher-class-grid";
 
 export default function TeacherDashboardPage() {
   const router = useRouter();
@@ -43,9 +41,10 @@ export default function TeacherDashboardPage() {
 
   // Initialize dashboard data with React Query and Zustand
   const { isLoading: loadingDashboard, error: dashboardError } = useInitializeTeacherDashboard();
-  const { metrics, classes, isLoading: storeLoading } = useTeacherDashboardSelectors();
+  const { metrics, classes, isLoading: storeLoading, error: storeError } = useTeacherDashboardSelectors();
 
   const loadingMetrics = loadingDashboard || storeLoading;
+  const classesError = dashboardError || storeError;
 
   // Show welcome toast and handle errors
   React.useEffect(() => {
@@ -123,41 +122,47 @@ export default function TeacherDashboardPage() {
     return `Welcome back, ${firstName}! `;
   };
 
-  const loadDashboardData = async () => {
-    try {
-      setLoadingMetrics(true);
-      
-      // Mock data - will be replaced with actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockMetrics: TeacherDashboardMetrics = {
-        totalStudents: 247,
-        totalClasses: 8,
-        weeklyAttendanceRate: 94.2,
-        studentsAtRisk: 12,
-      };
-      
-      setMetrics(mockMetrics);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load dashboard data', {
-        description: 'Please refresh the page to try again.'
-      });
-    } finally {
-      setLoadingMetrics(false);
+  const handleStudentProgress = () => {
+    toast.info('Student Progress feature coming soon!');
+  };
+
+  // Class action handlers with proper navigation
+  const handleMarkAttendance = (classId?: string) => {
+    if (classId) {
+      router.push(`/teacher/attendance?classId=${classId}`);
+    } else {
+      router.push('/teacher/attendance');
     }
   };
 
-  const handleMarkAttendance = () => {
-    toast.info('Mark Attendance feature coming soon!');
+  const handleViewClassDetails = (classId: string) => {
+    router.push(`/teacher/classes/${classId}`);
   };
 
-  const handleViewReports = () => {
-    toast.info('Reports feature coming soon!');
+  const handleViewStudents = (classId: string) => {
+    // Navigate to class details page which has student view functionality
+    router.push(`/teacher/classes/${classId}?tab=students`);
   };
 
-  const handleStudentProgress = () => {
-    toast.info('Student Progress feature coming soon!');
+  const handleViewReports = (classId?: string) => {
+    if (classId) {
+      // Navigate to class details page with reports tab
+      router.push(`/teacher/classes/${classId}?tab=reports`);
+    } else {
+      toast.info('Reports feature coming soon!', {
+        description: 'Global reports will be implemented in task 6.1'
+      });
+    }
+  };
+
+  const handleViewSchedule = (classId: string) => {
+    // Navigate to class details page with schedule tab
+    router.push(`/teacher/classes/${classId}?tab=schedule`);
+  };
+
+  const handleManageClass = (classId: string) => {
+    // Navigate to class details page with management tab
+    router.push(`/teacher/classes/${classId}?tab=manage`);
   };
 
   return (
@@ -226,7 +231,7 @@ export default function TeacherDashboardPage() {
                 >
                   <Button
                     size="lg"
-                    onClick={handleMarkAttendance}
+                    onClick={() => handleMarkAttendance()}
                     className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-semibold transition-all duration-300 border-0"
                   >
                     <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
@@ -241,7 +246,7 @@ export default function TeacherDashboardPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={handleViewReports}
+                    onClick={() => handleViewReports()}
                     className="w-full sm:w-auto border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-semibold transition-all duration-300"
                   >
                     <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
@@ -254,108 +259,155 @@ export default function TeacherDashboardPage() {
           </div>
         </motion.div>
 
-        {/* Ultra Modern Metrics Cards - Orange Theme */}
+        {/* Enhanced Metrics Cards with Count-up Animations - Orange Theme */}
         <GridLayout cols={4} gap="xl">
-          <ModernMetricCard
+          <EnhancedMetricCard
             title="Total Students"
-            value={loadingMetrics ? '...' : metrics?.totalStudents.toLocaleString() || '0'}
+            value={loadingMetrics ? '...' : metrics?.totalStudents || 0}
             icon={<Modern3DIcons.Users3D size="lg" variant="primary" />}
             trend="+12"
             trendLabel="vs last month"
             color="orange"
             className="border-0 shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
+            animateValue={!loadingMetrics}
+            delay={0}
           />
-          <ModernMetricCard
+          <EnhancedMetricCard
             title="Active Classes"
-            value={loadingMetrics ? '...' : metrics?.totalClasses.toString() || '0'}
+            value={loadingMetrics ? '...' : metrics?.totalClasses || 0}
             icon={<Modern3DIcons.Calendar3D size="lg" variant="success" />}
             trend="+2"
             trendLabel="new this term"
             color="orange"
             className="border-0 shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
+            animateValue={!loadingMetrics}
+            delay={0.2}
           />
-          <ModernMetricCard
+          <EnhancedMetricCard
             title="Attendance Rate"
-            value={loadingMetrics ? '...' : `${metrics?.weeklyAttendanceRate}%` || '0%'}
+            value={loadingMetrics ? '...' : `${metrics?.weeklyAttendanceRate || 0}%`}
             icon={<Modern3DIcons.Chart3D size="lg" variant="primary" />}
             trend="+2.1%"
             trendLabel="vs last week"
             color="orange"
             className="border-0 shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
+            animateValue={!loadingMetrics}
+            delay={0.4}
           />
-          <ModernMetricCard
+          <EnhancedMetricCard
             title="At-Risk Students"
-            value={loadingMetrics ? '...' : metrics?.studentsAtRisk.toString() || '0'}
+            value={loadingMetrics ? '...' : metrics?.studentsAtRisk || 0}
             icon={<Modern3DIcons.Clipboard3D size="lg" variant="warning" />}
             trend="-3"
             trendLabel="need attention"
             color="orange"
             className="border-0 shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
+            animateValue={!loadingMetrics}
+            delay={0.6}
           />
         </GridLayout>
 
-        {/* Quick Actions Panel */}
+        {/* Enhanced Floating Quick Actions Panel */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-3xl p-6 shadow-2xl shadow-orange-500/10 border-0"
+          transition={{ delay: 0.8, type: 'spring', stiffness: 300, damping: 25 }}
+          className="relative"
         >
-          <div className="flex items-center gap-4 mb-6">
-            <motion.div
-              className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl shadow-orange-500/25"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-            >
-              <Plus className="h-6 w-6 text-white" />
-            </motion.div>
-            <h2 className="text-3xl font-bold text-slate-900">
-              Quick Actions
-            </h2>
-          </div>
+          {/* Floating container with enhanced glass morphism */}
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-3xl p-6 shadow-2xl shadow-orange-500/10 border-0 relative overflow-hidden">
+            {/* Subtle background pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-4 right-8 w-24 h-24 bg-orange-400/20 rounded-full blur-xl" />
+              <div className="absolute bottom-4 left-8 w-20 h-20 bg-orange-500/20 rounded-full blur-lg" />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                onClick={handleMarkAttendance}
-                className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300"
-              >
-                <CheckCircle className="h-6 w-6 mr-3" />
-                Mark Attendance
-              </Button>
-            </motion.div>
-            
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                onClick={handleViewReports}
-                className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300"
-              >
-                <BarChart3 className="h-6 w-6 mr-3" />
-                View Reports
-              </Button>
-            </motion.div>
-            
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                onClick={handleStudentProgress}
-                className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300"
-              >
-                <Users className="h-6 w-6 mr-3" />
-                Student Progress
-              </Button>
-            </motion.div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-6">
+                <motion.div
+                  className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl shadow-orange-500/25"
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
+                  <Plus className="h-6 w-6 text-white" />
+                </motion.div>
+                <h2 className="text-3xl font-bold text-slate-900">
+                  Quick Actions
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <motion.div
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -2,
+                    transition: { type: 'spring', stiffness: 400, damping: 25 }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group"
+                >
+                  <Button
+                    onClick={() => handleMarkAttendance()}
+                    className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20"
+                  >
+                    {/* Button shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
+                    <div className="relative z-10 flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 mr-3" />
+                      Mark Attendance
+                    </div>
+                  </Button>
+                </motion.div>
+                
+                <motion.div
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -2,
+                    transition: { type: 'spring', stiffness: 400, damping: 25 }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group"
+                >
+                  <Button
+                    onClick={() => handleViewReports()}
+                    className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20"
+                  >
+                    {/* Button shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
+                    <div className="relative z-10 flex items-center justify-center">
+                      <BarChart3 className="h-6 w-6 mr-3" />
+                      View Reports
+                    </div>
+                  </Button>
+                </motion.div>
+                
+                <motion.div
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -2,
+                    transition: { type: 'spring', stiffness: 400, damping: 25 }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group"
+                >
+                  <Button
+                    onClick={handleStudentProgress}
+                    className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20"
+                  >
+                    {/* Button shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
+                    <div className="relative z-10 flex items-center justify-center">
+                      <Users className="h-6 w-6 mr-3" />
+                      Student Progress
+                    </div>
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </motion.div>
 
-        {/* My Classes Section - Placeholder */}
+        {/* My Classes Section */}
         <ModernCard
           variant="glass"
           className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
@@ -369,15 +421,17 @@ export default function TeacherDashboardPage() {
             </ModernCardTitle>
           </ModernCardHeader>
           <ModernCardContent>
-            <div className="text-center py-12">
-              <BookOpen className="h-16 w-16 text-orange-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                Classes will appear here
-              </h3>
-              <p className="text-slate-500">
-                Your assigned classes and student information will be displayed in this section.
-              </p>
-            </div>
+            <TeacherClassGrid
+              classes={classes}
+              isLoading={loadingMetrics}
+              error={classesError instanceof Error ? classesError.message : classesError}
+              onMarkAttendance={handleMarkAttendance}
+              onViewDetails={handleViewClassDetails}
+              onViewStudents={handleViewStudents}
+              onViewReports={handleViewReports}
+              onViewSchedule={handleViewSchedule}
+              onManageClass={handleManageClass}
+            />
           </ModernCardContent>
         </ModernCard>
       </PageContainer>

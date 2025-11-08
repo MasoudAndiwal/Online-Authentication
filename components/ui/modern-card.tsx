@@ -209,7 +209,7 @@ export function ModernMetricCard({
           )}
         </div>
 
-        {/* Value */}
+        {/* Value with Count-up Animation */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
