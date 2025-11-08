@@ -31,10 +31,10 @@ export async function POST(request: NextRequest) {
 
     console.log('[Verify Password] Attempting to verify password for:', email || `User ID: ${userId}`);
 
-    // Query the users table to get the user's stored password
+    // Query the office_staff table to get the user's stored password
     let query = supabase
-      .from('users')
-      .select('id, email, password, first_name, last_name');
+      .from('office_staff')
+      .select('id, email, password, first_name, last_name, username');
 
     if (email) {
       query = query.eq('email', email);
@@ -61,9 +61,13 @@ export async function POST(request: NextRequest) {
 
     console.log('[Verify Password] User found:', user.email);
 
-    // Check if the password matches
-    // Note: This is a simple comparison. In production, you should use hashed passwords
-    if (user.password !== password) {
+    // Import bcrypt for password comparison
+    const bcrypt = require('bcrypt');
+    
+    // Check if the password matches using bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
       console.log('[Verify Password] Password mismatch');
       return NextResponse.json(
         { 
