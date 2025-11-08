@@ -288,6 +288,9 @@ export default function MarkAttendanceClassPage() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"ALL" | AttendanceStatus>("ALL");
+  
+  // Store original attendance records to detect changes
+  const [originalAttendanceRecords, setOriginalAttendanceRecords] = React.useState<Map<string, AttendanceRecord>>(new Map());
 
   // Generate 6 standard periods for display (always show 6 columns)
   const standardPeriods = React.useMemo(() => {
@@ -425,6 +428,7 @@ export default function MarkAttendanceClassPage() {
     if (classData) {
       loadSchedule();
       setAttendanceRecords(new Map());
+      setOriginalAttendanceRecords(new Map()); // Reset original records when date changes
     }
   }, [selectedDate, classData, loadSchedule]);
 
@@ -648,6 +652,34 @@ export default function MarkAttendanceClassPage() {
       toast.error("No attendance records to save", {
         description: "Please mark attendance for at least one student",
         position: "top-center",
+        className: "bg-red-50 border-red-200 text-red-900",
+      });
+      return;
+    }
+
+    // Check if any changes were made
+    let hasChanges = false;
+    
+    // Check if the number of records changed
+    if (attendanceRecords.size !== originalAttendanceRecords.size) {
+      hasChanges = true;
+    } else {
+      // Check if any record values changed
+      for (const [key, record] of attendanceRecords.entries()) {
+        const originalRecord = originalAttendanceRecords.get(key);
+        if (!originalRecord || originalRecord.status !== record.status) {
+          hasChanges = true;
+          break;
+        }
+      }
+    }
+
+    // If no changes, show message and don't submit
+    if (!hasChanges) {
+      toast.info("No changes to save", {
+        description: "You haven't made any changes to the attendance records",
+        position: "top-center",
+        className: "bg-blue-50 border-blue-200 text-blue-900",
       });
       return;
     }
@@ -677,6 +709,9 @@ export default function MarkAttendanceClassPage() {
         throw new Error(data.error || 'Failed to save attendance');
       }
 
+      // Update original records after successful save
+      setOriginalAttendanceRecords(new Map(attendanceRecords));
+
       toast.success("Attendance saved successfully!", {
         description: `Saved ${data.saved} attendance records for ${formatSolarDate(selectedDate, "long")}`,
         className: "bg-green-50 border-green-200 text-green-900",
@@ -693,7 +728,7 @@ export default function MarkAttendanceClassPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [classData, selectedDate, attendanceRecords, user]);
+  }, [classData, selectedDate, attendanceRecords, originalAttendanceRecords, user]);
 
   const displayUser = user ? {
     name: `${user.firstName} ${user.lastName}`,

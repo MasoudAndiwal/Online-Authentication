@@ -198,32 +198,41 @@ const getNavigationItems = (role: string): NavigationItem[] => {
 
   if (role === "TEACHER") {
     return [
-      ...baseItems,
+      {
+        label: "Dashboard",
+        href: "/teacher/dashboard",
+        icon: Home,
+      },
       {
         label: "My Classes",
-        href: "/classes",
+        href: "/teacher/classes",
         icon: BookOpen,
       },
       {
         label: "Attendance",
-        href: "/attendance",
+        href: "/teacher/attendance",
         icon: ClipboardList,
         children: [
           {
             label: "Mark Attendance",
-            href: "/dashboard/mark-attendance",
+            href: "/teacher/attendance/mark",
             icon: ClipboardList,
           },
           {
             label: "Attendance History",
-            href: "/attendance/history",
+            href: "/teacher/attendance/history",
             icon: Clock,
           },
         ],
       },
       {
+        label: "Student Progress",
+        href: "/teacher/progress",
+        icon: TrendingUp,
+      },
+      {
         label: "Reports",
-        href: "/reports",
+        href: "/teacher/reports",
         icon: FileText,
       },
     ];
