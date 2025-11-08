@@ -237,7 +237,7 @@ export default function AllClassesPage() {
       <PageContainer>
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="rounded-2xl shadow-lg border-orange-200 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -255,7 +255,7 @@ export default function AllClassesPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-amber-200 bg-gradient-to-br from-amber-50 via-amber-100 to-yellow-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-amber-50 via-amber-100 to-yellow-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -273,7 +273,7 @@ export default function AllClassesPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-indigo-200 bg-gradient-to-br from-indigo-50 via-indigo-100 to-blue-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-indigo-50 via-indigo-100 to-blue-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -291,7 +291,7 @@ export default function AllClassesPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-lg border-green-200 bg-gradient-to-br from-green-50 via-green-100 to-emerald-50 hover:shadow-xl transition-all duration-200">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-green-50 via-green-100 to-emerald-50 hover:shadow-xl transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -311,7 +311,7 @@ export default function AllClassesPage() {
         </div>
 
         {/* Search and Filter Bar */}
-        <Card className="rounded-2xl shadow-md border-slate-200 mb-8">
+        <Card className="rounded-2xl shadow-md border-0 mb-8">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search Input */}
@@ -321,7 +321,7 @@ export default function AllClassesPage() {
                   placeholder="Search by class name or major..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12 border-slate-300 focus:border-orange-400 focus:ring-orange-400"
+                  className="pl-10 h-12 border border-slate-200 focus:border-orange-400 focus:ring-orange-400"
                 />
               </div>
 
@@ -334,18 +334,18 @@ export default function AllClassesPage() {
                 <CustomSelect
                   value={sessionFilter}
                   onValueChange={(value) => setSessionFilter(value as "ALL" | "MORNING" | "AFTERNOON")}
-                  className="h-12 w-40 border-slate-300 focus:border-orange-400"
+                  className="h-12 w-40 border border-slate-200 focus:border-orange-400"
                 >
                   <option value="ALL">All Sessions</option>
-                  <option value="MORNING"> Morning</option>
-                  <option value="AFTERNOON"> Afternoon</option>
+                  <option value="MORNING">Morning</option>
+                  <option value="AFTERNOON">Afternoon</option>
                 </CustomSelect>
               </div>
 
               {/* Create Class Button */}
               <Button
                 onClick={() => setCreateDialogOpen(true)}
-                className="h-12 px-6 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="h-12 px-6 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Create Class
@@ -356,16 +356,54 @@ export default function AllClassesPage() {
 
         {/* Classes Grid */}
         {loading ? (
-          <div className="py-20 text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-orange-600 mx-auto mb-3" />
-            <p className="text-slate-600">Loading classes...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="rounded-2xl shadow-sm border-0 bg-white">
+                <CardContent className="p-5">
+                  <div className="animate-pulse">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 bg-gradient-to-br from-slate-200 to-slate-300 rounded-xl animate-shimmer" />
+                        <div>
+                          <div className="h-5 w-32 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-2 animate-shimmer" />
+                          <div className="h-4 w-24 bg-gradient-to-r from-slate-200 to-slate-300 rounded animate-shimmer" />
+                        </div>
+                      </div>
+                      <div className="h-6 w-20 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full animate-shimmer" />
+                    </div>
+                    
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-slate-50 rounded-xl p-4">
+                        <div className="h-4 w-16 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-2 animate-shimmer" />
+                        <div className="h-8 w-12 bg-gradient-to-r from-slate-200 to-slate-300 rounded animate-shimmer" />
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-4">
+                        <div className="h-4 w-16 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-2 animate-shimmer" />
+                        <div className="h-8 w-12 bg-gradient-to-r from-slate-200 to-slate-300 rounded animate-shimmer" />
+                      </div>
+                    </div>
+                    
+                    {/* Semester */}
+                    <div className="h-4 w-28 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4 animate-shimmer" />
+                    
+                    {/* Buttons */}
+                    <div className="flex gap-2 pt-4">
+                      <div className="flex-1 h-9 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-shimmer" />
+                      <div className="flex-1 h-9 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-shimmer" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : error ? (
-          <Card className="rounded-2xl shadow-md border-red-200 bg-red-50">
+          <Card className="rounded-2xl shadow-md border-0 bg-red-50">
             <CardContent className="p-8 text-center">
               <h3 className="text-xl font-semibold text-red-700 mb-2">Failed to load classes</h3>
               <p className="text-red-700/80 mb-4">Please try again later.</p>
-              <Button onClick={loadClasses} variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">Retry</Button>
+              <Button onClick={loadClasses} variant="outline" className="border-0 bg-white text-red-700 hover:bg-red-100">Retry</Button>
             </CardContent>
           </Card>
         ) : filteredClasses.length > 0 ? (
@@ -385,7 +423,7 @@ export default function AllClassesPage() {
             ))}
           </div>
         ) : (
-          <Card className="rounded-2xl shadow-md border-slate-200">
+          <Card className="rounded-2xl shadow-md border-0">
             <CardContent className="p-12 text-center">
               <div className="p-4 bg-gradient-to-br from-orange-100 to-amber-100 w-fit mx-auto rounded-2xl mb-4">
                 <BookOpen className="h-16 w-16 text-orange-600" />
@@ -401,7 +439,7 @@ export default function AllClassesPage() {
               {!searchQuery && sessionFilter === "ALL" && (
                 <Button
                   onClick={() => setCreateDialogOpen(true)}
-                  className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0"
                 >
                   <Plus className="h-5 w-5 mr-2" />
                   Create Your First Class

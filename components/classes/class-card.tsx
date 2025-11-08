@@ -42,7 +42,7 @@ export function ClassCard({ classData, onEdit, onDelete }: ClassCardProps) {
     : "bg-indigo-50 text-indigo-700 border-indigo-200";
 
   return (
-    <Card className="rounded-2xl shadow-sm border-slate-200 bg-white hover:shadow-lg transition-all duration-200">
+    <Card className="rounded-2xl shadow-sm border-0 bg-white hover:shadow-lg transition-all duration-200">
       <CardContent className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -104,7 +104,7 @@ export function ClassCard({ classData, onEdit, onDelete }: ClassCardProps) {
               variant="outline"
               size="sm"
               onClick={() => onEdit(classData.id)}
-              className="flex-1 h-9 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+              className="flex-1 h-9 border-0 bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium shadow-sm"
             >
               <Edit className="h-3.5 w-3.5 mr-1.5" />
               Edit
@@ -116,7 +116,7 @@ export function ClassCard({ classData, onEdit, onDelete }: ClassCardProps) {
               variant="outline"
               size="sm"
               onClick={() => onDelete(classData.id)}
-              className="flex-1 h-9 border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+              className="flex-1 h-9 border-0 bg-red-50 text-red-700 hover:bg-red-100 font-medium shadow-sm"
             >
               <Trash2 className="h-3.5 w-3.5 mr-1.5" />
               Delete

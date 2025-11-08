@@ -571,28 +571,69 @@ export default function MarkAttendanceClassPage() {
   }, []);
 
   const handleAuthenticate = React.useCallback(async () => {
-    // Simple authentication check - you can enhance this with actual API call
     if (!authPassword.trim()) {
       toast.error("Please enter password", {
+        description: "Password is required",
+        className: "bg-red-50 border-red-200 text-red-900",
         position: "top-center",
       });
       return;
     }
 
-    // For now, we'll use the user's email as verification
-    // In production, you should verify against a proper authentication system
-    if (authPassword === user?.email || authPassword === "admin123") {
-      setIsAuthenticated(true);
-      setShowAuthDialog(false);
-      setAuthPassword("");
-      toast.success("Authentication successful", {
-        description: "You can now submit attendance",
-        className: "bg-green-50 border-green-200 text-green-900",
+    if (!user?.email) {
+      toast.error("Authentication error", {
+        description: "User email not found",
+        className: "bg-red-50 border-red-200 text-red-900",
         position: "top-center",
       });
-    } else {
-      toast.error("Authentication failed", {
-        description: "Invalid password",
+      return;
+    }
+
+    try {
+      // Call the verify-password API endpoint
+      const response = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          password: authPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Password verified successfully
+        setIsAuthenticated(true);
+        setShowAuthDialog(false);
+        setAuthPassword("");
+        toast.success("Authentication successful", {
+          description: "You can now submit attendance",
+          className: "bg-green-50 border-green-200 text-green-900",
+          position: "top-center",
+        });
+      } else {
+        // Authentication failed
+        console.error('Authentication failed:', data);
+        
+        // Show debug info in development
+        if (process.env.NODE_ENV === 'development' && data.debug) {
+          console.error('Debug info:', data.debug);
+        }
+        
+        toast.error("Authentication failed", {
+          description: data.message || "Invalid password. Please try again.",
+          className: "bg-red-50 border-red-200 text-red-900",
+          position: "top-center",
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      toast.error("Authentication error", {
+        description: "Failed to verify password. Please try again.",
         className: "bg-red-50 border-red-200 text-red-900",
         position: "top-center",
       });
@@ -680,14 +721,14 @@ export default function MarkAttendanceClassPage() {
     return (
       <ModernDashboardLayout user={displayUser} title="Mark Attendance" subtitle="Error loading class" currentPath={currentPath} onNavigate={handleNavigation} onLogout={handleLogout} onSearch={handleSearch} hideSearch={true}>
         <PageContainer>
-          <Card className="rounded-2xl shadow-md border-red-200 bg-red-50">
+          <Card className="rounded-2xl shadow-md border-0 bg-red-50">
             <CardContent className="p-12 text-center">
               <div className="p-4 bg-gradient-to-br from-red-100 to-rose-100 w-fit mx-auto rounded-2xl mb-4">
                 <AlertCircle className="h-16 w-16 text-red-600" />
               </div>
               <h3 className="text-2xl font-bold text-red-900 mb-2">Failed to Load Class</h3>
               <p className="text-red-700 mb-6 max-w-md mx-auto">{error || "Class not found"}</p>
-              <Button onClick={() => router.push("/dashboard/mark-attendance")} className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg">
+              <Button onClick={() => router.push("/dashboard/mark-attendance")} className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg border-0">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Classes
               </Button>
@@ -703,13 +744,13 @@ export default function MarkAttendanceClassPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
         <PageContainer>
           <div className="mb-6">
-            <Button onClick={() => router.push("/dashboard/mark-attendance")} variant="outline" className="h-11 border-slate-300 text-slate-700 hover:bg-slate-50 touch-manipulation">
+            <Button onClick={() => router.push("/dashboard/mark-attendance")} className="h-11 bg-white hover:bg-slate-50 text-slate-700 shadow-sm border-0 touch-manipulation">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Classes
             </Button>
           </div>
 
-          <Card className="rounded-2xl shadow-lg border-orange-200 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 mb-6 md:mb-8">
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 mb-6 md:mb-8">
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
                 <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
@@ -781,7 +822,7 @@ export default function MarkAttendanceClassPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0 }}>
-              <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-orange-50 to-orange-100/50">
+              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-orange-50 to-orange-100/50">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-orange-600 rounded-lg flex-shrink-0">
@@ -795,7 +836,7 @@ export default function MarkAttendanceClassPage() {
                 </CardContent>
               </Card>
             </motion.div>            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-              <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-green-50 to-green-100/50">
+              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-green-50 to-green-100/50">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-green-600 rounded-lg flex-shrink-0">
@@ -810,7 +851,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-              <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-red-50 to-red-100/50">
+              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-red-50 to-red-100/50">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-red-600 rounded-lg flex-shrink-0">
@@ -825,7 +866,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
-              <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-amber-50 to-amber-100/50">
+              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-amber-50 to-amber-100/50">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-amber-600 rounded-lg flex-shrink-0">
@@ -840,7 +881,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-              <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-cyan-50 to-cyan-100/50">
+              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-cyan-50 to-cyan-100/50">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-cyan-600 rounded-lg flex-shrink-0">
@@ -855,7 +896,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }}>
-              <Card className="rounded-xl shadow-md border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100/50">
+              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-slate-50 to-slate-100/50">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-slate-600 rounded-lg flex-shrink-0">
@@ -871,7 +912,7 @@ export default function MarkAttendanceClassPage() {
             </motion.div>
           </div>
 
-          <Card className="rounded-2xl shadow-md border-slate-200 mb-6">
+          <Card className="rounded-2xl shadow-md border-0 bg-white mb-6">
             <CardContent className="p-4 md:p-4">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
                 <div className="flex items-center gap-2">
@@ -883,7 +924,7 @@ export default function MarkAttendanceClassPage() {
                     <Button 
                       onClick={() => setShowAuthDialog(true)} 
                       disabled={attendanceRecords.size === 0}
-                      className="h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed border-0"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Authenticate to Submit
@@ -892,7 +933,7 @@ export default function MarkAttendanceClassPage() {
                     <Button 
                       onClick={handleSubmitAttendance} 
                       disabled={isSaving || attendanceRecords.size === 0}
-                      className="h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed border-0"
                     >
                       {isSaving ? (
                         <>
@@ -907,11 +948,11 @@ export default function MarkAttendanceClassPage() {
                       )}
                     </Button>
                   )}
-                  <Button onClick={() => setShowMarkAllDialog(true)} className="h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation">
+                  <Button onClick={() => setShowMarkAllDialog(true)} className="h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 touch-manipulation border-0">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Mark All Present
                   </Button>
-                  <Button variant="outline" onClick={() => setShowResetDialog(true)} className="h-11 border-slate-300 text-slate-700 hover:bg-slate-50 touch-manipulation">
+                  <Button onClick={() => setShowResetDialog(true)} className="h-11 bg-white hover:bg-slate-50 text-slate-700 shadow-sm touch-manipulation border-0">
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reset All
                   </Button>
@@ -920,15 +961,15 @@ export default function MarkAttendanceClassPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-md border-slate-200 mb-6">
+          <Card className="rounded-2xl shadow-md border-0 bg-white mb-6">
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <Input type="text" placeholder="Search by name or student ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-11 border-slate-300 focus:border-orange-500 focus:ring-orange-500 text-base" />
+                  <Input type="text" placeholder="Search by name or student ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-11 border border-slate-200 focus:border-orange-500 focus:ring-orange-500 text-base bg-white" />
                 </div>
                 <div className="w-full md:w-64">
-                  <CustomSelect value={statusFilter} onValueChange={(value: string) => setStatusFilter(value as "ALL" | AttendanceStatus)} placeholder="Filter by status" className="h-11 border-slate-300 focus:border-orange-500 focus:ring-orange-500 text-base">
+                  <CustomSelect value={statusFilter} onValueChange={(value: string) => setStatusFilter(value as "ALL" | AttendanceStatus)} placeholder="Filter by status" className="h-11 border border-slate-200 focus:border-orange-500 focus:ring-orange-500 text-base bg-white">
                     <option value="ALL">All Statuses</option>
                     <option value="PRESENT">Present</option>
                     <option value="ABSENT">Absent</option>
@@ -942,14 +983,14 @@ export default function MarkAttendanceClassPage() {
           </Card>
 
           {studentsLoading ? (
-            <Card className="rounded-2xl shadow-md border-slate-200">
+            <Card className="rounded-2xl shadow-md border-0 bg-white">
               <CardContent className="p-12 text-center">
                 <Loader2 className="h-10 w-10 animate-spin text-orange-600 mx-auto mb-3" />
                 <p className="text-slate-600">Loading students...</p>
               </CardContent>
             </Card>
           ) : studentsError ? (
-            <Card className="rounded-2xl shadow-md border-red-200 bg-red-50">
+            <Card className="rounded-2xl shadow-md border-0 bg-red-50">
               <CardContent className="p-12 text-center">
                 <div className="p-4 bg-gradient-to-br from-red-100 to-rose-100 w-fit mx-auto rounded-2xl mb-4">
                   <AlertCircle className="h-16 w-16 text-red-600" />
@@ -1126,9 +1167,6 @@ export default function MarkAttendanceClassPage() {
                       className="h-12 text-base border-slate-300 focus:border-purple-500 focus:ring-purple-500"
                       autoFocus
                     />
-                    <p className="text-xs text-slate-500 mt-2">
-                      For demo: Use your email or &quot;admin123&quot;
-                    </p>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-sm text-blue-800">

@@ -42,6 +42,9 @@ export default function MarkAttendancePage() {
   const [sessionFilter, setSessionFilter] = React.useState<
     "ALL" | "MORNING" | "AFTERNOON"
   >("ALL");
+  const [studentFilter, setStudentFilter] = React.useState<
+    "ALL" | "MAX" | "MIN" | "HIGH" | "MEDIUM" | "LOW"
+  >("ALL");
   const [classes, setClasses] = React.useState<ClassItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -74,7 +77,7 @@ export default function MarkAttendancePage() {
     }
   }, [user, loadClasses]);
 
-  // Filter classes based on search and session
+  // Filter classes based on search, session, and student count
   const filteredClasses = React.useMemo(() => {
     return classes.filter((classItem) => {
       const matchesSearch = classItem.name
@@ -82,9 +85,28 @@ export default function MarkAttendancePage() {
         .includes(searchQuery.toLowerCase());
       const matchesSession =
         sessionFilter === "ALL" || classItem.session === sessionFilter;
-      return matchesSearch && matchesSession;
+
+      // Student count filtering
+      const studentCount = classItem.studentCount || 0;
+      const maxStudents = Math.max(...classes.map((c) => c.studentCount || 0));
+      const minStudents = Math.min(...classes.map((c) => c.studentCount || 0));
+
+      let matchesStudentFilter = true;
+      if (studentFilter === "MAX") {
+        matchesStudentFilter = studentCount === maxStudents;
+      } else if (studentFilter === "MIN") {
+        matchesStudentFilter = studentCount === minStudents;
+      } else if (studentFilter === "HIGH") {
+        matchesStudentFilter = studentCount > 30;
+      } else if (studentFilter === "MEDIUM") {
+        matchesStudentFilter = studentCount >= 15 && studentCount <= 30;
+      } else if (studentFilter === "LOW") {
+        matchesStudentFilter = studentCount < 15;
+      }
+
+      return matchesSearch && matchesSession && matchesStudentFilter;
     });
-  }, [classes, searchQuery, sessionFilter]);
+  }, [classes, searchQuery, sessionFilter, studentFilter]);
 
   // Calculate statistics
   const totalClasses = classes.length;
@@ -158,7 +180,7 @@ export default function MarkAttendancePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0 }}
             >
-              <Card className="rounded-2xl shadow-lg border-orange-200 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50">
+              <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50">
                 <CardContent className="p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -183,7 +205,7 @@ export default function MarkAttendancePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 }}
             >
-              <Card className="rounded-2xl shadow-lg border-amber-200 bg-gradient-to-br from-amber-50 via-amber-100 to-yellow-50">
+              <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-amber-50 via-amber-100 to-yellow-50">
                 <CardContent className="p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -208,7 +230,7 @@ export default function MarkAttendancePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <Card className="rounded-2xl shadow-lg border-indigo-200 bg-gradient-to-br from-indigo-50 via-indigo-100 to-blue-50">
+              <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-indigo-50 via-indigo-100 to-blue-50">
                 <CardContent className="p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -229,7 +251,7 @@ export default function MarkAttendancePage() {
           </div>
 
           {/* Search and Filter Bar */}
-          <Card className="rounded-2xl shadow-md border-slate-200 mb-6">
+          <Card className="rounded-2xl shadow-md border-0 bg-white mb-6">
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                 {/* Search Input */}
@@ -239,7 +261,7 @@ export default function MarkAttendancePage() {
                     placeholder="Search classes..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-11 border-slate-300 focus:border-orange-500 focus:ring-orange-500 text-base"
+                    className="pl-10 h-11 border border-slate-200 focus:border-orange-500 focus:ring-orange-500 text-base bg-white"
                   />
                 </div>
 
@@ -258,6 +280,27 @@ export default function MarkAttendancePage() {
                     <option value="AFTERNOON">Afternoon</option>
                   </CustomSelect>
                 </div>
+
+                {/* Student Count Filter */}
+                <div className="w-full md:w-48">
+                  <CustomSelect
+                    value={studentFilter}
+                    onValueChange={(value) =>
+                      setStudentFilter(
+                        value as "ALL" | "MAX" | "MIN" | "HIGH" | "MEDIUM" | "LOW"
+                      )
+                    }
+                    placeholder="Filter by students"
+                    className="h-11 text-base"
+                  >
+                    <option value="ALL">All Classes</option>
+                    <option value="MAX">Max Students</option>
+                    <option value="MIN">Min Students</option>
+                    <option value="HIGH">High (&gt;30)</option>
+                    <option value="MEDIUM">Medium (15-30)</option>
+                    <option value="LOW">Low (&lt;15)</option>
+                  </CustomSelect>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -272,7 +315,7 @@ export default function MarkAttendancePage() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, delay: i * 0.05 }}
                 >
-                  <Card className="rounded-2xl shadow-lg border-slate-200">
+                  <Card className="rounded-2xl shadow-lg border-0 bg-white">
                     <CardContent className="p-6">
                       <div className="animate-pulse">
                         <div className="flex items-start justify-between mb-4">
@@ -296,7 +339,7 @@ export default function MarkAttendancePage() {
               ))}
             </div>
           ) : error ? (
-            <Card className="rounded-2xl shadow-md border-red-200 bg-red-50">
+            <Card className="rounded-2xl shadow-md border-0 bg-red-50">
               <CardContent className="p-12 text-center">
                 <div className="p-4 bg-gradient-to-br from-red-100 to-rose-100 w-fit mx-auto rounded-2xl mb-4">
                   <AlertCircle className="h-16 w-16 text-red-600" />
@@ -314,7 +357,7 @@ export default function MarkAttendancePage() {
               </CardContent>
             </Card>
           ) : filteredClasses.length === 0 ? (
-            <Card className="rounded-2xl shadow-md border-slate-200">
+            <Card className="rounded-2xl shadow-md border-0">
               <CardContent className="p-12 text-center">
                 <div className="p-4 bg-gradient-to-br from-orange-100 to-amber-100 w-fit mx-auto rounded-2xl mb-4">
                   <BookOpen className="h-16 w-16 text-orange-600" />
@@ -347,7 +390,7 @@ export default function MarkAttendancePage() {
                 >
                   <Card
                     onClick={() => handleClassClick(classItem.id)}
-                    className="rounded-2xl shadow-lg border-orange-200 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                    className="rounded-2xl shadow-lg border-0 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
