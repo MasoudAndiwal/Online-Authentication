@@ -58,3 +58,39 @@ export { NotificationSettings } from './notification-settings'
 export type { NotificationPreferences } from './notification-settings'
 
 export { NotificationCenterDemo } from './notification-center-demo'
+
+// Loading States and Skeleton Components
+export {
+  ShimmerEffect,
+  SkeletonMetricCard,
+  SkeletonClassCard,
+  SkeletonStudentProgressCard,
+  SkeletonReportCard,
+  SkeletonAttendanceGrid,
+  SkeletonNotificationItem,
+  SkeletonChart,
+  SkeletonMetricGrid,
+  SkeletonClassGrid,
+  SkeletonStudentProgressGrid,
+  SkeletonReportGrid,
+  SkeletonTeacherDashboard
+} from './skeleton-loaders'
+
+// Error Handling Components
+export {
+  ErrorBoundary,
+  DefaultErrorFallback,
+  CompactErrorFallback,
+  SectionErrorBoundary,
+  useErrorHandler
+} from './error-boundary'
+export type { ErrorFallbackProps } from './error-boundary'
+
+// Offline Support Components
+export {
+  OfflineIndicator,
+  OfflineBadge,
+  SyncQueueStatus,
+  NetworkStatusIcon,
+  OfflineModeProvider
+} from './offline-indicator'
