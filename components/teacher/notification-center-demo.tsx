@@ -11,9 +11,7 @@ import { NotificationHistory } from './notification-history'
 import { NotificationDigest } from './notification-digest'
 import { WebSocketStatus, useWebSocketStatus } from './websocket-status'
 import { 
-  useNotifications, 
-  useNotificationHistory, 
-  useNotificationDigest 
+  useNotifications
 } from '@/lib/hooks/use-notifications'
 import { notificationService } from '@/lib/services/notification-service'
 import { cn } from '@/lib/utils'
@@ -38,28 +36,46 @@ export function NotificationCenterDemo() {
 
   const {
     notifications,
-    preferences,
     unreadCount,
     isLoading,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    updatePreferences,
-    refresh
+    addNotification
   } = useNotifications()
+  
+  // Stub implementations for demo
+  const preferences = {
+    studentRiskAlerts: true,
+    systemUpdates: true,
+    scheduleChanges: true,
+    inAppNotifications: true,
+    emailNotifications: false,
+    enableDigest: true,
+    digestFrequency: 'daily' as const,
+    digestTime: '08:00',
+    quietHours: {
+      enabled: false,
+      startTime: '22:00',
+      endTime: '07:00'
+    },
+    notifyOnMahroom: true,
+    notifyOnTasdiq: true,
+    notifyOnAbsenceCount: true,
+    absenceCountThreshold: 3
+  }
+  const updatePreferences = () => {}
+  const refresh = () => {}
 
-  const {
-    history,
-    isLoading: historyLoading,
-    refresh: refreshHistory,
-    clear: clearHistory
-  } = useNotificationHistory()
+  // Stub implementations for demo purposes
+  const history: never[] = []
+  const historyLoading = false
+  const refreshHistory = () => {}
+  const clearHistory = () => {}
 
-  const {
-    digest,
-    isLoading: digestLoading,
-    refresh: refreshDigest
-  } = useNotificationDigest(digestFrequency)
+  const digest = null
+  const digestLoading = false
+  const refreshDigest = () => {}
 
   const { status: wsStatus } = useWebSocketStatus()
 

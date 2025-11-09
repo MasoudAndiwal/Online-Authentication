@@ -109,6 +109,7 @@ export function useTouchGestures(options: TouchGestureOptions): TouchGestureHand
   );
 
   const handleTouchEnd = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (e: React.TouchEvent) => {
       if (!enabled) return;
 

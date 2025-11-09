@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+
+// Disable static generation for this page
+export const dynamic = 'force-dynamic';
 import { AttendanceManagement } from "@/components/attendance/attendance-management";
 import {
   ModernDashboardLayout,
@@ -11,7 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { handleLogout } from "@/lib/auth/logout";
 
-export default function AttendancePage() {
+function AttendanceContent() {
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
   const searchParams = useSearchParams();
   const classId = searchParams.get('classId') || 'demo-class-1';
@@ -72,5 +76,13 @@ export default function AttendancePage() {
         />
       </PageContainer>
     </ModernDashboardLayout>
+  );
+}
+
+export default function AttendancePage() {
+  return (
+    <Suspense fallback={<AuthLoadingScreen />}>
+      <AttendanceContent />
+    </Suspense>
   );
 }

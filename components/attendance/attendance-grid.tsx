@@ -27,7 +27,6 @@ import {
   Clock,
   Filter,
   MoreHorizontal,
-  User,
   TrendingDown,
   Shield,
   Target,
@@ -404,7 +403,10 @@ export function AttendanceGrid({
                     className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
                     ref={(el) => {
                       if (el) {
-                        el.indeterminate = someSelected;
+                        const inputEl = el.querySelector('input');
+                        if (inputEl) {
+                          inputEl.indeterminate = someSelected;
+                        }
                       }
                     }}
                   />

@@ -310,15 +310,17 @@ export function SkeletonChart({ className }: { className?: string }) {
       <CardContent className="p-6 pt-0">
         {/* Chart bars skeleton */}
         <div className="flex items-end justify-between gap-2 h-48">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2">
-              <SkeletonBase 
-                className="w-full rounded-t-lg" 
-                style={{ height: `${Math.random() * 60 + 40}%` }}
-              />
-              <SkeletonBase className="h-3 w-8" />
-            </div>
-          ))}
+          {Array.from({ length: 7 }).map((_, i) => {
+            const height = `${Math.random() * 60 + 40}%`;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                <div className="w-full rounded-t-lg" style={{ height }}>
+                  <SkeletonBase className="w-full h-full" />
+                </div>
+                <SkeletonBase className="h-3 w-8" />
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
