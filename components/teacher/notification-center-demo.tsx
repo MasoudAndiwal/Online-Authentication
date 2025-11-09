@@ -7,7 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NotificationCenter, NotificationTrigger } from './notification-center'
 import { NotificationSettings } from './notification-settings'
-import { useNotifications } from '@/lib/hooks/use-notifications'
+import { NotificationHistory } from './notification-history'
+import { NotificationDigest } from './notification-digest'
+import { WebSocketStatus, useWebSocketStatus } from './websocket-status'
+import { 
+  useNotifications, 
+  useNotificationHistory, 
+  useNotificationDigest 
+} from '@/lib/hooks/use-notifications'
 import { notificationService } from '@/lib/services/notification-service'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +32,9 @@ import { cn } from '@/lib/utils'
 export function NotificationCenterDemo() {
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
+  const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
+  const [isDigestOpen, setIsDigestOpen] = React.useState(false)
+  const [digestFrequency, setDigestFrequency] = React.useState<'daily' | 'weekly'>('daily')
 
   const {
     notifications,
@@ -37,6 +47,21 @@ export function NotificationCenterDemo() {
     updatePreferences,
     refresh
   } = useNotifications()
+
+  const {
+    history,
+    isLoading: historyLoading,
+    refresh: refreshHistory,
+    clear: clearHistory
+  } = useNotificationHistory()
+
+  const {
+    digest,
+    isLoading: digestLoading,
+    refresh: refreshDigest
+  } = useNotificationDigest(digestFrequency)
+
+  const { status: wsStatus } = useWebSocketStatus()
 
   // Demo: Add test notification
   const handleAddTestNotification = async () => {
@@ -104,11 +129,16 @@ export function NotificationCenterDemo() {
                 </div>
               </div>
 
-              {/* Notification Trigger */}
-              <NotificationTrigger
-                unreadCount={unreadCount}
-                onClick={() => setIsNotificationOpen(true)}
-              />
+              <div className="flex items-center gap-3">
+                {/* WebSocket Status */}
+                <WebSocketStatus status={wsStatus} />
+                
+                {/* Notification Trigger */}
+                <NotificationTrigger
+                  unreadCount={unreadCount}
+                  onClick={() => setIsNotificationOpen(true)}
+                />
+              </div>
             </div>
           </div>
         </motion.div>
@@ -148,6 +178,20 @@ export function NotificationCenterDemo() {
                 >
                   <Bell className="h-4 w-4 mr-2" />
                   Open Notifications ({unreadCount})
+                </Button>
+                <Button
+                  onClick={() => setIsHistoryOpen(true)}
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0 shadow-sm rounded-xl"
+                >
+                  View History
+                </Button>
+                <Button
+                  onClick={() => setIsDigestOpen(true)}
+                  variant="outline"
+                  className="bg-green-50 text-green-700 hover:bg-green-100 border-0 shadow-sm rounded-xl"
+                >
+                  View Digest
                 </Button>
               </div>
             </CardContent>
@@ -281,6 +325,31 @@ export function NotificationCenterDemo() {
           onSave={updatePreferences}
         />
       )}
+
+      {/* Notification History */}
+      <NotificationHistory
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        history={history}
+        onRefresh={refreshHistory}
+        onClear={clearHistory}
+        isLoading={historyLoading}
+      />
+
+      {/* Notification Digest */}
+      <NotificationDigest
+        isOpen={isDigestOpen}
+        onClose={() => setIsDigestOpen(false)}
+        digest={digest}
+        frequency={digestFrequency}
+        onFrequencyChange={setDigestFrequency}
+        onRefresh={refreshDigest}
+        onExport={() => {
+          // Export functionality
+          console.log('Exporting digest...')
+        }}
+        isLoading={digestLoading}
+      />
     </div>
   )
 }

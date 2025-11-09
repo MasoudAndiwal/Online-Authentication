@@ -146,24 +146,108 @@ export function useNotificationDigest(frequency: 'daily' | 'weekly') {
     unreadCount: number
     byType: Record<string, number>
     recentNotifications: Notification[]
+    period: {
+      start: Date
+      end: Date
+    }
+    trends: {
+      comparedToPrevious: number
+      mostActiveType: string
+    }
+  } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchDigest = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const digestData = await notificationService.generateDigest(frequency)
+      setDigest(digestData)
+    } catch (err) {
+      console.error('Error fetching digest:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [frequency])
+
+  useEffect(() => {
+    fetchDigest()
+  }, [fetchDigest])
+
+  return { digest, isLoading, refresh: fetchDigest }
+}
+
+/**
+ * Hook for notification history
+ */
+export function useNotificationHistory() {
+  const [history, setHistory] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const historyData = await notificationService.getHistory()
+      setHistory(historyData)
+      setError(null)
+    } catch (err) {
+      console.error('Error fetching history:', err)
+      setError('Failed to load history')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const clearHistory = useCallback(async () => {
+    try {
+      await notificationService.clearHistory()
+      setHistory([])
+    } catch (err) {
+      console.error('Error clearing history:', err)
+      setError('Failed to clear history')
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchHistory()
+  }, [fetchHistory])
+
+  return {
+    history,
+    isLoading,
+    error,
+    refresh: fetchHistory,
+    clear: clearHistory
+  }
+}
+
+/**
+ * Hook for notification statistics
+ */
+export function useNotificationStatistics() {
+  const [statistics, setStatistics] = useState<{
+    total: number
+    unread: number
+    byType: Record<string, number>
+    byDay: { date: string; count: number }[]
   } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchDigest = async () => {
+    const fetchStatistics = async () => {
       try {
         setIsLoading(true)
-        const digestData = await notificationService.generateDigest(frequency)
-        setDigest(digestData)
+        const stats = await notificationService.getStatistics()
+        setStatistics(stats)
       } catch (err) {
-        console.error('Error fetching digest:', err)
+        console.error('Error fetching statistics:', err)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchDigest()
-  }, [frequency])
+    fetchStatistics()
+  }, [])
 
-  return { digest, isLoading }
+  return { statistics, isLoading }
 }

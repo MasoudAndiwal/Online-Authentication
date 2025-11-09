@@ -96,6 +96,32 @@ const mockPreferences: NotificationPreferences = {
 }
 
 // ============================================================================
+// Notification History Types
+// ============================================================================
+
+export interface NotificationHistory {
+  id: string
+  notification: Notification
+  action: 'created' | 'read' | 'deleted'
+  timestamp: Date
+}
+
+export interface DigestSummary {
+  totalNotifications: number
+  unreadCount: number
+  byType: Record<NotificationType, number>
+  recentNotifications: Notification[]
+  period: {
+    start: Date
+    end: Date
+  }
+  trends: {
+    comparedToPrevious: number // percentage change
+    mostActiveType: NotificationType
+  }
+}
+
+// ============================================================================
 // Notification Service Class
 // ============================================================================
 
@@ -104,6 +130,10 @@ class NotificationService {
   private preferences: NotificationPreferences = { ...mockPreferences }
   private listeners: Set<(notifications: Notification[]) => void> = new Set()
   private wsConnection: WebSocket | null = null
+  private history: NotificationHistory[] = []
+  private reconnectAttempts = 0
+  private maxReconnectAttempts = 5
+  private reconnectDelay = 1000
 
   /**
    * Fetch all notifications for the current user
@@ -137,9 +167,16 @@ class NotificationService {
     // In production, replace with actual API call:
     // await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' })
     
+    const notification = this.notifications.find(n => n.id === notificationId)
+    
     this.notifications = this.notifications.map(n =>
       n.id === notificationId ? { ...n, isRead: true } : n
     )
+    
+    // Add to history
+    if (notification) {
+      this.addToHistory(notification, 'read')
+    }
     
     this.notifyListeners()
   }
@@ -169,7 +206,14 @@ class NotificationService {
     // In production, replace with actual API call:
     // await fetch(`/api/notifications/${notificationId}`, { method: 'DELETE' })
     
+    const notification = this.notifications.find(n => n.id === notificationId)
+    
     this.notifications = this.notifications.filter(n => n.id !== notificationId)
+    
+    // Add to history
+    if (notification) {
+      this.addToHistory(notification, 'deleted')
+    }
     
     this.notifyListeners()
   }
@@ -225,6 +269,10 @@ class NotificationService {
     }
     
     this.notifications.unshift(notification)
+    
+    // Add to history
+    this.addToHistory(notification, 'created')
+    
     this.notifyListeners()
     
     return notification
@@ -253,19 +301,107 @@ class NotificationService {
 
   /**
    * Initialize WebSocket connection for real-time updates
-   * This is a placeholder for future WebSocket integration
    */
   initializeWebSocket(userId: string): void {
-    // In production, implement WebSocket connection:
-    // this.wsConnection = new WebSocket(`wss://your-api.com/notifications?userId=${userId}`)
-    // 
-    // this.wsConnection.onmessage = (event) => {
-    //   const notification = JSON.parse(event.data)
-    //   this.notifications.unshift(notification)
-    //   this.notifyListeners()
-    // }
+    // In production, replace with actual WebSocket URL
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/notifications'
     
-    console.log('WebSocket connection initialized for user:', userId)
+    try {
+      this.wsConnection = new WebSocket(`${wsUrl}?userId=${userId}`)
+      
+      this.wsConnection.onopen = () => {
+        console.log('WebSocket connection established for user:', userId)
+        this.reconnectAttempts = 0
+      }
+      
+      this.wsConnection.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          
+          if (data.type === 'notification') {
+            const notification: Notification = {
+              id: data.id,
+              type: data.notificationType,
+              title: data.title,
+              message: data.message,
+              timestamp: new Date(data.timestamp),
+              isRead: false,
+              metadata: data.metadata
+            }
+            
+            this.notifications.unshift(notification)
+            this.addToHistory(notification, 'created')
+            this.notifyListeners()
+            
+            // Show browser notification if enabled
+            this.showBrowserNotification(notification)
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error)
+        }
+      }
+      
+      this.wsConnection.onerror = (error) => {
+        console.error('WebSocket error:', error)
+      }
+      
+      this.wsConnection.onclose = () => {
+        console.log('WebSocket connection closed')
+        this.attemptReconnect(userId)
+      }
+    } catch (error) {
+      console.error('Failed to initialize WebSocket:', error)
+    }
+  }
+
+  /**
+   * Attempt to reconnect WebSocket with exponential backoff
+   */
+  private attemptReconnect(userId: string): void {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++
+      const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
+      
+      console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+      
+      setTimeout(() => {
+        this.initializeWebSocket(userId)
+      }, delay)
+    } else {
+      console.error('Max reconnection attempts reached')
+    }
+  }
+
+  /**
+   * Show browser notification
+   */
+  private async showBrowserNotification(notification: Notification): Promise<void> {
+    if (!this.preferences.inAppNotifications) return
+    
+    // Check if browser notifications are supported and permitted
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(notification.title, {
+          body: notification.message,
+          icon: '/notification-icon.png',
+          badge: '/notification-badge.png',
+          tag: notification.id,
+          requireInteraction: notification.type === 'student_risk'
+        })
+      } catch (error) {
+        console.error('Failed to show browser notification:', error)
+      }
+    }
+  }
+
+  /**
+   * Request browser notification permission
+   */
+  async requestNotificationPermission(): Promise<NotificationPermission> {
+    if ('Notification' in window) {
+      return await Notification.requestPermission()
+    }
+    return 'denied'
   }
 
   /**
@@ -279,29 +415,125 @@ class NotificationService {
   }
 
   /**
-   * Generate digest summary
+   * Generate digest summary with trends
    */
-  async generateDigest(
-    frequency: 'daily' | 'weekly'
-  ): Promise<{
-    totalNotifications: number
-    unreadCount: number
-    byType: Record<NotificationType, number>
-    recentNotifications: Notification[]
-  }> {
+  async generateDigest(frequency: 'daily' | 'weekly'): Promise<DigestSummary> {
     const notifications = await this.fetchNotifications()
     
-    // Filter notifications based on frequency
-    const cutoffDate = new Date()
+    // Calculate date ranges
+    const now = new Date()
+    const currentPeriodStart = new Date()
+    const previousPeriodStart = new Date()
+    
     if (frequency === 'daily') {
-      cutoffDate.setDate(cutoffDate.getDate() - 1)
+      currentPeriodStart.setDate(now.getDate() - 1)
+      previousPeriodStart.setDate(now.getDate() - 2)
     } else {
-      cutoffDate.setDate(cutoffDate.getDate() - 7)
+      currentPeriodStart.setDate(now.getDate() - 7)
+      previousPeriodStart.setDate(now.getDate() - 14)
     }
     
-    const recentNotifications = notifications.filter(
-      n => n.timestamp >= cutoffDate
+    // Filter notifications for current period
+    const currentNotifications = notifications.filter(
+      n => n.timestamp >= currentPeriodStart && n.timestamp <= now
     )
+    
+    // Filter notifications for previous period
+    const previousNotifications = notifications.filter(
+      n => n.timestamp >= previousPeriodStart && n.timestamp < currentPeriodStart
+    )
+    
+    // Count by type
+    const byType: Record<NotificationType, number> = {
+      student_risk: 0,
+      system_update: 0,
+      schedule_change: 0
+    }
+    
+    currentNotifications.forEach(n => {
+      byType[n.type]++
+    })
+    
+    // Calculate trends
+    const comparedToPrevious = previousNotifications.length > 0
+      ? ((currentNotifications.length - previousNotifications.length) / previousNotifications.length) * 100
+      : 0
+    
+    const mostActiveType = (Object.entries(byType) as [NotificationType, number][])
+      .reduce((max, [type, count]) => count > max[1] ? [type, count] : max, ['student_risk', 0] as [NotificationType, number])[0]
+    
+    return {
+      totalNotifications: currentNotifications.length,
+      unreadCount: currentNotifications.filter(n => !n.isRead).length,
+      byType,
+      recentNotifications: currentNotifications.slice(0, 10),
+      period: {
+        start: currentPeriodStart,
+        end: now
+      },
+      trends: {
+        comparedToPrevious,
+        mostActiveType
+      }
+    }
+  }
+
+  /**
+   * Get notification history
+   */
+  async getHistory(limit = 50): Promise<NotificationHistory[]> {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // In production, replace with actual API call:
+    // const response = await fetch(`/api/notifications/history?limit=${limit}`)
+    // return response.json()
+    
+    return this.history.slice(0, limit)
+  }
+
+  /**
+   * Clear notification history
+   */
+  async clearHistory(): Promise<void> {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // In production, replace with actual API call:
+    // await fetch('/api/notifications/history', { method: 'DELETE' })
+    
+    this.history = []
+  }
+
+  /**
+   * Add notification to history
+   */
+  private addToHistory(notification: Notification, action: NotificationHistory['action']): void {
+    const historyEntry: NotificationHistory = {
+      id: `${notification.id}-${action}-${Date.now()}`,
+      notification,
+      action,
+      timestamp: new Date()
+    }
+    
+    this.history.unshift(historyEntry)
+    
+    // Keep only last 100 history entries
+    if (this.history.length > 100) {
+      this.history = this.history.slice(0, 100)
+    }
+  }
+
+  /**
+   * Get notification statistics
+   */
+  async getStatistics(): Promise<{
+    total: number
+    unread: number
+    byType: Record<NotificationType, number>
+    byDay: { date: string; count: number }[]
+  }> {
+    const notifications = await this.fetchNotifications()
     
     const byType: Record<NotificationType, number> = {
       student_risk: 0,
@@ -309,15 +541,25 @@ class NotificationService {
       schedule_change: 0
     }
     
-    recentNotifications.forEach(n => {
+    const byDay: Record<string, number> = {}
+    
+    notifications.forEach(n => {
       byType[n.type]++
+      
+      const dateKey = n.timestamp.toISOString().split('T')[0]
+      byDay[dateKey] = (byDay[dateKey] || 0) + 1
     })
     
+    const byDayArray = Object.entries(byDay)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 7)
+    
     return {
-      totalNotifications: recentNotifications.length,
-      unreadCount: recentNotifications.filter(n => !n.isRead).length,
+      total: notifications.length,
+      unread: notifications.filter(n => !n.isRead).length,
       byType,
-      recentNotifications: recentNotifications.slice(0, 10)
+      byDay: byDayArray
     }
   }
 }
