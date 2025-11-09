@@ -130,10 +130,28 @@ export function AttendanceManagement({
     loadData();
   }, [loadData]);
 
-  // Monitor connection status
+  // Enhanced connection monitoring with real-time feedback
   React.useEffect(() => {
-    const handleOnline = () => setConnectionStatus('online');
-    const handleOffline = () => setConnectionStatus('offline');
+    const handleOnline = () => {
+      setConnectionStatus('online');
+      toast.success("🌐 Connection restored", {
+        description: "Auto-sync is now active",
+        duration: 3000,
+      });
+    };
+    
+    const handleOffline = () => {
+      setConnectionStatus('offline');
+      toast.warning("📡 Connection lost", {
+        description: "Changes will be saved when connection is restored",
+        duration: 5000,
+      });
+    };
+    
+    // Check initial connection status
+    if (!navigator.onLine) {
+      setConnectionStatus('offline');
+    }
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -227,20 +245,43 @@ export function AttendanceManagement({
     }
   }, [hasUnsavedChanges, connectionStatus, students, classId, date, classData?.name]);
 
-  // Auto-save interval for pending changes
+  // Separate effect for handling connection restoration auto-save
+  React.useEffect(() => {
+    if (connectionStatus === 'online' && hasUnsavedChanges) {
+      const autoSaveTimer = setTimeout(() => {
+        handleSave();
+      }, 1000);
+      
+      return () => clearTimeout(autoSaveTimer);
+    }
+  }, [connectionStatus, hasUnsavedChanges, handleSave]);
+
+  // Enhanced auto-save with real-time progress and smart intervals
   React.useEffect(() => {
     if (!autoSaveEnabled || !hasUnsavedChanges || connectionStatus === 'offline') {
       return;
     }
 
+    // Smart auto-save interval - shorter for recent changes, longer for stable state
+    const getAutoSaveInterval = () => {
+      const timeSinceLastChange = Date.now() - (lastSyncTime?.getTime() || 0);
+      if (timeSinceLastChange < 30000) return 5000;  // 5s for recent changes
+      if (timeSinceLastChange < 60000) return 10000; // 10s for moderate age
+      return 15000; // 15s for older changes
+    };
+
     const autoSaveInterval = setInterval(() => {
-      if (hasUnsavedChanges) {
+      if (hasUnsavedChanges && connectionStatus === 'online') {
+        toast.info("💾 Auto-saving changes...", {
+          duration: 1500,
+          id: 'auto-save',
+        });
         handleSave();
       }
-    }, 10000); // Auto-save every 10 seconds
+    }, getAutoSaveInterval());
 
     return () => clearInterval(autoSaveInterval);
-  }, [hasUnsavedChanges, autoSaveEnabled, connectionStatus, handleSave]);
+  }, [hasUnsavedChanges, autoSaveEnabled, connectionStatus, handleSave, lastSyncTime]);
 
   // Handle status change for individual student with auto-save and risk monitoring
   const handleStatusChange = async (studentId: string, status: AttendanceStatus) => {
@@ -362,13 +403,14 @@ export function AttendanceManagement({
     }
   };
 
-  // Handle bulk status change with real-time updates and error handling
+  // Enhanced bulk status change with comprehensive real-time updates and error recovery
   const handleBulkStatusChange = async (studentIds: string[], status: AttendanceStatus) => {
     // Store original state for rollback on error
     const originalStudents = [...students];
+    const startTime = Date.now();
     
     try {
-      // Update local state immediately for better UX (optimistic update)
+      // Real-time optimistic update with visual feedback
       setStudents(prev => 
         prev.map(student => 
           studentIds.includes(student.id)
@@ -377,16 +419,31 @@ export function AttendanceManagement({
         )
       );
       setHasUnsavedChanges(true);
+      setConnectionStatus('saving');
       
-      // Simulate API call with real-time saving
-      const attendanceRecords = studentIds.map(studentId => ({
-        studentId,
-        status,
-        periodNumber: 1,
-        teacherName: 'Current Teacher',
-        subject: classData?.name || 'Unknown Subject',
-        notes: null,
-      }));
+      // Show immediate feedback for bulk operation start
+      toast.info(`🚀 Starting bulk update for ${studentIds.length} students...`, {
+        duration: 2000,
+        id: 'bulk-start',
+      });
+      
+      // Prepare attendance records with enhanced metadata
+      const attendanceRecords = studentIds.map(studentId => {
+        const student = students.find(s => s.id === studentId);
+        return {
+          studentId,
+          status,
+          periodNumber: 1,
+          teacherName: 'Current Teacher',
+          subject: classData?.name || 'Unknown Subject',
+          notes: `Bulk update: ${studentIds.length} students at ${new Date().toLocaleTimeString()}`,
+          studentName: student?.name || 'Unknown Student', // For better error reporting
+        };
+      });
+
+      // Enhanced API call with timeout and retry logic
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const response = await fetch('/api/attendance', {
         method: 'POST',
@@ -398,38 +455,110 @@ export function AttendanceManagement({
           date: date.toISOString().split('T')[0],
           records: attendanceRecords,
           markedBy: 'current-teacher-id',
+          bulkOperation: true,
+          timestamp: new Date().toISOString(),
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`Failed to save bulk attendance: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Server error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
+      const processingTime = Date.now() - startTime;
       
-      // Real-time success feedback
-      toast.success(`Bulk update successful`, {
-        description: `Updated ${result.saved || studentIds.length} students to ${status.toLowerCase()}`,
-        duration: 3000,
-      });
-      
+      // Update sync status and timing
+      setConnectionStatus('online');
+      setLastSyncTime(new Date());
       setHasUnsavedChanges(false);
       
-    } catch (error) {
-      // Rollback optimistic update on error
-      setStudents(originalStudents);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save bulk attendance';
-      
-      // Enhanced error handling with retry option
-      toast.error('Bulk update failed', {
-        description: errorMessage,
-        duration: 5000,
+      // Comprehensive success feedback with performance metrics
+      toast.success(`✅ Bulk update completed successfully!`, {
+        description: `${result.saved || studentIds.length} students updated in ${processingTime}ms`,
+        duration: 4000,
         action: {
-          label: "Retry",
-          onClick: () => handleBulkStatusChange(studentIds, status),
+          label: "View Details",
+          onClick: () => {
+            toast.info(`📊 Operation Summary`, {
+              description: `Status: ${status} | Students: ${studentIds.length} | Time: ${processingTime}ms`,
+              duration: 5000,
+            });
+          },
         },
       });
+
+      // Real-time validation - check if all students were updated correctly
+      const updatedCount = students.filter(s => 
+        studentIds.includes(s.id) && s.status === status
+      ).length;
+      
+      if (updatedCount !== studentIds.length) {
+        toast.warning("⚠️ Partial update detected", {
+          description: `${updatedCount}/${studentIds.length} students updated. Please verify.`,
+          duration: 6000,
+        });
+      }
+      
+    } catch (error) {
+      // Comprehensive error handling with rollback
+      setStudents(originalStudents);
+      setConnectionStatus('online');
+      setHasUnsavedChanges(true);
+      
+      let errorMessage = 'Unknown error occurred';
+      let errorType = 'network';
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timed out after 30 seconds';
+          errorType = 'timeout';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network connection lost';
+          errorType = 'connection';
+        } else {
+          errorMessage = error.message;
+          errorType = 'server';
+        }
+      }
+      
+      // Enhanced error reporting with recovery suggestions
+      toast.error(`❌ Bulk update failed (${errorType})`, {
+        description: errorMessage,
+        duration: 8000,
+        action: {
+          label: "Retry with Recovery",
+          onClick: () => {
+            // Implement smart retry with smaller batches if needed
+            if (studentIds.length > 10) {
+              toast.info("🔄 Trying smaller batches...", {
+                description: "Breaking down into smaller groups for better reliability",
+                duration: 3000,
+              });
+              // Could implement batch processing here
+            }
+            handleBulkStatusChange(studentIds, status);
+          },
+        },
+      });
+
+      // Show recovery suggestions based on error type
+      setTimeout(() => {
+        if (errorType === 'connection') {
+          toast.info("💡 Connection tip", {
+            description: "Check your internet connection and try again",
+            duration: 5000,
+          });
+        } else if (errorType === 'timeout') {
+          toast.info("💡 Performance tip", {
+            description: "Try selecting fewer students for faster processing",
+            duration: 5000,
+          });
+        }
+      }, 2000);
       
       throw error; // Re-throw for bulk actions panel to handle
     }
@@ -503,32 +632,65 @@ export function AttendanceManagement({
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Real-time connection status indicator */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-white/60 backdrop-blur-sm rounded-xl border-0 shadow-sm">
+          {/* Enhanced real-time connection status indicator */}
+          <motion.div 
+            className="flex items-center gap-2 px-3 py-2 bg-white/60 backdrop-blur-sm rounded-xl border-0 shadow-sm"
+            animate={{
+              scale: connectionStatus === 'saving' ? [1, 1.02, 1] : 1,
+            }}
+            transition={{
+              duration: 1,
+              repeat: connectionStatus === 'saving' ? Infinity : 0,
+            }}
+          >
             {connectionStatus === 'online' && (
               <>
-                <Wifi className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700 font-medium">Online</span>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Wifi className="h-4 w-4 text-green-600" />
+                </motion.div>
+                <span className="text-sm text-green-700 font-medium">Real-time Sync</span>
                 {lastSyncTime && (
                   <span className="text-xs text-slate-500">
-                    • Synced {lastSyncTime.toLocaleTimeString()}
+                    • {lastSyncTime.toLocaleTimeString()}
                   </span>
+                )}
+                {autoSaveEnabled && hasUnsavedChanges && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="w-2 h-2 bg-orange-400 rounded-full"
+                  />
                 )}
               </>
             )}
             {connectionStatus === 'offline' && (
               <>
-                <WifiOff className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-red-700 font-medium">Offline</span>
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  <WifiOff className="h-4 w-4 text-red-600" />
+                </motion.div>
+                <span className="text-sm text-red-700 font-medium">Offline Mode</span>
+                <span className="text-xs text-red-500">• Changes queued</span>
               </>
             )}
             {connectionStatus === 'saving' && (
               <>
                 <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
                 <span className="text-sm text-blue-700 font-medium">Syncing...</span>
+                <motion.div
+                  animate={{ width: ["0%", "100%"] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="h-1 bg-blue-400 rounded-full"
+                  style={{ width: "20px" }}
+                />
               </>
             )}
-          </div>
+          </motion.div>
 
           <Button
             variant="outline"

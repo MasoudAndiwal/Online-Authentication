@@ -200,39 +200,39 @@ const getNavigationItems = (role: string): NavigationItem[] => {
     return [
       {
         label: "Dashboard",
-        href: "/dashboard",
+        href: "/teacher/dashboard",
         icon: Home,
       },
       {
         label: "My Classes",
-        href: "/dashboard/classes",
+        href: "/teacher/dashboard/classes",
         icon: BookOpen,
       },
       {
         label: "Attendance",
-        href: "/dashboard/attendance",
+        href: "/teacher/dashboard/attendance",
         icon: ClipboardList,
         children: [
           {
             label: "Mark Attendance",
-            href: "/dashboard/attendance",
+            href: "/teacher/dashboard/attendance",
             icon: ClipboardList,
           },
           {
             label: "Attendance History",
-            href: "/dashboard/attendance/history",
+            href: "/teacher/dashboard/attendance/history",
             icon: Clock,
           },
         ],
       },
       {
         label: "Student Progress",
-        href: "/dashboard/progress",
+        href: "/teacher/dashboard/progress",
         icon: TrendingUp,
       },
       {
         label: "Reports",
-        href: "/dashboard/reports",
+        href: "/teacher/dashboard/reports",
         icon: FileText,
       },
     ];

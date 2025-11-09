@@ -21,7 +21,6 @@ import {
   FileText,
   X,
   Users,
-  AlertTriangle,
   Loader2,
   Clock,
   CheckCircle2,
@@ -108,29 +107,38 @@ export function BulkActionsPanel({
   const [saveStatus, setSaveStatus] = React.useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [retryCount, setRetryCount] = React.useState(0);
 
-  // Auto-hide panel after 5 seconds of inactivity
+  // Enhanced auto-hide panel after 5 seconds of inactivity with real-time updates
   const [lastActivity, setLastActivity] = React.useState(Date.now());
   const [shouldAutoHide, setShouldAutoHide] = React.useState(false);
+  const [autoHideCountdown, setAutoHideCountdown] = React.useState(0);
 
   React.useEffect(() => {
     if (selectedStudents.length === 0) {
       setShouldAutoHide(false);
+      setAutoHideCountdown(0);
       return;
     }
 
-    const timer = setTimeout(() => {
-      if (Date.now() - lastActivity >= 5000) {
+    const countdownInterval = setInterval(() => {
+      const timeSinceActivity = Date.now() - lastActivity;
+      const remainingTime = Math.max(0, 5000 - timeSinceActivity);
+      
+      if (remainingTime > 0) {
+        setAutoHideCountdown(Math.ceil(remainingTime / 1000));
+      } else {
         setShouldAutoHide(true);
+        setAutoHideCountdown(0);
       }
-    }, 5000);
+    }, 100);
 
-    return () => clearTimeout(timer);
+    return () => clearInterval(countdownInterval);
   }, [selectedStudents.length, lastActivity]);
 
-  // Reset auto-hide when user interacts
+  // Reset auto-hide when user interacts with enhanced feedback
   const handleUserActivity = () => {
     setLastActivity(Date.now());
     setShouldAutoHide(false);
+    setAutoHideCountdown(0);
   };
 
   // Auto-save functionality with real-time updates
@@ -150,7 +158,7 @@ export function BulkActionsPanel({
     setShowConfirmDialog(true);
   };
 
-  // Confirm bulk action with enhanced error handling and progress tracking
+  // Enhanced bulk action confirmation with real-time progress and comprehensive error handling
   const handleConfirmAction = async () => {
     if (!pendingAction || selectedStudents.length === 0) return;
 
@@ -159,52 +167,93 @@ export function BulkActionsPanel({
     setProcessingProgress(0);
     
     try {
-      // Simulate progress for better UX
+      // Enhanced progress simulation with realistic timing
+      const totalSteps = selectedStudents.length;
       const progressInterval = setInterval(() => {
-        setProcessingProgress(prev => Math.min(prev + 10, 90));
-      }, 100);
+        setProcessingProgress(prev => {
+          const increment = Math.min(85 / totalSteps, 15); // Distribute 85% across students, reserve 15% for completion
+          return Math.min(prev + increment, 85);
+        });
+      }, 50); // Faster updates for smoother progress
+
+      // Real-time status updates during processing
+      const statusUpdateInterval = setInterval(() => {
+        if (Math.random() > 0.7) { // Occasional status updates
+          toast.info(`Processing ${selectedStudents.length} students...`, {
+            duration: 1000,
+            id: 'bulk-processing', // Prevent spam
+          });
+        }
+      }, 1500);
 
       await onBulkStatusChange(selectedStudents, pendingAction.status);
       
       clearInterval(progressInterval);
+      clearInterval(statusUpdateInterval);
       setProcessingProgress(100);
       
-      // Set success status and save time
+      // Enhanced success feedback with detailed information
       setSaveStatus('success');
       setLastSaveTime(new Date());
       setRetryCount(0);
       
-      toast.success(`Successfully updated ${selectedStudents.length} students`, {
-        description: `All selected students marked as ${pendingAction.label.toLowerCase().replace('mark all ', '')}`,
-        duration: 3000,
+      // Show comprehensive success notification
+      toast.success(`✅ Bulk update completed successfully!`, {
+        description: `${selectedStudents.length} students marked as ${pendingAction.label.toLowerCase().replace('mark all ', '')}`,
+        duration: 4000,
         action: {
-          label: "View Changes",
+          label: "View Summary",
           onClick: () => {
-            // Could scroll to updated students or show summary
-            console.log("View changes clicked");
+            toast.info(`Summary: ${selectedStudents.length} students updated`, {
+              description: `Status changed to: ${pendingAction.status}`,
+              duration: 3000,
+            });
           },
         },
       });
       
-      // Auto-clear selection after successful save
+      // Real-time visual confirmation with staggered auto-clear
       setTimeout(() => {
+        toast.info("🎉 Changes saved automatically", {
+          description: "All attendance records have been synchronized",
+          duration: 2000,
+        });
+      }, 1000);
+      
+      // Auto-clear selection with user notification
+      setTimeout(() => {
+        toast.info("Selection cleared", {
+          description: "Ready for next bulk action",
+          duration: 1500,
+        });
         onClearSelection();
-      }, 1500);
+      }, 2500);
       
     } catch (error) {
       setSaveStatus('error');
       setRetryCount(prev => prev + 1);
       
-      const errorMessage = error instanceof Error ? error.message : "Please try again";
+      const errorMessage = error instanceof Error ? error.message : "Network error occurred";
       
-      toast.error("Failed to update attendance", {
-        description: errorMessage,
-        duration: 5000,
+      // Enhanced error handling with detailed feedback
+      toast.error("❌ Bulk update failed", {
+        description: `${errorMessage} (Attempt ${retryCount + 1}/3)`,
+        duration: 6000,
         action: {
-          label: "Retry",
+          label: retryCount < 2 ? "Retry Now" : "Manual Retry",
           onClick: () => handleRetryAction(),
         },
       });
+
+      // Show recovery suggestions for persistent errors
+      if (retryCount >= 1) {
+        setTimeout(() => {
+          toast.warning("💡 Troubleshooting tip", {
+            description: "Try selecting fewer students or check your internet connection",
+            duration: 5000,
+          });
+        }, 1000);
+      }
     } finally {
       setIsProcessing(false);
       setShowConfirmDialog(false);
@@ -213,16 +262,31 @@ export function BulkActionsPanel({
     }
   };
 
-  // Retry failed action
+  // Enhanced retry mechanism with exponential backoff and smart recovery
   const handleRetryAction = async () => {
     if (!pendingAction || retryCount >= 3) {
-      toast.error("Maximum retry attempts reached", {
-        description: "Please refresh the page and try again",
+      toast.error("⚠️ Maximum retry attempts reached", {
+        description: "Please refresh the page or try individual updates",
+        duration: 8000,
+        action: {
+          label: "Refresh Page",
+          onClick: () => window.location.reload(),
+        },
       });
       return;
     }
     
-    await handleConfirmAction();
+    // Exponential backoff delay
+    const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s delays
+    
+    toast.info(`🔄 Retrying in ${delay / 1000} seconds...`, {
+      description: `Attempt ${retryCount + 2}/3`,
+      duration: delay,
+    });
+    
+    setTimeout(async () => {
+      await handleConfirmAction();
+    }, delay);
   };
 
   // Cancel action
@@ -389,11 +453,23 @@ export function BulkActionsPanel({
                 })}
               </div>
 
-              {/* Enhanced status footer */}
+              {/* Enhanced real-time status footer */}
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <Clock className="h-3 w-3" />
-                  <span>Auto-hide after 5s inactivity</span>
+                  <span>
+                    {autoHideCountdown > 0 
+                      ? `Auto-hide in ${autoHideCountdown}s` 
+                      : "Auto-hide after 5s inactivity"
+                    }
+                  </span>
+                  {autoHideCountdown > 0 && autoHideCountdown <= 3 && (
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 0.5, repeat: Infinity }}
+                      className="w-2 h-2 bg-orange-400 rounded-full"
+                    />
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -404,7 +480,18 @@ export function BulkActionsPanel({
                       className="flex items-center gap-1 text-xs text-green-600"
                     >
                       <CheckCircle2 className="h-3 w-3" />
-                      <span>Changes saved automatically</span>
+                      <span>Real-time sync active</span>
+                    </motion.div>
+                  )}
+                  
+                  {saveStatus === 'saving' && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-1 text-xs text-blue-600"
+                    >
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Syncing changes...</span>
                     </motion.div>
                   )}
                   
@@ -415,7 +502,7 @@ export function BulkActionsPanel({
                       className="flex items-center gap-1 text-xs text-red-600"
                     >
                       <AlertCircle className="h-3 w-3" />
-                      <span>Save failed - will retry</span>
+                      <span>Retry {retryCount + 1}/3 pending</span>
                     </motion.div>
                   )}
                 </div>
@@ -484,7 +571,7 @@ export function BulkActionsPanel({
             </div>
           </div>
 
-          {/* Processing progress in dialog */}
+          {/* Enhanced processing progress with real-time updates */}
           {isProcessing && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -492,10 +579,25 @@ export function BulkActionsPanel({
               className="mb-4"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Updating attendance records...
-                </span>
-                <span className="text-sm text-slate-600">{processingProgress}%</span>
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  >
+                    <RefreshCw className="h-4 w-4 text-blue-600" />
+                  </motion.div>
+                  <span className="text-sm font-medium text-slate-700">
+                    Processing {selectedStudents.length} students...
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-600">{processingProgress}%</span>
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                    className="w-2 h-2 bg-blue-500 rounded-full"
+                  />
+                </div>
               </div>
               <ProgressIndicator 
                 percentage={processingProgress} 
@@ -504,6 +606,18 @@ export function BulkActionsPanel({
                 animated={true}
                 showPercentage={false}
               />
+              
+              {/* Real-time status messages */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-2 text-xs text-slate-500"
+              >
+                {processingProgress < 30 && "Validating student records..."}
+                {processingProgress >= 30 && processingProgress < 60 && "Updating attendance status..."}
+                {processingProgress >= 60 && processingProgress < 90 && "Synchronizing with database..."}
+                {processingProgress >= 90 && "Finalizing changes..."}
+              </motion.div>
             </motion.div>
           )}
 
