@@ -3,29 +3,12 @@
 import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  BookOpen, 
-  Users, 
-  Clock,
-  MapPin,
-  TrendingUp,
-  CheckCircle,
-  Eye,
-  MoreVertical,
-  Settings,
-  Calendar,
-  FileText,
-  UserCheck
+import { BookOpen, Users, Clock,MapPin,TrendingUp,CheckCircle,Eye,MoreVertical,Settings,Calendar,FileText,UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator,DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Class } from "@/lib/stores/teacher-dashboard-store";
 
@@ -38,9 +21,11 @@ interface TeacherClassCardProps {
   onViewSchedule?: (classId: string) => void;
   onManageClass?: (classId: string) => void;
   className?: string;
+  isFocused?: boolean;
+  tabIndex?: number;
 }
 
-export function TeacherClassCard({ 
+export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCardProps>(({ 
   classData, 
   onMarkAttendance,
   onViewDetails,
@@ -48,8 +33,10 @@ export function TeacherClassCard({
   onViewReports,
   onViewSchedule,
   onManageClass,
-  className 
-}: TeacherClassCardProps) {
+  className,
+  isFocused = false,
+  tabIndex = 0
+}, ref) => {
   // Get next session info
   const getNextSession = () => {
     if (classData.nextSession) {
@@ -96,6 +83,7 @@ export function TeacherClassCard({
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -105,6 +93,16 @@ export function TeacherClassCard({
         transition: { type: 'spring', stiffness: 400, damping: 25 }
       }}
       className={cn("group", className)}
+      tabIndex={tabIndex}
+      role="article"
+      aria-label={`${classData.name} class card. ${classData.studentCount} students enrolled. Attendance rate: ${formatAttendanceRate(classData.attendanceRate)}. Next session: ${getNextSession()}`}
+      aria-current={isFocused ? 'true' : undefined}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onViewDetails?.(classData.id);
+        }
+      }}
     >
       <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl hover:shadow-xl transition-all duration-300 overflow-hidden relative">
         {/* Subtle background pattern */}
@@ -505,4 +503,6 @@ export function TeacherClassCard({
       </Card>
     </motion.div>
   );
-}
+});
+
+TeacherClassCard.displayName = 'TeacherClassCard';

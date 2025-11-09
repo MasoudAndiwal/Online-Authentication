@@ -34,6 +34,7 @@ export interface DashboardHeaderProps {
   isMobile?: boolean;
   className?: string;
   hideSearch?: boolean;
+  notificationTrigger?: React.ReactNode;
 }
 
 export function DashboardHeader({
@@ -43,6 +44,7 @@ export function DashboardHeader({
   onSearch,
   className,
   hideSearch = false,
+  notificationTrigger,
 }: DashboardHeaderProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchFocused, setSearchFocused] = React.useState(false);
@@ -90,23 +92,35 @@ export function DashboardHeader({
           )}
         </div>
 
-        {/* Mobile hamburger menu button - RIGHT SIDE with LARGER SIZE */}
-        {onMenuClick && (
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="ml-4"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onMenuClick}
-              className="h-14 w-14 rounded-2xl hover:bg-slate-100/80 transition-all duration-300 border-0 shadow-sm"
+        {/* Notification trigger and hamburger menu */}
+        <div className="flex items-center gap-2 ml-4">
+          {notificationTrigger && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
             >
-              <Menu className="h-7 w-7 text-slate-600" />
-            </Button>
-          </motion.div>
-        )}
+              {notificationTrigger}
+            </motion.div>
+          )}
+          
+          {/* Mobile hamburger menu button - RIGHT SIDE with LARGER SIZE */}
+          {onMenuClick && (
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onMenuClick}
+                className="h-14 w-14 rounded-2xl hover:bg-slate-100/80 transition-all duration-300 border-0 shadow-sm"
+              >
+                <Menu className="h-7 w-7 text-slate-600" />
+              </Button>
+            </motion.div>
+          )}
+        </div>
       </div>
 
       {/* Tablet Layout (iPad) */}
@@ -183,22 +197,34 @@ export function DashboardHeader({
           </motion.form>
         )}
 
-        {/* Hamburger menu on right */}
-        {onMenuClick && (
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onMenuClick}
-              className="h-12 w-12 rounded-2xl hover:bg-slate-100/80 transition-all duration-300 border-0"
+        {/* Notification trigger and hamburger menu on right */}
+        <div className="flex items-center gap-3">
+          {notificationTrigger && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
             >
-              <Menu className="h-6 w-6 text-slate-600" />
-            </Button>
-          </motion.div>
-        )}
+              {notificationTrigger}
+            </motion.div>
+          )}
+          
+          {onMenuClick && (
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onMenuClick}
+                className="h-12 w-12 rounded-2xl hover:bg-slate-100/80 transition-all duration-300 border-0"
+              >
+                <Menu className="h-6 w-6 text-slate-600" />
+              </Button>
+            </motion.div>
+          )}
+        </div>
       </div>
 
       {/* Desktop Layout */}
@@ -275,8 +301,18 @@ export function DashboardHeader({
           </motion.form>
         )}
 
-        {/* Empty space on right for balance */}
-        <div className="flex-shrink-0 w-12"></div>
+        {/* Notification trigger on right */}
+        <div className="flex-shrink-0">
+          {notificationTrigger && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              {notificationTrigger}
+            </motion.div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

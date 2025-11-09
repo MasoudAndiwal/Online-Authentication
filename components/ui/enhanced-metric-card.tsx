@@ -96,9 +96,11 @@ export function EnhancedMetricCard({
       variant="glass" 
       className={cn('relative overflow-hidden group', className)}
       hover={true}
+      role="article"
+      aria-label={`${title}: ${value}${trend ? `, ${trend} ${trendLabel || ''}` : ''}`}
     >
       {/* Background Pattern */}
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+      <div className="absolute top-0 right-0 w-32 h-32 opacity-5" aria-hidden="true">
         <div className={cn(
           'w-full h-full rounded-full bg-gradient-to-br transform translate-x-8 -translate-y-8',
           colors.bg
@@ -108,7 +110,7 @@ export function EnhancedMetricCard({
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+          <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide" id={`metric-${title.replace(/\s+/g, '-').toLowerCase()}`}>
             {title}
           </p>
           {icon && (
@@ -118,6 +120,7 @@ export function EnhancedMetricCard({
                 'p-2.5 rounded-xl shadow-lg relative overflow-hidden',
                 `bg-gradient-to-br ${colors.bg} ${colors.glow}`
               )}
+              aria-hidden="true"
             >
               {/* Icon shine effect */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000" />
@@ -134,7 +137,11 @@ export function EnhancedMetricCard({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 + delay }}
         >
-          <p className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">
+          <p 
+            className="text-3xl font-bold text-slate-900 mb-2 tracking-tight"
+            aria-labelledby={`metric-${title.replace(/\s+/g, '-').toLowerCase()}`}
+            aria-live="polite"
+          >
             {animateValue && numericValue > 0 ? (
               <>
                 <CountUp

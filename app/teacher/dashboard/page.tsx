@@ -32,12 +32,27 @@ import { motion } from "framer-motion";
 import { useTeacherDashboardSelectors } from "@/lib/stores/teacher-dashboard-store";
 import { useInitializeTeacherDashboard } from "@/lib/hooks/use-teacher-dashboard";
 import { TeacherClassGrid } from "@/components/classes/teacher-class-grid";
+import { SkipLinks } from "@/components/ui/skip-link";
+import { useScreenReaderAnnouncements } from "@/lib/hooks/use-screen-reader-announcements";
+import { NotificationCenter, NotificationTrigger } from "@/components/teacher";
+import { useNotifications } from "@/lib/hooks/use-notifications";
 
 export default function TeacherDashboardPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
   const [currentPath, setCurrentPath] = React.useState("/teacher/dashboard");
   const [hasShownWelcome, setHasShownWelcome] = React.useState(false);
+  const { announce } = useScreenReaderAnnouncements();
+  
+  // Notification state using custom hook
+  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification
+  } = useNotifications();
 
   // Initialize dashboard data with React Query and Zustand
   const { isLoading: loadingDashboard, error: dashboardError } = useInitializeTeacherDashboard();
@@ -165,17 +180,49 @@ export default function TeacherDashboardPage() {
     router.push(`/teacher/dashboard/${classId}?tab=manage`);
   };
 
+
+
   return (
-    <ModernDashboardLayout
-      user={displayUser}
-      title="Teacher Dashboard"
-      subtitle="University Attendance Management System"
-      currentPath={currentPath}
-      onNavigate={handleNavigation}
-      onLogout={handleLogoutClick}
-      onSearch={handleSearch}
-    >
-      <PageContainer>
+    <>
+      {/* Skip Links for Keyboard Navigation */}
+      <SkipLinks
+        links={[
+          { href: '#main-content', label: 'Skip to main content' },
+          { href: '#metrics', label: 'Skip to metrics' },
+          { href: '#quick-actions', label: 'Skip to quick actions' },
+          { href: '#my-classes', label: 'Skip to my classes' },
+        ]}
+      />
+      
+      <ModernDashboardLayout
+        user={displayUser}
+        title="Teacher Dashboard"
+        subtitle="University Attendance Management System"
+        currentPath={currentPath}
+        onNavigate={handleNavigation}
+        onLogout={handleLogoutClick}
+        onSearch={handleSearch}
+        notificationTrigger={
+          <NotificationTrigger
+            unreadCount={unreadCount}
+            onClick={() => {
+              setIsNotificationOpen(true);
+              announce(`Opening notifications. You have ${unreadCount} unread notifications.`);
+            }}
+          />
+        }
+      >
+        {/* Notification Center */}
+        <NotificationCenter
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
+          notifications={notifications}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onDelete={deleteNotification}
+        />
+        <PageContainer>
+          <div id="main-content" role="main" aria-label="Teacher dashboard main content">
         {/* Ultra Modern Welcome Section with Orange Theme */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -231,10 +278,14 @@ export default function TeacherDashboardPage() {
                 >
                   <Button
                     size="lg"
-                    onClick={() => handleMarkAttendance()}
+                    onClick={() => {
+                      handleMarkAttendance();
+                      announce('Navigating to attendance marking interface');
+                    }}
                     className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-semibold transition-all duration-300 border-0"
+                    aria-label="Mark attendance for your classes"
                   >
-                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" aria-hidden="true" />
                     Mark Attendance
                   </Button>
                 </motion.div>
@@ -246,10 +297,14 @@ export default function TeacherDashboardPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={() => handleViewReports()}
+                    onClick={() => {
+                      handleViewReports();
+                      announce('Opening reports and analytics');
+                    }}
                     className="w-full sm:w-auto border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-semibold transition-all duration-300"
+                    aria-label="View attendance reports and analytics"
                   >
-                    <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                    <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" aria-hidden="true" />
                     <span className="hidden xs:inline">View Reports</span>
                     <span className="xs:hidden">Reports</span>
                   </Button>
@@ -260,7 +315,11 @@ export default function TeacherDashboardPage() {
         </motion.div>
 
         {/* Enhanced Metrics Cards with Count-up Animations - Orange Theme */}
-        <GridLayout cols={4} gap="xl">
+        <div id="metrics" role="region" aria-label="Dashboard metrics">
+        <GridLayout 
+          cols={4} 
+          gap="xl"
+        >
           <EnhancedMetricCard
             title="Total Students"
             value={loadingMetrics ? '...' : metrics?.totalStudents || 0}
@@ -306,6 +365,7 @@ export default function TeacherDashboardPage() {
             delay={0.6}
           />
         </GridLayout>
+        </div>
 
         {/* Enhanced Floating Quick Actions Panel */}
         <motion.div
@@ -313,6 +373,9 @@ export default function TeacherDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, type: 'spring', stiffness: 300, damping: 25 }}
           className="relative"
+          id="quick-actions"
+          role="region"
+          aria-label="Quick actions"
         >
           {/* Floating container with enhanced glass morphism */}
           <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-3xl p-6 shadow-2xl shadow-orange-500/10 border-0 relative overflow-hidden">
@@ -347,13 +410,17 @@ export default function TeacherDashboardPage() {
                   className="group"
                 >
                   <Button
-                    onClick={() => handleMarkAttendance()}
+                    onClick={() => {
+                      handleMarkAttendance();
+                      announce('Opening attendance marking interface');
+                    }}
                     className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20"
+                    aria-label="Quick action: Mark attendance for your classes"
                   >
                     {/* Button shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
                     <div className="relative z-10 flex items-center justify-center">
-                      <CheckCircle className="h-6 w-6 mr-3" />
+                      <CheckCircle className="h-6 w-6 mr-3" aria-hidden="true" />
                       Mark Attendance
                     </div>
                   </Button>
@@ -369,13 +436,17 @@ export default function TeacherDashboardPage() {
                   className="group"
                 >
                   <Button
-                    onClick={() => handleViewReports()}
+                    onClick={() => {
+                      handleViewReports();
+                      announce('Opening reports and analytics');
+                    }}
                     className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20"
+                    aria-label="Quick action: View attendance reports and analytics"
                   >
                     {/* Button shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
                     <div className="relative z-10 flex items-center justify-center">
-                      <BarChart3 className="h-6 w-6 mr-3" />
+                      <BarChart3 className="h-6 w-6 mr-3" aria-hidden="true" />
                       View Reports
                     </div>
                   </Button>
@@ -391,13 +462,17 @@ export default function TeacherDashboardPage() {
                   className="group"
                 >
                   <Button
-                    onClick={handleStudentProgress}
+                    onClick={() => {
+                      handleStudentProgress();
+                      announce('Opening student progress tracking');
+                    }}
                     className="w-full h-20 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-2xl text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20"
+                    aria-label="Quick action: View student progress and analytics"
                   >
                     {/* Button shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
                     <div className="relative z-10 flex items-center justify-center">
-                      <Users className="h-6 w-6 mr-3" />
+                      <Users className="h-6 w-6 mr-3" aria-hidden="true" />
                       Student Progress
                     </div>
                   </Button>
@@ -408,6 +483,7 @@ export default function TeacherDashboardPage() {
         </motion.div>
 
         {/* My Classes Section */}
+        <div id="my-classes" role="region" aria-label="My classes section">
         <ModernCard
           variant="glass"
           className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
@@ -434,7 +510,10 @@ export default function TeacherDashboardPage() {
             />
           </ModernCardContent>
         </ModernCard>
+        </div>
+          </div>
       </PageContainer>
     </ModernDashboardLayout>
+    </>
   );
 }

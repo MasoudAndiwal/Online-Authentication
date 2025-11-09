@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { TeacherClassCard } from "./teacher-class-card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Class } from "@/lib/stores/teacher-dashboard-store";
+import { useKeyboardNavigation } from "@/lib/hooks/use-keyboard-navigation";
+import { useScreenReaderAnnouncements } from "@/lib/hooks/use-screen-reader-announcements";
 
 interface TeacherClassGridProps {
   classes: Class[];
@@ -33,10 +35,59 @@ export function TeacherClassGrid({
   onCreateClass,
   className
 }: TeacherClassGridProps) {
+  const { announce } = useScreenReaderAnnouncements();
+  
+  // Determine grid columns based on screen size
+  const [columns, setColumns] = React.useState(4);
+  
+  React.useEffect(() => {
+    const updateColumns = () => {
+      if (window.innerWidth < 768) setColumns(1);
+      else if (window.innerWidth < 1024) setColumns(2);
+      else if (window.innerWidth < 1280) setColumns(3);
+      else setColumns(4);
+    };
+    
+    updateColumns();
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
+  }, []);
+
+  const {
+    focusedIndex,
+    setItemRef,
+    handleKeyDown,
+  } = useKeyboardNavigation({
+    totalItems: classes.length,
+    columns,
+    enabled: !isLoading && !error && classes.length > 0,
+    onSelect: (index) => {
+      const selectedClass = classes[index];
+      if (selectedClass && onViewDetails) {
+        onViewDetails(selectedClass.id);
+        announce(`Opening ${selectedClass.name}`);
+      }
+    },
+  });
+
+  // Announce loading state changes
+  React.useEffect(() => {
+    if (isLoading) {
+      announce('Loading classes');
+    } else if (classes.length > 0) {
+      announce(`${classes.length} ${classes.length === 1 ? 'class' : 'classes'} loaded`);
+    }
+  }, [isLoading, classes.length, announce]);
+
   // Show loading state
   if (isLoading) {
     return (
-      <div className={className}>
+      <div 
+        className={className}
+        role="status"
+        aria-live="polite"
+        aria-label="Loading classes"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
             <ClassCardSkeleton key={index} delay={index * 0.1} />
@@ -92,6 +143,9 @@ export function TeacherClassGrid({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        role="list"
+        aria-label="Your assigned classes"
+        onKeyDown={handleKeyDown}
       >
         {classes.map((classData, index) => (
           <motion.div
@@ -103,8 +157,10 @@ export function TeacherClassGrid({
               delay: index * 0.1,
               ease: [0.34, 1.56, 0.64, 1]
             }}
+            role="listitem"
           >
             <TeacherClassCard
+              ref={setItemRef(index)}
               classData={classData}
               onMarkAttendance={onMarkAttendance}
               onViewDetails={onViewDetails}
@@ -112,6 +168,8 @@ export function TeacherClassGrid({
               onViewReports={onViewReports}
               onViewSchedule={onViewSchedule}
               onManageClass={onManageClass}
+              isFocused={focusedIndex === index}
+              tabIndex={focusedIndex === index ? 0 : -1}
             />
           </motion.div>
         ))}
