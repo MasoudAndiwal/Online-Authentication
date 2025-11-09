@@ -28,6 +28,10 @@ import {
   ModernCardTitle,
   ModernCardContent,
 } from "@/components/ui/modern-card";
+import { ClassReportsDashboard } from "@/components/teacher/class-reports-dashboard";
+import { ClassStudentsDashboard } from "@/components/teacher/class-students-dashboard";
+import { ClassScheduleDashboard } from "@/components/teacher/class-schedule-dashboard";
+import { ClassManageDashboard } from "@/components/teacher/class-manage-dashboard";
 
 export default function TeacherClassDetailsPage() {
   const router = useRouter();
@@ -87,31 +91,7 @@ export default function TeacherClassDetailsPage() {
     router.push(`/teacher/dashboard/${classId}?tab=manage`);
   };
 
-  // Show appropriate content based on active tab
-  React.useEffect(() => {
-    switch (activeTab) {
-      case 'students':
-        toast.info('Student list view coming soon!', {
-          description: 'This will show detailed student information and progress.'
-        });
-        break;
-      case 'reports':
-        toast.info('Class reports coming soon!', {
-          description: 'This will show attendance reports and analytics for this class.'
-        });
-        break;
-      case 'schedule':
-        toast.info('Class schedule view coming soon!', {
-          description: 'This will show the detailed schedule for this class.'
-        });
-        break;
-      case 'manage':
-        toast.info('Class management coming soon!', {
-          description: 'This will allow you to edit class settings and information.'
-        });
-        break;
-    }
-  }, [activeTab]);
+  // All tabs now have actual functionality - no toast messages needed
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -249,130 +229,143 @@ export default function TeacherClassDetailsPage() {
           </div>
         </motion.div>
 
-        {/* Class Information Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Class Overview */}
-          <ModernCard
-            variant="glass"
-            className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
-          >
-            <ModernCardHeader>
-              <ModernCardTitle
-                icon={<BookOpen className="h-6 w-6 text-orange-500" />}
-                className="text-2xl font-bold"
+        {/* Tab Content */}
+        {activeTab === 'reports' ? (
+          <ClassReportsDashboard classId={classId} />
+        ) : activeTab === 'students' ? (
+          <ClassStudentsDashboard classId={classId} />
+        ) : activeTab === 'schedule' ? (
+          <ClassScheduleDashboard classId={classId} />
+        ) : activeTab === 'manage' ? (
+          <ClassManageDashboard classId={classId} />
+        ) : (
+          <>
+            {/* Class Information Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Class Overview */}
+              <ModernCard
+                variant="glass"
+                className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
               >
-                Class Overview
-              </ModernCardTitle>
-            </ModernCardHeader>
-            <ModernCardContent>
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <motion.div
-                    className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl shadow-orange-500/25 inline-block mb-4"
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                <ModernCardHeader>
+                  <ModernCardTitle
+                    icon={<BookOpen className="h-6 w-6 text-orange-500" />}
+                    className="text-2xl font-bold"
                   >
-                    <BookOpen className="h-8 w-8 text-white" />
-                  </motion.div>
-                  
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">
-                    Class Information
-                  </h3>
-                  
-                  <p className="text-slate-600 mb-6">
-                    Detailed class information will be loaded from the database in future tasks.
-                  </p>
-                  
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
-                    <p className="font-semibold text-slate-900">Class ID: {classId}</p>
+                    Class Overview
+                  </ModernCardTitle>
+                </ModernCardHeader>
+                <ModernCardContent>
+                  <div className="space-y-6">
+                    <div className="text-center py-8">
+                      <motion.div
+                        className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl shadow-orange-500/25 inline-block mb-4"
+                        whileHover={{ scale: 1.05, rotate: 5 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      >
+                        <BookOpen className="h-8 w-8 text-white" />
+                      </motion.div>
+                      
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">
+                        Class Information
+                      </h3>
+                      
+                      <p className="text-slate-600 mb-6">
+                        Detailed class information will be loaded from the database in future tasks.
+                      </p>
+                      
+                      <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
+                        <p className="font-semibold text-slate-900">Class ID: {classId}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </ModernCardContent>
-          </ModernCard>
+                </ModernCardContent>
+              </ModernCard>
 
-          {/* Quick Actions */}
-          <ModernCard
-            variant="glass"
-            className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
-          >
-            <ModernCardHeader>
-              <ModernCardTitle
-                icon={<Settings className="h-6 w-6 text-orange-500" />}
-                className="text-2xl font-bold"
+              {/* Quick Actions */}
+              <ModernCard
+                variant="glass"
+                className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
               >
-                Quick Actions
-              </ModernCardTitle>
-            </ModernCardHeader>
-            <ModernCardContent>
-              <div className="space-y-4">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={handleViewStudents}
-                    className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
+                <ModernCardHeader>
+                  <ModernCardTitle
+                    icon={<Settings className="h-6 w-6 text-orange-500" />}
+                    className="text-2xl font-bold"
                   >
-                    <Users className="h-6 w-6 mr-4 text-orange-600" />
-                    <div>
-                      <p className="font-semibold">View Students</p>
-                      <p className="text-sm text-slate-500">See enrolled students and their progress</p>
-                    </div>
-                  </Button>
-                </motion.div>
+                    Quick Actions
+                  </ModernCardTitle>
+                </ModernCardHeader>
+                <ModernCardContent>
+                  <div className="space-y-4">
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={handleViewStudents}
+                        className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
+                      >
+                        <Users className="h-6 w-6 mr-4 text-orange-600" />
+                        <div>
+                          <p className="font-semibold">View Students</p>
+                          <p className="text-sm text-slate-500">See enrolled students and their progress</p>
+                        </div>
+                      </Button>
+                    </motion.div>
 
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={handleViewSchedule}
-                    className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
-                  >
-                    <Calendar className="h-6 w-6 mr-4 text-orange-600" />
-                    <div>
-                      <p className="font-semibold">View Schedule</p>
-                      <p className="text-sm text-slate-500">Check class times and sessions</p>
-                    </div>
-                  </Button>
-                </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={handleViewSchedule}
+                        className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
+                      >
+                        <Calendar className="h-6 w-6 mr-4 text-orange-600" />
+                        <div>
+                          <p className="font-semibold">View Schedule</p>
+                          <p className="text-sm text-slate-500">Check class times and sessions</p>
+                        </div>
+                      </Button>
+                    </motion.div>
 
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={handleViewReports}
-                    className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
-                  >
-                    <TrendingUp className="h-6 w-6 mr-4 text-orange-600" />
-                    <div>
-                      <p className="font-semibold">View Reports</p>
-                      <p className="text-sm text-slate-500">Attendance analytics and insights</p>
-                    </div>
-                  </Button>
-                </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={handleViewReports}
+                        className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
+                      >
+                        <TrendingUp className="h-6 w-6 mr-4 text-orange-600" />
+                        <div>
+                          <p className="font-semibold">View Reports</p>
+                          <p className="text-sm text-slate-500">Attendance analytics and insights</p>
+                        </div>
+                      </Button>
+                    </motion.div>
 
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={handleManageClass}
-                    className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
-                  >
-                    <Settings className="h-6 w-6 mr-4 text-orange-600" />
-                    <div>
-                      <p className="font-semibold">Manage Class</p>
-                      <p className="text-sm text-slate-500">Edit class settings and information</p>
-                    </div>
-                  </Button>
-                </motion.div>
-              </div>
-            </ModernCardContent>
-          </ModernCard>
-        </div>
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={handleManageClass}
+                        className="w-full h-16 bg-white/60 hover:bg-white/80 text-slate-700 shadow-sm border-0 rounded-xl text-left justify-start"
+                      >
+                        <Settings className="h-6 w-6 mr-4 text-orange-600" />
+                        <div>
+                          <p className="font-semibold">Manage Class</p>
+                          <p className="text-sm text-slate-500">Edit class settings and information</p>
+                        </div>
+                      </Button>
+                    </motion.div>
+                  </div>
+                </ModernCardContent>
+              </ModernCard>
+            </div>
+          </>
+        )}
 
         {/* Implementation Note */}
         <motion.div
