@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -162,7 +163,13 @@ export function TeacherClassCard({
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   >
                     <DropdownMenuItem 
-                      onClick={() => onViewStudents(classData.id)}
+                      onClick={() => {
+                        onViewStudents(classData.id);
+                        toast.success('Loading student list...', {
+                          description: `Viewing enrolled students in ${classData.name}`,
+                          duration: 2500,
+                        });
+                      }}
                       className="rounded-xl hover:bg-orange-50 cursor-pointer transition-all duration-200 py-3 px-4 mx-1 my-1 group/item"
                     >
                       <motion.div
@@ -181,7 +188,13 @@ export function TeacherClassCard({
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   >
                     <DropdownMenuItem 
-                      onClick={() => onViewReports(classData.id)}
+                      onClick={() => {
+                        onViewReports(classData.id);
+                        toast.success('Opening class analytics...', {
+                          description: `Loading attendance reports for ${classData.name}`,
+                          duration: 2500,
+                        });
+                      }}
                       className="rounded-xl hover:bg-orange-50 cursor-pointer transition-all duration-200 py-3 px-4 mx-1 my-1 group/item"
                     >
                       <motion.div
@@ -200,7 +213,13 @@ export function TeacherClassCard({
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   >
                     <DropdownMenuItem 
-                      onClick={() => onViewSchedule(classData.id)}
+                      onClick={() => {
+                        onViewSchedule(classData.id);
+                        toast.success('Loading class schedule...', {
+                          description: `Viewing timetable for ${classData.name}`,
+                          duration: 2500,
+                        });
+                      }}
                       className="rounded-xl hover:bg-orange-50 cursor-pointer transition-all duration-200 py-3 px-4 mx-1 my-1 group/item"
                     >
                       <motion.div
@@ -220,7 +239,13 @@ export function TeacherClassCard({
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   >
                     <DropdownMenuItem 
-                      onClick={() => onManageClass(classData.id)}
+                      onClick={() => {
+                        onManageClass(classData.id);
+                        toast.success('Opening class management...', {
+                          description: `Managing settings for ${classData.name}`,
+                          duration: 2500,
+                        });
+                      }}
                       className="rounded-xl hover:bg-orange-50 cursor-pointer transition-all duration-200 py-3 px-4 mx-1 my-1 group/item"
                     >
                       <motion.div
@@ -237,13 +262,21 @@ export function TeacherClassCard({
             </DropdownMenu>
           </div>
 
-          {/* Enhanced Stats Grid with Hover Effects */}
+          {/* Enhanced Stats Grid with Hover Effects and Navigation Feedback */}
           <div className="grid grid-cols-2 gap-4 mb-5">
             <motion.div 
               className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border-0 cursor-pointer transition-all duration-200 hover:bg-white/80 hover:shadow-md"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onViewStudents?.(classData.id)}
+              onClick={() => {
+                if (onViewStudents) {
+                  onViewStudents(classData.id);
+                  toast.success('Loading student list...', {
+                    description: `${classData.studentCount} students enrolled in ${classData.name}`,
+                    duration: 2500,
+                  });
+                }
+              }}
             >
               <div className="flex items-center gap-2 mb-2">
                 <motion.div
@@ -260,7 +293,15 @@ export function TeacherClassCard({
               className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border-0 cursor-pointer transition-all duration-200 hover:bg-white/80 hover:shadow-md"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onViewReports?.(classData.id)}
+              onClick={() => {
+                if (onViewReports) {
+                  onViewReports(classData.id);
+                  toast.success('Loading attendance analytics...', {
+                    description: `Current rate: ${formatAttendanceRate(classData.attendanceRate)} for ${classData.name}`,
+                    duration: 2500,
+                  });
+                }
+              }}
             >
               <div className="flex items-center gap-2 mb-2">
                 <motion.div
@@ -277,12 +318,20 @@ export function TeacherClassCard({
             </motion.div>
           </div>
 
-          {/* Enhanced Next Session with Click Action */}
+          {/* Enhanced Next Session with Click Action and Navigation Feedback */}
           <motion.div 
             className="flex items-center gap-3 mb-6 p-3 bg-white/40 backdrop-blur-sm rounded-xl border-0 cursor-pointer transition-all duration-200 hover:bg-white/60 hover:shadow-md"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            onClick={() => onViewSchedule?.(classData.id)}
+            onClick={() => {
+              if (onViewSchedule) {
+                onViewSchedule(classData.id);
+                toast.success('Opening class schedule...', {
+                  description: `Next session: ${getNextSession()} for ${classData.name}`,
+                  duration: 2500,
+                });
+              }
+            }}
           >
             <motion.div 
               className="p-2 bg-orange-100 rounded-lg"
@@ -304,89 +353,101 @@ export function TeacherClassCard({
             </motion.div>
           </motion.div>
 
-          {/* Enhanced Quick Access Toolbar - Slides in on Hover */}
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.9 }}
-            animate={{ 
-              opacity: 0, 
-              y: -10, 
-              scale: 0.9,
-              transition: { duration: 0.2 }
-            }}
-            className="absolute top-4 left-4 right-16 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto"
-            style={{
-              transform: 'translateY(-10px) scale(0.9)',
-            }}
-          >
-            <style jsx>{`
-              .group:hover .quick-toolbar {
-                opacity: 1 !important;
-                transform: translateY(0) scale(1) !important;
-                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-              }
-            `}</style>
-            <div className="quick-toolbar flex gap-2 transition-all duration-300">
-              {onMarkAttendance && (
-                <motion.div
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          {/* Enhanced Quick Access Toolbar - Slides in on Hover with Improved Animation */}
+          <div className="absolute top-4 left-4 right-16 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto transform translate-y-[-10px] scale-90 group-hover:translate-y-0 group-hover:scale-100">
+            {onMarkAttendance && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ 
+                  opacity: 0, 
+                  scale: 0.8,
+                  transition: { duration: 0.2 }
+                }}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="opacity-0 group-hover:opacity-100 transition-all duration-300 delay-75"
+              >
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkAttendance(classData.id);
+                    toast.success('Navigating to attendance marking...', {
+                      description: `Opening attendance interface for ${classData.name}`,
+                      duration: 2000,
+                    });
+                  }}
+                  className="h-8 px-3 bg-green-50 text-green-700 hover:bg-green-100 shadow-lg hover:shadow-xl border-0 rounded-xl text-xs font-semibold transition-all duration-200 hover:shadow-green-500/20"
                 >
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onMarkAttendance(classData.id);
-                    }}
-                    className="h-8 px-3 bg-green-50 text-green-700 hover:bg-green-100 shadow-lg hover:shadow-xl border-0 rounded-xl text-xs font-semibold transition-all duration-200 hover:shadow-green-500/20"
-                  >
-                    <UserCheck className="h-3 w-3 mr-1" />
-                    Mark
-                  </Button>
-                </motion.div>
-              )}
-              {onViewReports && (
-                <motion.div
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  <UserCheck className="h-3 w-3 mr-1" />
+                  Mark
+                </Button>
+              </motion.div>
+            )}
+            {onViewReports && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ 
+                  opacity: 0, 
+                  scale: 0.8,
+                  transition: { duration: 0.2 }
+                }}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100"
+              >
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewReports(classData.id);
+                    toast.success('Opening class reports...', {
+                      description: `Loading analytics for ${classData.name}`,
+                      duration: 2000,
+                    });
+                  }}
+                  className="h-8 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-lg hover:shadow-xl border-0 rounded-xl text-xs font-semibold transition-all duration-200 hover:shadow-blue-500/20"
                 >
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewReports(classData.id);
-                    }}
-                    className="h-8 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-lg hover:shadow-xl border-0 rounded-xl text-xs font-semibold transition-all duration-200 hover:shadow-blue-500/20"
-                  >
-                    <FileText className="h-3 w-3 mr-1" />
-                    Reports
-                  </Button>
-                </motion.div>
-              )}
-              {onViewDetails && (
-                <motion.div
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  <FileText className="h-3 w-3 mr-1" />
+                  Reports
+                </Button>
+              </motion.div>
+            )}
+            {onViewDetails && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ 
+                  opacity: 0, 
+                  scale: 0.8,
+                  transition: { duration: 0.2 }
+                }}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="opacity-0 group-hover:opacity-100 transition-all duration-300 delay-125"
+              >
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails(classData.id);
+                    toast.success('Opening class details...', {
+                      description: `Loading detailed view for ${classData.name}`,
+                      duration: 2000,
+                    });
+                  }}
+                  className="h-8 px-3 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-lg hover:shadow-xl border-0 rounded-xl text-xs font-semibold transition-all duration-200 hover:shadow-orange-500/20"
                 >
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewDetails(classData.id);
-                    }}
-                    className="h-8 px-3 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-lg hover:shadow-xl border-0 rounded-xl text-xs font-semibold transition-all duration-200 hover:shadow-orange-500/20"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
+                  <Eye className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </motion.div>
+            )}
+          </div>
 
-          {/* Main Action Buttons */}
+          {/* Enhanced Main Action Buttons with Navigation Feedback */}
           <div className="flex gap-3">
             {onMarkAttendance && (
               <motion.div
@@ -395,7 +456,13 @@ export function TeacherClassCard({
                 className="flex-1"
               >
                 <Button
-                  onClick={() => onMarkAttendance(classData.id)}
+                  onClick={() => {
+                    onMarkAttendance(classData.id);
+                    toast.success('Opening attendance interface...', {
+                      description: `Ready to mark attendance for ${classData.name}`,
+                      duration: 3000,
+                    });
+                  }}
                   className="w-full h-11 bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl font-semibold transition-all duration-300 relative overflow-hidden group"
                 >
                   {/* Button shine effect */}
@@ -415,7 +482,13 @@ export function TeacherClassCard({
                 className="flex-1"
               >
                 <Button
-                  onClick={() => onViewDetails(classData.id)}
+                  onClick={() => {
+                    onViewDetails(classData.id);
+                    toast.success('Loading class details...', {
+                      description: `Opening comprehensive view for ${classData.name}`,
+                      duration: 3000,
+                    });
+                  }}
                   className="w-full h-11 bg-orange-100 text-orange-700 hover:bg-orange-200 shadow-sm border-0 rounded-xl font-semibold transition-all duration-300 relative overflow-hidden group"
                 >
                   {/* Button shine effect */}

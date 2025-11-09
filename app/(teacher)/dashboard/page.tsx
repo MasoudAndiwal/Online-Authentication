@@ -129,25 +129,25 @@ export default function TeacherDashboardPage() {
   // Class action handlers with proper navigation
   const handleMarkAttendance = (classId?: string) => {
     if (classId) {
-      router.push(`/teacher/attendance?classId=${classId}`);
+      router.push(`/teacher/dashboard/attendance?classId=${classId}`);
     } else {
-      router.push('/teacher/attendance');
+      router.push('/teacher/dashboard/attendance');
     }
   };
 
   const handleViewClassDetails = (classId: string) => {
-    router.push(`/teacher/classes/${classId}`);
+    router.push(`/teacher/dashboard/${classId}`);
   };
 
   const handleViewStudents = (classId: string) => {
     // Navigate to class details page which has student view functionality
-    router.push(`/teacher/classes/${classId}?tab=students`);
+    router.push(`/teacher/dashboard/${classId}?tab=students`);
   };
 
   const handleViewReports = (classId?: string) => {
     if (classId) {
       // Navigate to class details page with reports tab
-      router.push(`/teacher/classes/${classId}?tab=reports`);
+      router.push(`/teacher/dashboard/${classId}?tab=reports`);
     } else {
       toast.info('Reports feature coming soon!', {
         description: 'Global reports will be implemented in task 6.1'
@@ -157,12 +157,12 @@ export default function TeacherDashboardPage() {
 
   const handleViewSchedule = (classId: string) => {
     // Navigate to class details page with schedule tab
-    router.push(`/teacher/classes/${classId}?tab=schedule`);
+    router.push(`/teacher/dashboard/${classId}?tab=schedule`);
   };
 
   const handleManageClass = (classId: string) => {
     // Navigate to class details page with management tab
-    router.push(`/teacher/classes/${classId}?tab=manage`);
+    router.push(`/teacher/dashboard/${classId}?tab=manage`);
   };
 
   return (

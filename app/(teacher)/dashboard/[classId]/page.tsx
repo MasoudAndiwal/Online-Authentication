@@ -36,7 +36,7 @@ export default function TeacherClassDetailsPage() {
   const classId = params.classId as string;
   const activeTab = searchParams.get('tab') || 'overview';
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
-  const [currentPath] = React.useState(`/teacher/classes/${classId}`);
+  const [currentPath] = React.useState(`/teacher/dashboard/${classId}`);
 
   // Use authenticated user data
   const displayUser = user ? {
@@ -68,23 +68,23 @@ export default function TeacherClassDetailsPage() {
   };
 
   const handleMarkAttendance = () => {
-    router.push(`/teacher/attendance?classId=${classId}`);
+    router.push(`/teacher/dashboard/attendance?classId=${classId}`);
   };
 
   const handleViewStudents = () => {
-    router.push(`/teacher/classes/${classId}?tab=students`);
+    router.push(`/teacher/dashboard/${classId}?tab=students`);
   };
 
   const handleViewReports = () => {
-    router.push(`/teacher/classes/${classId}?tab=reports`);
+    router.push(`/teacher/dashboard/${classId}?tab=reports`);
   };
 
   const handleViewSchedule = () => {
-    router.push(`/teacher/classes/${classId}?tab=schedule`);
+    router.push(`/teacher/dashboard/${classId}?tab=schedule`);
   };
 
   const handleManageClass = () => {
-    router.push(`/teacher/classes/${classId}?tab=manage`);
+    router.push(`/teacher/dashboard/${classId}?tab=manage`);
   };
 
   // Show appropriate content based on active tab
@@ -232,7 +232,7 @@ export default function TeacherClassDetailsPage() {
                     className="flex-1"
                   >
                     <Button
-                      onClick={() => router.push(`/teacher/classes/${classId}?tab=${tab.id}`)}
+                      onClick={() => router.push(`/teacher/dashboard/${classId}?tab=${tab.id}`)}
                       className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 border-0 ${
                         isActive
                           ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25'
