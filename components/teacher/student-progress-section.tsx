@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useResponsive } from '@/lib/hooks/use-responsive'
+import { useHapticFeedback } from '@/lib/hooks/use-touch-gestures'
 
 // Import our progress tracking components
 import { StudentProgressGrid, type StudentProgressData } from './student-progress-card'
@@ -160,6 +162,10 @@ export function StudentProgressSection({ classId, className }: StudentProgressSe
   const [activeView, setActiveView] = React.useState<ProgressView>('overview')
   const [selectedPeriod, setSelectedPeriod] = React.useState<'week' | 'month'>('week')
   
+  // Responsive and touch support
+  const { isMobile, isTouch } = useResponsive()
+  const { lightTap } = useHapticFeedback()
+  
   // Mock data - in real implementation, this would come from props or API calls
   const studentData = React.useMemo(() => generateMockStudentData(), [])
   const weeklyData = React.useMemo(() => generateMockWeeklyData(), [])
@@ -202,119 +208,138 @@ export function StudentProgressSection({ classId, className }: StudentProgressSe
   }
 
   return (
-    <div className={cn('space-y-6', className)}>
-      {/* Section Header with Navigation */}
-      <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50">
-        <CardHeader className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold text-slate-900">
+    <div className={cn('space-y-4 sm:space-y-6', className)}>
+      {/* Section Header with Navigation - Mobile Responsive */}
+      <Card className="rounded-xl sm:rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">
                 Student Progress Tracking
               </CardTitle>
-              <p className="text-slate-600 mt-1">
+              <p className="text-sm sm:text-base text-slate-600 mt-1">
                 Monitor attendance patterns, identify at-risk students, and track progress trends
               </p>
             </div>
 
-            {/* View Navigation */}
-            <div className="flex gap-2">
+            {/* View Navigation - Mobile Responsive */}
+            <div className="flex gap-1 sm:gap-2 overflow-x-auto">
               <Button
                 variant={activeView === 'overview' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setActiveView('overview')}
-                className={activeView === 'overview' 
-                  ? 'bg-orange-600 hover:bg-orange-700' 
-                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-0'
-                }
+                onClick={() => {
+                  setActiveView('overview');
+                  if (isTouch) lightTap();
+                }}
+                className={cn(
+                  "min-h-[44px] touch-manipulation flex-shrink-0",
+                  activeView === 'overview' 
+                    ? 'bg-orange-600 hover:bg-orange-700' 
+                    : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-0'
+                )}
               >
-                <Users className="w-4 h-4 mr-1" />
-                Overview
+                <Users className="w-4 h-4 sm:mr-1" />
+                <span className="hidden xs:inline ml-1">Overview</span>
               </Button>
               <Button
                 variant={activeView === 'charts' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setActiveView('charts')}
-                className={activeView === 'charts' 
-                  ? 'bg-orange-600 hover:bg-orange-700' 
-                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-0'
-                }
+                onClick={() => {
+                  setActiveView('charts');
+                  if (isTouch) lightTap();
+                }}
+                className={cn(
+                  "min-h-[44px] touch-manipulation flex-shrink-0",
+                  activeView === 'charts' 
+                    ? 'bg-orange-600 hover:bg-orange-700' 
+                    : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-0'
+                )}
               >
-                <BarChart3 className="w-4 h-4 mr-1" />
-                Analytics
+                <BarChart3 className="w-4 h-4 sm:mr-1" />
+                <span className="hidden xs:inline ml-1">Analytics</span>
               </Button>
               <Button
                 variant={activeView === 'risk-assessment' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setActiveView('risk-assessment')}
-                className={activeView === 'risk-assessment' 
-                  ? 'bg-orange-600 hover:bg-orange-700' 
-                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-0'
-                }
+                onClick={() => {
+                  setActiveView('risk-assessment');
+                  if (isTouch) lightTap();
+                }}
+                className={cn(
+                  "min-h-[44px] touch-manipulation flex-shrink-0",
+                  activeView === 'risk-assessment' 
+                    ? 'bg-orange-600 hover:bg-orange-700' 
+                    : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-0'
+                )}
               >
-                <AlertTriangle className="w-4 h-4 mr-1" />
-                Risk Assessment
+                <AlertTriangle className="w-4 h-4 sm:mr-1" />
+                <span className="hidden xs:inline ml-1">Risk</span>
               </Button>
             </div>
           </div>
 
-          {/* Summary Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          {/* Summary Statistics - Mobile Responsive */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
             <motion.div
-              className="bg-white/60 rounded-xl p-4"
-              whileHover={{ scale: 1.02 }}
+              className="bg-white/60 rounded-lg sm:rounded-xl p-3 sm:p-4"
+              whileHover={!isMobile ? { scale: 1.02 } : {}}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-center gap-3">
-                <Users className="w-8 h-8 text-orange-600" />
-                <div>
-                  <div className="text-2xl font-bold text-slate-900">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">
                     {summaryStats.totalStudents}
                   </div>
-                  <div className="text-sm text-slate-600">Total Students</div>
+                  <div className="text-xs sm:text-sm text-slate-600 truncate">Total Students</div>
                 </div>
               </div>
             </motion.div>
 
             <motion.div
-              className="bg-white/60 rounded-xl p-4"
-              whileHover={{ scale: 1.02 }}
+              className="bg-white/60 rounded-lg sm:rounded-xl p-3 sm:p-4"
+              whileHover={!isMobile ? { scale: 1.02 } : {}}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-center gap-3">
-                <TrendingUp className="w-8 h-8 text-green-600" />
-                <div>
-                  <div className="text-2xl font-bold text-green-600">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600">
                     {Math.round(summaryStats.averageAttendance)}%
                   </div>
-                  <div className="text-sm text-slate-600">Avg Attendance</div>
+                  <div className="text-xs sm:text-sm text-slate-600 truncate">Avg Attendance</div>
                 </div>
               </div>
             </motion.div>
 
             <motion.div
-              className="bg-white/60 rounded-xl p-4"
-              whileHover={{ scale: 1.02 }}
+              className="bg-white/60 rounded-lg sm:rounded-xl p-3 sm:p-4"
+              whileHover={!isMobile ? { scale: 1.02 } : {}}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-8 h-8 text-orange-600" />
-                <div>
-                  <div className="text-2xl font-bold text-orange-600">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-orange-600">
                     {summaryStats.atRiskStudents}
                   </div>
-                  <div className="text-sm text-slate-600">At Risk</div>
+                  <div className="text-xs sm:text-sm text-slate-600 truncate">At Risk</div>
                 </div>
               </div>
             </motion.div>
 
             <motion.div
-              className="bg-white/60 rounded-xl p-4"
-              whileHover={{ scale: 1.02 }}
+              className="bg-white/60 rounded-lg sm:rounded-xl p-3 sm:p-4"
+              whileHover={!isMobile ? { scale: 1.02 } : {}}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
-                <div>
-                  <div className="text-2xl font-bold text-red-600">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600">
                     {summaryStats.criticalRisk}
                   </div>
-                  <div className="text-sm text-slate-600">Critical Risk</div>
+                  <div className="text-xs sm:text-sm text-slate-600 truncate">Critical Risk</div>
                 </div>
               </div>
             </motion.div>

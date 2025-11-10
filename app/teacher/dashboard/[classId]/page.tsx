@@ -21,13 +21,15 @@ import {
   FileText
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 import {
   ModernCard,
   ModernCardHeader,
   ModernCardTitle,
   ModernCardContent,
 } from "@/components/ui/modern-card";
+import { useResponsive } from "@/lib/hooks/use-responsive";
+import { useHapticFeedback } from "@/lib/hooks/use-touch-gestures";
+import { cn } from "@/lib/utils";
 import { ClassReportsDashboard } from "@/components/teacher/class-reports-dashboard";
 import { ClassStudentsDashboard } from "@/components/teacher/class-students-dashboard";
 import { ClassScheduleDashboard } from "@/components/teacher/class-schedule-dashboard";
@@ -41,6 +43,10 @@ export default function TeacherClassDetailsPage() {
   const activeTab = searchParams.get('tab') || 'overview';
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
   const [currentPath] = React.useState(`/teacher/dashboard/${classId}`);
+  
+  // Responsive and touch support
+  const { isMobile, isTouch } = useResponsive();
+  const { lightTap } = useHapticFeedback();
 
   // Use authenticated user data
   const displayUser = user ? {
@@ -72,14 +78,17 @@ export default function TeacherClassDetailsPage() {
   };
 
   const handleMarkAttendance = () => {
+    if (isTouch) lightTap();
     router.push(`/teacher/dashboard/attendance?classId=${classId}`);
   };
 
   const handleViewStudents = () => {
+    if (isTouch) lightTap();
     router.push(`/teacher/dashboard/${classId}?tab=students`);
   };
 
   const handleViewReports = () => {
+    if (isTouch) lightTap();
     router.push(`/teacher/dashboard/${classId}?tab=reports`);
   };
 
@@ -109,75 +118,93 @@ export default function TeacherClassDetailsPage() {
       onSearch={handleSearch}
     >
       <PageContainer>
-        {/* Back Navigation */}
+        {/* Back Navigation - Mobile Responsive */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <Button
             onClick={handleBackToDashboard}
-            className="h-11 bg-white hover:bg-slate-50 text-slate-700 shadow-sm border-0 rounded-xl"
+            size={isMobile ? "sm" : "default"}
+            className="min-h-[44px] bg-white hover:bg-slate-50 text-slate-700 shadow-sm border-0 rounded-lg sm:rounded-xl touch-manipulation"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <ArrowLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden xs:inline ml-2">Back to Dashboard</span>
+            <span className="xs:hidden ml-2">Back</span>
           </Button>
         </motion.div>
 
-        {/* Class Header */}
+        {/* Class Header - Mobile Responsive */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-3xl p-8 shadow-2xl shadow-orange-500/10 border-0 mb-8"
+          className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg sm:shadow-2xl shadow-orange-500/10 border-0 mb-6 sm:mb-8"
         >
-          <div className="flex items-start gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
             <motion.div
-              className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl shadow-xl shadow-orange-500/25"
-              whileHover={{ scale: 1.05, rotate: 5 }}
+              className="p-3 sm:p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl sm:rounded-3xl shadow-xl shadow-orange-500/25 flex-shrink-0 self-start"
+              whileHover={!isMobile ? { scale: 1.05, rotate: 5 } : {}}
+              whileTap={{ scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              <BookOpen className="h-12 w-12 text-white" />
+              <BookOpen className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 text-white" />
             </motion.div>
             
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
                 Class Details
               </h1>
-              <p className="text-lg text-slate-600 mb-6">
+              <p className="text-sm sm:text-base lg:text-lg text-slate-600 mb-4 sm:mb-6">
                 Comprehensive view and management for Class ID: {classId}
               </p>
               
-              {/* Quick Actions */}
-              <div className="flex flex-wrap gap-3">
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              {/* Quick Actions - Mobile Responsive */}
+              <div className="flex flex-col xs:flex-row gap-2 sm:gap-3">
+                <motion.div 
+                  whileHover={!isMobile ? { scale: 1.02 } : {}} 
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 xs:flex-none"
+                >
                   <Button
                     onClick={handleMarkAttendance}
-                    className="bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl"
+                    size={isMobile ? "sm" : "default"}
+                    className="w-full xs:w-auto min-h-[44px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-lg sm:rounded-xl touch-manipulation"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Mark Attendance
+                    <CheckCircle className="h-4 w-4 sm:mr-2" />
+                    <span className="ml-2">Mark Attendance</span>
                   </Button>
                 </motion.div>
                 
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div 
+                  whileHover={!isMobile ? { scale: 1.02 } : {}} 
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 xs:flex-none"
+                >
                   <Button
                     onClick={handleViewStudents}
-                    className="bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl"
+                    size={isMobile ? "sm" : "default"}
+                    className="w-full xs:w-auto min-h-[44px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-lg sm:rounded-xl touch-manipulation"
                   >
-                    <Users className="h-4 w-4 mr-2" />
-                    View Students
+                    <Users className="h-4 w-4 sm:mr-2" />
+                    <span className="ml-2">View Students</span>
                   </Button>
                 </motion.div>
                 
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div 
+                  whileHover={!isMobile ? { scale: 1.02 } : {}} 
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 xs:flex-none"
+                >
                   <Button
                     onClick={handleViewReports}
-                    className="bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl"
+                    size={isMobile ? "sm" : "default"}
+                    className="w-full xs:w-auto min-h-[44px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-lg sm:rounded-xl touch-manipulation"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Reports
+                    <FileText className="h-4 w-4 sm:mr-2" />
+                    <span className="ml-2">View Reports</span>
                   </Button>
                 </motion.div>
               </div>
@@ -185,21 +212,21 @@ export default function TeacherClassDetailsPage() {
           </div>
         </motion.div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation - Mobile Responsive */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 shadow-lg border-0">
-            <div className="flex gap-2">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl p-1 sm:p-2 shadow-lg border-0 overflow-x-auto">
+            <div className="flex gap-1 sm:gap-2 min-w-max sm:min-w-0">
               {[
-                { id: 'overview', label: 'Overview', icon: BookOpen },
-                { id: 'students', label: 'Students', icon: Users },
-                { id: 'schedule', label: 'Schedule', icon: Calendar },
-                { id: 'reports', label: 'Reports', icon: TrendingUp },
-                { id: 'manage', label: 'Manage', icon: Settings },
+                { id: 'overview', label: 'Overview', icon: BookOpen, shortLabel: 'Overview' },
+                { id: 'students', label: 'Students', icon: Users, shortLabel: 'Students' },
+                { id: 'schedule', label: 'Schedule', icon: Calendar, shortLabel: 'Schedule' },
+                { id: 'reports', label: 'Reports', icon: TrendingUp, shortLabel: 'Reports' },
+                { id: 'manage', label: 'Manage', icon: Settings, shortLabel: 'Manage' },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -207,20 +234,26 @@ export default function TeacherClassDetailsPage() {
                 return (
                   <motion.div
                     key={tab.id}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={!isMobile ? { scale: 1.02 } : {}}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1"
+                    className="flex-1 min-w-0"
                   >
                     <Button
-                      onClick={() => router.push(`/teacher/dashboard/${classId}?tab=${tab.id}`)}
-                      className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 border-0 ${
+                      onClick={() => {
+                        if (isTouch) lightTap();
+                        router.push(`/teacher/dashboard/${classId}?tab=${tab.id}`);
+                      }}
+                      size={isMobile ? "sm" : "default"}
+                      className={cn(
+                        "w-full min-h-[44px] rounded-lg sm:rounded-xl font-semibold transition-all duration-300 border-0 touch-manipulation",
                         isActive
                           ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25'
                           : 'bg-transparent text-slate-600 hover:bg-orange-50 hover:text-orange-700'
-                      }`}
+                      )}
                     >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {tab.label}
+                      <Icon className="h-4 w-4 sm:mr-2 flex-shrink-0" />
+                      <span className="hidden xs:inline ml-2 truncate">{tab.label}</span>
+                      <span className="xs:hidden ml-1 text-xs truncate">{tab.shortLabel}</span>
                     </Button>
                   </motion.div>
                 );

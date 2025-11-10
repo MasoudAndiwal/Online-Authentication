@@ -12,7 +12,11 @@ export interface TeacherDashboardMetrics {
 export interface Class {
   id: string;
   name: string;
+  session?: string;
+  major?: string;
+  semester?: number;
   studentCount: number;
+  scheduleCount?: number;
   schedule: {
     dayOfWeek: number;
     startTime: string;

@@ -23,31 +23,41 @@ const mockApi = {
   },
 
   fetchClasses: async (): Promise<Class[]> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return [
-      {
-        id: '1',
-        name: 'Computer Science 101',
-        studentCount: 28,
-        schedule: [
-          { dayOfWeek: 1, startTime: '10:00', endTime: '11:30', room: 'A-204' },
-          { dayOfWeek: 3, startTime: '10:00', endTime: '11:30', room: 'A-204' },
-        ],
-        attendanceRate: 94.2,
-        nextSession: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-      },
-      {
-        id: '2',
-        name: 'Data Structures',
-        studentCount: 32,
-        schedule: [
-          { dayOfWeek: 2, startTime: '14:00', endTime: '15:30', room: 'B-101' },
-          { dayOfWeek: 4, startTime: '14:00', endTime: '15:30', room: 'B-101' },
-        ],
-        attendanceRate: 91.8,
-        nextSession: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
-      },
-    ];
+    try {
+      // Get teacher ID from session (if available)
+      let teacherId = '';
+      if (typeof window !== 'undefined') {
+        const sessionData = localStorage.getItem('user_session');
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          teacherId = session.id || '';
+        }
+      }
+      
+      // Build API URL with teacher ID
+      const apiUrl = teacherId 
+        ? `/api/teachers/classes?teacherId=${teacherId}`
+        : '/api/teachers/classes';
+      
+      console.log('Fetching classes for teacher:', teacherId);
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch teacher classes');
+      }
+      const apiClasses = await response.json();
+      
+      console.log('Fetched classes from API:', apiClasses);
+      console.log('Classes array length:', Array.isArray(apiClasses) ? apiClasses.length : 'Not an array');
+      console.log('Classes data:', JSON.stringify(apiClasses, null, 2));
+      
+      // Ensure we always return an array
+      const classesArray = Array.isArray(apiClasses) ? apiClasses : [apiClasses];
+      return classesArray;
+    } catch (error) {
+      console.error('Error fetching teacher classes:', error);
+      throw error;
+    }
   },
 
   fetchNotifications: async (): Promise<Notification[]> => {
@@ -104,10 +114,13 @@ export function useTeacherClasses() {
     queryKey: teacherDashboardKeys.classes(),
     queryFn: mockApi.fetchClasses,
     onSuccess: (data) => {
+      console.log('Setting classes in store:', data);
+      console.log('Is array?', Array.isArray(data), 'Length:', data?.length);
       setClasses(data);
       setError(null);
     },
     onError: (error) => {
+      console.error('Error in useTeacherClasses:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch classes');
     },
   });

@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { AttendanceGrid } from "./attendance-grid";
 import { BulkActionsPanel } from "./bulk-actions-panel";
 import { RiskIndicatorsGrid, calculateStudentRisk } from "./student-risk-indicators";
+import { useResponsive } from "@/lib/hooks/use-responsive";
 import type { 
   AttendanceStatus, 
   StudentWithAttendance, 
@@ -42,6 +43,9 @@ export function AttendanceManagement({
   date = new Date(),
   className,
 }: AttendanceManagementProps) {
+  // Responsive hook
+  const { isMobile } = useResponsive();
+  
   // State management
   const [students, setStudents] = React.useState<StudentWithAttendance[]>([]);
   const [selectedStudents, setSelectedStudents] = React.useState<string[]>([]);
@@ -620,21 +624,21 @@ export function AttendanceManagement({
 
   return (
     <div className={cn("space-y-6", className)}>
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
+      {/* Header Section - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">
             Attendance Management
           </h1>
-          <p className="text-slate-600 mt-1">
+          <p className="text-sm sm:text-base text-slate-600 mt-1 truncate">
             {classData?.name || `Class ${classId}`} • {date.toLocaleDateString()}
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          {/* Enhanced real-time connection status indicator */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Enhanced real-time connection status indicator - Mobile Responsive */}
           <motion.div 
-            className="flex items-center gap-2 px-3 py-2 bg-white/60 backdrop-blur-sm rounded-xl border-0 shadow-sm"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/60 backdrop-blur-sm rounded-lg sm:rounded-xl border-0 shadow-sm"
             animate={{
               scale: connectionStatus === 'saving' ? [1, 1.02, 1] : 1,
             }}
@@ -651,9 +655,10 @@ export function AttendanceManagement({
                 >
                   <Wifi className="h-4 w-4 text-green-600" />
                 </motion.div>
-                <span className="text-sm text-green-700 font-medium">Real-time Sync</span>
+                <span className="text-xs sm:text-sm text-green-700 font-medium hidden xs:inline">Real-time Sync</span>
+                <span className="text-xs sm:text-sm text-green-700 font-medium xs:hidden">Sync</span>
                 {lastSyncTime && (
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 hidden sm:inline">
                     • {lastSyncTime.toLocaleTimeString()}
                   </span>
                 )}
@@ -674,14 +679,14 @@ export function AttendanceManagement({
                 >
                   <WifiOff className="h-4 w-4 text-red-600" />
                 </motion.div>
-                <span className="text-sm text-red-700 font-medium">Offline Mode</span>
-                <span className="text-xs text-red-500">• Changes queued</span>
+                <span className="text-xs sm:text-sm text-red-700 font-medium">Offline Mode</span>
+                <span className="text-xs text-red-500 hidden sm:inline">• Changes queued</span>
               </>
             )}
             {connectionStatus === 'saving' && (
               <>
                 <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-                <span className="text-sm text-blue-700 font-medium">Syncing...</span>
+                <span className="text-xs sm:text-sm text-blue-700 font-medium">Syncing...</span>
                 <motion.div
                   animate={{ width: ["0%", "100%"] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -694,19 +699,21 @@ export function AttendanceManagement({
 
           <Button
             variant="outline"
+            size={isMobile ? "sm" : "default"}
             onClick={loadData}
             disabled={isLoading || connectionStatus === 'offline'}
-            className="bg-white/60 backdrop-blur-sm border-0 shadow-sm rounded-xl hover:bg-white/80"
+            className="bg-white/60 backdrop-blur-sm border-0 shadow-sm rounded-lg sm:rounded-xl hover:bg-white/80 min-h-[44px] touch-manipulation"
           >
-            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-            Refresh
+            <RefreshCw className={cn("h-4 w-4 sm:mr-2", isLoading && "animate-spin")} />
+            <span className="hidden sm:inline ml-2">Refresh</span>
           </Button>
           
           <Button
             onClick={handleSave}
+            size={isMobile ? "sm" : "default"}
             disabled={!hasUnsavedChanges || isSaving || connectionStatus === 'offline'}
             className={cn(
-              "border-0 shadow-sm rounded-xl transition-all duration-200",
+              "border-0 shadow-sm rounded-lg sm:rounded-xl transition-all duration-200 min-h-[44px] touch-manipulation",
               hasUnsavedChanges 
                 ? "bg-orange-600 hover:bg-orange-700 text-white" 
                 : "bg-green-50 text-green-700 hover:bg-green-100"
@@ -714,40 +721,42 @@ export function AttendanceManagement({
           >
             {isSaving ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                <span className="hidden sm:inline ml-2">Saving...</span>
               </>
             ) : hasUnsavedChanges ? (
               <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                <Save className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline ml-2">Save Changes</span>
+                <span className="sm:hidden ml-2">Save</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                All Saved
+                <CheckCircle2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline ml-2">All Saved</span>
+                <span className="sm:hidden ml-2">Saved</span>
               </>
             )}
           </Button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* Statistics Cards - Mobile Responsive */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-xl">
-                  <Users className="h-5 w-5 text-orange-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{statistics.total}</p>
-                  <p className="text-sm text-slate-600">Total Students</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{statistics.total}</p>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">Total Students</p>
                 </div>
               </div>
             </CardContent>
@@ -760,14 +769,14 @@ export function AttendanceManagement({
           transition={{ delay: 0.2 }}
         >
           <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-xl">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-green-700">{statistics.present}</p>
-                  <p className="text-sm text-slate-600">Present</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700">{statistics.present}</p>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">Present</p>
                 </div>
               </div>
             </CardContent>
@@ -780,14 +789,14 @@ export function AttendanceManagement({
           transition={{ delay: 0.3 }}
         >
           <Card className="bg-gradient-to-br from-red-50 to-red-100/50 border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-xl">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-red-700">{statistics.absent}</p>
-                  <p className="text-sm text-slate-600">Absent</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-700">{statistics.absent}</p>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">Absent</p>
                 </div>
               </div>
             </CardContent>
@@ -800,16 +809,16 @@ export function AttendanceManagement({
           transition={{ delay: 0.4 }}
         >
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-xl">
-                  <TrendingUp className="h-5 w-5 text-yellow-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-yellow-700">
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-700">
                     {statistics.total > 0 ? Math.round((statistics.present / statistics.total) * 100) : 0}%
                   </p>
-                  <p className="text-sm text-slate-600">Attendance Rate</p>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">Attendance Rate</p>
                 </div>
               </div>
             </CardContent>
@@ -822,14 +831,14 @@ export function AttendanceManagement({
           transition={{ delay: 0.5 }}
         >
           <Card className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-xl">
-                  <Clock className="h-5 w-5 text-slate-600" />
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-700">{statistics.notMarked}</p>
-                  <p className="text-sm text-slate-600">Not Marked</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-700">{statistics.notMarked}</p>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">Not Marked</p>
                 </div>
               </div>
             </CardContent>
@@ -837,25 +846,28 @@ export function AttendanceManagement({
         </motion.div>
       </div>
 
-      {/* Unsaved Changes Warning */}
+      {/* Unsaved Changes Warning - Mobile Responsive */}
       {hasUnsavedChanges && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-orange-50 border border-orange-200 rounded-xl p-4"
+          className="bg-orange-50 border border-orange-200 rounded-lg sm:rounded-xl p-3 sm:p-4"
         >
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
-            <div className="flex-1">
-              <p className="font-medium text-orange-800">You have unsaved changes</p>
-              <p className="text-sm text-orange-700">
-                Don&apos;t forget to save your attendance changes before leaving this page.
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-start gap-3 flex-1">
+              <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-orange-800 text-sm sm:text-base">You have unsaved changes</p>
+                <p className="text-xs sm:text-sm text-orange-700 mt-1">
+                  Don&apos;t forget to save your attendance changes before leaving this page.
+                </p>
+              </div>
             </div>
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-orange-600 hover:bg-orange-700 text-white border-0 shadow-sm"
+              size="sm"
+              className="bg-orange-600 hover:bg-orange-700 text-white border-0 shadow-sm min-h-[44px] touch-manipulation w-full sm:w-auto"
             >
               Save Now
             </Button>
@@ -863,33 +875,37 @@ export function AttendanceManagement({
         </motion.div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-xl p-1 border-0 shadow-sm">
+      {/* Tab Navigation - Mobile Responsive */}
+      <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 border-0 shadow-sm overflow-x-auto">
         <Button
           variant={activeTab === "attendance" ? "default" : "ghost"}
           onClick={() => setActiveTab("attendance")}
+          size="sm"
           className={cn(
-            "rounded-lg transition-all duration-200",
+            "rounded-lg transition-all duration-200 min-h-[44px] touch-manipulation flex-shrink-0",
             activeTab === "attendance"
               ? "bg-orange-600 text-white shadow-sm"
               : "hover:bg-orange-50 text-slate-700"
           )}
         >
-          <Users className="h-4 w-4 mr-2" />
-          Attendance Grid
+          <Users className="h-4 w-4 sm:mr-2" />
+          <span className="hidden xs:inline ml-2">Attendance Grid</span>
+          <span className="xs:hidden ml-2">Grid</span>
         </Button>
         <Button
           variant={activeTab === "risks" ? "default" : "ghost"}
           onClick={() => setActiveTab("risks")}
+          size="sm"
           className={cn(
-            "rounded-lg transition-all duration-200",
+            "rounded-lg transition-all duration-200 min-h-[44px] touch-manipulation flex-shrink-0",
             activeTab === "risks"
               ? "bg-orange-600 text-white shadow-sm"
               : "hover:bg-orange-50 text-slate-700"
           )}
         >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Risk Indicators
+          <AlertTriangle className="h-4 w-4 sm:mr-2" />
+          <span className="hidden xs:inline ml-2">Risk Indicators</span>
+          <span className="xs:hidden ml-2">Risks</span>
         </Button>
       </div>
 

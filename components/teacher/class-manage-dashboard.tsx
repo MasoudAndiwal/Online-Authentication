@@ -9,8 +9,6 @@ import {
   X,
   Users,
   Calendar,
-  MapPin,
-  Clock,
   BookOpen,
   AlertTriangle,
   CheckCircle,
@@ -28,26 +26,14 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,
 } from '@/components/ui/select'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle,AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useResponsive } from '@/lib/hooks/use-responsive'
+import { useHapticFeedback } from '@/lib/hooks/use-touch-gestures'
 
 // Class management data interfaces
 export interface ClassInfo {
@@ -94,6 +80,10 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
   const [isEditing, setIsEditing] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState<'basic' | 'settings' | 'policies' | 'advanced'>('basic')
+  
+  // Responsive and touch support
+  const { isMobile, isTouch } = useResponsive()
+  const { lightTap } = useHapticFeedback()
 
   // Mock class data - will be replaced with actual API calls
   const [classInfo, setClassInfo] = React.useState<ClassInfo>({
@@ -151,6 +141,7 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
     setIsSaving(false)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: keyof ClassInfo, value: any) => {
     setEditedInfo(prev => ({
       ...prev,
@@ -214,38 +205,42 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
   ]
 
   return (
-    <div className={cn('space-y-6', className)}>
-      {/* Header Section */}
+    <div className={cn('space-y-4 sm:space-y-6', className)}>
+      {/* Header Section - Mobile Responsive */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative overflow-hidden rounded-3xl"
+        className="relative overflow-hidden rounded-2xl sm:rounded-3xl"
       >
         {/* Background Gradient - Orange Theme */}
         <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 via-orange-500/5 to-orange-400/10" />
         
-        {/* Floating Elements */}
-        <div className="absolute top-4 right-8 w-20 h-20 bg-orange-400/20 rounded-full blur-xl animate-pulse" />
-        <div className="absolute bottom-4 left-8 w-16 h-16 bg-orange-500/20 rounded-full blur-lg animate-pulse delay-1000" />
+        {/* Floating Elements - Hidden on mobile for performance */}
+        {!isMobile && (
+          <>
+            <div className="absolute top-4 right-8 w-20 h-20 bg-orange-400/20 rounded-full blur-xl animate-pulse" />
+            <div className="absolute bottom-4 left-8 w-16 h-16 bg-orange-500/20 rounded-full blur-lg animate-pulse delay-1000" />
+          </>
+        )}
         
-        <div className="relative p-6 lg:p-12">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="space-y-4">
+        <div className="relative p-4 sm:p-6 lg:p-12">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
+            <div className="space-y-3 sm:space-y-4 flex-1 min-w-0">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-4"
+                className="flex items-center gap-3 sm:gap-4"
               >
-                <div className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl shadow-xl shadow-orange-500/25">
-                  <Settings className="h-8 w-8 text-white" />
+                <div className="p-2.5 sm:p-3 lg:p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl sm:rounded-3xl shadow-xl shadow-orange-500/25 flex-shrink-0">
+                  <Settings className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-3xl lg:text-5xl font-bold text-slate-900 tracking-tight">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-5xl font-bold text-slate-900 tracking-tight">
                     Manage Class
                   </h1>
-                  <p className="text-lg text-slate-600 font-medium mt-2">
+                  <p className="text-sm sm:text-base lg:text-lg text-slate-600 font-medium mt-1 sm:mt-2 truncate">
                     Configure and manage settings for {classInfo.name}
                   </p>
                 </div>
@@ -256,24 +251,34 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3"
+              className="flex flex-col xs:flex-row gap-2 sm:gap-3"
             >
               {!isEditing ? (
                 <>
                   <Button
-                    onClick={handleEdit}
-                    className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-2xl px-6 py-3 text-base font-semibold border-0"
+                    onClick={() => {
+                      if (isTouch) lightTap();
+                      handleEdit();
+                    }}
+                    size={isMobile ? "sm" : "default"}
+                    className="min-h-[44px] bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold border-0 touch-manipulation"
                   >
-                    <Edit className="h-5 w-5 mr-2" />
-                    Edit Class
+                    <Edit className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                    <span className="hidden xs:inline ml-2">Edit Class</span>
+                    <span className="xs:hidden ml-2">Edit</span>
                   </Button>
                   <Button
-                    onClick={handleExportData}
+                    onClick={() => {
+                      if (isTouch) lightTap();
+                      handleExportData();
+                    }}
                     variant="outline"
-                    className="border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-2xl px-6 py-3 text-base font-semibold"
+                    size={isMobile ? "sm" : "default"}
+                    className="min-h-[44px] border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold touch-manipulation"
                   >
-                    <Download className="h-5 w-5 mr-2" />
-                    Export Data
+                    <Download className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                    <span className="hidden xs:inline ml-2">Export Data</span>
+                    <span className="xs:hidden ml-2">Export</span>
                   </Button>
                 </>
               ) : (
@@ -400,14 +405,14 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
         </Card>
       </motion.div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Mobile Responsive with Horizontal Scroll */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
-        className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 shadow-lg border-0"
+        className="bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl p-1 sm:p-2 shadow-lg border-0 overflow-x-auto scrollbar-hide"
       >
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2 min-w-max sm:min-w-0">
           {tabs.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -415,20 +420,27 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
             return (
               <motion.div
                 key={tab.id}
-                whileHover={{ scale: 1.02 }}
+                whileHover={!isMobile ? { scale: 1.02 } : {}}
                 whileTap={{ scale: 0.98 }}
-                className="flex-1"
+                className="flex-1 min-w-0"
               >
                 <Button
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full h-12 rounded-xl font-semibold transition-all duration-300 border-0 ${
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  onClick={() => {
+                    if (isTouch) lightTap();
+                    setActiveTab(tab.id as any);
+                  }}
+                  size={isMobile ? "sm" : "default"}
+                  className={cn(
+                    "w-full min-h-[44px] rounded-lg sm:rounded-xl font-semibold transition-all duration-300 border-0 touch-manipulation whitespace-nowrap",
                     isActive
                       ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25'
                       : 'bg-transparent text-slate-600 hover:bg-orange-50 hover:text-orange-700'
-                  }`}
+                  )}
                 >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {tab.label}
+                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2 flex-shrink-0" />
+                  <span className="hidden xs:inline ml-2 truncate">{tab.label}</span>
+                  <span className="xs:hidden ml-1 text-xs truncate">{tab.label}</span>
                 </Button>
               </motion.div>
             )
@@ -444,14 +456,14 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
         transition={{ duration: 0.3 }}
       >
         {activeTab === 'basic' && (
-          <Card className="rounded-2xl shadow-xl border-0 bg-white/80 backdrop-blur-xl">
-            <CardHeader className="p-6">
-              <CardTitle className="text-2xl font-bold text-slate-900">
+          <Card className="rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border-0 bg-white/80 backdrop-blur-xl">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">
                 Basic Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-semibold text-slate-700">Class Name</Label>
@@ -588,76 +600,88 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
         )}
 
         {activeTab === 'settings' && (
-          <Card className="rounded-2xl shadow-xl border-0 bg-white/80 backdrop-blur-xl">
-            <CardHeader className="p-6">
-              <CardTitle className="text-2xl font-bold text-slate-900">
+          <Card className="rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl border-0 bg-white/80 backdrop-blur-xl">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">
                 Class Settings
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-semibold text-slate-700">Published</Label>
-                    <p className="text-xs text-slate-600 mt-1">Make this class visible to students</p>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-start sm:items-center justify-between gap-4 p-3 sm:p-4 bg-slate-50/50 rounded-lg sm:rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <Label className="text-sm sm:text-base font-semibold text-slate-700">Published</Label>
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1">Make this class visible to students</p>
                   </div>
                   <Switch
                     checked={isEditing ? editedInfo.isPublished : classInfo.isPublished}
-                    onCheckedChange={(checked) => isEditing && handleInputChange('isPublished', checked)}
+                    onCheckedChange={(checked) => {
+                      if (isTouch) lightTap();
+                      isEditing && handleInputChange('isPublished', checked);
+                    }}
                     disabled={!isEditing}
+                    className="flex-shrink-0"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-semibold text-slate-700">Allow Self Enrollment</Label>
-                    <p className="text-xs text-slate-600 mt-1">Students can enroll themselves</p>
+                <div className="flex items-start sm:items-center justify-between gap-4 p-3 sm:p-4 bg-slate-50/50 rounded-lg sm:rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <Label className="text-sm sm:text-base font-semibold text-slate-700">Allow Self Enrollment</Label>
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1">Students can enroll themselves</p>
                   </div>
                   <Switch
                     checked={isEditing ? editedInfo.allowSelfEnrollment : classInfo.allowSelfEnrollment}
-                    onCheckedChange={(checked) => isEditing && handleInputChange('allowSelfEnrollment', checked)}
+                    onCheckedChange={(checked) => {
+                      if (isTouch) lightTap();
+                      isEditing && handleInputChange('allowSelfEnrollment', checked);
+                    }}
                     disabled={!isEditing}
+                    className="flex-shrink-0"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-semibold text-slate-700">Require Approval</Label>
-                    <p className="text-xs text-slate-600 mt-1">Enrollment requires teacher approval</p>
+                <div className="flex items-start sm:items-center justify-between gap-4 p-3 sm:p-4 bg-slate-50/50 rounded-lg sm:rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <Label className="text-sm sm:text-base font-semibold text-slate-700">Require Approval</Label>
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1">Enrollment requires teacher approval</p>
                   </div>
                   <Switch
                     checked={isEditing ? editedInfo.requireApproval : classInfo.requireApproval}
-                    onCheckedChange={(checked) => isEditing && handleInputChange('requireApproval', checked)}
+                    onCheckedChange={(checked) => {
+                      if (isTouch) lightTap();
+                      isEditing && handleInputChange('requireApproval', checked);
+                    }}
                     disabled={!isEditing}
+                    className="flex-shrink-0"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label className="text-sm font-semibold text-slate-700">Maximum Absences</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="p-3 sm:p-4 bg-slate-50/50 rounded-lg sm:rounded-xl">
+                    <Label className="text-sm sm:text-base font-semibold text-slate-700">Maximum Absences</Label>
                     {isEditing ? (
                       <Input
                         type="number"
                         value={editedInfo.maxAbsences}
                         onChange={(e) => handleInputChange('maxAbsences', parseInt(e.target.value))}
-                        className="mt-1 border-0 bg-slate-50 focus:bg-white rounded-xl"
+                        className="mt-2 border-0 bg-white focus:bg-white rounded-lg sm:rounded-xl min-h-[44px] touch-manipulation"
                       />
                     ) : (
-                      <p className="mt-1 text-slate-900 font-medium">{classInfo.maxAbsences}</p>
+                      <p className="mt-2 text-lg sm:text-xl font-bold text-slate-900">{classInfo.maxAbsences}</p>
                     )}
                   </div>
 
-                  <div>
-                    <Label className="text-sm font-semibold text-slate-700">Passing Grade</Label>
+                  <div className="p-3 sm:p-4 bg-slate-50/50 rounded-lg sm:rounded-xl">
+                    <Label className="text-sm sm:text-base font-semibold text-slate-700">Passing Grade</Label>
                     {isEditing ? (
                       <Input
                         type="number"
                         value={editedInfo.passingGrade}
                         onChange={(e) => handleInputChange('passingGrade', parseInt(e.target.value))}
-                        className="mt-1 border-0 bg-slate-50 focus:bg-white rounded-xl"
+                        className="mt-2 border-0 bg-white focus:bg-white rounded-lg sm:rounded-xl min-h-[44px] touch-manipulation"
                       />
                     ) : (
-                      <p className="mt-1 text-slate-900 font-medium">{classInfo.passingGrade}%</p>
+                      <p className="mt-2 text-lg sm:text-xl font-bold text-slate-900">{classInfo.passingGrade}%</p>
                     )}
                   </div>
                 </div>

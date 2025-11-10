@@ -9,7 +9,6 @@ import {
 import { handleLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
-import { toast } from "sonner";
 import {
   ModernCard,
   ModernCardHeader,
@@ -33,11 +32,12 @@ import { useInitializeTeacherDashboard } from "@/lib/hooks/use-teacher-dashboard
 import { TeacherClassGrid } from "@/components/classes/teacher-class-grid";
 import { SkipLinks } from "@/components/ui/skip-link";
 import { useScreenReaderAnnouncements } from "@/lib/hooks/use-screen-reader-announcements";
-import { NotificationCenter, NotificationTrigger } from "@/components/teacher";
+import { NotificationCenter, NotificationTrigger, NotificationSettings } from "@/components/teacher";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { useResponsive } from "@/lib/hooks/use-responsive";
 import { useHapticFeedback, useTouchGestures } from "@/lib/hooks/use-touch-gestures";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { toast } from "sonner";
 
 export default function TeacherDashboardPage() {
   const router = useRouter();
@@ -52,6 +52,9 @@ export default function TeacherDashboardPage() {
   
   // Mobile quick actions bottom sheet
   const [showQuickActions, setShowQuickActions] = React.useState(false);
+  
+  // Notification settings state
+  const [showNotificationSettings, setShowNotificationSettings] = React.useState(false);
   
   // Touch gesture handlers for mobile navigation (must be called unconditionally)
   const touchGestures = useTouchGestures({
@@ -202,9 +205,8 @@ export default function TeacherDashboardPage() {
       // Navigate to class details page with reports tab
       router.push(`/teacher/dashboard/${classId}?tab=reports`);
     } else {
-      toast.info('Reports feature coming soon!', {
-        description: 'Global reports will be implemented in task 6.1'
-      });
+      // Navigate to general reports page (student progress)
+      router.push('/teacher/dashboard/student-progress');
     }
   };
 
@@ -264,7 +266,42 @@ export default function TeacherDashboardPage() {
           onMarkAsRead={markAsRead}
           onMarkAllAsRead={markAllAsRead}
           onDelete={deleteNotification}
+          onOpenSettings={() => {
+            setShowNotificationSettings(true);
+            announce('Opening notification settings');
+          }}
         />
+        
+        {/* Notification Settings */}
+        <NotificationSettings
+          isOpen={showNotificationSettings}
+          onClose={() => setShowNotificationSettings(false)}
+          preferences={{
+            studentRiskAlerts: true,
+            systemUpdates: true,
+            scheduleChanges: true,
+            inAppNotifications: true,
+            emailNotifications: false,
+            enableDigest: true,
+            digestFrequency: 'daily',
+            digestTime: '08:00',
+            quietHours: {
+              enabled: false,
+              startTime: '22:00',
+              endTime: '07:00'
+            },
+            notifyOnMahroom: true,
+            notifyOnTasdiq: true,
+            notifyOnAbsenceCount: true,
+            absenceCountThreshold: 3
+          }}
+          onSave={(preferences) => {
+            console.log('Saving notification preferences:', preferences);
+            setShowNotificationSettings(false);
+            announce('Notification settings saved');
+          }}
+        />
+        
         <PageContainer>
           <div id="main-content" role="main" aria-label="Teacher dashboard main content">
         {/* Ultra Modern Welcome Section with Orange Theme - Mobile Optimized */}
@@ -619,7 +656,7 @@ export default function TeacherDashboardPage() {
           <ModernCardHeader className="p-4 sm:p-6">
             <ModernCardTitle
               icon={<BookOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-orange-500" />}
-              className="text-xl sm:text-2xl lg:text-3xl font-bold"
+              className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold"
             >
               My Classes
             </ModernCardTitle>

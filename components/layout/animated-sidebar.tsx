@@ -220,7 +220,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
           },
           {
             label: "Attendance History",
-            href: "/teacher/dashboard/attendance/history",
+            href: "/teacher/dashboard/attendance-history",
             icon: Clock,
           },
         ],

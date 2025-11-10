@@ -93,6 +93,8 @@ export async function GET(request: NextRequest) {
     const classId = searchParams.get('classId');
     const date = searchParams.get('date');
 
+    console.log('[Attendance API GET] Request params:', { classId, date });
+
     if (!classId || !date) {
       return NextResponse.json(
         { error: 'Missing required parameters: classId, date' },
@@ -108,11 +110,34 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('[Attendance API] Error fetching records:', error);
+      console.error('[Attendance API] Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      
+      // Provide more specific error message
+      let errorMessage = 'Failed to fetch attendance records';
+      if (error.message.includes('relation') || error.message.includes('does not exist')) {
+        errorMessage = 'Database table "attendance_records" not found or has incorrect schema. Please run the fix script: scripts/fix_attendance_table_schema.sql';
+      } else if (error.message.includes('column')) {
+        errorMessage = `Database column error: ${error.message}. The table schema may need to be updated.`;
+      } else if (error.message.includes('invalid input syntax for type uuid')) {
+        errorMessage = `Invalid class ID format. Expected UUID format, got: "${classId}". Please select a class from your dashboard.`;
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to fetch attendance records' },
+        { 
+          error: errorMessage,
+          details: error.message,
+          hint: 'Check server logs for more information'
+        },
         { status: 500 }
       );
     }
+
+    console.log('[Attendance API GET] Successfully fetched', data?.length || 0, 'records');
 
     return NextResponse.json({
       success: true,
@@ -120,9 +145,12 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Attendance API] Error:', error);
+    console.error('[Attendance API] Unexpected error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch attendance' },
+      { 
+        error: 'Failed to fetch attendance',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
