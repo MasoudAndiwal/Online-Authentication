@@ -147,25 +147,15 @@ export function TeacherClassGrid({
 
   return (
     <div className={className}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
+      <div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         role="list"
         aria-label="Your assigned classes"
         onKeyDown={handleKeyDown}
       >
         {classes.map((classData, index) => (
-          <motion.div
+          <div
             key={classData.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 0.4, 
-              delay: index * 0.1,
-              ease: [0.34, 1.56, 0.64, 1]
-            }}
             role="listitem"
           >
             <TeacherClassCard
@@ -180,9 +170,9 @@ export function TeacherClassGrid({
               isFocused={focusedIndex === index}
               tabIndex={focusedIndex === index ? 0 : -1}
             />
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -190,11 +180,8 @@ export function TeacherClassGrid({
 // Skeleton component for loading state
 function ClassCardSkeleton({ delay = 0 }: { delay?: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl overflow-hidden"
+    <div
+      className="rounded-2xl shadow-md border border-slate-200/60 bg-[#FEF7ED] overflow-hidden"
     >
       <div className="p-6">
         {/* Header skeleton */}
@@ -236,6 +223,6 @@ function ClassCardSkeleton({ delay = 0 }: { delay?: number }) {
           <div className="flex-1 h-11 bg-gradient-to-r from-slate-200 to-slate-300 rounded-xl animate-pulse" />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

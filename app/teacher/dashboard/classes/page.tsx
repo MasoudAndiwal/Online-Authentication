@@ -10,7 +10,6 @@ import { handleLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
 import {
   ModernCard,
   ModernCardHeader,
@@ -104,20 +103,15 @@ export default function TeacherClassesPage() {
     >
       <PageContainer>
         {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-3xl p-8 shadow-2xl shadow-orange-500/10 border-0 mb-8"
+        <div
+          className="bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-emerald-600/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl shadow-blue-500/10 border-0 mb-8"
         >
           <div className="flex items-center gap-6">
-            <motion.div
-              className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl shadow-xl shadow-orange-500/25"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            <div
+              className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl shadow-xl shadow-blue-500/25"
             >
               <BookOpen className="h-12 w-12 text-white" />
-            </motion.div>
+            </div>
             
             <div>
               <h1 className="text-4xl font-bold text-slate-900 mb-2">
@@ -128,16 +122,16 @@ export default function TeacherClassesPage() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Classes Grid */}
         <ModernCard
           variant="glass"
-          className="border-0 shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
+          className="border-0 shadow-2xl shadow-blue-200/20 bg-white backdrop-blur-xl"
         >
           <ModernCardHeader>
             <ModernCardTitle
-              icon={<BookOpen className="h-7 w-7 text-orange-500" />}
+              icon={<BookOpen className="h-7 w-7 text-blue-500" />}
               className="text-3xl font-bold"
             >
               All Classes

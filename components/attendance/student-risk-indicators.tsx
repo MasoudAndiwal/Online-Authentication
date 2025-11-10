@@ -197,18 +197,18 @@ export function StudentRiskIndicator({
           </TooltipTrigger>
           <TooltipContent 
             side="top" 
-            className="max-w-xs bg-white/95 backdrop-blur-xl border-0 shadow-xl"
+            className="max-w-xs bg-white border border-slate-200 shadow-xl text-slate-900"
           >
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-600" />
-                <span className="font-semibold">{riskData.studentName}</span>
+                <span className="font-semibold text-slate-900">{riskData.studentName}</span>
               </div>
-              <div className="text-sm space-y-1">
-                <p><strong>Status:</strong> {config.description}</p>
-                <p><strong>Attendance Rate:</strong> {riskData.attendanceRate.toFixed(1)}%</p>
-                <p><strong>Absences:</strong> {riskData.totalAbsences}/{riskData.allowedAbsences}</p>
-                <p><strong>Remaining:</strong> {riskData.remainingAbsences}</p>
+              <div className="text-sm space-y-1 text-slate-700">
+                <p><strong className="text-slate-900">Status:</strong> {config.description}</p>
+                <p><strong className="text-slate-900">Attendance Rate:</strong> {riskData.attendanceRate.toFixed(1)}%</p>
+                <p><strong className="text-slate-900">Absences:</strong> {riskData.totalAbsences}/{riskData.allowedAbsences}</p>
+                <p><strong className="text-slate-900">Remaining:</strong> {riskData.remainingAbsences}</p>
                 <p className={cn("font-medium", levelConfig.color)}>
                   {getUrgencyMessage()}
                 </p>

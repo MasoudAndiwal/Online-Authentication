@@ -67,8 +67,10 @@ export function AttendanceManagement({
     setError(null);
 
     try {
-      // Fetch students for the class
-      const studentsResponse = await fetch(`/api/students?classSection=${classData?.name || ''}`);
+      // Fetch students for the class with proper format (uppercase session)
+      const classSectionKey = `${classData?.name} - ${classData?.session || 'MORNING'}`;
+      console.log('Attendance Management - Fetching students with classSection:', classSectionKey);
+      const studentsResponse = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`);
       if (!studentsResponse.ok) {
         throw new Error('Failed to fetch students');
       }

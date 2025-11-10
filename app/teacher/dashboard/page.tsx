@@ -2,29 +2,17 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  ModernDashboardLayout,
-  PageContainer,
+import {ModernDashboardLayout,PageContainer,
 } from "@/components/layout/modern-dashboard-layout";
 import { handleLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
-import {
-  ModernCard,
-  ModernCardHeader,
-  ModernCardTitle,
-  ModernCardContent,
+import {ModernCard,ModernCardHeader,ModernCardTitle,ModernCardContent,
 } from "@/components/ui/modern-card";
 import { EnhancedMetricCard } from "@/components/ui/enhanced-metric-card";
 import { Modern3DIcons } from "@/components/ui/modern-3d-icons";
 import { Button } from "@/components/ui/button";
-import {
-  Users,
-  BookOpen,
-  CheckCircle,
-  Plus,
-  BarChart3,
-  Sparkles,
+import {Users,BookOpen,CheckCircle,Plus,BarChart3,Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTeacherDashboardMetrics, useTeacherClasses, useTeacherNotifications } from "@/lib/hooks/use-teacher-dashboard";
@@ -321,15 +309,15 @@ export default function TeacherDashboardPage() {
           className="relative mb-6 sm:mb-8 lg:mb-12 overflow-hidden rounded-2xl sm:rounded-3xl"
           {...(isMobile && isTouch ? touchGestures : {})}
         >
-          {/* Beautiful Background Gradient - Orange Theme */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 via-orange-500/5 to-orange-400/10" />
+          {/* Beautiful Background Gradient - Blue Theme */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-emerald-600/10" />
 
-          {/* Floating Animated Elements - Orange Theme (hidden on mobile for performance) */}
+          {/* Floating Animated Elements - Blue Theme (hidden on mobile for performance) */}
           {!isMobile && (
             <>
-              <div className="absolute top-4 right-8 w-20 h-20 bg-orange-400/20 rounded-full blur-xl animate-pulse" />
-              <div className="absolute bottom-4 left-8 w-16 h-16 bg-orange-500/20 rounded-full blur-lg animate-pulse delay-1000" />
-              <div className="absolute top-1/2 right-1/4 w-12 h-12 bg-orange-300/15 rounded-full blur-md animate-pulse delay-500" />
+              <div className="absolute top-4 right-8 w-20 h-20 bg-blue-400/20 rounded-full blur-xl animate-pulse" />
+              <div className="absolute bottom-4 left-8 w-16 h-16 bg-purple-500/20 rounded-full blur-lg animate-pulse delay-1000" />
+              <div className="absolute top-1/2 right-1/4 w-12 h-12 bg-emerald-300/15 rounded-full blur-md animate-pulse delay-500" />
             </>
           )}
 
@@ -343,7 +331,7 @@ export default function TeacherDashboardPage() {
                   className="flex items-start gap-3 sm:gap-4"
                 >
                   <motion.div
-                    className="p-2.5 sm:p-3 lg:p-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-xl shadow-orange-500/25 flex-shrink-0"
+                    className="p-2.5 sm:p-3 lg:p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-xl shadow-blue-500/25 flex-shrink-0"
                     whileHover={!isMobile ? { scale: 1.05, rotate: 5 } : {}}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -379,7 +367,7 @@ export default function TeacherDashboardPage() {
                       announce('Navigating to attendance marking interface');
                       if (isTouch) successHaptic();
                     }}
-                    className="w-full sm:w-auto min-h-[44px] bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-xl sm:rounded-2xl px-5 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300 border-0 touch-manipulation"
+                    className="w-full sm:w-auto min-h-[44px] bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-xl shadow-blue-500/25 rounded-xl sm:rounded-2xl px-5 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300 border-0 touch-manipulation"
                     aria-label="Mark attendance for your classes"
                   >
                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2 sm:mr-3" aria-hidden="true" />
@@ -421,8 +409,8 @@ export default function TeacherDashboardPage() {
             icon={<Modern3DIcons.Users3D size={isMobile ? "md" : "lg"} variant="primary" />}
             trend="+12"
             trendLabel="vs last month"
-            color="orange"
-            className="border-0 shadow-lg sm:shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl touch-manipulation"
+            color="blue"
+            className="border-0 shadow-lg sm:shadow-2xl shadow-blue-500/10 bg-gradient-to-br from-blue-50 to-blue-100/50 backdrop-blur-xl touch-manipulation"
             animateValue={!loadingMetrics}
             delay={0}
           />
@@ -432,8 +420,8 @@ export default function TeacherDashboardPage() {
             icon={<Modern3DIcons.Calendar3D size={isMobile ? "md" : "lg"} variant="success" />}
             trend="+2"
             trendLabel="new this term"
-            color="orange"
-            className="border-0 shadow-lg sm:shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl touch-manipulation"
+            color="emerald"
+            className="border-0 shadow-lg sm:shadow-2xl shadow-emerald-500/10 bg-gradient-to-br from-emerald-50 to-emerald-100/50 backdrop-blur-xl touch-manipulation"
             animateValue={!loadingMetrics}
             delay={0.2}
           />
@@ -443,8 +431,8 @@ export default function TeacherDashboardPage() {
             icon={<Modern3DIcons.Chart3D size={isMobile ? "md" : "lg"} variant="primary" />}
             trend="+2.1%"
             trendLabel="vs last week"
-            color="orange"
-            className="border-0 shadow-lg sm:shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl touch-manipulation"
+            color="purple"
+            className="border-0 shadow-lg sm:shadow-2xl shadow-purple-500/10 bg-gradient-to-br from-purple-50 to-purple-100/50 backdrop-blur-xl touch-manipulation"
             animateValue={!loadingMetrics}
             delay={0.4}
           />
@@ -474,17 +462,17 @@ export default function TeacherDashboardPage() {
             aria-label="Quick actions"
           >
             {/* Floating container with enhanced glass morphism */}
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl sm:shadow-2xl shadow-orange-500/10 border-0 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-50 to-purple-100/50 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl sm:shadow-2xl shadow-blue-500/10 border-0 relative overflow-hidden">
               {/* Subtle background pattern */}
               <div className="absolute inset-0 opacity-5">
-                <div className="absolute top-4 right-8 w-24 h-24 bg-orange-400/20 rounded-full blur-xl" />
-                <div className="absolute bottom-4 left-8 w-20 h-20 bg-orange-500/20 rounded-full blur-lg" />
+                <div className="absolute top-4 right-8 w-24 h-24 bg-blue-400/20 rounded-full blur-xl" />
+                <div className="absolute bottom-4 left-8 w-20 h-20 bg-purple-500/20 rounded-full blur-lg" />
               </div>
 
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <motion.div
-                    className="p-2 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/25"
+                    className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-xl shadow-blue-500/25"
                     whileHover={{ scale: 1.05, rotate: 5 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   >
@@ -510,7 +498,7 @@ export default function TeacherDashboardPage() {
                         handleMarkAttendance();
                         announce('Opening attendance marking interface');
                       }}
-                      className="w-full min-h-[60px] sm:min-h-[80px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20 touch-manipulation"
+                      className="w-full min-h-[60px] sm:min-h-[80px] bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-blue-500/20 touch-manipulation"
                       aria-label="Quick action: Mark attendance for your classes"
                     >
                       {/* Button shine effect */}
@@ -536,7 +524,7 @@ export default function TeacherDashboardPage() {
                         handleViewReports();
                         announce('Opening reports and analytics');
                       }}
-                      className="w-full min-h-[60px] sm:min-h-[80px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20 touch-manipulation"
+                      className="w-full min-h-[60px] sm:min-h-[80px] bg-purple-50 text-purple-700 hover:bg-purple-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-purple-500/20 touch-manipulation"
                       aria-label="Quick action: View attendance reports and analytics"
                     >
                       {/* Button shine effect */}
@@ -562,7 +550,7 @@ export default function TeacherDashboardPage() {
                         handleStudentProgress();
                         announce('Opening student progress tracking');
                       }}
-                      className="w-full min-h-[60px] sm:min-h-[80px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-orange-500/20 touch-manipulation"
+                      className="w-full min-h-[60px] sm:min-h-[80px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-emerald-500/20 touch-manipulation"
                       aria-label="Quick action: View student progress and analytics"
                     >
                       {/* Button shine effect */}
@@ -593,7 +581,7 @@ export default function TeacherDashboardPage() {
                   lightTap();
                   announce('Opening quick actions menu');
                 }}
-                className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full shadow-2xl shadow-orange-500/50 flex items-center justify-center text-white touch-manipulation"
+                className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl shadow-blue-500/50 flex items-center justify-center text-white touch-manipulation"
                 aria-label="Open quick actions menu"
               >
                 <Plus className="h-6 w-6" />
@@ -617,7 +605,7 @@ export default function TeacherDashboardPage() {
                     announce('Opening attendance marking interface');
                     successHaptic();
                   }}
-                  className="w-full min-h-[56px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
+                  className="w-full min-h-[56px] bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
                   aria-label="Mark attendance for your classes"
                 >
                   <CheckCircle className="h-5 w-5 mr-3" aria-hidden="true" />
@@ -631,7 +619,7 @@ export default function TeacherDashboardPage() {
                     announce('Opening reports and analytics');
                     lightTap();
                   }}
-                  className="w-full min-h-[56px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
+                  className="w-full min-h-[56px] bg-purple-50 text-purple-700 hover:bg-purple-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
                   aria-label="View attendance reports and analytics"
                 >
                   <BarChart3 className="h-5 w-5 mr-3" aria-hidden="true" />
@@ -645,7 +633,7 @@ export default function TeacherDashboardPage() {
                     announce('Opening student progress tracking');
                     lightTap();
                   }}
-                  className="w-full min-h-[56px] bg-orange-50 text-orange-700 hover:bg-orange-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
+                  className="w-full min-h-[56px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
                   aria-label="View student progress and analytics"
                 >
                   <Users className="h-5 w-5 mr-3" aria-hidden="true" />
@@ -660,11 +648,11 @@ export default function TeacherDashboardPage() {
         <div id="my-classes" role="region" aria-label="My classes section">
         <ModernCard
           variant="glass"
-          className="border-0 shadow-lg sm:shadow-2xl shadow-orange-200/20 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl"
+          className="border-0 shadow-lg sm:shadow-2xl shadow-blue-200/20 bg-gradient-to-br from-blue-50 to-purple-100/50 backdrop-blur-xl"
         >
           <ModernCardHeader className="p-4 sm:p-6">
             <ModernCardTitle
-              icon={<BookOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-orange-500" />}
+              icon={<BookOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-blue-500" />}
               className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold"
             >
               My Classes

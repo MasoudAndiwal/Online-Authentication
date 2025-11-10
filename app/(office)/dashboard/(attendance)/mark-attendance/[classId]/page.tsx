@@ -395,7 +395,9 @@ export default function MarkAttendanceClassPage() {
     try {
       setStudentsLoading(true);
       setStudentsError(null);
+      // Database stores sessions in uppercase format
       const classSectionKey = `${classData.name} - ${classData.session}`;
+      console.log('Mark Attendance - Fetching students with classSection:', classSectionKey);
       const response = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`);
       if (!response.ok) throw new Error("Failed to fetch students");
       const data: Student[] = await response.json();

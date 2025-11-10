@@ -210,12 +210,12 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       },
       {
         label: "Attendance",
-        href: "/teacher/dashboard/attendance",
+        href: "/dashboard/mark-attendance",
         icon: ClipboardList,
         children: [
           {
             label: "Mark Attendance",
-            href: "/teacher/dashboard/attendance",
+            href: "/dashboard/mark-attendance",
             icon: ClipboardList,
           },
           {

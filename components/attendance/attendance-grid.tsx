@@ -30,7 +30,16 @@ import {
   TrendingDown,
   Shield,
   Target,
+  ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { StudentRiskIndicator, calculateStudentRisk } from "./student-risk-indicators";
 import type { AttendanceStatus, Student, StudentWithAttendance } from "@/types/attendance";
@@ -154,19 +163,31 @@ export function AttendanceGrid({
   showRiskIndicators = true,
 }: AttendanceGridProps) {
   const [localSearchQuery, setLocalSearchQuery] = React.useState(searchQuery);
+  const [statusFilter, setStatusFilter] = React.useState<AttendanceStatus | "ALL">("ALL");
+  const [riskFilter, setRiskFilter] = React.useState<"ALL" | "AT_RISK" | "GOOD_STANDING">("ALL");
 
-  // Filter students based on search query
+  // Filter students based on search query, status, and risk level
   const filteredStudents = React.useMemo(() => {
-    if (!localSearchQuery.trim()) return students;
+    let filtered = students;
     
-    const query = localSearchQuery.toLowerCase();
-    return students.filter(
-      (student) =>
-        student.name.toLowerCase().includes(query) ||
-        student.studentId.toLowerCase().includes(query) ||
-        student.classSection.toLowerCase().includes(query)
-    );
-  }, [students, localSearchQuery]);
+    // Apply search filter
+    if (localSearchQuery.trim()) {
+      const query = localSearchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (student) =>
+          student.name.toLowerCase().includes(query) ||
+          student.studentId.toLowerCase().includes(query) ||
+          student.classSection.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply status filter
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter(student => student.status === statusFilter);
+    }
+    
+    return filtered;
+  }, [students, localSearchQuery, statusFilter]);
 
   // Handle search input change
   const handleSearchChange = (value: string) => {
@@ -231,11 +252,24 @@ export function AttendanceGrid({
 
   // Memoize risk calculations for performance
   const studentsWithRisk = React.useMemo(() => {
-    return filteredStudents.map(student => ({
+    let studentsWithRiskData = filteredStudents.map(student => ({
       ...student,
       riskData: getStudentRiskData(student),
     }));
-  }, [filteredStudents, getStudentRiskData]);
+    
+    // Apply risk filter
+    if (riskFilter === "AT_RISK") {
+      studentsWithRiskData = studentsWithRiskData.filter(student => 
+        student.riskData.riskType !== 'good_standing'
+      );
+    } else if (riskFilter === "GOOD_STANDING") {
+      studentsWithRiskData = studentsWithRiskData.filter(student => 
+        student.riskData.riskType === 'good_standing'
+      );
+    }
+    
+    return studentsWithRiskData;
+  }, [filteredStudents, getStudentRiskData, riskFilter]);
 
   if (error) {
     return (
@@ -346,19 +380,151 @@ export function AttendanceGrid({
               className="pl-10 bg-white/60 backdrop-blur-sm border-0 shadow-sm rounded-xl"
             />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white/60 backdrop-blur-sm border-0 shadow-sm rounded-xl hover:bg-white/80"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "bg-white/60 backdrop-blur-sm border-0 shadow-sm rounded-xl hover:bg-white/80 relative",
+                  (statusFilter !== "ALL" || riskFilter !== "ALL") && "bg-orange-50 text-orange-700 hover:bg-orange-100"
+                )}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+                {(statusFilter !== "ALL" || riskFilter !== "ALL") && (
+                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-orange-500 rounded-full" />
+                )}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-xl border-0 shadow-xl rounded-xl">
+              {(statusFilter !== "ALL" || riskFilter !== "ALL") && (
+                <>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setStatusFilter("ALL");
+                      setRiskFilter("ALL");
+                    }}
+                    className="cursor-pointer rounded-lg mx-1 my-0.5 text-orange-600 hover:bg-orange-50"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Clear All Filters
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="my-2" />
+                </>
+              )}
+              <DropdownMenuLabel className="text-slate-900 font-semibold">Filter by Status</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("ALL")}
+                className={cn(
+                  "cursor-pointer rounded-lg mx-1 my-0.5",
+                  statusFilter === "ALL" && "bg-orange-50 text-orange-700"
+                )}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                All Students
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("PRESENT")}
+                className={cn(
+                  "cursor-pointer rounded-lg mx-1 my-0.5",
+                  statusFilter === "PRESENT" && "bg-green-50 text-green-700"
+                )}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Present
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("ABSENT")}
+                className={cn(
+                  "cursor-pointer rounded-lg mx-1 my-0.5",
+                  statusFilter === "ABSENT" && "bg-red-50 text-red-700"
+                )}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Absent
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("SICK")}
+                className={cn(
+                  "cursor-pointer rounded-lg mx-1 my-0.5",
+                  statusFilter === "SICK" && "bg-yellow-50 text-yellow-700"
+                )}
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Sick
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("LEAVE")}
+                className={cn(
+                  "cursor-pointer rounded-lg mx-1 my-0.5",
+                  statusFilter === "LEAVE" && "bg-orange-50 text-orange-700"
+                )}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Leave
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("NOT_MARKED")}
+                className={cn(
+                  "cursor-pointer rounded-lg mx-1 my-0.5",
+                  statusFilter === "NOT_MARKED" && "bg-slate-50 text-slate-700"
+                )}
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                Not Marked
+              </DropdownMenuItem>
+              
+              {showRiskIndicators && (
+                <>
+                  <DropdownMenuSeparator className="my-2" />
+                  <DropdownMenuLabel className="text-slate-900 font-semibold">Filter by Risk</DropdownMenuLabel>
+                  <DropdownMenuItem 
+                    onClick={() => setRiskFilter("ALL")}
+                    className={cn(
+                      "cursor-pointer rounded-lg mx-1 my-0.5",
+                      riskFilter === "ALL" && "bg-orange-50 text-orange-700"
+                    )}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    All Risk Levels
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setRiskFilter("AT_RISK")}
+                    className={cn(
+                      "cursor-pointer rounded-lg mx-1 my-0.5",
+                      riskFilter === "AT_RISK" && "bg-red-50 text-red-700"
+                    )}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    At Risk Students
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setRiskFilter("GOOD_STANDING")}
+                    className={cn(
+                      "cursor-pointer rounded-lg mx-1 my-0.5",
+                      riskFilter === "GOOD_STANDING" && "bg-green-50 text-green-700"
+                    )}
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    Good Standing
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <Users className="h-4 w-4" />
-          <span>{filteredStudents.length} students</span>
+          <span>
+            {studentsWithRisk.length} 
+            {studentsWithRisk.length !== students.length && ` of ${students.length}`} students
+            {(statusFilter !== "ALL" || riskFilter !== "ALL") && (
+              <span className="text-orange-600 font-medium"> (filtered)</span>
+            )}
+          </span>
           {showRiskIndicators && studentsWithRisk.filter(s => s.riskData.riskType !== 'good_standing').length > 0 && (
             <>
               <span>•</span>
@@ -413,7 +579,6 @@ export function AttendanceGrid({
                 </TableHead>
                 <TableHead className="font-semibold text-slate-700">Student</TableHead>
                 <TableHead className="font-semibold text-slate-700">ID</TableHead>
-                <TableHead className="font-semibold text-slate-700">Section</TableHead>
                 <TableHead className="font-semibold text-slate-700">Status</TableHead>
                 {showRiskIndicators && (
                   <TableHead className="font-semibold text-slate-700">Risk</TableHead>
@@ -467,7 +632,7 @@ export function AttendanceGrid({
                   ))
                 ) : filteredStudents.length === 0 ? (
                   <TableRow className="border-0">
-                    <TableCell colSpan={showRiskIndicators ? 7 : 6} className="text-center py-12">
+                    <TableCell colSpan={showRiskIndicators ? 6 : 5} className="text-center py-12">
                       <div className="space-y-4">
                         <Users className="h-12 w-12 text-slate-400 mx-auto" />
                         <div>
@@ -583,12 +748,6 @@ export function AttendanceGrid({
                           <span className="font-mono text-sm text-slate-700">
                             {student.studentId}
                           </span>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
-                            {student.classSection}
-                          </Badge>
                         </TableCell>
                         
                         <TableCell>

@@ -89,9 +89,8 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         
         console.log('Class data:', classInfo)
         
-        // Construct class section key with proper capitalization
-        const capitalizeFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-        const classSectionKey = `${classInfo.name} - ${capitalizeFirst(classInfo.session || 'MORNING')}`
+        // Construct class section key with uppercase session (matches database)
+        const classSectionKey = `${classInfo.name} - ${classInfo.session || 'MORNING'}`
         
         console.log('Fetching students with classSection:', classSectionKey)
         

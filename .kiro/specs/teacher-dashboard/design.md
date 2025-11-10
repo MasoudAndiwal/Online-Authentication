@@ -180,7 +180,7 @@ interface ClassCardProps {
 │  Computer Science 101           │
 │  Room: A-204                    │
 │                                 │
-│  👥 28 Students                 │
+│  👥 28 Students                │
 │  📊 94.2% Attendance            │
 │                                 │
 │  Next: Today 10:00 AM           │

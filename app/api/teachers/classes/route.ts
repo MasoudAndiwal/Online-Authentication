@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
       .select('class_section');
 
     if (!studentsError && students) {
+      console.log('[Teacher Classes API] All students class_sections:', students.map(s => s.class_section));
       studentCountByClass = students.reduce((acc, s) => {
         const key = s.class_section || '';
         if (key) {
@@ -101,20 +102,18 @@ export async function GET(request: NextRequest) {
         }
         return acc;
       }, {} as Record<string, number>);
+      console.log('[Teacher Classes API] Student count by class:', studentCountByClass);
     }
-
-    // Helper function to capitalize first letter
-    const capitalizeFirst = (str: string) => {
-      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    };
 
     // Transform classes to match frontend interface
     const transformedClasses = filteredClasses.map((cls) => {
       const session = cls.session || 'MORNING';
-      // Database stores as "AI-401-A - Morning" (capitalized first letter)
-      const classKey = `${cls.name} - ${capitalizeFirst(session)}`;
+      // Database actually stores as "AI-401-A - AFTERNOON" (uppercase session)
+      const classKey = `${cls.name} - ${session}`;
       
       console.log('[Teacher Classes API] Looking for students with classKey:', classKey);
+      console.log('[Teacher Classes API] Available class sections:', Object.keys(studentCountByClass));
+      console.log('[Teacher Classes API] Found student count:', studentCountByClass[classKey] || 0);
       
       return {
         id: cls.id,

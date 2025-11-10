@@ -107,11 +107,12 @@ export function BulkActionsPanel({
   const [saveStatus, setSaveStatus] = React.useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [retryCount, setRetryCount] = React.useState(0);
 
-  // Enhanced auto-hide panel after 5 seconds of inactivity with real-time updates
+  // Disable auto-hide to prevent flashing - keep panel visible when students are selected
   const [lastActivity, setLastActivity] = React.useState(Date.now());
   const [shouldAutoHide, setShouldAutoHide] = React.useState(false);
   const [autoHideCountdown, setAutoHideCountdown] = React.useState(0);
 
+  // Disable auto-hide functionality to prevent flashing
   React.useEffect(() => {
     if (selectedStudents.length === 0) {
       setShouldAutoHide(false);
@@ -119,19 +120,9 @@ export function BulkActionsPanel({
       return;
     }
 
-    const countdownInterval = setInterval(() => {
-      const timeSinceActivity = Date.now() - lastActivity;
-      const remainingTime = Math.max(0, 5000 - timeSinceActivity);
-      
-      if (remainingTime > 0) {
-        setAutoHideCountdown(Math.ceil(remainingTime / 1000));
-      } else {
-        setShouldAutoHide(true);
-        setAutoHideCountdown(0);
-      }
-    }, 100);
-
-    return () => clearInterval(countdownInterval);
+    // Keep panel visible when students are selected - no auto-hide
+    setShouldAutoHide(false);
+    setAutoHideCountdown(0);
   }, [selectedStudents.length, lastActivity]);
 
   // Reset auto-hide when user interacts with enhanced feedback
@@ -514,9 +505,9 @@ export function BulkActionsPanel({
 
       {/* Enhanced Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-lg bg-white/95 backdrop-blur-xl border-0 shadow-2xl">
+        <DialogContent className="sm:max-w-lg bg-white border border-slate-200 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
               <div className={cn(
                 "p-2 rounded-lg",
                 pendingAction?.bgColor || "bg-orange-100"
@@ -524,17 +515,17 @@ export function BulkActionsPanel({
                 {pendingAction && <pendingAction.icon className={cn("h-5 w-5", pendingAction.textColor)} />}
               </div>
               <div>
-                <span>Confirm Bulk Action</span>
+                <span className="text-slate-900 font-semibold">Confirm Bulk Action</span>
                 <p className="text-sm font-normal text-slate-600 mt-1">
                   {pendingAction?.label}
                 </p>
               </div>
             </DialogTitle>
-            <DialogDescription className="text-slate-600">
+            <DialogDescription className="text-slate-700 mt-2">
               {pendingAction && (
                 <>
                   This action will {pendingAction.description.toLowerCase()} for{' '}
-                  <strong>{selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''}</strong>.
+                  <strong className="text-slate-900">{selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''}</strong>.
                   Changes will be saved automatically and cannot be undone.
                 </>
               )}
@@ -626,7 +617,7 @@ export function BulkActionsPanel({
               variant="outline"
               onClick={handleCancelAction}
               disabled={isProcessing}
-              className="border-slate-200 hover:bg-slate-50"
+              className="border-slate-200 hover:bg-slate-50 text-slate-700"
             >
               Cancel
             </Button>
@@ -634,22 +625,23 @@ export function BulkActionsPanel({
               onClick={handleConfirmAction}
               disabled={isProcessing}
               className={cn(
-                "border-0 shadow-sm transition-all duration-200",
-                pendingAction?.bgColor,
-                pendingAction?.textColor,
-                pendingAction?.hoverColor,
+                "border-0 shadow-sm transition-all duration-200 text-white",
+                pendingAction?.status === "PRESENT" && "bg-green-600 hover:bg-green-700",
+                pendingAction?.status === "ABSENT" && "bg-red-600 hover:bg-red-700",
+                pendingAction?.status === "SICK" && "bg-yellow-600 hover:bg-yellow-700",
+                pendingAction?.status === "LEAVE" && "bg-orange-600 hover:bg-orange-700",
                 isProcessing && "opacity-80"
               )}
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing {processingProgress}%
+                  <span className="text-white">Processing {processingProgress}%</span>
                 </>
               ) : (
                 <>
                   {pendingAction && <pendingAction.icon className="h-4 w-4 mr-2" />}
-                  Confirm & Save
+                  <span className="text-white">Confirm & Save</span>
                 </>
               )}
             </Button>
