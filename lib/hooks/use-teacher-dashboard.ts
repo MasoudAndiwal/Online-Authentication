@@ -90,57 +90,75 @@ export function useTeacherDashboardMetrics() {
   const setLoading = useTeacherDashboardStore(state => state.setLoading);
   const setError = useTeacherDashboardStore(state => state.setError);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: teacherDashboardKeys.metrics(),
     queryFn: mockApi.fetchMetrics,
-    onSuccess: (data) => {
-      setMetrics(data);
-      setError(null);
-    },
-    onError: (error) => {
-      setError(error instanceof Error ? error.message : 'Failed to fetch metrics');
-    },
-    onSettled: () => {
-      setLoading(false);
-    },
   });
+
+  // Use useEffect to sync query data with store
+  React.useEffect(() => {
+    if (query.data) {
+      setMetrics(query.data);
+      setError(null);
+    }
+    if (query.error) {
+      setError(query.error instanceof Error ? query.error.message : 'Failed to fetch metrics');
+    }
+    if (!query.isLoading) {
+      setLoading(false);
+    }
+  }, [query.data, query.error, query.isLoading, setMetrics, setError, setLoading]);
+
+  return query;
 }
 
 export function useTeacherClasses() {
   const setClasses = useTeacherDashboardStore(state => state.setClasses);
   const setError = useTeacherDashboardStore(state => state.setError);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: teacherDashboardKeys.classes(),
     queryFn: mockApi.fetchClasses,
-    onSuccess: (data) => {
-      console.log('Setting classes in store:', data);
-      console.log('Is array?', Array.isArray(data), 'Length:', data?.length);
-      setClasses(data);
-      setError(null);
-    },
-    onError: (error) => {
-      console.error('Error in useTeacherClasses:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch classes');
-    },
   });
+
+  // Use useEffect to sync query data with store
+  React.useEffect(() => {
+    if (query.data) {
+      console.log('Setting classes in store:', query.data);
+      console.log('Is array?', Array.isArray(query.data), 'Length:', query.data?.length);
+      setClasses(query.data);
+      setError(null);
+    }
+    if (query.error) {
+      console.error('Error in useTeacherClasses:', query.error);
+      setError(query.error instanceof Error ? query.error.message : 'Failed to fetch classes');
+    }
+  }, [query.data, query.error, setClasses, setError]);
+
+  return query;
 }
 
 export function useTeacherNotifications() {
   const setNotifications = useTeacherDashboardStore(state => state.setNotifications);
   const setError = useTeacherDashboardStore(state => state.setError);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: teacherDashboardKeys.notifications(),
     queryFn: mockApi.fetchNotifications,
-    onSuccess: (data) => {
-      setNotifications(data);
-      setError(null);
-    },
-    onError: (error) => {
-      setError(error instanceof Error ? error.message : 'Failed to fetch notifications');
-    },
   });
+
+  // Use useEffect to sync query data with store
+  React.useEffect(() => {
+    if (query.data) {
+      setNotifications(query.data);
+      setError(null);
+    }
+    if (query.error) {
+      setError(query.error instanceof Error ? query.error.message : 'Failed to fetch notifications');
+    }
+  }, [query.data, query.error, setNotifications, setError]);
+
+  return query;
 }
 
 // Mutation hooks for teacher dashboard actions

@@ -103,14 +103,23 @@ export async function GET(request: NextRequest) {
       }, {} as Record<string, number>);
     }
 
+    // Helper function to capitalize first letter
+    const capitalizeFirst = (str: string) => {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     // Transform classes to match frontend interface
     const transformedClasses = filteredClasses.map((cls) => {
-      const classKey = `${cls.name} - ${cls.session || 'MORNING'}`;
+      const session = cls.session || 'MORNING';
+      // Database stores as "AI-401-A - Morning" (capitalized first letter)
+      const classKey = `${cls.name} - ${capitalizeFirst(session)}`;
+      
+      console.log('[Teacher Classes API] Looking for students with classKey:', classKey);
       
       return {
         id: cls.id,
         name: cls.name,
-        session: cls.session || 'MORNING',
+        session: session,
         major: cls.major || '',
         semester: Number(cls.semester || 1),
         studentCount: studentCountByClass[classKey] || 0,

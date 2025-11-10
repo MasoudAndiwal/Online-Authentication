@@ -72,92 +72,84 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
   const [statusFilter, setStatusFilter] = React.useState<string>('all')
   const [riskFilter, setRiskFilter] = React.useState<string>('all')
   const [sortBy, setSortBy] = React.useState<string>('name')
-  // const [isLoading, setIsLoading] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [students, setStudents] = React.useState<ClassStudent[]>([])
+  const [error, setError] = React.useState<string | null>(null)
 
-  // Mock student data - will be replaced with actual API calls
-  const [students] = React.useState<ClassStudent[]>([
-    {
-      id: '1',
-      studentId: 'CS2024001',
-      firstName: 'Ahmad',
-      lastName: 'Hassan',
-      email: 'ahmad.hassan@university.edu',
-      phone: '+1234567890',
-      attendanceRate: 68.5,
-      totalClasses: 24,
-      presentCount: 16,
-      absentCount: 6,
-      sickCount: 1,
-      leaveCount: 1,
-      status: 'Active',
-      riskLevel: 'high',
-      riskType: 'محروم',
-      lastAttendance: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      enrollmentDate: new Date('2024-09-01'),
-      parentContact: '+1234567891',
-      notes: 'Needs attention - frequent absences'
-    },
-    {
-      id: '2',
-      studentId: 'CS2024002',
-      firstName: 'Sara',
-      lastName: 'Ahmed',
-      email: 'sara.ahmed@university.edu',
-      phone: '+1234567892',
-      attendanceRate: 94.2,
-      totalClasses: 24,
-      presentCount: 23,
-      absentCount: 1,
-      sickCount: 0,
-      leaveCount: 0,
-      status: 'Active',
-      riskLevel: 'low',
-      lastAttendance: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      enrollmentDate: new Date('2024-09-01'),
-      parentContact: '+1234567893'
-    },
-    {
-      id: '3',
-      studentId: 'CS2024003',
-      firstName: 'Omar',
-      lastName: 'Ali',
-      email: 'omar.ali@university.edu',
-      phone: '+1234567894',
-      attendanceRate: 87.5,
-      totalClasses: 24,
-      presentCount: 21,
-      absentCount: 2,
-      sickCount: 1,
-      leaveCount: 0,
-      status: 'Active',
-      riskLevel: 'low',
-      lastAttendance: new Date(),
-      enrollmentDate: new Date('2024-09-01'),
-      parentContact: '+1234567895'
-    },
-    {
-      id: '4',
-      studentId: 'CS2024004',
-      firstName: 'Fatima',
-      lastName: 'Khan',
-      email: 'fatima.khan@university.edu',
-      phone: '+1234567896',
-      attendanceRate: 75.0,
-      totalClasses: 24,
-      presentCount: 18,
-      absentCount: 4,
-      sickCount: 2,
-      leaveCount: 0,
-      status: 'Active',
-      riskLevel: 'medium',
-      riskType: 'تصدیق طلب',
-      lastAttendance: new Date(),
-      enrollmentDate: new Date('2024-09-01'),
-      parentContact: '+1234567897'
+  // Fetch class data and students
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // Fetch class data first
+        const classResponse = await fetch(`/api/classes/${classId}`)
+        if (!classResponse.ok) throw new Error('Failed to fetch class data')
+        const classInfo = await classResponse.json()
+        
+        console.log('Class data:', classInfo)
+        
+        // Construct class section key with proper capitalization
+        const capitalizeFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+        const classSectionKey = `${classInfo.name} - ${capitalizeFirst(classInfo.session || 'MORNING')}`
+        
+        console.log('Fetching students with classSection:', classSectionKey)
+        
+        // Fetch students for this class
+        const studentsResponse = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`)
+        if (!studentsResponse.ok) throw new Error('Failed to fetch students')
+        const studentsData = await studentsResponse.json()
+        
+        console.log('Fetched students:', studentsData)
+        
+        // Transform students to match ClassStudent interface
+        const transformedStudents: ClassStudent[] = studentsData.map((student: {
+          id: string;
+          studentId: string;
+          firstName: string;
+          lastName: string;
+          username: string;
+          phone: string;
+          status?: string;
+          createdAt?: string;
+          fatherPhone?: string;
+        }) => ({
+          id: student.id,
+          studentId: student.studentId,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.username, // Using username as email
+          phone: student.phone,
+          attendanceRate: 0, // TODO: Calculate from attendance records
+          totalClasses: 0,
+          presentCount: 0,
+          absentCount: 0,
+          sickCount: 0,
+          leaveCount: 0,
+          status: student.status || 'Active',
+          riskLevel: 'low',
+          lastAttendance: new Date(),
+          enrollmentDate: new Date(student.createdAt || Date.now()),
+          parentContact: student.fatherPhone || '',
+          notes: ''
+        }))
+        
+        setStudents(transformedStudents)
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch students')
+      } finally {
+        setIsLoading(false)
+      }
     }
-  ])
+    
+    if (classId) {
+      fetchData()
+    }
+  }, [classId])
 
-  // Filter and sort students
+  // Filter and sort students - MUST be before any conditional returns
   const filteredStudents = React.useMemo(() => {
     const filtered = students.filter(student => {
       const matchesSearch = 
@@ -191,6 +183,34 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
 
     return filtered
   }, [students, searchQuery, statusFilter, riskFilter, sortBy])
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-slate-200 rounded w-1/4 mb-4"></div>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 bg-slate-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-600 mb-4">
+          <h3 className="text-lg font-semibold">Error loading students</h3>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   const getRiskBadgeColor = (riskLevel: string) => {
     switch (riskLevel) {

@@ -27,8 +27,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useTeacherDashboardSelectors } from "@/lib/stores/teacher-dashboard-store";
-import { useInitializeTeacherDashboard } from "@/lib/hooks/use-teacher-dashboard";
+import { useTeacherDashboardMetrics, useTeacherClasses, useTeacherNotifications } from "@/lib/hooks/use-teacher-dashboard";
 import { TeacherClassGrid } from "@/components/classes/teacher-class-grid";
 import { SkipLinks } from "@/components/ui/skip-link";
 import { useScreenReaderAnnouncements } from "@/lib/hooks/use-screen-reader-announcements";
@@ -83,12 +82,22 @@ export default function TeacherDashboardPage() {
     deleteNotification
   } = useNotifications();
 
-  // Initialize dashboard data with React Query and Zustand
-  const { isLoading: loadingDashboard, error: dashboardError } = useInitializeTeacherDashboard();
-  const { metrics, classes, isLoading: storeLoading, error: storeError } = useTeacherDashboardSelectors();
-
-  const loadingMetrics = loadingDashboard || storeLoading;
-  const classesError = dashboardError || storeError;
+  // Initialize dashboard data with React Query
+  const metricsQuery = useTeacherDashboardMetrics();
+  const classesQuery = useTeacherClasses();
+  const notificationsQuery = useTeacherNotifications();
+  
+  // Get data directly from React Query (primary source)
+  const metrics = metricsQuery.data || null;
+  const classes = classesQuery.data || [];
+  
+  // Loading and error states
+  const loadingMetrics = metricsQuery.isLoading || classesQuery.isLoading || notificationsQuery.isLoading;
+  const classesError = metricsQuery.error || classesQuery.error || notificationsQuery.error;
+  
+  console.log('Dashboard - classes from query:', classes);
+  console.log('Dashboard - classes length:', classes?.length);
+  console.log('Dashboard - isLoading:', loadingMetrics);
 
   // Show welcome toast and handle errors
   React.useEffect(() => {
@@ -113,12 +122,12 @@ export default function TeacherDashboardPage() {
 
   // Handle dashboard errors
   React.useEffect(() => {
-    if (dashboardError) {
+    if (classesError) {
       toast.error('Failed to load dashboard data', {
         description: 'Please refresh the page to try again.'
       });
     }
-  }, [dashboardError]);
+  }, [classesError]);
 
   // Use authenticated user data
   const displayUser = user ? {
