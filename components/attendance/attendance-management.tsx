@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AttendanceGrid } from "./attendance-grid";
+import { PeriodAttendanceForm } from "./period-attendance-form";
 import { BulkActionsPanel } from "./bulk-actions-panel";
 import { RiskIndicatorsGrid, calculateStudentRisk } from "./student-risk-indicators";
 import { useResponsive } from "@/lib/hooks/use-responsive";
@@ -29,12 +30,16 @@ import type {
   Class,
   AttendanceStatistics 
 } from "@/types/attendance";
+import { periodAssignmentService, type TeacherPeriodAssignment } from "@/lib/services/period-assignment-service";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AttendanceManagementProps {
   classId: string;
   classData?: Class;
   date?: Date;
   className?: string;
+  teacherId?: string; // Current teacher's ID
+  enablePeriodFiltering?: boolean; // Feature flag
 }
 
 export function AttendanceManagement({
@@ -42,9 +47,15 @@ export function AttendanceManagement({
   classData,
   date = new Date(),
   className,
+  teacherId,
+  enablePeriodFiltering = true,
 }: AttendanceManagementProps) {
   // Responsive hook
   const { isMobile } = useResponsive();
+  
+  // Auth hook to get current teacher if not provided
+  const { user } = useAuth({ requiredRole: 'TEACHER' });
+  const currentTeacherId = teacherId || user?.id;
   
   // State management
   const [students, setStudents] = React.useState<StudentWithAttendance[]>([]);
@@ -58,6 +69,11 @@ export function AttendanceManagement({
   const [connectionStatus, setConnectionStatus] = React.useState<'online' | 'offline' | 'saving'>('online');
   const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
   const [autoSaveEnabled] = React.useState(true);
+
+  // Period assignment state management
+  const [teacherPeriods, setTeacherPeriods] = React.useState<TeacherPeriodAssignment[]>([]);
+  const [periodAssignmentLoading, setPeriodAssignmentLoading] = React.useState(false);
+  const [periodAssignmentError, setPeriodAssignmentError] = React.useState<string | null>(null);
 
   // Load students and attendance data
   const loadData = React.useCallback(async () => {
@@ -131,10 +147,50 @@ export function AttendanceManagement({
     }
   }, [classId, classData?.name, date]);
 
+  // Load period assignments
+  const loadPeriodAssignments = React.useCallback(async () => {
+    if (!enablePeriodFiltering || !currentTeacherId || !classId) {
+      setTeacherPeriods([]);
+      return;
+    }
+
+    setPeriodAssignmentLoading(true);
+    setPeriodAssignmentError(null);
+
+    try {
+      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const periods = await periodAssignmentService.getTeacherPeriods(
+        currentTeacherId,
+        classId,
+        dayOfWeek
+      );
+      
+      setTeacherPeriods(periods);
+      console.log('Loaded teacher periods:', periods);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load period assignments';
+      setPeriodAssignmentError(errorMessage);
+      console.error('Failed to load period assignments:', err);
+      
+      // Show toast notification for period assignment errors
+      toast.error('Failed to load period assignments', {
+        description: errorMessage,
+        duration: 5000,
+      });
+    } finally {
+      setPeriodAssignmentLoading(false);
+    }
+  }, [enablePeriodFiltering, currentTeacherId, classId, date]);
+
   // Load data on mount and when dependencies change
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Load period assignments when component mounts or dependencies change
+  React.useEffect(() => {
+    loadPeriodAssignments();
+  }, [loadPeriodAssignments]);
 
   // Enhanced connection monitoring with real-time feedback
   React.useEffect(() => {
@@ -186,16 +242,23 @@ export function AttendanceManagement({
     setConnectionStatus('saving');
 
     try {
-      const attendanceRecords = students
+      const attendanceRecords: any[] = [];
+      
+      students
         .filter(student => student.status !== 'NOT_MARKED')
-        .map(student => ({
-          studentId: student.id,
-          status: student.status,
-          periodNumber: 1,
-          teacherName: 'Current Teacher',
-          subject: classData?.name || 'Unknown Subject',
-          notes: null,
-        }));
+        .forEach(student => {
+          // Create records for all 6 periods
+          for (let period = 1; period <= 6; period++) {
+            attendanceRecords.push({
+              studentId: student.id,
+              status: student.status,
+              periodNumber: period,
+              teacherName: `Teacher ${Math.ceil(period / 2)}`,
+              subject: classData?.name || 'Unknown Subject',
+              notes: null,
+            });
+          }
+        });
 
       const response = await fetch('/api/attendance', {
         method: 'POST',
@@ -353,17 +416,21 @@ export function AttendanceManagement({
     }
     
     try {
-      // Auto-save individual change
+      // Auto-save individual change for ALL 6 periods
       if (!originalStudent) return;
       
-      const attendanceRecord = {
-        studentId,
-        status,
-        periodNumber: 1,
-        teacherName: 'Current Teacher',
-        subject: classData?.name || 'Unknown Subject',
-        notes: null,
-      };
+      // Create records for all 6 periods with the same status
+      const attendanceRecords = [];
+      for (let period = 1; period <= 6; period++) {
+        attendanceRecords.push({
+          studentId,
+          status,
+          periodNumber: period,
+          teacherName: `Teacher ${Math.ceil(period / 2)}`, // Default teacher names
+          subject: classData?.name || 'Unknown Subject',
+          notes: null,
+        });
+      }
 
       const response = await fetch('/api/attendance', {
         method: 'POST',
@@ -373,7 +440,7 @@ export function AttendanceManagement({
         body: JSON.stringify({
           classId,
           date: date.toISOString().split('T')[0],
-          records: [attendanceRecord],
+          records: attendanceRecords,
           markedBy: 'current-teacher-id',
         }),
       });
@@ -433,18 +500,23 @@ export function AttendanceManagement({
         id: 'bulk-start',
       });
       
-      // Prepare attendance records with enhanced metadata
-      const attendanceRecords = studentIds.map(studentId => {
+      // Prepare attendance records with enhanced metadata for ALL 6 periods
+      const attendanceRecords: any[] = [];
+      
+      studentIds.forEach(studentId => {
         const student = students.find(s => s.id === studentId);
-        return {
-          studentId,
-          status,
-          periodNumber: 1,
-          teacherName: 'Current Teacher',
-          subject: classData?.name || 'Unknown Subject',
-          notes: `Bulk update: ${studentIds.length} students at ${new Date().toLocaleTimeString()}`,
-          studentName: student?.name || 'Unknown Student', // For better error reporting
-        };
+        // Create records for all 6 periods
+        for (let period = 1; period <= 6; period++) {
+          attendanceRecords.push({
+            studentId,
+            status,
+            periodNumber: period,
+            teacherName: `Teacher ${Math.ceil(period / 2)}`,
+            subject: classData?.name || 'Unknown Subject',
+            notes: `Bulk update: ${studentIds.length} students at ${new Date().toLocaleTimeString()}`,
+            studentName: student?.name || 'Unknown Student', // For better error reporting
+          });
+        }
       });
 
       // Enhanced API call with timeout and retry logic
@@ -877,6 +949,117 @@ export function AttendanceManagement({
         </motion.div>
       )}
 
+      {/* Period Assignment Error States - Beautiful Multi-Color Design */}
+      <AnimatePresence>
+        {enablePeriodFiltering && periodAssignmentError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-gradient-to-br from-rose-50 to-rose-100/50 border-0 rounded-2xl p-6 shadow-xl shadow-rose-500/10 backdrop-blur-xl"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-3 bg-rose-100 rounded-xl flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-rose-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-rose-800 text-base sm:text-lg">Period Assignment Error</h3>
+                  <p className="text-sm sm:text-base text-rose-700 mt-1">
+                    {periodAssignmentError}
+                  </p>
+                  <p className="text-xs sm:text-sm text-rose-600 mt-2">
+                    Please contact the office to verify your schedule assignments.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={loadPeriodAssignments}
+                  disabled={periodAssignmentLoading}
+                  size="sm"
+                  className="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white border-0 shadow-xl rounded-xl flex-1 sm:flex-none"
+                >
+                  <RefreshCw className={cn("h-4 w-4 mr-2", periodAssignmentLoading && "animate-spin")} />
+                  Retry
+                </Button>
+                <Button
+                  onClick={() => setPeriodAssignmentError(null)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/60 backdrop-blur-sm border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl flex-1 sm:flex-none"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {enablePeriodFiltering && !periodAssignmentError && teacherPeriods.length === 0 && !periodAssignmentLoading && currentTeacherId && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-0 rounded-2xl p-6 shadow-xl shadow-slate-500/10 backdrop-blur-xl"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-3 bg-slate-100 rounded-xl flex-shrink-0">
+                  <Users className="h-6 w-6 text-slate-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-slate-800 text-base sm:text-lg">No Period Assignments</h3>
+                  <p className="text-sm sm:text-base text-slate-700 mt-1">
+                    You don&apos;t have any periods assigned for this class on {date.toLocaleDateString('en-US', { weekday: 'long' })}.
+                  </p>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-2">
+                    Contact the office if you believe this is incorrect.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={loadPeriodAssignments}
+                  disabled={periodAssignmentLoading}
+                  size="sm"
+                  className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white border-0 shadow-xl rounded-xl flex-1 sm:flex-none"
+                >
+                  <RefreshCw className={cn("h-4 w-4 mr-2", periodAssignmentLoading && "animate-spin")} />
+                  Check Again
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {enablePeriodFiltering && periodAssignmentLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-gradient-to-br from-amber-50 to-amber-100/50 border-0 rounded-2xl p-6 shadow-xl shadow-amber-500/10 backdrop-blur-xl"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-100 rounded-xl flex-shrink-0">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <Clock className="h-6 w-6 text-amber-600" />
+                </motion.div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-amber-800 text-base sm:text-lg">Loading Period Assignments</h3>
+                <p className="text-sm sm:text-base text-amber-700 mt-1">
+                  Fetching your assigned periods for this class...
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Tab Navigation - Mobile Responsive */}
       <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 border-0 shadow-sm overflow-x-auto">
         <Button
@@ -919,13 +1102,12 @@ export function AttendanceManagement({
           isLoading={isLoading}
           error={error}
           onStatusChange={handleStatusChange}
-          onBulkStatusChange={handleBulkStatusChange}
           selectedStudents={selectedStudents}
           onStudentSelect={handleStudentSelect}
           onSelectAll={handleSelectAll}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          showRiskIndicators={true}
+          teacherPeriods={teacherPeriods}
+          currentTeacherId={currentTeacherId}
+          enablePeriodFiltering={enablePeriodFiltering}
         />
       ) : (
         <RiskIndicatorsGrid

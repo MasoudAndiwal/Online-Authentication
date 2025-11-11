@@ -4,6 +4,7 @@ import supabase from '@/lib/supabase';
 /**
  * POST /api/attendance
  * Save attendance records for a class on a specific date
+ * Backward compatible: Works with current table structure
  */
 export async function POST(request: NextRequest) {
   try {
@@ -19,60 +20,165 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Attendance API] Saving ${records.length} attendance records for class ${classId} on ${date}`);
 
-    // Prepare attendance records for insertion
-    const attendanceData = records.map((record: {
-      studentId: string;
-      status: string;
-      periodNumber?: number;
-      teacherName?: string;
-      subject?: string;
-      notes?: string;
-    }) => ({
-      student_id: record.studentId,
-      class_id: classId,
-      date: date,
-      period_number: record.periodNumber || null,
-      status: record.status,
-      teacher_name: record.teacherName || null,
-      subject: record.subject || null,
-      notes: record.notes || null,
-      marked_by: markedBy || null,
-      marked_at: new Date().toISOString(),
-    }));
-
-    // Delete existing attendance records for this class and date
-    const { error: deleteError } = await supabase
-      .from('attendance_records')
-      .delete()
-      .eq('class_id', classId)
-      .eq('date', date);
-
-    if (deleteError) {
-      console.error('[Attendance API] Error deleting existing records:', deleteError);
-      // Continue anyway - the upsert might still work
+    // Check if new table structure exists by trying to query the new table
+    let useNewStructure = false;
+    try {
+      const { error: checkError } = await supabase
+        .from('attendance_records_new')
+        .select('period_1_status')
+        .limit(1);
+      
+      if (!checkError) {
+        useNewStructure = true;
+        console.log('[Attendance API] Using new table structure (attendance_records_new)');
+      }
+    } catch (e) {
+      console.log('[Attendance API] Using old table structure (attendance_records)');
     }
 
-    // Insert new attendance records
-    const { data, error: insertError } = await supabase
-      .from('attendance_records')
-      .insert(attendanceData)
-      .select();
+    if (useNewStructure) {
+      // NEW STRUCTURE: Group records by student to create one record per student
+      const studentRecords = new Map();
+      
+      records.forEach((record: {
+        studentId: string;
+        status: string;
+        periodNumber?: number;
+        teacherName?: string;
+        subject?: string;
+        notes?: string;
+      }) => {
+        const studentId = record.studentId;
+        const periodNumber = record.periodNumber || 1;
+        
+        if (!studentRecords.has(studentId)) {
+          studentRecords.set(studentId, {
+            student_id: studentId,
+            class_id: classId,
+            date: date,
+            period_1_status: 'NOT_MARKED',
+            period_2_status: 'NOT_MARKED',
+            period_3_status: 'NOT_MARKED',
+            period_4_status: 'NOT_MARKED',
+            period_5_status: 'NOT_MARKED',
+            period_6_status: 'NOT_MARKED',
+            period_1_teacher: null,
+            period_2_teacher: null,
+            period_3_teacher: null,
+            period_4_teacher: null,
+            period_5_teacher: null,
+            period_6_teacher: null,
+            period_1_subject: null,
+            period_2_subject: null,
+            period_3_subject: null,
+            period_4_subject: null,
+            period_5_subject: null,
+            period_6_subject: null,
+            marked_by: markedBy || null,
+            marked_at: new Date().toISOString(),
+          });
+        }
+        
+        const studentRecord = studentRecords.get(studentId);
+        
+        // Set the status for the specific period
+        if (periodNumber >= 1 && periodNumber <= 6) {
+          studentRecord[`period_${periodNumber}_status`] = record.status;
+          studentRecord[`period_${periodNumber}_teacher`] = record.teacherName || null;
+          studentRecord[`period_${periodNumber}_subject`] = record.subject || null;
+        }
+      });
 
-    if (insertError) {
-      console.error('[Attendance API] Error inserting records:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to save attendance records', details: insertError.message },
-        { status: 500 }
-      );
+      const attendanceData = Array.from(studentRecords.values());
+
+      // Delete existing attendance records for this class and date from NEW table
+      const { error: deleteError } = await supabase
+        .from('attendance_records_new')
+        .delete()
+        .eq('class_id', classId)
+        .eq('date', date);
+
+      if (deleteError) {
+        console.error('[Attendance API] Error deleting existing records from new table:', deleteError);
+      }
+
+      // Insert new attendance records (1 per student) into NEW table
+      const { data, error: insertError } = await supabase
+        .from('attendance_records_new')
+        .insert(attendanceData)
+        .select();
+
+      if (insertError) {
+        console.error('[Attendance API] Error inserting records:', insertError);
+        return NextResponse.json(
+          { error: 'Failed to save attendance records', details: insertError.message },
+          { status: 500 }
+        );
+      }
+
+      console.log(`[Attendance API] Successfully saved ${data?.length || 0} student records`);
+
+      return NextResponse.json({
+        success: true,
+        saved: data?.length || 0,
+        message: `Successfully saved attendance for ${data?.length || 0} students`,
+      });
+
+    } else {
+      // OLD STRUCTURE: Save individual records as before
+      const attendanceData = records.map((record: {
+        studentId: string;
+        status: string;
+        periodNumber?: number;
+        teacherName?: string;
+        subject?: string;
+        notes?: string;
+      }) => ({
+        student_id: record.studentId,
+        class_id: classId,
+        date: date,
+        period_number: record.periodNumber || null,
+        status: record.status,
+        teacher_name: record.teacherName || null,
+        subject: record.subject || null,
+        notes: record.notes || null,
+        marked_by: markedBy || null,
+        marked_at: new Date().toISOString(),
+      }));
+
+      // Delete existing attendance records for this class and date
+      const { error: deleteError } = await supabase
+        .from('attendance_records')
+        .delete()
+        .eq('class_id', classId)
+        .eq('date', date);
+
+      if (deleteError) {
+        console.error('[Attendance API] Error deleting existing records:', deleteError);
+      }
+
+      // Insert new attendance records
+      const { data, error: insertError } = await supabase
+        .from('attendance_records')
+        .insert(attendanceData)
+        .select();
+
+      if (insertError) {
+        console.error('[Attendance API] Error inserting records:', insertError);
+        return NextResponse.json(
+          { error: 'Failed to save attendance records', details: insertError.message },
+          { status: 500 }
+        );
+      }
+
+      console.log(`[Attendance API] Successfully saved ${data?.length || 0} records`);
+
+      return NextResponse.json({
+        success: true,
+        saved: data?.length || 0,
+        message: `Successfully saved attendance for ${data?.length || 0} student-period combinations`,
+      });
     }
-
-    console.log(`[Attendance API] Successfully saved ${data?.length || 0} records`);
-
-    return NextResponse.json({
-      success: true,
-      saved: data?.length || 0,
-      message: `Successfully saved attendance for ${data?.length || 0} student-period combinations`,
-    });
 
   } catch (error) {
     console.error('[Attendance API] Error:', error);
@@ -86,6 +192,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/attendance
  * Fetch attendance records for a class on a specific date
+ * Backward compatible: Works with both old and new table structures
  */
 export async function GET(request: NextRequest) {
   try {
@@ -102,8 +209,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if new table structure exists
+    let useNewStructure = false;
+    let tableName = 'attendance_records';
+    try {
+      const { error: checkError } = await supabase
+        .from('attendance_records_new')
+        .select('period_1_status')
+        .limit(1);
+      
+      if (!checkError) {
+        useNewStructure = true;
+        tableName = 'attendance_records_new';
+        console.log('[Attendance API GET] Using new table structure (attendance_records_new)');
+      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      console.log('[Attendance API GET] Using old table structure (attendance_records)');
+    }
+
     const { data, error } = await supabase
-      .from('attendance_records')
+      .from(tableName)
       .select('*')
       .eq('class_id', classId)
       .eq('date', date);
@@ -120,7 +246,7 @@ export async function GET(request: NextRequest) {
       // Provide more specific error message
       let errorMessage = 'Failed to fetch attendance records';
       if (error.message.includes('relation') || error.message.includes('does not exist')) {
-        errorMessage = 'Database table "attendance_records" not found or has incorrect schema. Please run the fix script: scripts/fix_attendance_table_schema.sql';
+        errorMessage = 'Database table "attendance_records" not found or has incorrect schema. Please run the update script: scripts/update_attendance_table_schema.sql';
       } else if (error.message.includes('column')) {
         errorMessage = `Database column error: ${error.message}. The table schema may need to be updated.`;
       } else if (error.message.includes('invalid input syntax for type uuid')) {
@@ -137,11 +263,41 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('[Attendance API GET] Successfully fetched', data?.length || 0, 'records');
+    let expandedRecords: any[] = [];
+
+    if (useNewStructure && data && data.length > 0 && data[0].period_1_status !== undefined) {
+      // NEW STRUCTURE: Convert back to old format for compatibility
+      data.forEach((record: unknown) => {
+        // Create 6 separate records for each period (for compatibility with existing UI)
+        for (let period = 1; period <= 6; period++) {
+          const status = record[`period_${period}_status`] || 'NOT_MARKED';
+          const teacher = record[`period_${period}_teacher`];
+          const subject = record[`period_${period}_subject`];
+          
+          expandedRecords.push({
+            student_id: record.student_id,
+            class_id: record.class_id,
+            date: record.date,
+            period_number: period,
+            status: status,
+            teacher_name: teacher,
+            subject: subject,
+            marked_by: record.marked_by,
+            marked_at: record.marked_at,
+          });
+        }
+      });
+      
+      console.log('[Attendance API GET] Successfully fetched', data.length, 'student records, expanded to', expandedRecords.length, 'period records');
+    } else {
+      // OLD STRUCTURE: Return data as is
+      expandedRecords = data || [];
+      console.log('[Attendance API GET] Successfully fetched', expandedRecords.length, 'period records');
+    }
 
     return NextResponse.json({
       success: true,
-      data: data || [],
+      data: expandedRecords,
     });
 
   } catch (error) {

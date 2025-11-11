@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { handleLogout } from "@/lib/auth/logout";
+import type { Class } from "@/types/attendance";
 
 function AttendanceContent() {
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
@@ -21,7 +22,7 @@ function AttendanceContent() {
   const classId = searchParams.get('classId');
   
   // State for real class data
-  const [classData, setClassData] = React.useState<any>(null);
+  const [classData, setClassData] = React.useState<Class | null>(null);
   const [loadingClass, setLoadingClass] = React.useState(true);
   const [classError, setClassError] = React.useState<string | null>(null);
 
@@ -35,7 +36,7 @@ function AttendanceContent() {
       const response = await fetch("/api/classes");
       if (!response.ok) throw new Error("Failed to fetch classes");
       const data = await response.json();
-      const foundClass = data.find((c: unknown) => c.id === classId);
+      const foundClass = data.find((c: Class) => c.id === classId);
       if (!foundClass) throw new Error("Class not found");
       setClassData(foundClass);
     } catch (error) {
@@ -199,6 +200,8 @@ function AttendanceContent() {
           classId={classId}
           classData={classData}
           date={new Date()}
+          teacherId={user?.id}
+          enablePeriodFiltering={true}
         />
       </PageContainer>
     </ModernDashboardLayout>
