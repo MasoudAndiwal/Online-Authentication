@@ -112,7 +112,7 @@ export function BulkActionsPanel({
   const [shouldAutoHide, setShouldAutoHide] = React.useState(false);
   const [autoHideCountdown, setAutoHideCountdown] = React.useState(0);
 
-  // Disable auto-hide functionality to prevent flashing
+  // Auto-hide functionality after 10 seconds of inactivity
   React.useEffect(() => {
     if (selectedStudents.length === 0) {
       setShouldAutoHide(false);
@@ -120,10 +120,35 @@ export function BulkActionsPanel({
       return;
     }
 
-    // Keep panel visible when students are selected - no auto-hide
-    setShouldAutoHide(false);
-    setAutoHideCountdown(0);
+    // Start auto-hide countdown after 10 seconds of inactivity
+    const inactivityTimer = setTimeout(() => {
+      setShouldAutoHide(true);
+      setAutoHideCountdown(10);
+    }, 10000); // 10 seconds
+
+    return () => clearTimeout(inactivityTimer);
   }, [selectedStudents.length, lastActivity]);
+
+  // Countdown timer for auto-hide
+  React.useEffect(() => {
+    if (autoHideCountdown > 0) {
+      const countdownTimer = setTimeout(() => {
+        setAutoHideCountdown(prev => {
+          if (prev <= 1) {
+            // Hide the panel and clear selection
+            setShouldAutoHide(true);
+            setTimeout(() => {
+              onClearSelection();
+            }, 500);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearTimeout(countdownTimer);
+    }
+  }, [autoHideCountdown, onClearSelection]);
 
   // Reset auto-hide when user interacts with enhanced feedback
   const handleUserActivity = () => {
@@ -451,7 +476,7 @@ export function BulkActionsPanel({
                   <span>
                     {autoHideCountdown > 0 
                       ? `Auto-hide in ${autoHideCountdown}s` 
-                      : "Auto-hide after 5s inactivity"
+                      : "Auto-hide after 10s inactivity"
                     }
                   </span>
                   {autoHideCountdown > 0 && autoHideCountdown <= 3 && (

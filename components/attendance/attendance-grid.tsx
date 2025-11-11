@@ -64,7 +64,7 @@ export function AttendanceGrid({
   // Get assigned periods for current teacher
   const getAssignedPeriods = React.useMemo(() => {
     if (!enablePeriodFiltering || !teacherPeriods || teacherPeriods.length === 0) {
-      return [1, 2, 3, 4, 5, 6]; // Show all periods if filtering is disabled
+      return [1, 2, 3, 4, 5, 6, 7, 8]; // Show all 8 periods for university schedule
     }
     
     return teacherPeriods
@@ -91,6 +91,32 @@ export function AttendanceGrid({
     return getAssignedPeriods.includes(periodNumber);
   }, [enablePeriodFiltering, getAssignedPeriods]);
 
+  // Sync with bulk changes from parent component
+  React.useEffect(() => {
+    // When students prop changes (from bulk actions), update period attendance
+    const updatedPeriodAttendance: Record<string, Record<number, AttendanceStatus>> = {};
+    
+    students.forEach(student => {
+      // If student has a status and no period-specific data, apply to all periods
+      if (student.status !== 'NOT_MARKED' && !studentPeriodAttendance[student.id]) {
+        const assignedPeriods = getAssignedPeriods.filter(p => isTeacherAssignedToPeriod(p));
+        updatedPeriodAttendance[student.id] = {};
+        
+        assignedPeriods.forEach(period => {
+          updatedPeriodAttendance[student.id][period] = student.status;
+        });
+      }
+    });
+    
+    // Only update if there are changes
+    if (Object.keys(updatedPeriodAttendance).length > 0) {
+      setStudentPeriodAttendance(prev => ({
+        ...prev,
+        ...updatedPeriodAttendance
+      }));
+    }
+  }, [students, getAssignedPeriods, isTeacherAssignedToPeriod, studentPeriodAttendance]);
+
   // Get current status for student and period
   const getCurrentStatus = (studentId: string, periodNumber?: number): AttendanceStatus => {
     if (periodNumber) {
@@ -112,6 +138,8 @@ export function AttendanceGrid({
 
   // Handle status change
   const handleStatusChange = (studentId: string, status: AttendanceStatus, periodNumber?: number) => {
+    console.log('handleStatusChange called:', { studentId, status, periodNumber });
+    
     if (periodNumber) {
       // Period-specific status change
       if (enablePeriodFiltering && !isTeacherAssignedToPeriod(periodNumber)) {
@@ -126,14 +154,19 @@ export function AttendanceGrid({
       }
 
       // Update period-specific attendance
-      setStudentPeriodAttendance(prev => ({
-        ...prev,
-        [studentId]: {
-          ...prev[studentId],
-          [periodNumber]: status
-        }
-      }));
+      setStudentPeriodAttendance(prev => {
+        const updated = {
+          ...prev,
+          [studentId]: {
+            ...prev[studentId],
+            [periodNumber]: status
+          }
+        };
+        console.log('Updated period attendance:', updated);
+        return updated;
+      });
 
+      // Call parent handler
       onStatusChange(studentId, status, periodNumber);
 
       const student = students.find(s => s.id === studentId);
@@ -150,14 +183,19 @@ export function AttendanceGrid({
         return acc;
       }, {} as Record<number, AttendanceStatus>);
 
-      setStudentPeriodAttendance(prev => ({
-        ...prev,
-        [studentId]: {
-          ...prev[studentId],
-          ...periodAttendance
-        }
-      }));
+      setStudentPeriodAttendance(prev => {
+        const updated = {
+          ...prev,
+          [studentId]: {
+            ...prev[studentId],
+            ...periodAttendance
+          }
+        };
+        console.log('Updated global attendance:', updated);
+        return updated;
+      });
 
+      // Call parent handler
       onStatusChange(studentId, status);
 
       const student = students.find(s => s.id === studentId);
@@ -387,7 +425,10 @@ export function AttendanceGrid({
                           <div className="space-y-2">
                             {/* Sick Button */}
                             <Button
-                              onClick={() => handleStatusChange(student.id, 'SICK')}
+                              onClick={() => {
+                                console.log('Sick button clicked:', { studentId: student.id, currentStatus: getCurrentStatus(student.id) });
+                                handleStatusChange(student.id, 'SICK');
+                              }}
                               className={cn(
                                 "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
                                 getCurrentStatus(student.id) === 'SICK'
@@ -429,7 +470,10 @@ export function AttendanceGrid({
                                 <div className="space-y-2">
                                   {/* Present Button */}
                                   <Button
-                                    onClick={() => handleStatusChange(student.id, 'PRESENT', periodNumber)}
+                                    onClick={() => {
+                                      console.log('Present button clicked:', { studentId: student.id, periodNumber, currentStatus: periodStatus });
+                                      handleStatusChange(student.id, 'PRESENT', periodNumber);
+                                    }}
                                     className={cn(
                                       "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
                                       periodStatus === 'PRESENT'
@@ -443,7 +487,10 @@ export function AttendanceGrid({
                                   
                                   {/* Absent Button */}
                                   <Button
-                                    onClick={() => handleStatusChange(student.id, 'ABSENT', periodNumber)}
+                                    onClick={() => {
+                                      console.log('Absent button clicked:', { studentId: student.id, periodNumber, currentStatus: periodStatus });
+                                      handleStatusChange(student.id, 'ABSENT', periodNumber);
+                                    }}
                                     className={cn(
                                       "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
                                       periodStatus === 'ABSENT'

@@ -6,6 +6,26 @@ import { Calendar, Clock, BookOpen, User, Edit, Trash2, Plus } from "lucide-reac
 import { Class, ScheduleEntry, DAYS } from "@/lib/data/schedule-data";
 import { cn } from "@/lib/utils";
 
+// Utility function to convert 24-hour time to 12-hour format
+const formatTime12Hour = (time24: string): string => {
+  try {
+    // Handle different time formats (HH:MM:SS or HH:MM)
+    const [hours, minutes] = time24.split(':').map(Number);
+    
+    if (isNaN(hours) || isNaN(minutes)) {
+      return time24; // Return original if parsing fails
+    }
+    
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.warn('Error formatting time:', time24, error);
+    return time24; // Return original if error occurs
+  }
+};
+
 interface ScheduleTableProps {
   classData: Class | null;
   onEdit?: (entry: ScheduleEntry) => void;
@@ -180,7 +200,9 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                             </div>
                             <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
                               <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                              <span className="font-medium text-xs whitespace-nowrap">{entry.startTime} - {entry.endTime}</span>
+                              <span className="font-medium text-xs whitespace-nowrap">
+                                {formatTime12Hour(entry.startTime)} - {formatTime12Hour(entry.endTime)}
+                              </span>
                             </div>
                             <Badge variant="outline" className="bg-white/70 font-semibold shadow-sm text-xs">
                               {entry.hours}h

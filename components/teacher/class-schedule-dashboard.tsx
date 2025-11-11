@@ -18,6 +18,21 @@ import {
   Filter
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+// Utility function to convert 24-hour time to 12-hour format
+const formatTime12Hour = (time24: string): string => {
+  try {
+    const [hours, minutes] = time24.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return time24;
+    
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    return time24;
+  }
+};
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -430,7 +445,7 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                           </DropdownMenu>
                         </div>
                         <div className="text-xs opacity-90">
-                          {timeEntry.startTime} - {timeEntry.endTime}
+                          {formatTime12Hour(timeEntry.startTime)} - {formatTime12Hour(timeEntry.endTime)}
                         </div>
                         <div className="text-xs opacity-90">
                           {timeEntry.room}
@@ -466,7 +481,7 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                         {entry.subject}
                       </CardTitle>
                       <p className="text-sm text-slate-600">
-                        {entry.dayName} • {entry.startTime} - {entry.endTime}
+                        {entry.dayName} • {formatTime12Hour(entry.startTime)} - {formatTime12Hour(entry.endTime)}
                       </p>
                     </div>
                   </div>

@@ -9,29 +9,29 @@ export interface TimeSlot {
 
 // Morning Session: 6 teaching periods
 export const MORNING_TIME_SLOTS: TimeSlot[] = [
-  { period: 1, startTime: "08:30", endTime: "09:10", label: "Period 1 (08:30 - 09:10)" },
-  { period: 2, startTime: "09:10", endTime: "09:50", label: "Period 2 (09:10 - 09:50)" },
-  { period: 3, startTime: "09:50", endTime: "10:30", label: "Period 3 (09:50 - 10:30)" },
+  { period: 1, startTime: "08:30", endTime: "09:10", label: "Period 1 (8:30 AM - 9:10 AM)" },
+  { period: 2, startTime: "09:10", endTime: "09:50", label: "Period 2 (9:10 AM - 9:50 AM)" },
+  { period: 3, startTime: "09:50", endTime: "10:30", label: "Period 3 (9:50 AM - 10:30 AM)" },
   // Break: 10:30 - 10:45
-  { period: 4, startTime: "10:45", endTime: "11:25", label: "Period 4 (10:45 - 11:25)" },
-  { period: 5, startTime: "11:25", endTime: "12:05", label: "Period 5 (11:25 - 12:05)" },
-  { period: 6, startTime: "12:05", endTime: "12:45", label: "Period 6 (12:05 - 12:45)" },
+  { period: 4, startTime: "10:45", endTime: "11:25", label: "Period 4 (10:45 AM - 11:25 AM)" },
+  { period: 5, startTime: "11:25", endTime: "12:05", label: "Period 5 (11:25 AM - 12:05 PM)" },
+  { period: 6, startTime: "12:05", endTime: "12:45", label: "Period 6 (12:05 PM - 12:45 PM)" },
 ];
 
 // Afternoon Session: 6 teaching periods
 export const AFTERNOON_TIME_SLOTS: TimeSlot[] = [
-  { period: 1, startTime: "13:15", endTime: "13:55", label: "Period 1 (01:15 PM - 01:55 PM)" },
-  { period: 2, startTime: "13:55", endTime: "14:35", label: "Period 2 (01:55 PM - 02:35 PM)" },
-  { period: 3, startTime: "14:35", endTime: "15:15", label: "Period 3 (02:35 PM - 03:15 PM)" },
+  { period: 1, startTime: "13:15", endTime: "13:55", label: "Period 1 (1:15 PM - 1:55 PM)" },
+  { period: 2, startTime: "13:55", endTime: "14:35", label: "Period 2 (1:55 PM - 2:35 PM)" },
+  { period: 3, startTime: "14:35", endTime: "15:15", label: "Period 3 (2:35 PM - 3:15 PM)" },
   // Break: 15:15 - 15:30 (3:15 PM - 3:30 PM)
-  { period: 4, startTime: "15:30", endTime: "16:10", label: "Period 4 (03:30 PM - 04:10 PM)" },
-  { period: 5, startTime: "16:10", endTime: "16:50", label: "Period 5 (04:10 PM - 04:50 PM)" },
-  { period: 6, startTime: "16:50", endTime: "17:30", label: "Period 6 (04:50 PM - 05:30 PM)" },
+  { period: 4, startTime: "15:30", endTime: "16:10", label: "Period 4 (3:30 PM - 4:10 PM)" },
+  { period: 5, startTime: "16:10", endTime: "16:50", label: "Period 5 (4:10 PM - 4:50 PM)" },
+  { period: 6, startTime: "16:50", endTime: "17:30", label: "Period 6 (4:50 PM - 5:30 PM)" },
 ];
 
 export const BREAK_TIMES = {
-  MORNING: { startTime: "10:30", endTime: "10:45", label: "Break (10:30 - 10:45)" },
-  AFTERNOON: { startTime: "15:15", endTime: "15:30", label: "Break (03:15 PM - 03:30 PM)" },
+  MORNING: { startTime: "10:30", endTime: "10:45", label: "Break (10:30 AM - 10:45 AM)" },
+  AFTERNOON: { startTime: "15:15", endTime: "15:30", label: "Break (3:15 PM - 3:30 PM)" },
 };
 
 // Helper function to get time slots based on session

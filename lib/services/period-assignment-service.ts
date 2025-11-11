@@ -15,6 +15,7 @@ import { handleDatabaseOperation } from '@/lib/database/errors';
 
 export interface TeacherPeriodAssignment {
   periodNumber: number;
+  session: 'MORNING' | 'AFTERNOON'; // Add session information
   startTime: string;
   endTime: string;
   subject: string;
@@ -76,6 +77,11 @@ class PeriodAssignmentService {
     dayOfWeek: string
   ): Promise<TeacherPeriodAssignment[]> {
     return handleDatabaseOperation(async () => {
+      // Validate inputs
+      if (!teacherId || !classId || !dayOfWeek) {
+        console.warn('[PeriodAssignmentService] Invalid parameters:', { teacherId, classId, dayOfWeek });
+        return [];
+      }
       // Check cache first
       const cacheKey = `${teacherId}-${classId}-${dayOfWeek}`;
       const cached = this.cache.get(cacheKey);
@@ -104,11 +110,11 @@ class PeriodAssignmentService {
           hours,
           start_time,
           end_time,
-          classes!inner(id, name)
+          class_id
         `)
         .eq('class_id', classId)
         .eq('day_of_week', dayOfWeek.toLowerCase())
-        .or(`teacher_id.eq.${teacherId},teacher_name.ilike.%${teacherId}%`);
+        .eq('teacher_id', teacherId);
 
       if (error) {
         console.error('[PeriodAssignmentService] Error fetching schedule entries:', error);
@@ -216,7 +222,7 @@ class PeriodAssignmentService {
           classes!inner(id, name)
         `)
         .eq('day_of_week', dayOfWeek.toLowerCase())
-        .or(`teacher_id.eq.${teacherId},teacher_name.ilike.%${teacherName}%`);
+        .eq('teacher_id', teacherId);
 
       if (error) {
         console.error('[PeriodAssignmentService] Error fetching daily schedule:', error);
@@ -273,26 +279,30 @@ class PeriodAssignmentService {
     const startTime = entry.start_time;
     const endTime = entry.end_time;
     
+    // Determine if this is morning or afternoon session based on start time
+    const [startHour] = startTime.split(':').map(Number);
+    const isAfternoonSession = startHour >= 13; // 1:00 PM or later
+    const session: 'MORNING' | 'AFTERNOON' = isAfternoonSession ? 'AFTERNOON' : 'MORNING';
+    
     // Calculate period numbers based on start time
-    // Assuming periods are: 1(8-9), 2(9-10), 3(10-11), 4(11-12), 5(13-14), 6(14-15)
-    const startPeriod = this.timeToPeriodNumbe
-r(startTime);
+    const startPeriod = this.timeToPeriodNumber(startTime);
     
     for (let i = 0; i < hours; i++) {
       const periodNumber = startPeriod + i;
       if (periodNumber >= 1 && periodNumber <= 6) {
-        const periodStartTime = this.periodNumberToTime(periodNumber);
-        const periodEndTime = this.periodNumberToTime(periodNumber + 1);
+        // Get correct start and end times based on session and period
+        const { startTime: periodStartTime, endTime: periodEndTime } = this.getPeriodTimes(periodNumber, session);
         
         assignments.push({
           periodNumber,
+          session,
           startTime: periodStartTime,
           endTime: periodEndTime,
           subject: entry.subject,
           teacherName: entry.teacher_name,
           teacherId: entry.teacher_id,
           classId: entry.class_id,
-          className: entry.classes?.name || 'Unknown Class',
+          className: 'Unknown Class', // Will be fetched separately if needed
           dayOfWeek: entry.day_of_week,
           scheduleEntryId: entry.id
         });
@@ -324,20 +334,92 @@ Number(timeString: string): number {
   }
 
   /**
-   * Convert period number to time string
+   * Get period start and end times based on session and period number
+   */
+  private getPeriodTimes(periodNumber: number, session: 'MORNING' | 'AFTERNOON'): { startTime: string; endTime: string } {
+    if (session === 'MORNING') {
+      const morningTimes: Record<number, { startTime: string; endTime: string }> = {
+        1: { startTime: '8:30 AM', endTime: '9:10 AM' },
+        2: { startTime: '9:10 AM', endTime: '9:50 AM' },
+        3: { startTime: '9:50 AM', endTime: '10:30 AM' },
+        4: { startTime: '10:45 AM', endTime: '11:25 AM' },
+        5: { startTime: '11:25 AM', endTime: '12:05 PM' },
+        6: { startTime: '12:05 PM', endTime: '12:45 PM' },
+      };
+      return morningTimes[periodNumber] || { startTime: '8:30 AM', endTime: '9:10 AM' };
+    } else {
+      const afternoonTimes: Record<number, { startTime: string; endTime: string }> = {
+        1: { startTime: '1:15 PM', endTime: '1:55 PM' },
+        2: { startTime: '1:55 PM', endTime: '2:35 PM' },
+        3: { startTime: '2:35 PM', endTime: '3:15 PM' },
+        4: { startTime: '3:30 PM', endTime: '4:10 PM' },
+        5: { startTime: '4:10 PM', endTime: '4:50 PM' },
+        6: { startTime: '4:50 PM', endTime: '5:30 PM' },
+      };
+      return afternoonTimes[periodNumber] || { startTime: '1:15 PM', endTime: '1:55 PM' };
+    }
+  }
+
+  /**
+   * Convert period number to time string (12-hour format for university schedule)
+   * Note: This is kept for backward compatibility but getPeriodTimes should be used instead
    */
   private periodNumberToTime(periodNumber: number): string {
+    // Default to morning times for backward compatibility
     const timeMap: Record<number, string> = {
-      1: '08:00',
-      2: '09:00',
-      3: '10:00',
-      4: '11:00',
-      5: '13:00',
-      6: '14:00',
-      7: '15:00' // End time for period 6
+      1: '8:30 AM',
+      2: '9:10 AM',
+      3: '9:50 AM',
+      4: '10:45 AM',
+      5: '11:25 AM',
+      6: '12:05 PM',
     };
     
-    return timeMap[periodNumber] || '08:00';
+    return timeMap[periodNumber] || '8:30 AM';
+  }
+
+  /**
+   * Convert time string to period number for university schedule
+   * Morning Session: 8:30 AM - 12:45 PM (Periods 1-6)
+   * Afternoon Session: 1:15 PM - 5:30 PM (Periods 1-6)
+   * Note: Each session has its own period numbering starting from 1
+   */
+  private timeToPeriodNumber(timeString: string): number {
+    // Parse time string (e.g., "08:30:00" or "13:15")
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes;
+    
+    // Morning Session: 8:30 AM - 12:45 PM (Periods 1-6)
+    if (totalMinutes >= 510 && totalMinutes < 765) { // 8:30 AM - 12:45 PM
+      if (totalMinutes >= 510 && totalMinutes < 550) return 1; // 8:30-9:10 AM
+      if (totalMinutes >= 550 && totalMinutes < 590) return 2; // 9:10-9:50 AM
+      if (totalMinutes >= 590 && totalMinutes < 630) return 3; // 9:50-10:30 AM
+      // 15 min break: 10:30-10:45
+      if (totalMinutes >= 645 && totalMinutes < 685) return 4; // 10:45-11:25 AM
+      if (totalMinutes >= 685 && totalMinutes < 725) return 5; // 11:25 AM-12:05 PM
+      if (totalMinutes >= 725 && totalMinutes < 765) return 6; // 12:05-12:45 PM
+    }
+    
+    // Afternoon Session: 1:15 PM - 5:30 PM (Periods 1-6)
+    if (totalMinutes >= 795 && totalMinutes < 1050) { // 1:15 PM - 5:30 PM
+      if (totalMinutes >= 795 && totalMinutes < 835) return 1; // 1:15-1:55 PM
+      if (totalMinutes >= 835 && totalMinutes < 875) return 2; // 1:55-2:35 PM
+      if (totalMinutes >= 875 && totalMinutes < 915) return 3; // 2:35-3:15 PM
+      // 15 min break: 3:15-3:30
+      if (totalMinutes >= 930 && totalMinutes < 970) return 4; // 3:30-4:10 PM
+      if (totalMinutes >= 970 && totalMinutes < 1010) return 5; // 4:10-4:50 PM
+      if (totalMinutes >= 1010 && totalMinutes < 1050) return 6; // 4:50-5:30 PM
+    }
+    
+    // For common times, map directly
+    if (hours === 13 && minutes >= 15) return 1; // 1:15 PM = Afternoon Period 1
+    if (hours === 14) return 2; // 2:00 PM = Afternoon Period 2
+    if (hours === 15) return 3; // 3:00 PM = Afternoon Period 3
+    if (hours === 16) return 4; // 4:00 PM = Afternoon Period 4
+    if (hours === 17) return 6; // 5:00 PM = Afternoon Period 6
+    
+    // Default to period 1 if time doesn't match expected ranges
+    return 1;
   }
 
   /**
@@ -570,7 +652,7 @@ Number(timeString: string): number {
       const { data: teachers, error } = await supabase
         .from('teachers')
         .select('id, first_name, last_name')
-        .or(`first_name.ilike.%${teacherName}%,last_name.ilike.%${teacherName}%`)
+        .ilike('first_name', `%${teacherName}%`)
         .limit(1);
 
       if (error || !teachers || teachers.length === 0) {

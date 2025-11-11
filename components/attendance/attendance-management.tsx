@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AttendanceGrid } from "./attendance-grid";
-import { PeriodAttendanceForm } from "./period-attendance-form";
 import { BulkActionsPanel } from "./bulk-actions-panel";
 import { RiskIndicatorsGrid, calculateStudentRisk } from "./student-risk-indicators";
 import { useResponsive } from "@/lib/hooks/use-responsive";
@@ -48,7 +47,7 @@ export function AttendanceManagement({
   date = new Date(),
   className,
   teacherId,
-  enablePeriodFiltering = true,
+  enablePeriodFiltering = false, // Temporarily disabled to show all periods
 }: AttendanceManagementProps) {
   // Responsive hook
   const { isMobile } = useResponsive();
@@ -159,22 +158,31 @@ export function AttendanceManagement({
 
     try {
       const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      
+      // Validate inputs
+      if (!currentTeacherId || !classId || !dayOfWeek) {
+        throw new Error('Missing required parameters for period assignment loading');
+      }
+      
       const periods = await periodAssignmentService.getTeacherPeriods(
         currentTeacherId,
         classId,
         dayOfWeek
       );
       
-      setTeacherPeriods(periods);
+      setTeacherPeriods(periods || []);
       console.log('Loaded teacher periods:', periods);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load period assignments';
       setPeriodAssignmentError(errorMessage);
       console.error('Failed to load period assignments:', err);
       
+      // Set empty periods as fallback
+      setTeacherPeriods([]);
+      
       // Show toast notification for period assignment errors
       toast.error('Failed to load period assignments', {
-        description: errorMessage,
+        description: 'Using default period view. Please check your schedule configuration.',
         duration: 5000,
       });
     } finally {
@@ -353,7 +361,7 @@ export function AttendanceManagement({
   }, [hasUnsavedChanges, autoSaveEnabled, connectionStatus, handleSave, lastSyncTime]);
 
   // Handle status change for individual student with auto-save and risk monitoring
-  const handleStatusChange = async (studentId: string, status: AttendanceStatus) => {
+  const handleStatusChange = async (studentId: string, status: AttendanceStatus, periodNumber?: number) => {
     const originalStudent = students.find(s => s.id === studentId);
     
     // Update local state immediately (optimistic update)
@@ -419,17 +427,35 @@ export function AttendanceManagement({
       // Auto-save individual change for ALL 6 periods
       if (!originalStudent) return;
       
-      // Create records for all 6 periods with the same status
+      // Create records based on whether it's period-specific or global
       const attendanceRecords = [];
-      for (let period = 1; period <= 6; period++) {
+      
+      if (periodNumber) {
+        // Period-specific status change
         attendanceRecords.push({
           studentId,
           status,
-          periodNumber: period,
-          teacherName: `Teacher ${Math.ceil(period / 2)}`, // Default teacher names
+          periodNumber,
+          teacherName: currentTeacherId || 'Unknown Teacher',
           subject: classData?.name || 'Unknown Subject',
           notes: null,
         });
+      } else {
+        // Global status change (SICK/LEAVE for all assigned periods)
+        const assignedPeriods = teacherPeriods && teacherPeriods.length > 0 
+          ? teacherPeriods.map(p => p.periodNumber).filter((p, i, arr) => arr.indexOf(p) === i)
+          : [1, 2, 3, 4, 5, 6, 7, 8]; // University has 8 periods
+          
+        for (const period of assignedPeriods) {
+          attendanceRecords.push({
+            studentId,
+            status,
+            periodNumber: period,
+            teacherName: currentTeacherId || 'Unknown Teacher',
+            subject: classData?.name || 'Unknown Subject',
+            notes: null,
+          });
+        }
       }
 
       const response = await fetch('/api/attendance', {
@@ -441,12 +467,13 @@ export function AttendanceManagement({
           classId,
           date: date.toISOString().split('T')[0],
           records: attendanceRecords,
-          markedBy: 'current-teacher-id',
+          markedBy: currentTeacherId || 'unknown-teacher',
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to save attendance: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to save attendance: ${response.statusText}. ${errorData.details || ''}`);
       }
 
       // Success - no need to show toast for individual changes to avoid spam
@@ -1097,6 +1124,7 @@ export function AttendanceManagement({
       {/* Main Content */}
       {activeTab === "attendance" ? (
         <AttendanceGrid
+          key={`attendance-${students.map(s => `${s.id}-${s.status}`).join('-')}`}
           classId={classId}
           students={students}
           isLoading={isLoading}

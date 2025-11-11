@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { BookOpen, User, Clock, Calendar as CalendarIcon, Save, Plus, Trash2 } from "lucide-react";
 import { ScheduleEntry, DAYS } from "@/lib/data/schedule-data";
-import { getTimeSlotsBySession } from "@/lib/data/teaching-times";
+import { getTimeSlotsBySession, formatTimeDisplay } from "@/lib/data/teaching-times";
 import * as scheduleApi from "@/app/api/schedule/schedule-api";
 import { toast } from "sonner";
 
@@ -511,7 +511,7 @@ export function AddScheduleEntryDialog({
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-semibold text-orange-900">Total Time:</span>
-                  <span className="text-orange-700">{calculatedTimeRange.startTime} - {calculatedTimeRange.endTime}</span>
+                  <span className="text-orange-700">{formatTimeDisplay(calculatedTimeRange.startTime)} - {formatTimeDisplay(calculatedTimeRange.endTime)}</span>
                   <span className="text-orange-600">({calculatedTimeRange.hours} {calculatedTimeRange.hours === 1 ? 'period' : 'periods'}, {calculatedTimeRange.hours * 40} minutes)</span>
                 </div>
               </div>
