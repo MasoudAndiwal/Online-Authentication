@@ -44,9 +44,42 @@ export default function TeacherClassDetailsPage() {
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
   const [currentPath] = React.useState(`/teacher/dashboard/${classId}`);
   
+  // Class data state
+  const [classData, setClassData] = React.useState<{
+    name: string;
+    session: string;
+    major: string;
+    semester: number;
+  } | null>(null);
+  const [classLoading, setClassLoading] = React.useState(true);
+  
   // Responsive and touch support
   const { isMobile, isTouch } = useResponsive();
   const { lightTap } = useHapticFeedback();
+
+  // Fetch class data
+  React.useEffect(() => {
+    const fetchClassData = async () => {
+      try {
+        setClassLoading(true);
+        const response = await fetch(`/api/classes/${classId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setClassData(data);
+        } else {
+          console.error('Failed to fetch class data');
+        }
+      } catch (error) {
+        console.error('Error fetching class data:', error);
+      } finally {
+        setClassLoading(false);
+      }
+    };
+
+    if (classId) {
+      fetchClassData();
+    }
+  }, [classId]);
 
   // Use authenticated user data
   const displayUser = user ? {
@@ -107,11 +140,16 @@ export default function TeacherClassDetailsPage() {
     return <AuthLoadingScreen />;
   }
 
+  // Generate class display name
+  const classDisplayName = classData 
+    ? `${classData.name} - ${classData.session}` 
+    : 'Loading...';
+
   return (
     <ModernDashboardLayout
       user={displayUser}
       title={`Class Details`}
-      subtitle={`Detailed view and management for class ${classId}`}
+      subtitle={`Detailed view and management for ${classDisplayName}`}
       currentPath={currentPath}
       onNavigate={handleNavigation}
       onLogout={handleLogoutClick}
@@ -158,7 +196,17 @@ export default function TeacherClassDetailsPage() {
                 Class Details
               </h1>
               <p className="text-sm sm:text-base lg:text-lg text-slate-600 mb-4 sm:mb-6">
-                Comprehensive view and management for Class ID: {classId}
+                {classLoading ? (
+                  <span className="animate-pulse">Loading class information...</span>
+                ) : classData ? (
+                  <>
+                    Comprehensive view and management for <span className="font-semibold text-slate-900">{classData.name} - {classData.session}</span>
+                    {classData.major && <span className="text-slate-500"> • {classData.major}</span>}
+                    {classData.semester && <span className="text-slate-500"> • Semester {classData.semester}</span>}
+                  </>
+                ) : (
+                  `Comprehensive view and management for class ${classId}`
+                )}
               </p>
               
               {/* Quick Actions - Mobile Responsive */}
@@ -303,13 +351,44 @@ export default function TeacherClassDetailsPage() {
                         Class Information
                       </h3>
                       
-                      <p className="text-slate-600 mb-6">
-                        Detailed class information will be loaded from the database in future tasks.
-                      </p>
-                      
-                      <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
-                        <p className="font-semibold text-slate-900">Class ID: {classId}</p>
-                      </div>
+                      {classLoading ? (
+                        <div className="animate-pulse">
+                          <div className="h-4 bg-slate-200 rounded w-3/4 mx-auto mb-4"></div>
+                          <div className="h-4 bg-slate-200 rounded w-1/2 mx-auto"></div>
+                        </div>
+                      ) : classData ? (
+                        <div className="space-y-4">
+                          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
+                            <p className="text-sm text-slate-500 mb-1">Class Name</p>
+                            <p className="font-semibold text-slate-900 text-lg">{classData.name}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
+                              <p className="text-sm text-slate-500 mb-1">Session</p>
+                              <p className="font-semibold text-slate-900">{classData.session}</p>
+                            </div>
+                            
+                            {classData.semester && (
+                              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
+                                <p className="text-sm text-slate-500 mb-1">Semester</p>
+                                <p className="font-semibold text-slate-900">{classData.semester}</p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {classData.major && (
+                            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
+                              <p className="text-sm text-slate-500 mb-1">Major</p>
+                              <p className="font-semibold text-slate-900">{classData.major}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-slate-600 mb-6">
+                          Unable to load class information.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </ModernCardContent>

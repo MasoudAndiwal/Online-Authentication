@@ -2,21 +2,7 @@
 
 import * as React from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Calendar, 
-  Clock, 
-  MapPin,
-  Plus,
-  Edit,
-  Trash2,
-  MoreVertical,
-  BookOpen,
-  Users,
-  AlertCircle,
-  CheckCircle,
-  Download,
-  Filter
-} from 'lucide-react'
+import { Calendar, Clock, BookOpen, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // Utility function to convert 24-hour time to 12-hour format
@@ -29,18 +15,68 @@ const formatTime12Hour = (time24: string): string => {
     const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
     
     return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-  } catch (error) {
+  } catch {
     return time24;
   }
 };
+
+// Utility function to get period number based on time
+// 6 periods total: 3 in morning, 3 in afternoon
+const getPeriodNumber = (startTime: string): number => {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes;
+  
+  // Morning session periods (8:30 AM - 12:45 PM)
+  // Period 1: 8:30 - 9:10
+  if (totalMinutes >= 510 && totalMinutes < 550) return 1;
+  // Period 2: 9:10 - 9:50
+  if (totalMinutes >= 550 && totalMinutes < 590) return 2;
+  // Period 3: 9:50 - 10:30
+  if (totalMinutes >= 590 && totalMinutes < 630) return 3;
+  // Period 4: 10:45 - 11:25 (after break)
+  if (totalMinutes >= 645 && totalMinutes < 685) return 4;
+  // Period 5: 11:25 - 12:05
+  if (totalMinutes >= 685 && totalMinutes < 725) return 5;
+  // Period 6: 12:05 - 12:45
+  if (totalMinutes >= 725 && totalMinutes < 765) return 6;
+  
+  // Afternoon session periods (1:15 PM - 5:30 PM)
+  // Period 1: 1:15 - 1:55
+  if (totalMinutes >= 795 && totalMinutes < 835) return 1;
+  // Period 2: 1:55 - 2:35
+  if (totalMinutes >= 835 && totalMinutes < 875) return 2;
+  // Period 3: 2:35 - 3:15
+  if (totalMinutes >= 875 && totalMinutes < 915) return 3;
+  // Period 4: 3:30 - 4:10 (after break)
+  if (totalMinutes >= 930 && totalMinutes < 970) return 4;
+  // Period 5: 4:10 - 4:50
+  if (totalMinutes >= 970 && totalMinutes < 1010) return 5;
+  // Period 6: 4:50 - 5:30
+  if (totalMinutes >= 1010 && totalMinutes < 1050) return 6;
+  
+  return 1; // Default to period 1
+};
+
+// Utility function to format date in Afghanistan format (Persian calendar)
+const formatAfghanDate = (date: Date): string => {
+  try {
+    // Use Persian calendar locale for Afghanistan
+    return date.toLocaleDateString('fa-AF', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      calendar: 'persian'
+    });
+  } catch {
+    // Fallback to standard format if Persian calendar not supported
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric'
+    });
+  }
+};
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   Select,
   SelectContent,
@@ -63,8 +99,7 @@ export interface ClassScheduleEntry {
   subject: string
   teacherName: string
   teacherId: string
-  type: 'lecture' | 'lab' | 'tutorial' | 'exam'
-  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled'
+  major?: string // Added major field
   attendanceCount?: number
   totalStudents: number
   notes?: string
@@ -81,72 +116,142 @@ interface ClassScheduleDashboardProps {
 export function ClassScheduleDashboard({ classId, className }: ClassScheduleDashboardProps) {
   const [selectedWeek, setSelectedWeek] = React.useState(new Date())
   const [viewMode, setViewMode] = React.useState<'week' | 'month'>('week')
-  const [filterType, setFilterType] = React.useState<string>('all')
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [scheduleEntries, setScheduleEntries] = React.useState<ClassScheduleEntry[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [classData, setClassData] = React.useState<{
+    name: string;
+    session: string;
+    major: string;
+  } | null>(null)
 
-  // Mock schedule data - will be replaced with actual API calls
-  const [scheduleEntries] = React.useState<ClassScheduleEntry[]>([
-    {
-      id: '1',
-      dayOfWeek: 1, // Monday
-      dayName: 'Monday',
-      startTime: '08:00',
-      endTime: '09:30',
-      duration: 90,
-      room: 'A-204',
-      building: 'Engineering Building',
-      subject: 'Computer Science Fundamentals',
-      teacherName: 'Dr. Ahmed Hassan',
-      teacherId: 'T001',
-      type: 'lecture',
-      status: 'scheduled',
-      attendanceCount: 26,
-      totalStudents: 28,
-      isRecurring: true,
-      recurringPattern: 'weekly',
-      color: 'bg-blue-500'
-    },
-    {
-      id: '2',
-      dayOfWeek: 3, // Wednesday
-      dayName: 'Wednesday',
-      startTime: '10:00',
-      endTime: '11:30',
-      duration: 90,
-      room: 'B-101',
-      building: 'Engineering Building',
-      subject: 'Programming Lab',
-      teacherName: 'Dr. Ahmed Hassan',
-      teacherId: 'T001',
-      type: 'lab',
-      status: 'scheduled',
-      attendanceCount: 24,
-      totalStudents: 28,
-      isRecurring: true,
-      recurringPattern: 'weekly',
-      color: 'bg-green-500'
-    },
-    {
-      id: '3',
-      dayOfWeek: 5, // Friday
-      dayName: 'Friday',
-      startTime: '14:00',
-      endTime: '15:30',
-      duration: 90,
-      room: 'C-301',
-      building: 'Engineering Building',
-      subject: 'Tutorial Session',
-      teacherName: 'Dr. Ahmed Hassan',
-      teacherId: 'T001',
-      type: 'tutorial',
-      status: 'completed',
-      attendanceCount: 28,
-      totalStudents: 28,
-      isRecurring: true,
-      recurringPattern: 'weekly',
-      color: 'bg-purple-500'
-    }
-  ])
+  // Fetch class data and schedule data from database
+  React.useEffect(() => {
+    const fetchData = async () => {
+      if (!classId) return;
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        console.log('[Schedule Dashboard] Fetching data for class:', classId);
+        
+        // Fetch class data
+        const classResponse = await fetch(`/api/classes/${classId}`);
+        if (classResponse.ok) {
+          const classResult = await classResponse.json();
+          console.log('[Schedule Dashboard] Received class data:', classResult);
+          setClassData({
+            name: classResult.name,
+            session: classResult.session,
+            major: classResult.major || '',
+          });
+        }
+        
+        // Fetch schedule data
+        const response = await fetch(`/api/schedule/class?classId=${classId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch schedule data');
+        }
+
+        const result = await response.json();
+        console.log('[Schedule Dashboard] Received schedule data:', result);
+        console.log('[Schedule Dashboard] Raw entries:', result.data);
+
+        if (result.success && result.data) {
+          // Map database entries to component format
+          const mappedEntries: ClassScheduleEntry[] = result.data.map((entry: {
+            id: string;
+            dayOfWeek: string;
+            startTime: string;
+            endTime: string;
+            subject: string;
+            teacherName: string;
+            teacherId: string | null;
+          }) => {
+            // Map day_of_week string to number (0 = Sunday, 1 = Monday, etc.)
+            const dayMap: Record<string, number> = {
+              'sunday': 0,
+              'monday': 1,
+              'tuesday': 2,
+              'wednesday': 3,
+              'thursday': 4,
+              'friday': 5,
+              'saturday': 6,
+            };
+
+            const dayOfWeek = dayMap[entry.dayOfWeek.toLowerCase()] ?? 0;
+            const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
+            
+            console.log(`[Mapping] ${entry.subject}: "${entry.dayOfWeek}" -> ${dayOfWeek} (${dayName})`);
+
+            // Calculate duration in minutes
+            const [startHour, startMin] = entry.startTime.split(':').map(Number);
+            const [endHour, endMin] = entry.endTime.split(':').map(Number);
+            const duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+
+            // Determine type based on subject name or default to lecture
+            let type: 'lecture' | 'lab' | 'tutorial' | 'exam' = 'lecture';
+            const subjectLower = entry.subject.toLowerCase();
+            if (subjectLower.includes('lab')) type = 'lab';
+            else if (subjectLower.includes('tutorial')) type = 'tutorial';
+            else if (subjectLower.includes('exam')) type = 'exam';
+
+            // Assign color based on type
+            const colorMap = {
+              'lecture': 'bg-blue-500',
+              'lab': 'bg-green-500',
+              'tutorial': 'bg-purple-500',
+              'exam': 'bg-red-500',
+            };
+
+            return {
+              id: entry.id,
+              dayOfWeek,
+              dayName,
+              startTime: entry.startTime,
+              endTime: entry.endTime,
+              duration,
+              room: '',
+              building: '',
+              subject: entry.subject,
+              teacherName: entry.teacherName,
+              teacherId: entry.teacherId || '',
+              major: classData?.major || '',
+              type,
+              status: 'scheduled',
+              totalStudents: 0,
+              isRecurring: true,
+              recurringPattern: 'weekly',
+              color: colorMap[type],
+            };
+          });
+
+          console.log('[Schedule Dashboard] Mapped', mappedEntries.length, 'schedule entries');
+          console.log('[Schedule Dashboard] Summary by day:');
+          const byDay = mappedEntries.reduce((acc, e) => {
+            if (!acc[e.dayName]) acc[e.dayName] = [];
+            acc[e.dayName].push(`${e.subject} at ${e.startTime}`);
+            return acc;
+          }, {} as Record<string, string[]>);
+          console.table(byDay);
+          setScheduleEntries(mappedEntries);
+        } else {
+          console.log('[Schedule Dashboard] No schedule data found');
+          setScheduleEntries([]);
+        }
+      } catch (err) {
+        console.error('[Schedule Dashboard] Error fetching schedule:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load schedule');
+        setScheduleEntries([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [classId, classData?.major])
 
   const daysOfWeek = [
     'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
@@ -154,81 +259,17 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
 
   const timeSlots = [
     '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30', '18:00'
+    '12:00', '12:30', '13:00', '13:15', '13:30', '13:55', '14:00', '14:30', '14:35', '15:00', '15:15', '15:30',
+    '16:00', '16:10', '16:30', '16:50', '17:00', '17:30', '18:00'
   ]
 
-  // Filter schedule entries
+  // Show all schedule entries (filter removed since type badges are removed)
   const filteredEntries = React.useMemo(() => {
-    return scheduleEntries.filter(entry => {
-      if (filterType === 'all') return true
-      return entry.type === filterType
-    })
-  }, [scheduleEntries, filterType])
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'lecture':
-        return <BookOpen className="h-4 w-4" />
-      case 'lab':
-        return <Users className="h-4 w-4" />
-      case 'tutorial':
-        return <Clock className="h-4 w-4" />
-      case 'exam':
-        return <AlertCircle className="h-4 w-4" />
-      default:
-        return <Calendar className="h-4 w-4" />
-    }
-  }
-
-  const getTypeBadgeColor = (type: string) => {
-    switch (type) {
-      case 'lecture':
-        return 'bg-blue-100 text-blue-700 border-blue-200'
-      case 'lab':
-        return 'bg-green-100 text-green-700 border-green-200'
-      case 'tutorial':
-        return 'bg-purple-100 text-purple-700 border-purple-200'
-      case 'exam':
-        return 'bg-red-100 text-red-700 border-red-200'
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200'
-    }
-  }
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-700 border-blue-200'
-      case 'completed':
-        return 'bg-green-100 text-green-700 border-green-200'
-      case 'cancelled':
-        return 'bg-red-100 text-red-700 border-red-200'
-      case 'rescheduled':
-        return 'bg-orange-100 text-orange-700 border-orange-200'
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200'
-    }
-  }
+    return scheduleEntries
+  }, [scheduleEntries])
 
   const getAttendanceRate = (attendanceCount: number, totalStudents: number) => {
     return ((attendanceCount / totalStudents) * 100).toFixed(1)
-  }
-
-  const handleAddSchedule = () => {
-    console.log('Adding new schedule entry for class:', classId)
-  }
-
-  const handleEditSchedule = (entryId: string) => {
-    console.log('Editing schedule entry:', entryId)
-  }
-
-  const handleDeleteSchedule = (entryId: string) => {
-    console.log('Deleting schedule entry:', entryId)
-  }
-
-  const handleExportSchedule = () => {
-    console.log('Exporting schedule for class:', classId)
   }
 
   const getCurrentWeekDates = () => {
@@ -245,6 +286,41 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
   }
 
   const weekDates = getCurrentWeekDates()
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading schedule...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Failed to load schedule</h3>
+            <p className="text-slate-600 mb-4">{error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -279,34 +355,19 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                     Class Schedule
                   </h1>
                   <p className="text-lg text-slate-600 font-medium mt-2">
-                    Manage class timetable and sessions for Class {classId}
+                    {classData ? (
+                      <>
+                        Manage class timetable and sessions for <span className="font-semibold text-slate-900">{classData.name}</span>
+                        <span className="mx-2">•</span>
+                        <span className="text-orange-600 font-semibold">{classData.session === 'MORNING' ? 'Morning Session' : 'Afternoon Session'}</span>
+                      </>
+                    ) : (
+                      'Loading class information...'
+                    )}
                   </p>
                 </div>
               </motion.div>
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3"
-            >
-              <Button
-                onClick={handleAddSchedule}
-                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-2xl px-6 py-3 text-base font-semibold border-0"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Add Schedule
-              </Button>
-              <Button
-                onClick={handleExportSchedule}
-                variant="outline"
-                className="border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-2xl px-6 py-3 text-base font-semibold"
-              >
-                <Download className="h-5 w-5 mr-2" />
-                Export Schedule
-              </Button>
-            </motion.div>
           </div>
         </div>
       </motion.div>
@@ -329,22 +390,9 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                 <SelectItem value="month">Month View</SelectItem>
               </SelectContent>
             </Select>
-
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-40 border-0 bg-slate-50 focus:bg-white rounded-xl">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="lecture">Lectures</SelectItem>
-                <SelectItem value="lab">Labs</SelectItem>
-                <SelectItem value="tutorial">Tutorials</SelectItem>
-                <SelectItem value="exam">Exams</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <Button
               variant="outline"
               size="sm"
@@ -357,8 +405,12 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
             >
               ←
             </Button>
-            <span className="text-sm font-medium text-slate-700 px-4">
-              {weekDates[0].toLocaleDateString()} - {weekDates[6].toLocaleDateString()}
+            <span className="text-sm font-medium text-slate-700 px-6">
+              {formatAfghanDate(weekDates[0])}
+            </span>
+            <span className="text-slate-400">—</span>
+            <span className="text-sm font-medium text-slate-700 px-6">
+              {formatAfghanDate(weekDates[6])}
             </span>
             <Button
               variant="outline"
@@ -383,7 +435,8 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
         transition={{ delay: 0.3, duration: 0.5 }}
         className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border-0 overflow-hidden"
       >
-        <div className="grid grid-cols-8 gap-0">
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-8 gap-0 min-w-[800px]">
           {/* Time column header */}
           <div className="p-4 bg-slate-50 border-b border-slate-200">
             <span className="text-sm font-semibold text-slate-700">Time</span>
@@ -394,23 +447,32 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
             <div key={day} className="p-4 bg-slate-50 border-b border-slate-200 text-center">
               <div className="text-sm font-semibold text-slate-700">{day}</div>
               <div className="text-xs text-slate-500 mt-1">
-                {weekDates[index].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {weekDates[index].toLocaleDateString('fa-AF', { month: 'short', day: 'numeric' })}
               </div>
             </div>
           ))}
 
           {/* Time slots and schedule entries */}
-          {timeSlots.map((time, timeIndex) => (
+          {timeSlots.map((time) => (
             <React.Fragment key={time}>
               {/* Time label */}
               <div className="p-2 text-xs text-slate-600 border-b border-slate-100 bg-slate-25">
-                {time}
+                {formatTime12Hour(time)}
               </div>
               
               {/* Day columns */}
               {daysOfWeek.map((day, dayIndex) => {
                 const dayEntries = filteredEntries.filter(entry => entry.dayOfWeek === dayIndex)
-                const timeEntry = dayEntries.find(entry => entry.startTime === time)
+                // Match time by comparing first 5 characters (HH:MM) to handle both "08:00" and "08:00:00" formats
+                const timeEntry = dayEntries.find(entry => entry.startTime.substring(0, 5) === time)
+                
+                // Debug logging for first time slot only
+                if (time === '08:00' && dayEntries.length > 0) {
+                  console.log(`[Grid] Day ${day} (${dayIndex}):`, dayEntries.map(e => ({
+                    subject: e.subject,
+                    startTime: e.startTime
+                  })));
+                }
                 
                 return (
                   <div key={`${day}-${time}`} className="p-1 border-b border-slate-100 min-h-[60px] relative">
@@ -418,37 +480,18 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="absolute inset-1 rounded-lg p-2 text-xs text-white shadow-sm"
-                        style={{ backgroundColor: timeEntry.color.replace('bg-', '') }}
+                        className="absolute inset-1 rounded-lg p-2 bg-gradient-to-br from-blue-500 to-blue-600 shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer"
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold truncate">{timeEntry.subject}</span>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-4 w-4 p-0 text-white hover:bg-white/20">
-                                <MoreVertical className="h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditSchedule(timeEntry.id)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDeleteSchedule(timeEntry.id)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        <div className="text-xs opacity-90">
-                          {formatTime12Hour(timeEntry.startTime)} - {formatTime12Hour(timeEntry.endTime)}
-                        </div>
-                        <div className="text-xs opacity-90">
-                          {timeEntry.room}
+                        <div className="space-y-1">
+                          <div className="font-semibold text-xs text-white truncate">
+                            {timeEntry.subject}
+                          </div>
+                          <div className="text-[10px] text-white/90 truncate">
+                            {formatTime12Hour(timeEntry.startTime)} - {formatTime12Hour(timeEntry.endTime)}
+                          </div>
+                          <div className="text-[10px] text-white/80 truncate">
+                            Period {getPeriodNumber(timeEntry.startTime)}
+                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -457,6 +500,7 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
               })}
             </React.Fragment>
           ))}
+          </div>
         </div>
       </motion.div>
 
@@ -471,67 +515,40 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
           >
             <Card className="rounded-2xl shadow-lg border-0 bg-white/80 backdrop-blur-xl hover:shadow-xl transition-all duration-300">
               <CardHeader className="p-6 pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn('p-2 rounded-lg text-white', entry.color)}>
-                      {getTypeIcon(entry.type)}
+                <div className="space-y-2">
+                  <CardTitle className="text-lg font-bold text-slate-900">
+                    {entry.subject}
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">
+                    {entry.dayName} • {formatTime12Hour(entry.startTime)} - {formatTime12Hour(entry.endTime)}
+                  </p>
+                  {classData && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold text-slate-700">{classData.name}</span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-orange-600 font-medium">
+                        {classData.session === 'MORNING' ? 'Morning' : 'Afternoon'}
+                      </span>
                     </div>
-                    <div>
-                      <CardTitle className="text-lg font-bold text-slate-900">
-                        {entry.subject}
-                      </CardTitle>
-                      <p className="text-sm text-slate-600">
-                        {entry.dayName} • {formatTime12Hour(entry.startTime)} - {formatTime12Hour(entry.endTime)}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditSchedule(entry.id)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Schedule
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleDeleteSchedule(entry.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Schedule
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  )}
                 </div>
               </CardHeader>
 
               <CardContent className="p-6 pt-0">
                 <div className="space-y-4">
-                  {/* Badges */}
-                  <div className="flex gap-2">
-                    <Badge className={cn('border-2', getTypeBadgeColor(entry.type))}>
-                      {entry.type}
-                    </Badge>
-                    <Badge className={cn('border-2', getStatusBadgeColor(entry.status))}>
-                      {entry.status}
-                    </Badge>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <MapPin className="h-4 w-4" />
-                    <span>{entry.room}, {entry.building}</span>
-                  </div>
-
-                  {/* Duration */}
+                  {/* Period Number - Show period based on time */}
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <Clock className="h-4 w-4" />
-                    <span>{entry.duration} minutes</span>
+                    <span>Period {getPeriodNumber(entry.startTime)}</span>
                   </div>
+
+                  {/* Major */}
+                  {entry.major && (
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <BookOpen className="h-4 w-4" />
+                      <span>{entry.major}</span>
+                    </div>
+                  )}
 
                   {/* Attendance */}
                   {entry.attendanceCount !== undefined && (
@@ -554,24 +571,6 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                       </div>
                     </div>
                   )}
-
-                  {/* Recurring Pattern */}
-                  {entry.isRecurring && (
-                    <div className="bg-orange-50 rounded-lg p-3">
-                      <p className="text-sm text-orange-800">
-                        <strong>Recurring:</strong> {entry.recurringPattern}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Notes */}
-                  {entry.notes && (
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <p className="text-sm text-slate-700">
-                        <strong>Notes:</strong> {entry.notes}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -591,17 +590,8 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
             No schedule entries found
           </h3>
           <p className="text-slate-600 mb-6">
-            {filterType !== 'all'
-              ? `No ${filterType} sessions found for this class.`
-              : 'This class doesn\'t have any scheduled sessions yet.'}
+            This class doesn&apos;t have any scheduled sessions yet. Please contact the office to add schedule entries.
           </p>
-          <Button
-            onClick={handleAddSchedule}
-            className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-lg shadow-orange-500/25 rounded-xl px-6 py-3 font-semibold border-0"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add First Schedule
-          </Button>
         </motion.div>
       )}
     </div>

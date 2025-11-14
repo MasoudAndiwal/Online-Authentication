@@ -1205,7 +1205,7 @@ export function AttendanceManagement({
                         Today is {date.toLocaleDateString('en-US', { weekday: 'long' })} - a weekend day in Afghanistan.
                       </p>
                       <p className="text-xs sm:text-sm text-emerald-600 mt-2">
-                        No classes are scheduled on weekends. Enjoy your day off! 🌟
+                        No classes are scheduled on weekends. Enjoy your day off! 
                       </p>
                     </div>
                   </div>

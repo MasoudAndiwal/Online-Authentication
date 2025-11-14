@@ -70,60 +70,40 @@ export function AttendanceHistoryView({
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"records" | "stats">("stats");
 
-  // Mock data for demo
+  // Fetch real data from API
   React.useEffect(() => {
-    const generateMockData = () => {
-      const mockRecords: AttendanceRecord[] = [];
-      const mockStats: DailyStats[] = [];
+    const fetchAttendanceHistory = async () => {
+      if (!classId) return;
       
-      // Generate data for the last 30 days
-      for (let i = 0; i < 30; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+      setIsLoading(true);
+      
+      try {
+        const response = await fetch(
+          `/api/attendance/history?classId=${classId}&dateRange=${dateRange}`
+        );
         
-        // Generate daily stats
-        const total = 25;
-        const present = Math.floor(Math.random() * 5) + 20; // 20-25 present
-        const absent = total - present;
-        const late = Math.floor(Math.random() * 3);
-        const excused = Math.floor(Math.random() * 2);
-        
-        mockStats.push({
-          date: dateStr,
-          total,
-          present,
-          absent,
-          late,
-          excused,
-          rate: Math.round((present / total) * 100),
-        });
-        
-        // Generate individual records for this date
-        for (let j = 0; j < total; j++) {
-          const status = j < present ? 'PRESENT' : 
-                       j < present + late ? 'LATE' :
-                       j < present + late + excused ? 'EXCUSED' : 'ABSENT';
-          
-          mockRecords.push({
-            id: `${dateStr}-${j}`,
-            date: dateStr,
-            studentId: `STU${String(j + 1).padStart(3, '0')}`,
-            studentName: `Student ${j + 1}`,
-            status,
-            markedAt: `${date.toISOString().split('T')[0]}T09:00:00Z`,
-            markedBy: 'Teacher',
-          });
+        if (!response.ok) {
+          throw new Error('Failed to fetch attendance history');
         }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setRecords(result.data.records || []);
+          setDailyStats(result.data.dailyStats || []);
+        }
+      } catch (error) {
+        console.error('Error fetching attendance history:', error);
+        // Set empty data on error
+        setRecords([]);
+        setDailyStats([]);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setRecords(mockRecords);
-      setDailyStats(mockStats.reverse()); // Most recent first
-      setIsLoading(false);
     };
 
-    generateMockData();
-  }, []);
+    fetchAttendanceHistory();
+  }, [classId, dateRange]);
 
   // Filter records based on search and filters
   const filteredRecords = React.useMemo(() => {

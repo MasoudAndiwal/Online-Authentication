@@ -190,21 +190,21 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                             <div className="p-1.5 bg-white/80 rounded-lg flex-shrink-0">
                               <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
-                            <span className="font-bold text-sm sm:text-base md:text-lg truncate">{entry.subject}</span>
+                            <span className="font-bold text-sm sm:text-base md:text-lg break-words">{entry.subject}</span>
                           </div>
                           
                           <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm mt-2">
                             <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
                               <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                              <span className="font-medium truncate max-w-[120px] sm:max-w-none">{entry.teacherName}</span>
+                              <span className="font-medium break-words">{entry.teacherName}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">
+                            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/60 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg flex-shrink-0">
                               <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
                               <span className="font-medium text-xs whitespace-nowrap">
                                 {formatTime12Hour(entry.startTime)} - {formatTime12Hour(entry.endTime)}
                               </span>
                             </div>
-                            <Badge variant="outline" className="bg-white/70 font-semibold shadow-sm text-xs">
+                            <Badge variant="outline" className="bg-white/70 font-semibold shadow-sm text-xs flex-shrink-0">
                               {entry.hours}h
                             </Badge>
                           </div>
