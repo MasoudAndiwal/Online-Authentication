@@ -2,39 +2,16 @@
 
 import * as React from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Users, 
-  Search, 
-  MoreVertical,
-  Mail,
-  Phone,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  UserCheck,
-  UserX,
-  Download,
-  Plus,
-  Edit,
-  Trash2
+import { Users, Search, MoreVertical,Mail,Phone,AlertTriangle,CheckCircle,Clock,UserCheck,UserX,Download,Edit,Trash2
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
@@ -44,8 +21,10 @@ export interface ClassStudent {
   studentId: string
   firstName: string
   lastName: string
+  fatherName?: string
   email: string
   phone: string
+  fatherPhone?: string
   avatar?: string
   attendanceRate: number
   totalClasses: number
@@ -75,6 +54,10 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
   const [isLoading, setIsLoading] = React.useState(true)
   const [students, setStudents] = React.useState<ClassStudent[]>([])
   const [error, setError] = React.useState<string | null>(null)
+  const [classData, setClassData] = React.useState<{
+    name: string;
+    session: string;
+  } | null>(null)
 
   // Fetch class data and students
   React.useEffect(() => {
@@ -88,6 +71,12 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         const classInfo = await classResponse.json()
         
         console.log('Class data:', classInfo)
+        
+        // Store class data
+        setClassData({
+          name: classInfo.name,
+          session: classInfo.session || 'MORNING'
+        })
         
         // Construct class section key with uppercase session (matches database)
         const classSectionKey = `${classInfo.name} - ${classInfo.session || 'MORNING'}`
@@ -107,31 +96,44 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
           studentId: string;
           firstName: string;
           lastName: string;
+          fatherName?: string;
           username: string;
           phone: string;
+          fatherPhone?: string;
           status?: string;
           createdAt?: string;
-          fatherPhone?: string;
-        }) => ({
-          id: student.id,
-          studentId: student.studentId,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          email: student.username, // Using username as email
-          phone: student.phone,
-          attendanceRate: 0, // TODO: Calculate from attendance records
-          totalClasses: 0,
-          presentCount: 0,
-          absentCount: 0,
-          sickCount: 0,
-          leaveCount: 0,
-          status: student.status || 'Active',
-          riskLevel: 'low',
-          lastAttendance: new Date(),
-          enrollmentDate: new Date(student.createdAt || Date.now()),
-          parentContact: student.fatherPhone || '',
-          notes: ''
-        }))
+        }) => {
+          // Generate sample attendance data (will be replaced with real data later)
+          const presentCount = Math.floor(Math.random() * 15) + 15; // 15-30
+          const absentCount = Math.floor(Math.random() * 4) + 2;    // 2-6
+          const sickCount = Math.floor(Math.random() * 2) + 1;      // 1-3
+          const leaveCount = Math.floor(Math.random() * 2) + 1;     // 1-3
+          const totalClasses = presentCount + absentCount + sickCount + leaveCount;
+          const attendanceRate = (presentCount / totalClasses) * 100;
+          
+          return {
+            id: student.id,
+            studentId: student.studentId,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            fatherName: student.fatherName,
+            email: student.username, // Using username as email
+            phone: student.phone,
+            fatherPhone: student.fatherPhone,
+            attendanceRate,
+            totalClasses,
+            presentCount,
+            absentCount,
+            sickCount,
+            leaveCount,
+            status: student.status || 'Active',
+            riskLevel: attendanceRate >= 90 ? 'low' : attendanceRate >= 75 ? 'medium' : 'high',
+            lastAttendance: new Date(),
+            enrollmentDate: new Date(student.createdAt || Date.now()),
+            parentContact: student.fatherPhone || '',
+            notes: ''
+          };
+        })
         
         setStudents(transformedStudents)
         setError(null)
@@ -188,10 +190,23 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-slate-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 bg-slate-200 rounded"></div>
+          <div className="h-8 bg-slate-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-5 bg-slate-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-slate-200 rounded w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                  <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -248,22 +263,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
     console.log('Exporting students for class:', classId)
   }
 
-  const handleAddStudent = () => {
-    // Mock add student functionality
-    console.log('Adding new student to class:', classId)
-  }
-
-  const handleEditStudent = (studentId: string) => {
-    console.log('Editing student:', studentId)
-  }
-
-  const handleRemoveStudent = (studentId: string) => {
-    console.log('Removing student:', studentId)
-  }
-
-  const handleContactParent = (student: ClassStudent) => {
-    console.log('Contacting parent for student:', student.firstName, student.lastName)
-  }
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -298,7 +297,15 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
                     Class Students
                   </h1>
                   <p className="text-lg text-slate-600 font-medium mt-2">
-                    Manage and monitor students in Class {classId}
+                    {classData ? (
+                      <>
+                        Manage and monitor students in <span className="font-semibold text-slate-900">{classData.name}</span>
+                        <span className="mx-2">•</span>
+                        <span className="text-orange-600 font-semibold">{classData.session === 'MORNING' ? 'Morning Session' : 'Afternoon Session'}</span>
+                      </>
+                    ) : (
+                      'Loading class information...'
+                    )}
                   </p>
                 </div>
               </motion.div>
@@ -311,16 +318,8 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
               className="flex flex-col sm:flex-row gap-3"
             >
               <Button
-                onClick={handleAddStudent}
-                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-2xl px-6 py-3 text-base font-semibold border-0"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Add Student
-              </Button>
-              <Button
                 onClick={handleExportStudents}
-                variant="outline"
-                className="border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-2xl px-6 py-3 text-base font-semibold"
+                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-2xl px-6 py-3 text-base font-semibold border-0"
               >
                 <Download className="h-5 w-5 mr-2" />
                 Export List
@@ -403,125 +402,76 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
           >
             <Card className="rounded-2xl shadow-lg border-0 bg-white/80 backdrop-blur-xl hover:shadow-xl transition-all duration-300">
               <CardHeader className="p-6 pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={student.avatar} />
-                      <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white font-semibold">
-                        {student.firstName[0]}{student.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900">
-                        {student.firstName} {student.lastName}
-                      </h3>
-                      <p className="text-sm text-slate-600">
-                        ID: {student.studentId}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={student.avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-600 text-white font-semibold">
+                      {student.firstName[0]}{student.fatherName ? student.fatherName[0] : student.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {student.firstName} {student.fatherName || student.lastName}
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      ID: {student.studentId}
+                    </p>
                   </div>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditStudent(student.id)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Student
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleContactParent(student)}>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Contact Parent
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleRemoveStudent(student.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remove Student
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
               </CardHeader>
 
               <CardContent className="p-6 pt-0">
                 <div className="space-y-4">
-                  {/* Status and Risk Badges */}
-                  <div className="flex gap-2">
-                    <Badge className={cn('border-2', getStatusBadgeColor(student.status))}>
-                      {student.status}
-                    </Badge>
-                    <Badge className={cn('border-2', getRiskBadgeColor(student.riskLevel))}>
-                      {student.riskLevel} risk
-                    </Badge>
-                    {student.riskType && (
-                      <Badge className="bg-red-100 text-red-700 border-2 border-red-200">
-                        {student.riskType}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Attendance Rate */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getAttendanceIcon(student.attendanceRate)}
-                      <span className="text-sm font-medium text-slate-700">
-                        Attendance Rate
-                      </span>
-                    </div>
-                    <span className={cn(
-                      'text-lg font-bold',
-                      student.attendanceRate >= 90 ? 'text-green-600' :
-                      student.attendanceRate >= 75 ? 'text-orange-600' : 'text-red-600'
-                    )}>
-                      {student.attendanceRate.toFixed(1)}%
-                    </span>
-                  </div>
-
                   {/* Attendance Breakdown */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-green-600" />
-                      <span className="text-slate-600">Present: {student.presentCount}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4 text-green-600" />
+                        <span className="text-slate-600">Present:</span>
+                      </div>
+                      <span className="font-semibold text-slate-900">{student.presentCount}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <UserX className="h-4 w-4 text-red-600" />
-                      <span className="text-slate-600">Absent: {student.absentCount}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <UserX className="h-4 w-4 text-red-600" />
+                        <span className="text-slate-600">Absent:</span>
+                      </div>
+                      <span className="font-semibold text-slate-900">{student.absentCount}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-yellow-600" />
-                      <span className="text-slate-600">Sick: {student.sickCount}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-yellow-600" />
+                        <span className="text-slate-600">Sick:</span>
+                      </div>
+                      <span className="font-semibold text-slate-900">{student.sickCount}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-purple-600" />
-                      <span className="text-slate-600">Leave: {student.leaveCount}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-purple-600" />
+                        <span className="text-slate-600">Leave:</span>
+                      </div>
+                      <span className="font-semibold text-slate-900">{student.leaveCount}</span>
                     </div>
                   </div>
 
                   {/* Contact Information */}
-                  <div className="pt-3 border-t border-slate-200">
-                    <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
-                      <Mail className="h-4 w-4" />
-                      <span className="truncate">{student.email}</span>
-                    </div>
+                  <div className="pt-3 border-t border-slate-200 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Phone className="h-4 w-4" />
                       <span>{student.phone}</span>
                     </div>
+                    {student.fatherName && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <span className="font-medium text-slate-700">Father: {student.fatherName}</span>
+                      </div>
+                    )}
+                    {student.fatherPhone && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Phone className="h-4 w-4 text-orange-600" />
+                        <span className="font-medium">{student.fatherPhone}</span>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Notes */}
-                  {student.notes && (
-                    <div className="bg-orange-50 rounded-lg p-3">
-                      <p className="text-sm text-orange-800">
-                        <strong>Note:</strong> {student.notes}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -545,15 +495,7 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
               ? 'Try adjusting your filters to see more students.'
               : 'This class doesn\'t have any students yet.'}
           </p>
-          {(!searchQuery && statusFilter === 'all' && riskFilter === 'all') && (
-            <Button
-              onClick={handleAddStudent}
-              className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-lg shadow-orange-500/25 rounded-xl px-6 py-3 font-semibold border-0"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add First Student
-            </Button>
-          )}
+
         </motion.div>
       )}
     </div>
