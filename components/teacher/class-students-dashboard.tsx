@@ -2,15 +2,14 @@
 
 import * as React from 'react'
 import { motion } from 'framer-motion'
-import { Users, Search, MoreVertical,Mail,Phone,AlertTriangle,CheckCircle,Clock,UserCheck,UserX,Download,Edit,Trash2
+import { Users, Search, Phone, Clock, UserCheck, UserX, Download
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
@@ -32,8 +31,7 @@ export interface ClassStudent {
   absentCount: number
   sickCount: number
   leaveCount: number
-  status: 'Active' | 'Inactive' | 'Transferred'
-  riskLevel: 'low' | 'medium' | 'high'
+  status: 'Active' | 'Inactive'
   riskType?: 'محروم' | 'تصدیق طلب'
   lastAttendance: Date
   enrollmentDate: Date
@@ -49,7 +47,6 @@ interface ClassStudentsDashboardProps {
 export function ClassStudentsDashboard({ classId, className }: ClassStudentsDashboardProps) {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState<string>('all')
-  const [riskFilter, setRiskFilter] = React.useState<string>('all')
   const [sortBy, setSortBy] = React.useState<string>('name')
   const [isLoading, setIsLoading] = React.useState(true)
   const [students, setStudents] = React.useState<ClassStudent[]>([])
@@ -160,9 +157,8 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         student.email.toLowerCase().includes(searchQuery.toLowerCase())
       
       const matchesStatus = statusFilter === 'all' || student.status.toLowerCase() === statusFilter
-      const matchesRisk = riskFilter === 'all' || student.riskLevel === riskFilter
       
-      return matchesSearch && matchesStatus && matchesRisk
+      return matchesSearch && matchesStatus
     })
 
     // Sort students
@@ -170,11 +166,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
       switch (sortBy) {
         case 'name':
           return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
-        case 'attendance':
-          return b.attendanceRate - a.attendanceRate
-        case 'risk':
-          const riskOrder = { high: 3, medium: 2, low: 1 }
-          return riskOrder[b.riskLevel] - riskOrder[a.riskLevel]
         case 'studentId':
           return a.studentId.localeCompare(b.studentId)
         default:
@@ -183,7 +174,7 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
     })
 
     return filtered
-  }, [students, searchQuery, statusFilter, riskFilter, sortBy])
+  }, [students, searchQuery, statusFilter, sortBy])
 
   // Show loading state
   if (isLoading) {
@@ -224,38 +215,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         </div>
       </div>
     )
-  }
-
-  const getRiskBadgeColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'high':
-        return 'bg-red-100 text-red-700 border-red-200'
-      case 'medium':
-        return 'bg-orange-100 text-orange-700 border-orange-200'
-      case 'low':
-        return 'bg-green-100 text-green-700 border-green-200'
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200'
-    }
-  }
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-700 border-green-200'
-      case 'Inactive':
-        return 'bg-slate-100 text-slate-700 border-slate-200'
-      case 'Transferred':
-        return 'bg-blue-100 text-blue-700 border-blue-200'
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200'
-    }
-  }
-
-  const getAttendanceIcon = (rate: number) => {
-    if (rate >= 90) return <CheckCircle className="h-4 w-4 text-green-600" />
-    if (rate >= 75) return <Clock className="h-4 w-4 text-orange-600" />
-    return <AlertTriangle className="h-4 w-4 text-red-600" />
   }
 
   const handleExportStudents = () => {
@@ -336,9 +295,9 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         transition={{ delay: 0.2, duration: 0.5 }}
         className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-0"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Search */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
@@ -359,20 +318,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="transferred">Transferred</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Risk Filter */}
-          <Select value={riskFilter} onValueChange={setRiskFilter}>
-            <SelectTrigger className="border-0 bg-slate-50 focus:bg-white rounded-xl">
-              <SelectValue placeholder="Risk Level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Risk Levels</SelectItem>
-              <SelectItem value="high">High Risk</SelectItem>
-              <SelectItem value="medium">Medium Risk</SelectItem>
-              <SelectItem value="low">Low Risk</SelectItem>
             </SelectContent>
           </Select>
 
@@ -383,8 +328,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="attendance">Attendance Rate</SelectItem>
-              <SelectItem value="risk">Risk Level</SelectItem>
               <SelectItem value="studentId">Student ID</SelectItem>
             </SelectContent>
           </Select>
@@ -491,7 +434,7 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
             No students found
           </h3>
           <p className="text-slate-600 mb-6">
-            {searchQuery || statusFilter !== 'all' || riskFilter !== 'all'
+            {searchQuery || statusFilter !== 'all'
               ? 'Try adjusting your filters to see more students.'
               : 'This class doesn\'t have any students yet.'}
           </p>
