@@ -61,10 +61,13 @@ export function AttendanceGrid({
     Record<string, Record<number, AttendanceStatus>>
   >({});
 
+  // Track the last update timestamp to prevent sync loops
+  const lastUpdateRef = React.useRef<Record<string, number>>({});
+
   // Get assigned periods for current teacher
   const getAssignedPeriods = React.useMemo(() => {
     if (!enablePeriodFiltering || !teacherPeriods || teacherPeriods.length === 0) {
-      return [1, 2, 3, 4, 5, 6, 7, 8]; // Show all 8 periods for university schedule
+      return [1, 2, 3, 4, 5, 6]; // Show all 6 periods per day
     }
     
     return teacherPeriods
@@ -91,46 +94,126 @@ export function AttendanceGrid({
     return getAssignedPeriods.includes(periodNumber);
   }, [enablePeriodFiltering, getAssignedPeriods]);
 
-  // Sync with bulk changes from parent component
+  // Initialize period attendance from students data only once
   React.useEffect(() => {
-    // When students prop changes (from bulk actions), update period attendance
+    // Only initialize if we don't have period data yet
     const updatedPeriodAttendance: Record<string, Record<number, AttendanceStatus>> = {};
+    let hasUpdates = false;
     
     students.forEach(student => {
-      // If student has a status and no period-specific data, apply to all periods
-      if (student.status !== 'NOT_MARKED' && !studentPeriodAttendance[student.id]) {
-        const assignedPeriods = getAssignedPeriods.filter(p => isTeacherAssignedToPeriod(p));
+      // Only initialize if this student doesn't have period data yet
+      if (!studentPeriodAttendance[student.id]) {
         updatedPeriodAttendance[student.id] = {};
+        hasUpdates = true;
         
-        assignedPeriods.forEach(period => {
-          updatedPeriodAttendance[student.id][period] = student.status;
+        // Initialize all periods as NOT_MARKED
+        getAssignedPeriods.forEach(period => {
+          updatedPeriodAttendance[student.id][period] = 'NOT_MARKED';
         });
       }
     });
     
-    // Only update if there are changes
-    if (Object.keys(updatedPeriodAttendance).length > 0) {
+    // Only update if there are new students
+    if (hasUpdates) {
       setStudentPeriodAttendance(prev => ({
         ...prev,
         ...updatedPeriodAttendance
       }));
     }
-  }, [students, getAssignedPeriods, isTeacherAssignedToPeriod, studentPeriodAttendance]);
+  }, [getAssignedPeriods, studentPeriodAttendance, students, students.length]); // Only depend on students.length to avoid re-running on status changes
+
+  // Sync with bulk changes from parent component - FIXED FOR ALL PERIODS
+  React.useEffect(() => {
+    const updatedPeriodAttendance: Record<string, Record<number, AttendanceStatus>> = {};
+    let hasUpdates = false;
+    
+    students.forEach(student => {
+      // Only sync if student has a status from parent
+      if (student.status !== 'NOT_MARKED') {
+        const assignedPeriods = getAssignedPeriods.filter(p => isTeacherAssignedToPeriod(p));
+        
+        // Initialize period data if it doesn't exist
+        if (!studentPeriodAttendance[student.id]) {
+          updatedPeriodAttendance[student.id] = {};
+          assignedPeriods.forEach(period => {
+            updatedPeriodAttendance[student.id][period] = student.status;
+          });
+          hasUpdates = true;
+          console.log('✅ Initializing all periods for', student.id, '- Status:', student.status);
+          return;
+        }
+        
+        // Check if this is a recent update from our own handleStatusChange
+        const lastUpdate = lastUpdateRef.current[student.id] || 0;
+        const timeSinceUpdate = Date.now() - lastUpdate;
+        
+        // For individual period clicks (recent update), skip sync
+        if (timeSinceUpdate < 300) {
+          console.log('⏭️ Skipping sync for', student.id, '- recent internal update');
+          return;
+        }
+        
+        // Check if ALL periods currently have the same status OR if no periods are set yet
+        const currentPeriodStatuses = assignedPeriods.map(p => studentPeriodAttendance[student.id]?.[p] || 'NOT_MARKED');
+        const allPeriodsHaveSameStatus = currentPeriodStatuses.every(s => s === currentPeriodStatuses[0]);
+        const allPeriodsNotMarked = currentPeriodStatuses.every(s => s === 'NOT_MARKED');
+        
+        // Sync to all periods if:
+        // 1. SICK/LEAVE (always applies to all periods)
+        // 2. PRESENT/ABSENT AND (all periods have same status OR all not marked) - indicates bulk action
+        const isSickOrLeave = (student.status === 'SICK' || student.status === 'LEAVE');
+        const isPresentOrAbsent = (student.status === 'PRESENT' || student.status === 'ABSENT');
+        const shouldSyncToAllPeriods = isSickOrLeave || (isPresentOrAbsent && (allPeriodsHaveSameStatus || allPeriodsNotMarked));
+        
+        if (shouldSyncToAllPeriods) {
+          const needsSync = assignedPeriods.some(period => {
+            const currentPeriodStatus = studentPeriodAttendance[student.id]?.[period] || 'NOT_MARKED';
+            return currentPeriodStatus !== student.status;
+          });
+          
+          if (needsSync) {
+            if (!updatedPeriodAttendance[student.id]) {
+              updatedPeriodAttendance[student.id] = { ...studentPeriodAttendance[student.id] };
+            }
+            
+            // Apply the parent's status to ALL assigned periods
+            assignedPeriods.forEach(period => {
+              updatedPeriodAttendance[student.id][period] = student.status;
+            });
+            
+            hasUpdates = true;
+            console.log('✅ Syncing bulk action to ALL periods for', student.id, '- Status:', student.status, '- Periods:', assignedPeriods);
+          }
+        }
+      }
+    });
+    
+    // Update period attendance if there are changes from bulk actions
+    if (hasUpdates) {
+      console.log('✅ Syncing changes to period attendance:', updatedPeriodAttendance);
+      setStudentPeriodAttendance(prev => ({
+        ...prev,
+        ...updatedPeriodAttendance
+      }));
+    }
+  }, [getAssignedPeriods, isTeacherAssignedToPeriod, studentPeriodAttendance, students]); // ✅ Only depend on students prop to prevent infinite loops
 
   // Get current status for student and period
   const getCurrentStatus = (studentId: string, periodNumber?: number): AttendanceStatus => {
     if (periodNumber) {
+      // Return the specific period status
       return studentPeriodAttendance[studentId]?.[periodNumber] || 'NOT_MARKED';
     }
-    // For global status, check if all assigned periods have the same status
+    
+    // For global status (SICK/LEAVE), check if all assigned periods have the same status
     const assignedPeriods = getAssignedPeriods.filter(p => isTeacherAssignedToPeriod(p));
     const studentAttendance = studentPeriodAttendance[studentId];
     
-    if (!studentAttendance) return 'NOT_MARKED';
+    if (!studentAttendance || assignedPeriods.length === 0) return 'NOT_MARKED';
     
-    // Check if all periods have SICK status
+    // Check if all assigned periods have SICK status
     if (assignedPeriods.every(p => studentAttendance[p] === 'SICK')) return 'SICK';
-    // Check if all periods have LEAVE status
+    // Check if all assigned periods have LEAVE status  
     if (assignedPeriods.every(p => studentAttendance[p] === 'LEAVE')) return 'LEAVE';
     
     return 'NOT_MARKED';
@@ -139,9 +222,13 @@ export function AttendanceGrid({
   // Handle status change
   const handleStatusChange = (studentId: string, status: AttendanceStatus, periodNumber?: number) => {
     console.log('handleStatusChange called:', { studentId, status, periodNumber });
+    console.log('Current studentPeriodAttendance before update:', studentPeriodAttendance[studentId]);
+    
+    // Mark this as a recent internal update to prevent sync from overriding it
+    lastUpdateRef.current[studentId] = Date.now();
     
     if (periodNumber) {
-      // Period-specific status change
+      // Period-specific status change - ONLY affects this specific period
       if (enablePeriodFiltering && !isTeacherAssignedToPeriod(periodNumber)) {
         const teacherInfo = getTeacherForPeriod(periodNumber);
         const assignedTeacher = teacherInfo ? teacherInfo.teacherName : 'another teacher';
@@ -153,20 +240,21 @@ export function AttendanceGrid({
         return;
       }
 
-      // Update period-specific attendance
+      // Update ONLY the specific period attendance IMMEDIATELY
       setStudentPeriodAttendance(prev => {
+        const currentStudentData = prev[studentId] || {};
         const updated = {
           ...prev,
           [studentId]: {
-            ...prev[studentId],
-            [periodNumber]: status
+            ...currentStudentData,
+            [periodNumber]: status // Only update this specific period
           }
         };
-        console.log('Updated period attendance:', updated);
+        console.log('✅ Updated period attendance for period', periodNumber, ':', updated[studentId]);
         return updated;
       });
 
-      // Call parent handler
+      // Call parent handler with period number
       onStatusChange(studentId, status, periodNumber);
 
       const student = students.find(s => s.id === studentId);
@@ -176,32 +264,33 @@ export function AttendanceGrid({
         });
       }
     } else {
-      // Global status change (SICK/LEAVE for all periods)
+      // Global status change (SICK/LEAVE for ALL assigned periods)
       const assignedPeriods = getAssignedPeriods.filter(p => isTeacherAssignedToPeriod(p));
-      const periodAttendance = assignedPeriods.reduce((acc, period) => {
-        acc[period] = status;
-        return acc;
-      }, {} as Record<number, AttendanceStatus>);
-
+      
       setStudentPeriodAttendance(prev => {
+        const currentStudentData = prev[studentId] || {};
+        const periodAttendance = { ...currentStudentData };
+        
+        // Apply status to all assigned periods
+        assignedPeriods.forEach(period => {
+          periodAttendance[period] = status;
+        });
+
         const updated = {
           ...prev,
-          [studentId]: {
-            ...prev[studentId],
-            ...periodAttendance
-          }
+          [studentId]: periodAttendance
         };
-        console.log('Updated global attendance:', updated);
+        console.log('Updated global attendance for all periods:', updated[studentId]);
         return updated;
       });
 
-      // Call parent handler
+      // Call parent handler without period number (global change)
       onStatusChange(studentId, status);
 
       const student = students.find(s => s.id === studentId);
       if (student) {
         toast.success(
-          `${student.name} marked as ${status} for all periods (${assignedPeriods.join(', ')})`,
+          `${student.name} marked as ${status} for all assigned periods (${assignedPeriods.join(', ')})`,
           { duration: 3000 }
         );
       }
@@ -425,15 +514,18 @@ export function AttendanceGrid({
                           <div className="space-y-2">
                             {/* Sick Button */}
                             <Button
-                              onClick={() => {
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 console.log('Sick button clicked:', { studentId: student.id, currentStatus: getCurrentStatus(student.id) });
                                 handleStatusChange(student.id, 'SICK');
                               }}
                               className={cn(
-                                "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
+                                "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200 border-0",
                                 getCurrentStatus(student.id) === 'SICK'
                                   ? "bg-orange-500 hover:bg-orange-600 text-white shadow-md"
-                                  : "bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
+                                  : "bg-orange-50 text-orange-700 hover:bg-orange-100"
                               )}
                             >
                               <Heart className="h-3 w-3 mr-1" />
@@ -442,12 +534,17 @@ export function AttendanceGrid({
                             
                             {/* Leave Button */}
                             <Button
-                              onClick={() => handleStatusChange(student.id, 'LEAVE')}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleStatusChange(student.id, 'LEAVE');
+                              }}
                               className={cn(
-                                "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
+                                "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200 border-0",
                                 getCurrentStatus(student.id) === 'LEAVE'
                                   ? "bg-blue-500 hover:bg-blue-600 text-white shadow-md"
-                                  : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                                  : "bg-blue-50 text-blue-700 hover:bg-blue-100"
                               )}
                             >
                               <FileText className="h-3 w-3 mr-1" />
@@ -470,15 +567,23 @@ export function AttendanceGrid({
                                 <div className="space-y-2">
                                   {/* Present Button */}
                                   <Button
-                                    onClick={() => {
-                                      console.log('Present button clicked:', { studentId: student.id, periodNumber, currentStatus: periodStatus });
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Present button clicked:', { 
+                                        studentId: student.id, 
+                                        periodNumber, 
+                                        currentStatus: periodStatus,
+                                        allPeriodData: studentPeriodAttendance[student.id]
+                                      });
                                       handleStatusChange(student.id, 'PRESENT', periodNumber);
                                     }}
                                     className={cn(
-                                      "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
+                                      "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200 border-0",
                                       periodStatus === 'PRESENT'
                                         ? "bg-green-500 hover:bg-green-600 text-white shadow-md"
-                                        : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                                        : "bg-green-50 text-green-700 hover:bg-green-100"
                                     )}
                                   >
                                     <CheckCircle className="h-3 w-3 mr-1" />
@@ -487,15 +592,23 @@ export function AttendanceGrid({
                                   
                                   {/* Absent Button */}
                                   <Button
-                                    onClick={() => {
-                                      console.log('Absent button clicked:', { studentId: student.id, periodNumber, currentStatus: periodStatus });
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Absent button clicked:', { 
+                                        studentId: student.id, 
+                                        periodNumber, 
+                                        currentStatus: periodStatus,
+                                        allPeriodData: studentPeriodAttendance[student.id]
+                                      });
                                       handleStatusChange(student.id, 'ABSENT', periodNumber);
                                     }}
                                     className={cn(
-                                      "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200",
+                                      "w-full h-8 text-xs font-medium rounded-lg transition-all duration-200 border-0",
                                       periodStatus === 'ABSENT'
                                         ? "bg-red-500 hover:bg-red-600 text-white shadow-md"
-                                        : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+                                        : "bg-red-50 text-red-700 hover:bg-red-100"
                                     )}
                                   >
                                     <XCircle className="h-3 w-3 mr-1" />

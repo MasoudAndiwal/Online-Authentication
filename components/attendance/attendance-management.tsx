@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -31,6 +32,7 @@ import type {
 } from "@/types/attendance";
 import { periodAssignmentService, type TeacherPeriodAssignment } from "@/lib/services/period-assignment-service";
 import { useAuth } from "@/hooks/use-auth";
+import { date } from "zod";
 
 interface AttendanceManagementProps {
   classId: string;
@@ -144,7 +146,7 @@ export function AttendanceManagement({
     } finally {
       setIsLoading(false);
     }
-  }, [classId, classData?.name, date]);
+  }, [classId, classData?.name, classData?.session, date]);
 
   // Load period assignments
   const loadPeriodAssignments = React.useCallback(async () => {
@@ -444,7 +446,7 @@ export function AttendanceManagement({
         // Global status change (SICK/LEAVE for all assigned periods)
         const assignedPeriods = teacherPeriods && teacherPeriods.length > 0 
           ? teacherPeriods.map(p => p.periodNumber).filter((p, i, arr) => arr.indexOf(p) === i)
-          : [1, 2, 3, 4, 5, 6, 7, 8]; // University has 8 periods
+          : [1, 2, 3, 4, 5, 6]; // 6 periods per day
           
         for (const period of assignedPeriods) {
           attendanceRecords.push({
@@ -468,6 +470,8 @@ export function AttendanceManagement({
           date: date.toISOString().split('T')[0],
           records: attendanceRecords,
           markedBy: currentTeacherId || 'unknown-teacher',
+          updateMode: 'upsert', // Ensure we update existing records instead of creating duplicates
+          operation: periodNumber ? 'individual_update' : 'global_update',
         }),
       });
 
@@ -559,7 +563,9 @@ export function AttendanceManagement({
           classId,
           date: date.toISOString().split('T')[0],
           records: attendanceRecords,
-          markedBy: 'current-teacher-id',
+          markedBy: currentTeacherId || 'current-teacher-id',
+          updateMode: 'upsert', // Ensure we update existing records instead of creating duplicates
+          operation: 'bulk_update',
           bulkOperation: true,
           timestamp: new Date().toISOString(),
         }),
@@ -725,21 +731,86 @@ export function AttendanceManagement({
 
   return (
     <div className={cn("space-y-6", className)}>
-      {/* Header Section - Mobile Responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header Section - Mobile Responsive with Afghanistan Date */}
+      <motion.div 
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">
+          <motion.h1 
+            className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             Attendance Management
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 mt-1 truncate">
-            {classData?.name || `Class ${classId}`} • {date.toLocaleDateString()}
-          </p>
+          </motion.h1>
+          <motion.div 
+            className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <p className="text-sm sm:text-base text-slate-600 truncate">
+              {classData?.name || `Class ${classId}`}
+            </p>
+            <span className="hidden sm:inline text-slate-400">•</span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <motion.div
+                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-xl shadow-sm"
+                whileHover={{ scale: 1.02, y: -1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <motion.div 
+                  className="w-2 h-2 bg-emerald-500 rounded-full"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <span className="text-sm font-medium text-emerald-700">
+                  {new Date().toLocaleDateString('fa-AF', {
+                    timeZone: 'Asia/Kabul',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                  })}
+                </span>
+              </motion.div>
+              <motion.div
+                className="flex items-center gap-2 text-xs text-slate-500 px-3 py-1.5 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg shadow-sm"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <motion.div
+                  className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <span className="font-medium">
+                  {new Date().toLocaleTimeString('en-US', {
+                    timeZone: 'Asia/Kabul',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })} AFT
+                </span>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
         
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <motion.div 
+          className="flex items-center gap-2 sm:gap-3 flex-shrink-0"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
           {/* Enhanced real-time connection status indicator - Mobile Responsive */}
           <motion.div 
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/60 backdrop-blur-sm rounded-lg sm:rounded-xl border-0 shadow-sm"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/80 backdrop-blur-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
             animate={{
               scale: connectionStatus === 'saving' ? [1, 1.02, 1] : 1,
             }}
@@ -747,6 +818,7 @@ export function AttendanceManagement({
               duration: 1,
               repeat: connectionStatus === 'saving' ? Infinity : 0,
             }}
+            whileHover={{ scale: 1.02, y: -1 }}
           >
             {connectionStatus === 'online' && (
               <>
@@ -798,28 +870,39 @@ export function AttendanceManagement({
             )}
           </motion.div>
 
-          <Button
-            variant="outline"
-            size={isMobile ? "sm" : "default"}
-            onClick={loadData}
-            disabled={isLoading || connectionStatus === 'offline'}
-            className="bg-white/60 backdrop-blur-sm border-0 shadow-sm rounded-lg sm:rounded-xl hover:bg-white/80 min-h-[44px] touch-manipulation"
+          <motion.div
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <RefreshCw className={cn("h-4 w-4 sm:mr-2", isLoading && "animate-spin")} />
-            <span className="hidden sm:inline ml-2">Refresh</span>
-          </Button>
+            <Button
+              variant="outline"
+              size={isMobile ? "sm" : "default"}
+              onClick={loadData}
+              disabled={isLoading || connectionStatus === 'offline'}
+              className="bg-white/80 backdrop-blur-xl shadow-lg hover:shadow-xl rounded-xl hover:bg-white/90 min-h-[44px] touch-manipulation transition-all duration-300"
+            >
+              <RefreshCw className={cn("h-4 w-4 sm:mr-2", isLoading && "animate-spin")} />
+              <span className="hidden sm:inline ml-2">Refresh</span>
+            </Button>
+          </motion.div>
           
-          <Button
-            onClick={handleSave}
-            size={isMobile ? "sm" : "default"}
-            disabled={!hasUnsavedChanges || isSaving || connectionStatus === 'offline'}
-            className={cn(
-              "border-0 shadow-sm rounded-lg sm:rounded-xl transition-all duration-200 min-h-[44px] touch-manipulation",
-              hasUnsavedChanges 
-                ? "bg-orange-600 hover:bg-orange-700 text-white" 
-                : "bg-green-50 text-green-700 hover:bg-green-100"
-            )}
+          <motion.div
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
+            <Button
+              onClick={handleSave}
+              size={isMobile ? "sm" : "default"}
+              disabled={!hasUnsavedChanges || isSaving || connectionStatus === 'offline'}
+              className={cn(
+                "shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation",
+                hasUnsavedChanges 
+                  ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white" 
+                  : "bg-gradient-to-r from-green-50 to-green-100 text-green-700 hover:from-green-100 hover:to-green-200"
+              )}
+            >
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
@@ -839,24 +922,38 @@ export function AttendanceManagement({
               </>
             )}
           </Button>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
-      {/* Statistics Cards - Mobile Responsive */}
+      {/* Statistics Cards - Mobile Responsive with Enhanced Animations */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-orange-50 via-orange-25 to-orange-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <motion.div 
+                  className="p-1.5 sm:p-2 bg-orange-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-orange-200 transition-colors duration-300"
+                  whileHover={{ rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
                   <Users className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-                </div>
+                </motion.div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{statistics.total}</p>
+                  <motion.p 
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900"
+                    key={statistics.total}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {statistics.total}
+                  </motion.p>
                   <p className="text-xs sm:text-sm text-slate-600 truncate">Total Students</p>
                 </div>
               </div>
@@ -867,16 +964,29 @@ export function AttendanceManagement({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-green-50 via-green-25 to-green-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <motion.div 
+                  className="p-1.5 sm:p-2 bg-green-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-green-200 transition-colors duration-300"
+                  whileHover={{ rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
                   <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                </div>
+                </motion.div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700">{statistics.present}</p>
+                  <motion.p 
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700"
+                    key={statistics.present}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {statistics.present}
+                  </motion.p>
                   <p className="text-xs sm:text-sm text-slate-600 truncate">Present</p>
                 </div>
               </div>
@@ -887,16 +997,29 @@ export function AttendanceManagement({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-red-50 to-red-100/50 border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-red-50 via-red-25 to-red-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <motion.div 
+                  className="p-1.5 sm:p-2 bg-red-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-red-200 transition-colors duration-300"
+                  whileHover={{ rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
                   <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-                </div>
+                </motion.div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-red-700">{statistics.absent}</p>
+                  <motion.p 
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-red-700"
+                    key={statistics.absent}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {statistics.absent}
+                  </motion.p>
                   <p className="text-xs sm:text-sm text-slate-600 truncate">Absent</p>
                 </div>
               </div>
@@ -907,18 +1030,29 @@ export function AttendanceManagement({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <motion.div 
+                  className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-yellow-200 transition-colors duration-300"
+                  whileHover={{ rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
                   <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
-                </div>
+                </motion.div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-700">
+                  <motion.p 
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-700"
+                    key={statistics.total > 0 ? Math.round((statistics.present / statistics.total) * 100) : 0}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
                     {statistics.total > 0 ? Math.round((statistics.present / statistics.total) * 100) : 0}%
-                  </p>
+                  </motion.p>
                   <p className="text-xs sm:text-sm text-slate-600 truncate">Attendance Rate</p>
                 </div>
               </div>
@@ -929,16 +1063,29 @@ export function AttendanceManagement({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-slate-50 via-slate-25 to-slate-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg sm:rounded-xl flex-shrink-0">
+                <motion.div 
+                  className="p-1.5 sm:p-2 bg-slate-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-slate-200 transition-colors duration-300"
+                  whileHover={{ rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
                   <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
-                </div>
+                </motion.div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-700">{statistics.notMarked}</p>
+                  <motion.p 
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-700"
+                    key={statistics.notMarked}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {statistics.notMarked}
+                  </motion.p>
                   <p className="text-xs sm:text-sm text-slate-600 truncate">Not Marked</p>
                 </div>
               </div>
@@ -947,13 +1094,16 @@ export function AttendanceManagement({
         </motion.div>
       </div>
 
-      {/* Unsaved Changes Warning - Mobile Responsive */}
-      {hasUnsavedChanges && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-orange-50 border border-orange-200 rounded-lg sm:rounded-xl p-3 sm:p-4"
-        >
+      {/* Unsaved Changes Warning - Mobile Responsive with Enhanced Animation */}
+      <AnimatePresence>
+        {hasUnsavedChanges && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="bg-gradient-to-r from-orange-50 to-amber-50 shadow-lg hover:shadow-xl rounded-xl p-3 sm:p-4 transition-all duration-300"
+          >
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex items-start gap-3 flex-1">
               <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -964,17 +1114,24 @@ export function AttendanceManagement({
                 </p>
               </div>
             </div>
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              size="sm"
-              className="bg-orange-600 hover:bg-orange-700 text-white border-0 shadow-sm min-h-[44px] touch-manipulation w-full sm:w-auto"
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              Save Now
-            </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                size="sm"
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl min-h-[44px] touch-manipulation w-full sm:w-auto rounded-xl transition-all duration-300"
+              >
+                Save Now
+              </Button>
+            </motion.div>
           </div>
         </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Period Assignment Error States - Beautiful Multi-Color Design */}
       <AnimatePresence>
@@ -983,7 +1140,7 @@ export function AttendanceManagement({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-gradient-to-br from-rose-50 to-rose-100/50 border-0 rounded-2xl p-6 shadow-xl shadow-rose-500/10 backdrop-blur-xl"
+            className="bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl backdrop-blur-xl transition-all duration-300"
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-start gap-4 flex-1">
@@ -1005,7 +1162,7 @@ export function AttendanceManagement({
                   onClick={loadPeriodAssignments}
                   disabled={periodAssignmentLoading}
                   size="sm"
-                  className="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white border-0 shadow-xl rounded-xl flex-1 sm:flex-none"
+                  className="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-xl hover:shadow-2xl rounded-xl flex-1 sm:flex-none transition-all duration-300"
                 >
                   <RefreshCw className={cn("h-4 w-4 mr-2", periodAssignmentLoading && "animate-spin")} />
                   Retry
@@ -1014,7 +1171,7 @@ export function AttendanceManagement({
                   onClick={() => setPeriodAssignmentError(null)}
                   variant="outline"
                   size="sm"
-                  className="bg-white/60 backdrop-blur-sm border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl flex-1 sm:flex-none"
+                  className="bg-white/60 backdrop-blur-sm text-rose-700 hover:bg-rose-50 rounded-xl flex-1 sm:flex-none shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   Dismiss
                 </Button>
@@ -1023,49 +1180,85 @@ export function AttendanceManagement({
           </motion.div>
         )}
 
-        {enablePeriodFiltering && !periodAssignmentError && teacherPeriods.length === 0 && !periodAssignmentLoading && currentTeacherId && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-0 rounded-2xl p-6 shadow-xl shadow-slate-500/10 backdrop-blur-xl"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="p-3 bg-slate-100 rounded-xl flex-shrink-0">
-                  <Users className="h-6 w-6 text-slate-600" />
+        {enablePeriodFiltering && !periodAssignmentError && teacherPeriods.length === 0 && !periodAssignmentLoading && currentTeacherId && (() => {
+          // Check if today is a weekend in Afghanistan (Friday)
+          const dayOfWeek = date.getDay(); // 0 = Sunday, 5 = Friday
+          const isAfghanistanWeekend = dayOfWeek === 5; // Friday is weekend in Afghanistan
+          
+          // Don't show warning on weekends
+          if (isAfghanistanWeekend) {
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl backdrop-blur-xl transition-all duration-300"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="p-3 bg-emerald-100 rounded-xl flex-shrink-0">
+                      <CheckCircle className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-emerald-800 text-base sm:text-lg">Weekend Day</h3>
+                      <p className="text-sm sm:text-base text-emerald-700 mt-1">
+                        Today is {date.toLocaleDateString('en-US', { weekday: 'long' })} - a weekend day in Afghanistan.
+                      </p>
+                      <p className="text-xs sm:text-sm text-emerald-600 mt-2">
+                        No classes are scheduled on weekends. Enjoy your day off! 🌟
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-800 text-base sm:text-lg">No Period Assignments</h3>
-                  <p className="text-sm sm:text-base text-slate-700 mt-1">
-                    You don&apos;t have any periods assigned for this class on {date.toLocaleDateString('en-US', { weekday: 'long' })}.
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-2">
-                    Contact the office if you believe this is incorrect.
-                  </p>
+              </motion.div>
+            );
+          }
+          
+          // Show "No Period Assignments" warning only on weekdays
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl backdrop-blur-xl transition-all duration-300"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="p-3 bg-slate-100 rounded-xl flex-shrink-0">
+                    <Users className="h-6 w-6 text-slate-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-800 text-base sm:text-lg">No Period Assignments</h3>
+                    <p className="text-sm sm:text-base text-slate-700 mt-1">
+                      You don&apos;t have any periods assigned for this class on {date.toLocaleDateString('en-US', { weekday: 'long' })}.
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-600 mt-2">
+                      Contact the office if you believe this is incorrect.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    onClick={loadPeriodAssignments}
+                    disabled={periodAssignmentLoading}
+                    size="sm"
+                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-xl hover:shadow-2xl rounded-xl flex-1 sm:flex-none transition-all duration-300"
+                  >
+                    <RefreshCw className={cn("h-4 w-4 mr-2", periodAssignmentLoading && "animate-spin")} />
+                    Check Again
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button
-                  onClick={loadPeriodAssignments}
-                  disabled={periodAssignmentLoading}
-                  size="sm"
-                  className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white border-0 shadow-xl rounded-xl flex-1 sm:flex-none"
-                >
-                  <RefreshCw className={cn("h-4 w-4 mr-2", periodAssignmentLoading && "animate-spin")} />
-                  Check Again
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          );
+        })()}
 
         {enablePeriodFiltering && periodAssignmentLoading && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-gradient-to-br from-amber-50 to-amber-100/50 border-0 rounded-2xl p-6 shadow-xl shadow-amber-500/10 backdrop-blur-xl"
+            className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl backdrop-blur-xl transition-all duration-300"
           >
             <div className="flex items-center gap-4">
               <div className="p-3 bg-amber-100 rounded-xl flex-shrink-0">
@@ -1087,44 +1280,60 @@ export function AttendanceManagement({
         )}
       </AnimatePresence>
 
-      {/* Tab Navigation - Mobile Responsive */}
-      <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg sm:rounded-xl p-1 border-0 shadow-sm overflow-x-auto">
-        <Button
-          variant={activeTab === "attendance" ? "default" : "ghost"}
-          onClick={() => setActiveTab("attendance")}
-          size="sm"
-          className={cn(
-            "rounded-lg transition-all duration-200 min-h-[44px] touch-manipulation flex-shrink-0",
-            activeTab === "attendance"
-              ? "bg-orange-600 text-white shadow-sm"
-              : "hover:bg-orange-50 text-slate-700"
-          )}
+      {/* Tab Navigation - Mobile Responsive with Enhanced Animation */}
+      <motion.div 
+        className="flex items-center gap-1 bg-white/80 backdrop-blur-xl rounded-xl p-1 shadow-lg hover:shadow-xl overflow-x-auto transition-all duration-300"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <Users className="h-4 w-4 sm:mr-2" />
-          <span className="hidden xs:inline ml-2">Attendance Grid</span>
-          <span className="xs:hidden ml-2">Grid</span>
-        </Button>
-        <Button
-          variant={activeTab === "risks" ? "default" : "ghost"}
-          onClick={() => setActiveTab("risks")}
-          size="sm"
-          className={cn(
-            "rounded-lg transition-all duration-200 min-h-[44px] touch-manipulation flex-shrink-0",
-            activeTab === "risks"
-              ? "bg-orange-600 text-white shadow-sm"
-              : "hover:bg-orange-50 text-slate-700"
-          )}
+          <Button
+            variant={activeTab === "attendance" ? "default" : "ghost"}
+            onClick={() => setActiveTab("attendance")}
+            size="sm"
+            className={cn(
+              "rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation flex-shrink-0",
+              activeTab === "attendance"
+                ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
+                : "hover:bg-orange-50 text-slate-700 hover:shadow-md"
+            )}
+          >
+            <Users className="h-4 w-4 sm:mr-2" />
+            <span className="hidden xs:inline ml-2">Attendance Grid</span>
+            <span className="xs:hidden ml-2">Grid</span>
+          </Button>
+        </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <AlertTriangle className="h-4 w-4 sm:mr-2" />
-          <span className="hidden xs:inline ml-2">Risk Indicators</span>
-          <span className="xs:hidden ml-2">Risks</span>
-        </Button>
-      </div>
+          <Button
+            variant={activeTab === "risks" ? "default" : "ghost"}
+            onClick={() => setActiveTab("risks")}
+            size="sm"
+            className={cn(
+              "rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation flex-shrink-0",
+              activeTab === "risks"
+                ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
+                : "hover:bg-orange-50 text-slate-700 hover:shadow-md"
+            )}
+          >
+            <AlertTriangle className="h-4 w-4 sm:mr-2" />
+            <span className="hidden xs:inline ml-2">Risk Indicators</span>
+            <span className="xs:hidden ml-2">Risks</span>
+          </Button>
+        </motion.div>
+      </motion.div>
 
       {/* Main Content */}
       {activeTab === "attendance" ? (
         <AttendanceGrid
-          key={`attendance-${students.map(s => `${s.id}-${s.status}`).join('-')}`}
           classId={classId}
           students={students}
           isLoading={isLoading}

@@ -338,7 +338,7 @@ export function BulkActionsPanel({
             onMouseMove={handleUserActivity}
           >
             {/* Enhanced glass morphism container with real-time status */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-orange-500/20 border border-orange-100/50 p-6 min-w-[650px]">
+            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-orange-500/20 p-4 sm:p-6 w-[95vw] max-w-[650px] mx-auto">
               {/* Header with real-time status */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -434,7 +434,7 @@ export function BulkActionsPanel({
               )}
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
                 {bulkActionConfigs.map((config) => {
                   const Icon = config.icon;
                   
