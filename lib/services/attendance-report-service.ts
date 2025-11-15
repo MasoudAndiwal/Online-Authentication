@@ -253,16 +253,174 @@ export async function generateAttendanceReport(
     
     // Start adding student data from row 8 (based on template structure)
     const startRow = 8;
+    const templateRow = worksheet.getRow(startRow); // Get the template row for formatting
+    const templateSignatureRowNumber = 28; // Signature is at row 28 in template
     
+    // First, save the signature row content before we potentially overwrite it
+    const signatureRowBackup = worksheet.getRow(templateSignatureRowNumber);
+    const signatureData: Record<number, {
+      value: unknown;
+      style: unknown;
+      border: unknown;
+      fill: unknown;
+      font: unknown;
+      alignment: unknown;
+    }> = {};
+    signatureRowBackup.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      if (cell.value || cell.style) {
+        signatureData[colNumber] = {
+          value: cell.value,
+          style: cell.style ? { ...cell.style } : null,
+          border: cell.border ? { ...cell.border } : null,
+          fill: cell.fill ? { ...cell.fill } : null,
+          font: cell.font ? { ...cell.font } : null,
+          alignment: cell.alignment ? { ...cell.alignment } : null,
+        };
+      }
+    });
+    const signatureRowHeight = signatureRowBackup.height;
+    
+    // Save merged cells that include the signature row
+    const mergedCellsToMove: string[] = [];
+    worksheet.model.merges.forEach((merge: string) => {
+      // Check if this merge includes row 28
+      const match = merge.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+      if (match) {
+        const startRow = parseInt(match[2]);
+        const endRow = parseInt(match[4]);
+        if (startRow <= templateSignatureRowNumber && endRow >= templateSignatureRowNumber) {
+          mergedCellsToMove.push(merge);
+        }
+      }
+    });
+    
+    // Always remove signature merged cells first (for any number of students)
+    console.log(`Removing all signature merges from rows 28-38`);
+    
+    // Method 1: Remove specific known merges
+    const knownSignatureMerges = ['A28:AU28', 'A28:AU38'];
+    knownSignatureMerges.forEach((merge) => {
+      const index = worksheet.model.merges.indexOf(merge);
+      if (index > -1) {
+        worksheet.model.merges.splice(index, 1);
+        console.log(`Removed known merge: ${merge}`);
+      }
+    });
+    
+    // Method 2: Remove any merge that includes rows 28-38
+    const mergesToRemove: string[] = [];
+    worksheet.model.merges.forEach((merge: string) => {
+      const match = merge.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+      if (match) {
+        const startRow = parseInt(match[2]);
+        const endRow = parseInt(match[4]);
+        // If any part of the merge touches rows 28-38, remove it
+        if ((startRow >= 28 && startRow <= 38) || (endRow >= 28 && endRow <= 38) || 
+            (startRow < 28 && endRow > 38)) {
+          mergesToRemove.push(merge);
+        }
+      }
+    });
+    
+    // Remove the signature merges
+    mergesToRemove.forEach((merge) => {
+      const index = worksheet.model.merges.indexOf(merge);
+      if (index > -1) {
+        worksheet.model.merges.splice(index, 1);
+        console.log(`Removed merge: ${merge}`);
+      }
+    });
+    
+    // Method 3: Force unmerge specific cells if still merged
+    try {
+      // Try to unmerge the signature area directly
+      for (let row = 28; row <= 38; row++) {
+        worksheet.unMergeCells(`A${row}:AU${row}`);
+        console.log(`Force unmerged row ${row}`);
+      }
+    } catch (error) {
+      console.log(`Force unmerge completed (some may not have been merged)`);
+    }
+    
+    console.log(`Signature merge removal completed`);
+
     students.forEach((student, index) => {
-      const row = worksheet.getRow(startRow + index);
+      const currentRowNumber = startRow + index;
+      const row = worksheet.getRow(currentRowNumber);
+      
+      // If this row is in the signature area (28-38), completely reset it first
+      if (currentRowNumber >= 28 && currentRowNumber <= 38) {
+        console.log(`Resetting signature row ${currentRowNumber} for student data`);
+        
+        // Clear all cells completely
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.value = null;
+          cell.style = {};
+          cell.border = {};
+          cell.fill = {};
+          cell.font = {};
+          cell.alignment = {};
+        });
+      }
+      
+      // Always copy formatting from template row for consistency
+      // Copy row height
+      row.height = 62.1; // Use student height consistently
+      
+      // Copy cell styles from template row to new row
+      templateRow.eachCell({ includeEmpty: true }, (templateCell, colNumber) => {
+        const newCell = row.getCell(colNumber);
+        
+        // Copy style
+        if (templateCell.style) {
+          newCell.style = { ...templateCell.style };
+        }
+        
+        // Copy border
+        if (templateCell.border) {
+          newCell.border = { ...templateCell.border };
+        }
+        
+        // Copy fill
+        if (templateCell.fill) {
+          newCell.fill = { ...templateCell.fill };
+        }
+        
+        // Copy font
+        if (templateCell.font) {
+          newCell.font = { ...templateCell.font };
+        }
+        
+        // Copy alignment
+        if (templateCell.alignment) {
+          newCell.alignment = { ...templateCell.alignment };
+        }
+      });
+      
       const summary = calculateAttendanceSummary(student.id, attendanceRecords);
       
       // RTL table: Student info on the RIGHT side
       // AU8 = Column 47, AT8 = Column 46, AS8 = Column 45, AR8 = Column 44, AQ8 = Column 43
       row.getCell('AU').value = index + 1; // شماره (Number) - AU8
-      row.getCell('AT').value = student.first_name; // اسم (Name) - AT8
-      row.getCell('AS').value = student.father_name; // ولدیت (Father Name) - AS8
+      
+      // Name column (AT) with top and bottom borders
+      const nameCell = row.getCell('AT');
+      nameCell.value = student.first_name; // اسم (Name) - AT8
+      nameCell.border = {
+        ...nameCell.border,
+        top: { style: 'thin' },
+        bottom: { style: 'thin' }
+      };
+      
+      // Father name column (AS) with top and bottom borders
+      const fatherNameCell = row.getCell('AS');
+      fatherNameCell.value = student.father_name; // ولدیت (Father Name) - AS8
+      fatherNameCell.border = {
+        ...fatherNameCell.border,
+        top: { style: 'thin' },
+        bottom: { style: 'thin' }
+      };
+      
       row.getCell('AR').value = student.grandfather_name; // Grandfather Name - AR8
       row.getCell('AQ').value = student.student_id; // نمبر اساس (ID Number) - AQ8
       
@@ -289,6 +447,119 @@ export async function generateAttendanceReport(
       
       row.commit();
     });
+    
+    console.log(`Added ${students.length} student rows to the report`);
+
+
+
+    // Add new signature at the end (for all cases)
+    const lastStudentRow = startRow + students.length - 1;
+    const newSignatureRowNumber = lastStudentRow + 1;
+    
+    // Check if we have signature data to restore
+    if (Object.keys(signatureData).length > 0) {
+      const newSignatureRow = worksheet.getRow(newSignatureRowNumber);
+      
+      // Keep original signature row height (not student height)
+      if (signatureRowHeight) {
+        newSignatureRow.height = signatureRowHeight;
+      }
+      
+      // Restore signature row content and formatting
+      Object.keys(signatureData).forEach((colNumber) => {
+        const colNum = parseInt(colNumber);
+        const cellData = signatureData[colNum];
+        const newCell = newSignatureRow.getCell(colNum);
+        
+        // Restore value
+        if (cellData.value !== undefined && cellData.value !== null) {
+          newCell.value = cellData.value as ExcelJS.CellValue;
+        }
+        
+        // Restore style but override height-related properties
+        if (cellData.style && typeof cellData.style === 'object') {
+          newCell.style = cellData.style as Partial<ExcelJS.Style>;
+        }
+        
+        // Restore border but ensure we add thick top border
+        if (cellData.border && typeof cellData.border === 'object') {
+          const border = { ...cellData.border } as Partial<ExcelJS.Borders>;
+          // Force thick top border for signature row
+          border.top = { style: 'thick' };
+          newCell.border = border;
+        } else {
+          // If no border data, at least add thick top border
+          newCell.border = {
+            top: { style: 'thick' }
+          };
+        }
+        
+        // Restore fill
+        if (cellData.fill && typeof cellData.fill === 'object') {
+          newCell.fill = cellData.fill as ExcelJS.Fill;
+        }
+        
+        // Restore font
+        if (cellData.font && typeof cellData.font === 'object') {
+          newCell.font = cellData.font as Partial<ExcelJS.Font>;
+        }
+        
+        // Restore alignment
+        if (cellData.alignment && typeof cellData.alignment === 'object') {
+          newCell.alignment = cellData.alignment as Partial<ExcelJS.Alignment>;
+        }
+      });
+      
+      newSignatureRow.commit();
+      
+      // Add two separate signature merges as requested
+      try {
+        // Right side merge: AQ to AU (student info area)
+        const rightMerge = `AQ${newSignatureRowNumber}:AU${newSignatureRowNumber}`;
+        worksheet.mergeCells(rightMerge);
+        console.log(`Added right signature merge: ${rightMerge}`);
+        
+        // Left side merge: B to AP (attendance and summary area)  
+        const leftMerge = `B${newSignatureRowNumber}:AP${newSignatureRowNumber}`;
+        worksheet.mergeCells(leftMerge);
+        console.log(`Added left signature merge: ${leftMerge}`);
+        
+        // Apply styling to the merged areas
+        // Right side (AQ:AU) - for signature text
+        for (let col = 43; col <= 47; col++) { // AQ=43 to AU=47
+          const cell = worksheet.getRow(newSignatureRowNumber).getCell(col);
+          if (col === 43) { // First cell gets the signature text
+            cell.value = 'امضاء استاد مربوطه';
+          }
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.font = { bold: true, size: 26 };
+          cell.border = {
+            top: { style: 'thick' },
+            bottom: { style: 'thick' },
+            left: col === 43 ? { style: 'thick' } : undefined,
+            right: col === 47 ? { style: 'thick' } : undefined
+          };
+        }
+        
+        // Left side (B:AP) - empty signature area
+        for (let col = 2; col <= 42; col++) { // B=2 to AP=42
+          const cell = worksheet.getRow(newSignatureRowNumber).getCell(col);
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thick' },
+            bottom: { style: 'thick' },
+            left: col === 2 ? { style: 'thick' } : undefined,
+            right: col === 42 ? { style: 'thick' } : undefined
+          };
+        }
+        
+      } catch (error) {
+        console.log(`Could not create signature merges:`, error);
+      }
+      
+      console.log(`Added signature at row ${newSignatureRowNumber}`);
+                
+    }
 
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
