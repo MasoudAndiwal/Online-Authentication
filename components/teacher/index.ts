@@ -22,7 +22,6 @@ export { StudentProgressSection } from './student-progress-section'
 export { ReportsDashboard } from './reports-dashboard'
 export type { ReportType, ReportFilters } from './reports-dashboard'
 
-export { ReportCard } from './report-card'
 export { FilterPanel } from './filter-panel'
 export { ExportDialog } from './export-dialog'
 export type { ExportFormat } from './export-dialog'

@@ -11,7 +11,6 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { ReportCard } from './report-card'
 import { ExportManager } from './export-manager'
 import { AdvancedFilter, AdvancedReportFilters } from './advanced-filter'
 import { reportService } from '@/lib/services/report-service'
@@ -306,16 +305,7 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * index, duration: 0.5 }}
           >
-            <ReportCard
-              report={{
-                ...report,
-                isLoading: isGenerating === report.id
-              }}
-              onGenerate={() => handleGenerateReport(report.id)}
-              onExport={() => handleExportReport(report.id)}
-              onAdvancedExport={() => handleAdvancedExport(report.id)}
-              lastGeneratedText={getLastGeneratedText(report.lastGenerated)}
-            />
+           
           </motion.div>
         ))}
       </div>

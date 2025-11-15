@@ -6,13 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Download, Loader2, Calendar, Users, Clock, FileText, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import {
   Dialog,
@@ -134,7 +127,7 @@ export function AttendanceReportGenerator({
       className={cn("max-w-2xl", className)}
     >
       <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50 overflow-hidden">
-        <CardContent className="p-5">
+        <CardContent className="p-6">
           {/* Header Section */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
