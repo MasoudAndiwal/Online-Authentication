@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { formatPercentage } from '@/lib/utils/format'
 
 interface ProgressIndicatorProps {
   percentage: number
@@ -90,7 +91,7 @@ export function ProgressIndicator({
               animate={animated ? { opacity: [0.5, 1, 0.5] } : undefined}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              {Math.round(displayPercentage)}%
+              {formatPercentage(displayPercentage, 0)}
             </motion.span>
           )}
         </div>
@@ -206,7 +207,7 @@ export function CircularProgress({
           transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
         >
           <span className={cn("text-2xl font-bold", config.text)}>
-            {Math.round(displayPercentage)}%
+            {formatPercentage(displayPercentage, 0)}
           </span>
         </motion.div>
       )}

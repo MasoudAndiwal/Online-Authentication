@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { formatPercentage } from '@/lib/utils/format'
 
 // Types for chart data
 export interface AttendanceDataPoint {
@@ -191,7 +192,7 @@ export function ProgressCharts({
                             <div className="w-3 h-3" />
                           )}
                           <span className="text-xs text-slate-600">
-                            {week.trendPercentage > 0 && `${week.trendPercentage.toFixed(1)}%`}
+                            {week.trendPercentage > 0 && formatPercentage(week.trendPercentage, 1)}
                           </span>
                         </div>
                       </div>
@@ -387,7 +388,7 @@ export function ProgressCharts({
                             week.weeklyRate >= 90 ? 'bg-green-500' :
                             week.weeklyRate >= 75 ? 'bg-orange-500' : 'bg-red-500'
                           )}
-                          title={`Week ${weekIndex + 1}: ${week.weeklyRate.toFixed(1)}%`}
+                          title={`Week ${weekIndex + 1}: ${formatPercentage(week.weeklyRate, 1)}`}
                         />
                       ))}
                     </div>

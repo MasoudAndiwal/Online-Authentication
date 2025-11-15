@@ -4,34 +4,11 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Home,
-  Users,
-  Calendar,
-  BarChart3,
-  Settings,
-  BookOpen,
-  ClipboardList,
-  FileText,
-  UserPlus,
-  Shield,
-  Clock,
-  TrendingUp,
-  ChevronRight,
-  GraduationCap,
-  User,
-  LogOut,
-  MoreHorizontal,
+import {Home,Users,Calendar,BarChart3,Settings,BookOpen,ClipboardList,FileText,UserPlus,Shield,Clock,TrendingUp,ChevronRight,GraduationCap,User,LogOut,MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface NavigationItem {
@@ -227,13 +204,8 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       },
       {
         label: "Student Progress",
-        href: "/teacher/dashboard/progress",
+        href: "/teacher/dashboard/student-progress",
         icon: TrendingUp,
-      },
-      {
-        label: "Reports",
-        href: "/teacher/dashboard/reports",
-        icon: FileText,
       },
     ];
   }

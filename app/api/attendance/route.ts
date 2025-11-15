@@ -91,27 +91,20 @@ export async function POST(request: NextRequest) {
 
       const attendanceData = Array.from(studentRecords.values());
 
-      // Delete existing attendance records for this class and date from NEW table
-      const { error: deleteError } = await supabase
+      // Use UPSERT to update existing records or insert new ones
+      // This will only update the students sent in the request, not delete others
+      const { data, error: upsertError } = await supabase
         .from('attendance_records_new')
-        .delete()
-        .eq('class_id', classId)
-        .eq('date', date);
-
-      if (deleteError) {
-        console.error('[Attendance API] Error deleting existing records from new table:', deleteError);
-      }
-
-      // Insert new attendance records (1 per student) into NEW table
-      const { data, error: insertError } = await supabase
-        .from('attendance_records_new')
-        .insert(attendanceData)
+        .upsert(attendanceData, {
+          onConflict: 'student_id,class_id,date',
+          ignoreDuplicates: false
+        })
         .select();
 
-      if (insertError) {
-        console.error('[Attendance API] Error inserting records:', insertError);
+      if (upsertError) {
+        console.error('[Attendance API] Error upserting records:', upsertError);
         return NextResponse.json(
-          { error: 'Failed to save attendance records', details: insertError.message },
+          { error: 'Failed to save attendance records', details: upsertError.message },
           { status: 500 }
         );
       }
@@ -146,27 +139,20 @@ export async function POST(request: NextRequest) {
         marked_at: new Date().toISOString(),
       }));
 
-      // Delete existing attendance records for this class and date
-      const { error: deleteError } = await supabase
+      // Use UPSERT to update existing records or insert new ones
+      // This will only update the records sent in the request, not delete others
+      const { data, error: upsertError } = await supabase
         .from('attendance_records')
-        .delete()
-        .eq('class_id', classId)
-        .eq('date', date);
-
-      if (deleteError) {
-        console.error('[Attendance API] Error deleting existing records:', deleteError);
-      }
-
-      // Insert new attendance records
-      const { data, error: insertError } = await supabase
-        .from('attendance_records')
-        .insert(attendanceData)
+        .upsert(attendanceData, {
+          onConflict: 'student_id,class_id,date,period_number',
+          ignoreDuplicates: false
+        })
         .select();
 
-      if (insertError) {
-        console.error('[Attendance API] Error inserting records:', insertError);
+      if (upsertError) {
+        console.error('[Attendance API] Error upserting records:', upsertError);
         return NextResponse.json(
-          { error: 'Failed to save attendance records', details: insertError.message },
+          { error: 'Failed to save attendance records', details: upsertError.message },
           { status: 500 }
         );
       }

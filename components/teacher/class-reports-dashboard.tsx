@@ -4,14 +4,9 @@ import * as React from 'react'
 import { motion } from 'framer-motion'
 import { 
   BarChart3, 
-  TrendingUp, 
   Users, 
   Calendar,
-  Filter,
-  RefreshCw,
-  AlertTriangle,
-  Target,
-  Award
+  RefreshCw
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +15,7 @@ import { ReportCard } from './report-card'
 import { ExportManager } from './export-manager'
 import { AdvancedFilter, AdvancedReportFilters } from './advanced-filter'
 import { reportService } from '@/lib/services/report-service'
+import { AttendanceReportGenerator } from './attendance-report-generator'
 
 // Class-specific report types
 export interface ClassReportType {
@@ -45,6 +41,32 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
   const [showExportManager, setShowExportManager] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [isGenerating, setIsGenerating] = React.useState<string | null>(null)
+  
+  // State for class data
+  const [classData, setClassData] = React.useState<{ name: string; session: string } | null>(null)
+  const [classLoading, setClassLoading] = React.useState(true)
+  
+  // Fetch class data
+  React.useEffect(() => {
+    const fetchClassData = async () => {
+      try {
+        setClassLoading(true)
+        const response = await fetch(`/api/classes/${classId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setClassData({ name: data.name, session: data.session })
+        }
+      } catch (error) {
+        console.error('Error fetching class data:', error)
+      } finally {
+        setClassLoading(false)
+      }
+    }
+    
+    if (classId) {
+      fetchClassData()
+    }
+  }, [classId])
   
   const [advancedFilters, setAdvancedFilters] = React.useState<AdvancedReportFilters>({
     dateRange: {
@@ -78,46 +100,16 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
     }
   })
 
-  // Class-specific reports
+  // Class-specific reports - Only Weekly Attendance Report
   const [reports, setReports] = React.useState<ClassReportType[]>([
     {
-      id: 'class-attendance-summary',
-      title: 'Class Attendance Summary',
-      description: 'Detailed attendance overview for this specific class with daily and weekly breakdowns',
+      id: 'weekly-attendance-report',
+      title: 'Weekly Attendance Report',
+      description: 'Weekly attendance report with student marks',
       icon: <Calendar className="w-6 h-6" />,
       color: 'orange',
       lastGenerated: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
       dataCount: 28,
-      isLoading: false
-    },
-    {
-      id: 'student-performance',
-      title: 'Student Performance Report',
-      description: 'Individual student attendance rates and risk assessment for this class',
-      icon: <Users className="w-6 h-6" />,
-      color: 'blue',
-      lastGenerated: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-      dataCount: 28,
-      isLoading: false
-    },
-    {
-      id: 'attendance-trends',
-      title: 'Attendance Trends Analysis',
-      description: 'Weekly and monthly attendance trends with predictive insights',
-      icon: <TrendingUp className="w-6 h-6" />,
-      color: 'green',
-      lastGenerated: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-      dataCount: 84, // 28 students × 3 weeks
-      isLoading: false
-    },
-    {
-      id: 'risk-assessment',
-      title: 'Risk Assessment Report',
-      description: 'Students at risk of محروم or تصدیق طلب with actionable recommendations',
-      icon: <AlertTriangle className="w-6 h-6" />,
-      color: 'purple',
-      lastGenerated: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      dataCount: 3, // Students at risk
       isLoading: false
     }
   ])
@@ -228,7 +220,13 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
                     Class Reports
                   </h1>
                   <p className="text-lg text-slate-600 font-medium mt-2">
-                    Detailed analytics and insights for Class {classId}
+                    {classLoading ? (
+                      'Loading class information...'
+                    ) : classData ? (
+                      `Weekly attendance report for ${classData.name} - ${classData.session}`
+                    ) : (
+                      `Weekly attendance report for Class ${classId}`
+                    )}
                   </p>
                 </div>
               </motion.div>
@@ -240,14 +238,6 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
               transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-3"
             >
-              <Button
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                variant="outline"
-                className="border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-2xl px-6 py-3 text-base font-semibold"
-              >
-                <Filter className="h-5 w-5 mr-2" />
-                Filters
-              </Button>
               <Button
                 onClick={handleRefreshReports}
                 disabled={isRefreshing}
@@ -261,12 +251,12 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
         </div>
       </motion.div>
 
-      {/* Class Statistics Cards */}
+      {/* Total Students Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 gap-6"
       >
         <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl">
           <CardContent className="p-6">
@@ -285,61 +275,10 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
             </div>
           </CardContent>
         </Card>
-
-        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-green-50 to-green-100/50 backdrop-blur-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg shadow-green-500/25">
-                <Target className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                  Avg Attendance
-                </p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {classStats.averageAttendance}%
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-red-50 to-red-100/50 backdrop-blur-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg shadow-red-500/25">
-                <AlertTriangle className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                  At Risk
-                </p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {classStats.studentsAtRisk}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 backdrop-blur-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/25">
-                <Award className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                  Perfect Attendance
-                </p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {classStats.perfectAttendance}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </motion.div>
+
+      {/* Attendance Report Generator */}
+      <AttendanceReportGenerator classId={classId} className={className} />
 
       {/* Advanced Filter Panel */}
       {showAdvancedFilters && (
