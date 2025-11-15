@@ -254,17 +254,30 @@ export function AttendanceManagement({
     try {
       const attendanceRecords: any[] = [];
       
+      // Determine which periods to save
+      let periodsToSave: number[] = [];
+      if (enablePeriodFiltering && teacherPeriods && teacherPeriods.length > 0) {
+        // Only save periods assigned to this teacher
+        periodsToSave = teacherPeriods
+          .map(p => p.periodNumber)
+          .filter((p, i, arr) => arr.indexOf(p) === i);
+      } else if (!enablePeriodFiltering) {
+        // If period filtering is disabled, save all 6 periods (backward compatibility)
+        periodsToSave = [1, 2, 3, 4, 5, 6];
+      }
+      // If enablePeriodFiltering is true but no periods assigned, periodsToSave remains empty
+      
       students
         .filter(student => student.status !== 'NOT_MARKED')
         .forEach(student => {
-          // Create records for all 6 periods
-          for (let period = 1; period <= 6; period++) {
+          // Create records only for assigned periods
+          for (const period of periodsToSave) {
             attendanceRecords.push({
               studentId: student.id,
               status: student.status,
               periodNumber: period,
-              teacherName: `Teacher ${Math.ceil(period / 2)}`,
-              subject: classData?.name || 'Unknown Subject',
+              teacherName: currentTeacherId || 'Unknown Teacher',
+              subject: classData?.major || 'Unknown Subject',
               notes: null,
             });
           }
@@ -439,25 +452,42 @@ export function AttendanceManagement({
           status,
           periodNumber,
           teacherName: currentTeacherId || 'Unknown Teacher',
-          subject: classData?.name || 'Unknown Subject',
+          subject: classData?.major || 'Unknown Subject',
           notes: null,
         });
       } else {
-        // Global status change (SICK/LEAVE for all assigned periods)
-        const assignedPeriods = teacherPeriods && teacherPeriods.length > 0 
-          ? teacherPeriods.map(p => p.periodNumber).filter((p, i, arr) => arr.indexOf(p) === i)
-          : [1, 2, 3, 4, 5, 6]; // 6 periods per day
+        // Global status change (SICK/LEAVE for ONLY assigned periods)
+        // Only save for periods that the teacher is actually assigned to
+        if (enablePeriodFiltering && teacherPeriods && teacherPeriods.length > 0) {
+          // Get unique period numbers from teacher's assignments
+          const assignedPeriods = teacherPeriods
+            .map(p => p.periodNumber)
+            .filter((p, i, arr) => arr.indexOf(p) === i);
           
-        for (const period of assignedPeriods) {
-          attendanceRecords.push({
-            studentId,
-            status,
-            periodNumber: period,
-            teacherName: currentTeacherId || 'Unknown Teacher',
-            subject: classData?.name || 'Unknown Subject',
-            notes: null,
-          });
+          for (const period of assignedPeriods) {
+            attendanceRecords.push({
+              studentId,
+              status,
+              periodNumber: period,
+              teacherName: currentTeacherId || 'Unknown Teacher',
+              subject: classData?.major || 'Unknown Subject',
+              notes: null,
+            });
+          }
+        } else if (!enablePeriodFiltering) {
+          // If period filtering is disabled, save for all 6 periods (backward compatibility)
+          for (const period of [1, 2, 3, 4, 5, 6]) {
+            attendanceRecords.push({
+              studentId,
+              status,
+              periodNumber: period,
+              teacherName: currentTeacherId || 'Unknown Teacher',
+              subject: classData?.major || 'Unknown Subject',
+              notes: null,
+            });
+          }
         }
+        // If enablePeriodFiltering is true but no periods assigned, don't save anything
       }
 
       const response = await fetch('/api/attendance', {
@@ -531,19 +561,32 @@ export function AttendanceManagement({
         id: 'bulk-start',
       });
       
-      // Prepare attendance records with enhanced metadata for ALL 6 periods
+      // Prepare attendance records for ONLY assigned periods
       const attendanceRecords: any[] = [];
+      
+      // Determine which periods to update
+      let periodsToUpdate: number[] = [];
+      if (enablePeriodFiltering && teacherPeriods && teacherPeriods.length > 0) {
+        // Only update periods assigned to this teacher
+        periodsToUpdate = teacherPeriods
+          .map(p => p.periodNumber)
+          .filter((p, i, arr) => arr.indexOf(p) === i);
+      } else if (!enablePeriodFiltering) {
+        // If period filtering is disabled, update all 6 periods (backward compatibility)
+        periodsToUpdate = [1, 2, 3, 4, 5, 6];
+      }
+      // If enablePeriodFiltering is true but no periods assigned, periodsToUpdate remains empty
       
       studentIds.forEach(studentId => {
         const student = students.find(s => s.id === studentId);
-        // Create records for all 6 periods
-        for (let period = 1; period <= 6; period++) {
+        // Create records only for assigned periods
+        for (const period of periodsToUpdate) {
           attendanceRecords.push({
             studentId,
             status,
             periodNumber: period,
-            teacherName: `Teacher ${Math.ceil(period / 2)}`,
-            subject: classData?.name || 'Unknown Subject',
+            teacherName: currentTeacherId || 'Unknown Teacher',
+            subject: classData?.major || 'Unknown Subject',
             notes: `Bulk update: ${studentIds.length} students at ${new Date().toLocaleTimeString()}`,
             studentName: student?.name || 'Unknown Student', // For better error reporting
           });
@@ -1333,19 +1376,25 @@ export function AttendanceManagement({
 
       {/* Main Content */}
       {activeTab === "attendance" ? (
-        <AttendanceGrid
-          classId={classId}
-          students={students}
-          isLoading={isLoading}
-          error={error}
-          onStatusChange={handleStatusChange}
-          selectedStudents={selectedStudents}
-          onStudentSelect={handleStudentSelect}
-          onSelectAll={handleSelectAll}
-          teacherPeriods={teacherPeriods}
-          currentTeacherId={currentTeacherId}
-          enablePeriodFiltering={enablePeriodFiltering}
-        />
+        // Only show attendance grid if:
+        // 1. Period filtering is disabled, OR
+        // 2. Teacher has periods assigned, OR
+        // 3. Still loading period assignments
+        (!enablePeriodFiltering || teacherPeriods.length > 0 || periodAssignmentLoading) ? (
+          <AttendanceGrid
+            classId={classId}
+            students={students}
+            isLoading={isLoading}
+            error={error}
+            onStatusChange={handleStatusChange}
+            selectedStudents={selectedStudents}
+            onStudentSelect={handleStudentSelect}
+            onSelectAll={handleSelectAll}
+            teacherPeriods={teacherPeriods}
+            currentTeacherId={currentTeacherId}
+            enablePeriodFiltering={enablePeriodFiltering}
+          />
+        ) : null
       ) : (
         <RiskIndicatorsGrid
           students={riskData}
