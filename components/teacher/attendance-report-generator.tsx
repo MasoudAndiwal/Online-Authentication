@@ -4,7 +4,7 @@ import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Download, Loader2, Calendar, Users, Clock, FileText, ChevronRight } from 'lucide-react'
+import { Download, Loader2, Calendar, Users, Clock, FileText, CalendarDays, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import {
@@ -13,24 +13,114 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { DatePicker } from '@/components/ui/date-picker'
+import { Badge } from '@/components/ui/badge'
+import { SkeletonAttendanceReportGenerator } from './skeleton-loaders'
+import { getDateRange, validateDateRange, getWeekBoundaries, type DateRangeType } from '@/lib/utils/date-ranges'
+import { formatSolarDateForCalendar } from '@/lib/utils/solar-calendar'
 
 interface AttendanceReportGeneratorProps {
   classId: string
   className?: string
 }
 
-type DateRange = 'current-week' | 'last-week' | 'custom'
+// Helper function to format time ago
+function getTimeAgo(date: Date | null): string {
+  if (!date) return 'Never generated'
+  
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays > 0) {
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+  } else if (diffHours > 0) {
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`
+  } else {
+    return 'Just now'
+  }
+}
 
 export function AttendanceReportGenerator({
   classId,
   className,
 }: AttendanceReportGeneratorProps) {
-  const [dateRange, setDateRange] = React.useState<DateRange>('current-week')
+  const [dateRangeType, setDateRangeType] = React.useState<DateRangeType>('current-week')
   const [isGenerating, setIsGenerating] = React.useState(false)
-  const [customStartDate, setCustomStartDate] = React.useState<string>('')
-  const [customEndDate, setCustomEndDate] = React.useState<string>('')
+  const [customStartDate, setCustomStartDate] = React.useState<Date | undefined>()
+  const [customEndDate, setCustomEndDate] = React.useState<Date | undefined>()
   const [showExportDialog, setShowExportDialog] = React.useState(false)
-  const [selectedFormat, setSelectedFormat] = React.useState<'pdf' | 'excel'>('pdf')
+  const [selectedFormat, setSelectedFormat] = React.useState<'pdf' | 'excel'>('excel')
+
+  
+  // New state for database data
+  const [totalRecords, setTotalRecords] = React.useState<number>(0)
+  const [lastGenerated, setLastGenerated] = React.useState<Date | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+  
+  // Fetch data from database
+  React.useEffect(() => {
+    const fetchReportData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // Fetch attendance records count
+        const recordsResponse = await fetch(`/api/classes/${classId}/attendance/count`)
+        if (recordsResponse.ok) {
+          const recordsData = await recordsResponse.json()
+          setTotalRecords(recordsData.count || 0)
+        }
+        
+        // Fetch last generated report time (from localStorage or API)
+        const lastGen = localStorage.getItem(`report-last-gen-${classId}`)
+        if (lastGen) {
+          setLastGenerated(new Date(lastGen))
+        }
+        
+      } catch (error) {
+        console.error('Error fetching report data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    if (classId) {
+      fetchReportData()
+    }
+  }, [classId])
+
+  // Get current date range info
+  const currentDateRange = React.useMemo(() => {
+    try {
+      return getDateRange(dateRangeType, customStartDate, customEndDate)
+    } catch {
+      return null
+    }
+  }, [dateRangeType, customStartDate, customEndDate])
+
+  // Validate current selection
+  const dateValidation = React.useMemo(() => {
+    if (dateRangeType === 'custom') {
+      if (!customStartDate || !customEndDate) {
+        return { isValid: false, error: 'Please select both start and end dates' }
+      }
+      return validateDateRange(customStartDate, customEndDate)
+    }
+    return { isValid: true }
+  }, [dateRangeType, customStartDate, customEndDate])
+
+  // Get week boundaries for current selection
+  const weekBoundaries = React.useMemo(() => {
+    if (dateRangeType === 'current-week' || dateRangeType === 'last-week') {
+      const range = getDateRange(dateRangeType)
+      return getWeekBoundaries(range.from)
+    }
+    return null
+  }, [dateRangeType])
 
   const handleOpenExportDialog = () => {
     setShowExportDialog(true)
@@ -41,26 +131,20 @@ export function AttendanceReportGenerator({
       setIsGenerating(true)
       setShowExportDialog(false)
 
-      // Validate custom dates if selected
-      if (dateRange === 'custom') {
-        if (!customStartDate || !customEndDate) {
-          toast.error('Please select both start and end dates')
-          return
-        }
-
-        const start = new Date(customStartDate)
-        const end = new Date(customEndDate)
-
-        if (start > end) {
-          toast.error('Start date must be before end date')
-          return
-        }
+      // Validate date range
+      if (!dateValidation.isValid) {
+        toast.error(dateValidation.error || 'Invalid date range')
+        setIsGenerating(false)
+        return
       }
+
+      // Get the actual date range
+      const range = getDateRange(dateRangeType, customStartDate, customEndDate)
 
       // Prepare request body
       interface RequestBody {
         classId: string
-        dateRange: DateRange
+        dateRange: DateRangeType
         customStartDate?: string
         customEndDate?: string
         format?: string
@@ -68,19 +152,37 @@ export function AttendanceReportGenerator({
 
       const requestBody: RequestBody = {
         classId,
-        dateRange,
+        dateRange: dateRangeType,
+        customStartDate: range.from.toISOString().split('T')[0],
+        customEndDate: range.to.toISOString().split('T')[0],
         format: selectedFormat,
-      }
-
-      if (dateRange === 'custom') {
-        requestBody.customStartDate = customStartDate
-        requestBody.customEndDate = customEndDate
       }
 
       // Call API based on format
       if (selectedFormat === 'pdf') {
-        toast.info('PDF generation coming soon!')
-        return
+        const response = await fetch('/api/reports/attendance/pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to generate PDF report')
+        }
+
+        // Download PDF
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = `attendance-report-${new Date().toISOString().split('T')[0]}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       }
 
       const response = await fetch('/api/reports/attendance', {
@@ -108,6 +210,11 @@ export function AttendanceReportGenerator({
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
 
+      // Save last generated time
+      const now = new Date()
+      localStorage.setItem(`report-last-gen-${classId}`, now.toISOString())
+      setLastGenerated(now)
+      
       toast.success('Report generated and downloaded successfully')
     } catch (error) {
       console.error('Error generating report:', error)
@@ -117,6 +224,11 @@ export function AttendanceReportGenerator({
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <SkeletonAttendanceReportGenerator className={className} />
   }
 
   return (
@@ -156,55 +268,20 @@ export function AttendanceReportGenerator({
           <div className="flex items-center gap-4 mb-3 text-xs text-slate-600">
             <div className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
-              <span>28 records</span>
+              <span>{isLoading ? '...' : `${totalRecords} records`}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              <span>1 hour ago</span>
+              <span>{isLoading ? '...' : getTimeAgo(lastGenerated)}</span>
             </div>
           </div>
 
           {/* Status Badge */}
           <div className="mb-4">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
-              Ready
+              {isLoading ? 'Loading...' : lastGenerated ? 'Ready' : 'Not Generated'}
             </span>
           </div>
-
-          {/* Date Range Selection - Collapsible */}
-          {dateRange === 'custom' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-6 space-y-3"
-            >
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border-0 bg-white/60 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-orange-500 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border-0 bg-white/60 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-orange-500 text-sm"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
 
           {/* Action Buttons */}
           <div className="space-y-2">
@@ -235,31 +312,214 @@ export function AttendanceReportGenerator({
               </Button>
             </motion.div>
 
-            {/* View Detailed Report Link */}
-            <motion.button
-              whileHover={{ x: 4 }}
-              className="w-full flex items-center justify-center gap-2 text-orange-600 hover:text-orange-700 font-semibold text-xs py-1.5 transition-colors"
-            >
-              View Detailed Report
-              <ChevronRight className="h-3.5 w-3.5" />
-            </motion.button>
+
           </div>
         </CardContent>
       </Card>
 
       {/* Export Configuration Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-        <DialogContent className="sm:max-w-[600px] rounded-3xl p-0 overflow-hidden border-0">
-          <DialogHeader className="p-6 pb-4">
+        <DialogContent className="sm:max-w-[650px] rounded-3xl p-0 overflow-hidden border-0">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-200">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl">
                 <FileText className="h-6 w-6 text-white" />
               </div>
-              <DialogTitle className="text-2xl font-bold">Export Configuration</DialogTitle>
+              <div>
+                <DialogTitle className="text-2xl font-bold">Export Configuration</DialogTitle>
+                <p className="text-sm text-slate-600 mt-1">Configure your attendance report settings</p>
+              </div>
             </div>
           </DialogHeader>
 
-          <div className="px-6 pb-6 space-y-6">
+          <div className="px-6 pb-6 space-y-8 max-h-[70vh] overflow-y-auto">
+            {/* Date Range Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarDays className="h-5 w-5 text-orange-500" />
+                <h3 className="text-sm font-semibold text-slate-700">Date Range</h3>
+              </div>
+              
+              {/* Quick Date Range Options */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {(['current-week', 'last-week', 'current-month', 'last-month'] as DateRangeType[]).map((type) => {
+                  const range = getDateRange(type)
+                  const isSelected = dateRangeType === type
+                  return (
+                    <motion.button
+                      key={type}
+                      onClick={() => setDateRangeType(type)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={cn(
+                        "p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+                        isSelected
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-slate-900">{range.label}</h4>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center"
+                          >
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </motion.div>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-600">{range.description}</p>
+                    </motion.button>
+                  )
+                })}
+              </div>
+
+              {/* Custom Range Option */}
+              <motion.button
+                onClick={() => setDateRangeType('custom')}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className={cn(
+                  "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+                  dateRangeType === 'custom'
+                    ? "border-orange-500 bg-orange-50"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                )}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-slate-900">Custom Range</h4>
+                  {dateRangeType === 'custom' && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center"
+                    >
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </motion.div>
+                  )}
+                </div>
+                <p className="text-sm text-slate-600">Choose your own start and end dates</p>
+              </motion.button>
+
+              {/* Custom Date Pickers */}
+              {dateRangeType === 'custom' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 space-y-4"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-semibold text-slate-700 block mb-2">
+                        Start Date
+                      </label>
+                      <DatePicker
+                        date={customStartDate}
+                        onDateChange={setCustomStartDate}
+                        placeholder="Select start date"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-slate-700 block mb-2">
+                        End Date
+                      </label>
+                      <DatePicker
+                        date={customEndDate}
+                        onDateChange={setCustomEndDate}
+                        placeholder="Select end date"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Date Range Validation */}
+                  {!dateValidation.isValid && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl"
+                    >
+                      <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                      <p className="text-sm text-red-700">{dateValidation.error}</p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Week Boundaries Display for Week Selections */}
+              {weekBoundaries && (dateRangeType === 'current-week' || dateRangeType === 'last-week') && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <p className="text-sm font-semibold text-blue-900">Afghanistan Work Week</p>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {weekBoundaries.days.map((day, index) => {
+                      const solarDate = formatSolarDateForCalendar(day)
+                      return (
+                        <div
+                          key={index}
+                          className="text-center p-2 bg-white rounded-lg border border-blue-200"
+                        >
+                          <p className="text-xs font-semibold text-slate-700">
+                            {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </p>
+                          <p className="text-xs text-slate-600 mt-1">
+                            {solarDate.solarDay}
+                          </p>
+                          <p className="text-xs text-blue-600 mt-0.5 font-medium">
+                            {solarDate.monthName.slice(0, 3)}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2">
+                    Saturday to Thursday • 6 working days
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Date Range Preview */}
+              {currentDateRange && dateValidation.isValid && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Selected Range</p>
+                      <p className="text-sm text-slate-600 mb-1">{currentDateRange.description}</p>
+                      <p className="text-xs text-slate-500">
+                        {currentDateRange.from.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })} - {currentDateRange.to.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })} (Gregorian)
+                      </p>
+                    </div>
+                    <Badge className="bg-orange-100 text-orange-700 border-0">
+                      {Math.ceil((currentDateRange.to.getTime() - currentDateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1} days
+                    </Badge>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
             {/* Export Format Section */}
             <div>
               <h3 className="text-sm font-semibold text-slate-700 mb-4">Export Format</h3>
@@ -357,7 +617,7 @@ export function AttendanceReportGenerator({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-4 border-t border-slate-200">
               <Button
                 onClick={() => setShowExportDialog(false)}
                 variant="outline"
@@ -367,8 +627,8 @@ export function AttendanceReportGenerator({
               </Button>
               <Button
                 onClick={handleGenerateReport}
-                disabled={isGenerating}
-                className="flex-1 h-11 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold"
+                disabled={isGenerating || !dateValidation.isValid}
+                className="flex-1 h-11 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isGenerating ? (
                   <>
@@ -386,6 +646,8 @@ export function AttendanceReportGenerator({
           </div>
         </DialogContent>
       </Dialog>
+
+
     </motion.div>
   )
 }

@@ -4,25 +4,16 @@ import * as React from 'react'
 import { motion } from 'framer-motion'
 import { 
   BarChart3, 
-  FileText, 
   TrendingUp, 
   Users, 
   Calendar,
-  Download,
   Filter,
   RefreshCw,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
   PieChart
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { ReportCard } from './report-card'
-import { FilterPanel } from './filter-panel'
-import { ExportDialog } from './export-dialog'
 import { ExportManager } from './export-manager'
 import { AdvancedFilter, AdvancedReportFilters } from './advanced-filter'
 import { reportService } from '@/lib/services/report-service'

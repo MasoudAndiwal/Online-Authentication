@@ -15,6 +15,7 @@ import { ExportManager } from './export-manager'
 import { AdvancedFilter, AdvancedReportFilters } from './advanced-filter'
 import { reportService } from '@/lib/services/report-service'
 import { AttendanceReportGenerator } from './attendance-report-generator'
+import { SkeletonMetricGrid } from './skeleton-loaders'
 
 // Class-specific report types
 export interface ClassReportType {
@@ -45,7 +46,17 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
   const [classData, setClassData] = React.useState<{ name: string; session: string } | null>(null)
   const [classLoading, setClassLoading] = React.useState(true)
   
-  // Fetch class data
+  // State for class statistics
+  const [classStats, setClassStats] = React.useState({
+    totalStudents: 0,
+    averageAttendance: 0,
+    studentsAtRisk: 0,
+    perfectAttendance: 0,
+    lastUpdated: new Date()
+  })
+  const [statsLoading, setStatsLoading] = React.useState(true)
+  
+  // Fetch class data and statistics
   React.useEffect(() => {
     const fetchClassData = async () => {
       try {
@@ -62,8 +73,30 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
       }
     }
     
+    const fetchClassStats = async () => {
+      try {
+        setStatsLoading(true)
+        const response = await fetch(`/api/classes/${classId}/stats`)
+        if (response.ok) {
+          const data = await response.json()
+          setClassStats({
+            totalStudents: data.totalStudents,
+            averageAttendance: data.averageAttendance,
+            studentsAtRisk: data.studentsAtRisk,
+            perfectAttendance: data.perfectAttendance,
+            lastUpdated: new Date(data.lastUpdated)
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching class stats:', error)
+      } finally {
+        setStatsLoading(false)
+      }
+    }
+    
     if (classId) {
       fetchClassData()
+      fetchClassStats()
     }
   }, [classId])
   
@@ -115,9 +148,24 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
 
   const handleRefreshReports = async () => {
     setIsRefreshing(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    setIsRefreshing(false)
+    try {
+      // Refresh class stats
+      const response = await fetch(`/api/classes/${classId}/stats`)
+      if (response.ok) {
+        const data = await response.json()
+        setClassStats({
+          totalStudents: data.totalStudents,
+          averageAttendance: data.averageAttendance,
+          studentsAtRisk: data.studentsAtRisk,
+          perfectAttendance: data.perfectAttendance,
+          lastUpdated: new Date(data.lastUpdated)
+        })
+      }
+    } catch (error) {
+      console.error('Error refreshing stats:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const handleGenerateReport = async (reportId: string) => {
@@ -177,14 +225,7 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
     }
   }
 
-  // Mock class statistics
-  const classStats = {
-    totalStudents: 28,
-    averageAttendance: 94.2,
-    studentsAtRisk: 3,
-    perfectAttendance: 12,
-    lastUpdated: new Date()
-  }
+
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -250,14 +291,24 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
         </div>
       </motion.div>
 
-      {/* Total Students Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-1 gap-6"
-      >
-        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl">
+      {/* Stats Cards Grid */}
+      {statsLoading ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <SkeletonMetricGrid count={4} columns={4} />
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          {/* Total Students Card */}
+          <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg shadow-orange-500/25">
@@ -274,7 +325,69 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
             </div>
           </CardContent>
         </Card>
+
+        {/* Average Attendance Card */}
+        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 backdrop-blur-xl">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/25">
+                <BarChart3 className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                  Avg Attendance
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {classStats.averageAttendance}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Students At Risk Card */}
+        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-red-50 to-red-100/50 backdrop-blur-xl">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg shadow-red-500/25">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                  At Risk
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {classStats.studentsAtRisk}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Perfect Attendance Card */}
+        <Card className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-green-50 to-green-100/50 backdrop-blur-xl">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg shadow-green-500/25">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                  Perfect
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {classStats.perfectAttendance}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
+      )}
 
       {/* Attendance Report Generator */}
       <AttendanceReportGenerator classId={classId} className={className} />

@@ -487,3 +487,47 @@ export function SkeletonTeacherDashboard() {
     </div>
   )
 }
+
+// Skeleton Attendance Report Generator - matches attendance-report-generator structure
+export function SkeletonAttendanceReportGenerator({ className }: { className?: string }) {
+  return (
+    <Card className={cn(
+      'rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50',
+      'overflow-hidden',
+      className
+    )}>
+      <CardContent className="p-6">
+        {/* Header Section */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            {/* Icon skeleton */}
+            <SkeletonBase className="h-12 w-12 rounded-2xl flex-shrink-0" />
+            <div className="space-y-2">
+              {/* Title skeleton */}
+              <SkeletonBase className="h-5 w-48" />
+              {/* Description skeleton */}
+              <SkeletonBase className="h-3 w-56" />
+            </div>
+          </div>
+        </div>
+
+        {/* Info Stats */}
+        <div className="flex items-center gap-4 mb-3">
+          <SkeletonBase className="h-4 w-24" />
+          <SkeletonBase className="h-4 w-28" />
+        </div>
+
+        {/* Status Badge */}
+        <div className="mb-4">
+          <SkeletonBase className="h-6 w-16 rounded-full" />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          <SkeletonBase className="h-10 w-full rounded-xl" />
+          <SkeletonBase className="h-8 w-full rounded-xl" />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
