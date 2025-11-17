@@ -16,8 +16,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { Badge } from '@/components/ui/badge'
 import { SkeletonAttendanceReportGenerator } from './skeleton-loaders'
-import { getDateRange, validateDateRange, getWeekBoundaries, type DateRangeType } from '@/lib/utils/date-ranges'
-import { formatSolarDateForCalendar } from '@/lib/utils/solar-calendar'
+import { getDateRange, validateDateRange, type DateRangeType } from '@/lib/utils/date-ranges'
 
 interface AttendanceReportGeneratorProps {
   classId: string
@@ -113,14 +112,7 @@ export function AttendanceReportGenerator({
     return { isValid: true }
   }, [dateRangeType, customStartDate, customEndDate])
 
-  // Get week boundaries for current selection
-  const weekBoundaries = React.useMemo(() => {
-    if (dateRangeType === 'current-week' || dateRangeType === 'last-week') {
-      const range = getDateRange(dateRangeType)
-      return getWeekBoundaries(range.from)
-    }
-    return null
-  }, [dateRangeType])
+
 
   const handleOpenExportDialog = () => {
     setShowExportDialog(true)
@@ -160,7 +152,7 @@ export function AttendanceReportGenerator({
 
       // Call API based on format
       if (selectedFormat === 'pdf') {
-        const response = await fetch('/api/reports/attendance/pdf', {
+        const response = await fetch('/api/reports/attendance/pdf-alt', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -169,7 +161,8 @@ export function AttendanceReportGenerator({
         })
 
         if (!response.ok) {
-          throw new Error('Failed to generate PDF report')
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Failed to generate PDF report')
         }
 
         // Download PDF
@@ -183,32 +176,33 @@ export function AttendanceReportGenerator({
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
+      } else {
+        // Excel format
+        const response = await fetch('/api/reports/attendance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to generate report')
+        }
+
+        // Download file
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        const extension = 'xlsx'
+        a.download = `attendance_${classId}_${new Date().getTime()}.${extension}`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       }
-
-      const response = await fetch('/api/reports/attendance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to generate report')
-      }
-
-      // Download file
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const extension = 'xlsx' // Currently only Excel is supported
-      a.download = `attendance_${className || classId}_${new Date().getTime()}.${extension}`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
 
       // Save last generated time
       const now = new Date()
@@ -342,7 +336,7 @@ export function AttendanceReportGenerator({
               
               {/* Quick Date Range Options */}
               <div className="grid grid-cols-2 gap-3 mb-4">
-                {(['current-week', 'last-week', 'current-month', 'last-month'] as DateRangeType[]).map((type) => {
+                {(['current-week', 'last-week'] as DateRangeType[]).map((type) => {
                   const range = getDateRange(type)
                   const isSelected = dateRangeType === type
                   return (
@@ -352,11 +346,12 @@ export function AttendanceReportGenerator({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={cn(
-                        "p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+                        "p-4 rounded-2xl border-0 transition-all duration-200 text-left",
                         isSelected
-                          ? "border-orange-500 bg-orange-50"
-                          : "border-slate-200 bg-white hover:border-slate-300"
+                          ? "bg-orange-50 shadow-md"
+                          : "bg-white hover:bg-slate-50 shadow-sm"
                       )}
+                      style={{ border: 'none' }}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold text-slate-900">{range.label}</h4>
@@ -384,11 +379,12 @@ export function AttendanceReportGenerator({
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 className={cn(
-                  "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+                  "w-full p-4 rounded-2xl border-0 transition-all duration-200 text-left",
                   dateRangeType === 'custom'
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
+                    ? "bg-orange-50 shadow-md"
+                    : "bg-white hover:bg-slate-50 shadow-sm"
                 )}
+                style={{ border: 'none' }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-slate-900">Custom Range</h4>
@@ -452,43 +448,7 @@ export function AttendanceReportGenerator({
                 </motion.div>
               )}
 
-              {/* Week Boundaries Display for Week Selections */}
-              {weekBoundaries && (dateRangeType === 'current-week' || dateRangeType === 'last-week') && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calendar className="h-4 w-4 text-blue-600" />
-                    <p className="text-sm font-semibold text-blue-900">Afghanistan Work Week</p>
-                  </div>
-                  <div className="grid grid-cols-6 gap-2">
-                    {weekBoundaries.days.map((day, index) => {
-                      const solarDate = formatSolarDateForCalendar(day)
-                      return (
-                        <div
-                          key={index}
-                          className="text-center p-2 bg-white rounded-lg border border-blue-200"
-                        >
-                          <p className="text-xs font-semibold text-slate-700">
-                            {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                          </p>
-                          <p className="text-xs text-slate-600 mt-1">
-                            {solarDate.solarDay}
-                          </p>
-                          <p className="text-xs text-blue-600 mt-0.5 font-medium">
-                            {solarDate.monthName.slice(0, 3)}
-                          </p>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <p className="text-xs text-blue-700 mt-2">
-                    Saturday to Thursday • 6 working days
-                  </p>
-                </motion.div>
-              )}
+
 
               {/* Date Range Preview */}
               {currentDateRange && dateValidation.isValid && (
@@ -530,11 +490,12 @@ export function AttendanceReportGenerator({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   className={cn(
-                    "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+                    "w-full p-4 rounded-2xl border-0 transition-all duration-200 text-left",
                     selectedFormat === 'pdf'
-                      ? "border-orange-500 bg-orange-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
+                      ? "bg-orange-50 shadow-md"
+                      : "bg-white hover:bg-slate-50 shadow-sm"
                   )}
+                  style={{ border: 'none' }}
                 >
                   <div className="flex items-start gap-4">
                     <div className="p-2 bg-red-100 rounded-xl flex-shrink-0">
@@ -574,11 +535,12 @@ export function AttendanceReportGenerator({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   className={cn(
-                    "w-full p-4 rounded-2xl border-2 transition-all duration-200 text-left",
+                    "w-full p-4 rounded-2xl border-0 transition-all duration-200 text-left",
                     selectedFormat === 'excel'
-                      ? "border-orange-500 bg-orange-50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
+                      ? "bg-orange-50 shadow-md"
+                      : "bg-white hover:bg-slate-50 shadow-sm"
                   )}
+                  style={{ border: 'none' }}
                 >
                   <div className="flex items-start gap-4">
                     <div className="p-2 bg-green-100 rounded-xl flex-shrink-0">

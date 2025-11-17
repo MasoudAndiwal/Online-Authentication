@@ -1,16 +1,32 @@
-import supabase from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
-import PDFDocument from 'pdfkit'
+
+// Import PDFKit at the top level
+const PDFDocument = require('pdfkit')
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('PDF generation started')
+    
     const body = await request.json()
+    console.log('Request body:', body)
+    
     const { classId, dateRange, customStartDate, customEndDate } = body
+
+    if (!classId) {
+      console.error('Missing classId')
+      return NextResponse.json(
+        { error: 'Class ID is required' },
+        { status: 400 }
+      )
+    }
 
     // Determine week dates
     let weekStart: Date
     let weekEnd: Date
     const weekDays: Date[] = []
+
+    console.log('Processing date range:', dateRange)
 
     if (dateRange === 'current-week') {
       const today = new Date()
@@ -40,6 +56,7 @@ export async function POST(request: NextRequest) {
       weekEnd.setHours(23, 59, 59, 999)
     } else {
       if (!customStartDate || !customEndDate) {
+        console.error('Missing custom dates')
         return NextResponse.json(
           { error: 'Custom date range requires both start and end dates' },
           { status: 400 }
@@ -49,6 +66,8 @@ export async function POST(request: NextRequest) {
       weekEnd = new Date(customEndDate)
     }
 
+    console.log('Date range:', { weekStart, weekEnd })
+
     // Generate array of all days in the week
     for (let i = 0; i < 6; i++) {
       const day = new Date(weekStart)
@@ -57,6 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch class information
+    console.log('Fetching class info for ID:', classId)
     const { data: classInfo, error: classError } = await supabase
       .from('classes')
       .select('id, name, semester, major, session')
@@ -64,15 +84,18 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (classError) {
+      console.error('Class fetch error:', classError)
       return NextResponse.json(
-        { error: 'Class not found' },
+        { error: 'Class not found: ' + classError.message },
         { status: 404 }
       )
     }
 
+    console.log('Class info:', classInfo)
     const classSection = `${classInfo.name} - ${classInfo.session}`
 
     // Fetch students
+    console.log('Fetching students for section:', classSection)
     const { data: students, error: studentsError } = await supabase
       .from('students')
       .select('id, student_id, first_name, last_name, father_name, grandfather_name')
@@ -80,13 +103,17 @@ export async function POST(request: NextRequest) {
       .order('student_id', { ascending: true })
 
     if (studentsError) {
+      console.error('Students fetch error:', studentsError)
       return NextResponse.json(
-        { error: 'Failed to fetch students' },
+        { error: 'Failed to fetch students: ' + studentsError.message },
         { status: 500 }
       )
     }
 
+    console.log('Students found:', students?.length || 0)
+
     // Fetch attendance records
+    console.log('Fetching attendance records')
     const { data: attendanceRecords, error: attendanceError } = await supabase
       .from('attendance_records_new')
       .select('*')
@@ -97,7 +124,13 @@ export async function POST(request: NextRequest) {
 
     if (attendanceError) {
       console.error('Error fetching attendance records:', attendanceError)
+      return NextResponse.json(
+        { error: 'Failed to fetch attendance records: ' + attendanceError.message },
+        { status: 500 }
+      )
     }
+
+    console.log('Attendance records found:', attendanceRecords?.length || 0)
 
     // Helper function to get attendance status
     function getAttendanceStatus(studentId: string, date: Date, period: number): string {
@@ -120,107 +153,145 @@ export async function POST(request: NextRequest) {
     }
 
     // Create PDF document
+    console.log('Creating PDF document')
+    
+    // Create PDF document
+    console.log('Creating PDF document')
+    console.log('PDFDocument type:', typeof PDFDocument)
+    
+    if (typeof PDFDocument !== 'function') {
+      console.error('PDFDocument is not a function, it is:', typeof PDFDocument)
+      return NextResponse.json(
+        { error: 'PDFDocument is not a constructor. Type: ' + typeof PDFDocument },
+        { status: 500 }
+      )
+    }
+    
     const doc = new PDFDocument({
       size: 'A4',
       layout: 'landscape',
       margins: { top: 50, bottom: 50, left: 50, right: 50 }
     })
+    console.log('PDF document created successfully')
 
     // Set up response headers
     const chunks: Buffer[] = []
     doc.on('data', (chunk) => chunks.push(chunk))
     
-    return new Promise<NextResponse>((resolve) => {
+    return new Promise<NextResponse>((resolve, reject) => {
       doc.on('end', () => {
-        const pdfBuffer = Buffer.concat(chunks)
-        
-        const response = new NextResponse(pdfBuffer, {
-          headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="attendance-report-${classInfo.name}-${weekStart.toISOString().split('T')[0]}.pdf"`
-          }
-        })
-        
-        resolve(response)
+        try {
+          console.log('PDF generation completed')
+          const pdfBuffer = Buffer.concat(chunks)
+          
+          const response = new NextResponse(pdfBuffer, {
+            headers: {
+              'Content-Type': 'application/pdf',
+              'Content-Disposition': `attachment; filename="attendance-report-${classInfo.name}-${weekStart.toISOString().split('T')[0]}.pdf"`
+            }
+          })
+          
+          resolve(response)
+        } catch (error) {
+          console.error('Error creating PDF response:', error)
+          reject(error)
+        }
       })
 
-      // Add content to PDF
-      doc.fontSize(16).text('Weekly Attendance Report', { align: 'center' })
-      doc.moveDown()
-      
-      doc.fontSize(12)
-      doc.text(`Class: ${classInfo.name} - ${classInfo.session}`)
-      doc.text(`Period: ${weekStart.toLocaleDateString()} to ${weekEnd.toLocaleDateString()}`)
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`)
-      doc.moveDown()
-
-      // Create table headers
-      const startX = 50
-      let currentY = doc.y
-      const rowHeight = 25
-      const colWidth = 60
-
-      // Headers
-      doc.fontSize(10)
-      doc.text('No.', startX, currentY, { width: colWidth, align: 'center' })
-      doc.text('Student ID', startX + colWidth, currentY, { width: colWidth, align: 'center' })
-      doc.text('Name', startX + colWidth * 2, currentY, { width: colWidth * 2, align: 'center' })
-      
-      // Date headers
-      weekDays.forEach((day, index) => {
-        const x = startX + colWidth * 4 + (index * colWidth)
-        doc.text(day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), x, currentY, { width: colWidth, align: 'center' })
+      doc.on('error', (error) => {
+        console.error('PDF document error:', error)
+        reject(error)
       })
 
-      doc.text('Total', startX + colWidth * 10, currentY, { width: colWidth, align: 'center' })
+      try {
+        console.log('Adding content to PDF')
+        
+        // Add simple content to PDF first
+        doc.fontSize(16)
+        doc.text('Weekly Attendance Report', 100, 100)
+        doc.moveDown()
+        
+        doc.fontSize(12)
+        doc.text(`Class: ${classInfo?.name || 'Unknown'} - ${classInfo?.session || 'Unknown'}`)
+        doc.text(`Period: ${weekStart.toLocaleDateString()} to ${weekEnd.toLocaleDateString()}`)
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`)
+        doc.moveDown()
 
-      currentY += rowHeight
+        // Simple table approach
+        const startX = 50
+        let currentY = doc.y + 20
+        const rowHeight = 20
+        const colWidth = 80
 
-      // Student rows
-      students?.forEach((student, index) => {
-        if (currentY > 500) { // Start new page if needed
-          doc.addPage()
-          currentY = 50
+        // Headers
+        doc.fontSize(10)
+        doc.text('No.', startX, currentY)
+        doc.text('Student ID', startX + colWidth, currentY)
+        doc.text('Name', startX + colWidth * 2, currentY)
+        doc.text('Total Present', startX + colWidth * 3, currentY)
+
+        currentY += rowHeight
+
+        // Student rows - simplified
+        if (students && students.length > 0) {
+          students.forEach((student, index) => {
+            if (currentY > 700) { // Start new page if needed
+              doc.addPage()
+              currentY = 50
+            }
+
+            // Student info - simplified
+            doc.text((index + 1).toString(), startX, currentY)
+            doc.text(student.student_id || 'N/A', startX + colWidth, currentY)
+            doc.text(`${student.first_name || ''} ${student.father_name || ''}`.trim() || 'N/A', startX + colWidth * 2, currentY)
+
+            // Calculate total attendance
+            let totalPresent = 0
+            weekDays.forEach((day) => {
+              for (let period = 1; period <= 6; period++) {
+                const status = getAttendanceStatus(student.id, day, period)
+                if (status === '✓') totalPresent++
+              }
+            })
+
+            doc.text(totalPresent.toString(), startX + colWidth * 3, currentY)
+            currentY += rowHeight
+          })
+        } else {
+          doc.text('No students found for this class', startX, currentY)
+          currentY += rowHeight
         }
 
-        // Student info
-        doc.text((index + 1).toString(), startX, currentY, { width: colWidth, align: 'center' })
-        doc.text(student.student_id, startX + colWidth, currentY, { width: colWidth, align: 'center' })
-        doc.text(`${student.first_name} ${student.father_name}`, startX + colWidth * 2, currentY, { width: colWidth * 2, align: 'center' })
+        // Add summary
+        currentY += 20
+        doc.fontSize(12)
+        doc.text(`Total Students: ${students?.length || 0}`, startX, currentY)
+        currentY += 15
+        doc.text(`Report Generated: ${new Date().toLocaleString()}`, startX, currentY)
 
-        // Attendance for each day
-        let totalPresent = 0
-        weekDays.forEach((day, dayIndex) => {
-          const x = startX + colWidth * 4 + (dayIndex * colWidth)
-          let dayPresent = 0
-          
-          // Check all 6 periods for this day
-          for (let period = 1; period <= 6; period++) {
-            const status = getAttendanceStatus(student.id, day, period)
-            if (status === '✓') dayPresent++
-          }
-          
-          totalPresent += dayPresent
-          doc.text(dayPresent.toString(), x, currentY, { width: colWidth, align: 'center' })
-        })
-
-        doc.text(totalPresent.toString(), startX + colWidth * 10, currentY, { width: colWidth, align: 'center' })
-        currentY += rowHeight
-      })
-
-      // Add summary
-      doc.moveDown()
-      doc.fontSize(12)
-      doc.text(`Total Students: ${students?.length || 0}`)
-      doc.text(`Report Generated: ${new Date().toLocaleString()}`)
-
-      doc.end()
+        console.log('Finalizing PDF')
+        doc.end()
+      } catch (pdfError) {
+        console.error('Error generating PDF content:', pdfError)
+        reject(pdfError)
+      }
     })
 
   } catch (error) {
     console.error('Error generating PDF report:', error)
+    
+    // Return detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace available'
+    
+    console.error('Error details:', { errorMessage, errorStack })
+    
     return NextResponse.json(
-      { error: 'Failed to generate PDF report' },
+      { 
+        error: 'Failed to generate PDF report', 
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }

@@ -253,32 +253,37 @@ export async function GET(request: NextRequest) {
 
     if (useNewStructure && data && data.length > 0 && data[0].period_1_status !== undefined) {
       // NEW STRUCTURE: Convert back to old format for compatibility
-      data.forEach((record: unknown) => {
+      data.forEach((record: any) => {
         // Create 6 separate records for each period (for compatibility with existing UI)
         for (let period = 1; period <= 6; period++) {
           const status = record[`period_${period}_status`] || 'NOT_MARKED';
           const teacher = record[`period_${period}_teacher`];
           const subject = record[`period_${period}_subject`];
           
-          expandedRecords.push({
-            student_id: record.student_id,
-            class_id: record.class_id,
-            date: record.date,
-            period_number: period,
-            status: status,
-            teacher_name: teacher,
-            subject: subject,
-            marked_by: record.marked_by,
-            marked_at: record.marked_at,
-          });
+          // Only include records that are actually marked (not NOT_MARKED)
+          if (status !== 'NOT_MARKED') {
+            expandedRecords.push({
+              student_id: record.student_id,
+              class_id: record.class_id,
+              date: record.date,
+              period_number: period,
+              status: status,
+              teacher_name: teacher,
+              subject: subject,
+              marked_by: record.marked_by,
+              marked_at: record.marked_at,
+            });
+          }
         }
       });
       
       console.log('[Attendance API GET] Successfully fetched', data.length, 'student records, expanded to', expandedRecords.length, 'period records');
+      console.log('[Attendance API GET] Sample expanded records:', expandedRecords.slice(0, 3));
     } else {
       // OLD STRUCTURE: Return data as is
       expandedRecords = data || [];
       console.log('[Attendance API GET] Successfully fetched', expandedRecords.length, 'period records');
+      console.log('[Attendance API GET] Sample records:', expandedRecords.slice(0, 3));
     }
 
     return NextResponse.json({

@@ -18,6 +18,7 @@ import {
   WifiOff,
   CheckCircle2,
   Loader2,
+  Heart,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AttendanceGrid } from "./attendance-grid";
@@ -977,7 +978,7 @@ export function AttendanceManagement({
           transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-orange-50 via-orange-25 to-orange-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
+          <Card className="bg-gradient-to-br from-orange-50 via-orange-25 to-orange-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <motion.div 
@@ -1010,7 +1011,7 @@ export function AttendanceManagement({
           transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-green-50 via-green-25 to-green-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
+          <Card className="bg-gradient-to-br from-green-50 via-green-25 to-green-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <motion.div 
@@ -1043,7 +1044,7 @@ export function AttendanceManagement({
           transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-red-50 via-red-25 to-red-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
+          <Card className="bg-gradient-to-br from-red-50 via-red-25 to-red-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <motion.div 
@@ -1076,27 +1077,27 @@ export function AttendanceManagement({
           transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
+          <Card className="bg-gradient-to-br from-amber-50 via-amber-25 to-amber-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <motion.div 
-                  className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-yellow-200 transition-colors duration-300"
+                  className="p-1.5 sm:p-2 bg-amber-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-amber-200 transition-colors duration-300"
                   whileHover={{ rotate: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
                 </motion.div>
                 <div className="min-w-0 flex-1">
                   <motion.p 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-700"
-                    key={statistics.total > 0 ? Math.round((statistics.present / statistics.total) * 100) : 0}
+                    className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-700"
+                    key={statistics.sick || 0}
                     initial={{ scale: 1.2, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    {statistics.total > 0 ? Math.round((statistics.present / statistics.total) * 100) : 0}%
+                    {statistics.sick || 0}
                   </motion.p>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">Attendance Rate</p>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">Sick</p>
                 </div>
               </div>
             </CardContent>
@@ -1109,7 +1110,7 @@ export function AttendanceManagement({
           transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.02, y: -2 }}
         >
-          <Card className="bg-gradient-to-br from-slate-50 via-slate-25 to-slate-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group">
+          <Card className="bg-gradient-to-br from-slate-50 via-slate-25 to-slate-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <motion.div 

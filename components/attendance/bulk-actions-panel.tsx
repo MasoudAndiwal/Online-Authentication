@@ -421,7 +421,7 @@ export function BulkActionsPanel({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-slate-700">Processing...</span>
-                    <span className="text-sm text-slate-600">{processingProgress}%</span>
+                    <span className="text-sm text-slate-600">{Math.round(processingProgress)}%</span>
                   </div>
                   <ProgressIndicator 
                     percentage={processingProgress} 
@@ -607,7 +607,7 @@ export function BulkActionsPanel({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-600">{processingProgress}%</span>
+                  <span className="text-sm text-slate-600">{Math.round(processingProgress)}%</span>
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 0.5, repeat: Infinity }}
@@ -661,7 +661,7 @@ export function BulkActionsPanel({
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <span className="text-white">Processing {processingProgress}%</span>
+                  <span className="text-white">Processing {Math.round(processingProgress)}%</span>
                 </>
               ) : (
                 <>

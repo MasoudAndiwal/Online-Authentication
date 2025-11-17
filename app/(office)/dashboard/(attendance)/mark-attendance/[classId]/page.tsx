@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -376,7 +377,7 @@ export default function MarkAttendanceClassPage() {
       
       console.log('[LoadSchedule] API Response:', result);
       console.log('[LoadSchedule] Schedule data:', result.data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       console.log('[LoadSchedule] Teacher names:', result.data?.map((s: any) => s.teacherName));
       
       setSchedule(result.data);
@@ -387,6 +388,79 @@ export default function MarkAttendanceClassPage() {
       setTotalPeriods(0);
     } finally {
       setScheduleLoading(false);
+    }
+  }, [classData, selectedDate]);
+
+  const loadExistingAttendance = React.useCallback(async () => {
+    if (!classData) return;
+    
+    try {
+      console.log('[LoadAttendance] Fetching existing attendance for:', {
+        classId: classData.id,
+        date: selectedDate.toISOString().split('T')[0]
+      });
+      
+      const params = new URLSearchParams({
+        classId: classData.id,
+        date: selectedDate.toISOString().split('T')[0]
+      });
+      
+      const response = await fetch(`/api/attendance?${params.toString()}`);
+      if (!response.ok) {
+        // If no records found, that's okay - just means no attendance marked yet
+        if (response.status === 404) {
+          console.log('[LoadAttendance] No existing attendance records found');
+          return;
+        }
+        throw new Error("Failed to fetch existing attendance");
+      }
+      
+      const result = await response.json();
+      console.log('[LoadAttendance] API Response:', result);
+      
+      if (result.success && result.data && Array.isArray(result.data)) {
+        const existingRecords = new Map<string, AttendanceRecord>();
+        
+        result.data.forEach((record: any) => {
+          const key = `${record.student_id}-${record.period_number}`;
+          const attendanceRecord = {
+            studentId: record.student_id,
+            status: record.status as AttendanceStatus,
+            periodNumber: record.period_number,
+            markedAt: new Date(record.marked_at),
+            teacherName: record.teacher_name,
+            subject: record.subject,
+          };
+          existingRecords.set(key, attendanceRecord);
+          
+          // Debug logging for each record
+          console.log(`[LoadAttendance] Record ${key}:`, attendanceRecord);
+        });
+        
+        console.log('[LoadAttendance] Loaded', existingRecords.size, 'existing attendance records');
+        console.log('[LoadAttendance] All records:', Array.from(existingRecords.entries()));
+        
+        setAttendanceRecords(existingRecords);
+        setOriginalAttendanceRecords(new Map(existingRecords)); // Store original state
+        
+        if (existingRecords.size > 0) {
+          toast.success("Existing attendance loaded", {
+            description: `Found ${existingRecords.size} previously marked attendance records`,
+            className: "bg-blue-50 border-blue-200 text-blue-900",
+            position: "top-center",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading existing attendance:", error);
+      // Don't show error toast for missing records - that's normal
+      if (error instanceof Error && !error.message.includes('404')) {
+        toast.error("Failed to load existing attendance", {
+          description: "Starting with blank attendance sheet",
+          className: "bg-amber-50 border-amber-200 text-amber-900",
+          position: "top-center",
+        });
+      }
     }
   }, [classData, selectedDate]);
 
@@ -429,10 +503,13 @@ export default function MarkAttendanceClassPage() {
   React.useEffect(() => {
     if (classData) {
       loadSchedule();
+      // Reset records first, then load existing attendance
       setAttendanceRecords(new Map());
-      setOriginalAttendanceRecords(new Map()); // Reset original records when date changes
+      setOriginalAttendanceRecords(new Map());
+      // Load existing attendance records for the selected date
+      loadExistingAttendance();
     }
-  }, [selectedDate, classData, loadSchedule]);
+  }, [selectedDate, classData, loadSchedule, loadExistingAttendance]);
 
   const handleNavigation = (path: string) => router.push(path);
   const handleLogout = async () => {
@@ -450,9 +527,30 @@ export default function MarkAttendanceClassPage() {
   const totalStudents = students.length;
   const getUniqueStudentsByStatus = React.useCallback((status: AttendanceStatus) => {
     const uniqueStudents = new Set<string>();
+    
+    // Group records by student to determine their overall status
+    const studentStatusMap = new Map<string, Set<AttendanceStatus>>();
+    
     attendanceRecords.forEach((record) => {
-      if (record.status === status) uniqueStudents.add(record.studentId);
+      if (!studentStatusMap.has(record.studentId)) {
+        studentStatusMap.set(record.studentId, new Set());
+      }
+      studentStatusMap.get(record.studentId)!.add(record.status);
     });
+    
+    // For each student, check if they have the requested status
+    studentStatusMap.forEach((statuses, studentId) => {
+      if (statuses.has(status)) {
+        uniqueStudents.add(studentId);
+      }
+    });
+    
+    // Debug logging
+    console.log(`[Statistics] ${status} count:`, uniqueStudents.size);
+    console.log(`[Statistics] ${status} students:`, Array.from(uniqueStudents));
+    console.log(`[Statistics] Total attendance records:`, attendanceRecords.size);
+    console.log(`[Statistics] Student status map:`, Array.from(studentStatusMap.entries()));
+    
     return uniqueStudents.size;
   }, [attendanceRecords]);
 
@@ -857,23 +955,24 @@ export default function MarkAttendanceClassPage() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0 }}>
-              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-orange-50 to-orange-100/50">
+              <Card className="rounded-xl shadow-md !border-0 bg-gradient-to-br from-orange-50 to-orange-100/50" style={{ border: 'none' }}>
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-orange-600 rounded-lg flex-shrink-0">
                       <Users className="h-4 w-4 md:h-5 md:w-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-orange-600 truncate">Total</p>
+                      <p className="text-xs font-medium text-orange-600 truncate">Total Students</p>
                       <p className="text-xl md:text-2xl font-bold text-orange-700">{totalStudents}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-green-50 to-green-100/50">
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
+              <Card className="rounded-xl shadow-md !border-0 bg-gradient-to-br from-green-50 to-green-100/50" style={{ border: 'none' }}>
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-green-600 rounded-lg flex-shrink-0">
@@ -888,7 +987,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-red-50 to-red-100/50">
+              <Card className="rounded-xl shadow-md !border-0 bg-gradient-to-br from-red-50 to-red-100/50" style={{ border: 'none' }}>
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-red-600 rounded-lg flex-shrink-0">
@@ -903,7 +1002,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
-              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-amber-50 to-amber-100/50">
+              <Card className="rounded-xl shadow-md !border-0 bg-gradient-to-br from-amber-50 to-amber-100/50" style={{ border: 'none' }}>
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-amber-600 rounded-lg flex-shrink-0">
@@ -918,22 +1017,7 @@ export default function MarkAttendanceClassPage() {
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-cyan-50 to-cyan-100/50">
-                <CardContent className="p-3 md:p-4">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="p-1.5 md:p-2 bg-cyan-600 rounded-lg flex-shrink-0">
-                      <CalendarIcon className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-cyan-600 truncate">Leave</p>
-                      <p className="text-xl md:text-2xl font-bold text-cyan-700">{leaveCount}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }}>
-              <Card className="rounded-xl shadow-md border-0 bg-gradient-to-br from-slate-50 to-slate-100/50">
+              <Card className="rounded-xl shadow-md !border-0 bg-gradient-to-br from-slate-50 to-slate-100/50" style={{ border: 'none' }}>
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center gap-2 md:gap-3">
                     <div className="p-1.5 md:p-2 bg-slate-600 rounded-lg flex-shrink-0">

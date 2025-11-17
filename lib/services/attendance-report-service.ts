@@ -115,11 +115,62 @@ async function fetchAttendanceRecords(
 }
 
 /**
- * Calculate attendance summary for a student
+ * Convert column number to Excel column letter (e.g., 1 -> A, 27 -> AA)
+ */
+function getColumnLetter(columnNumber: number): string {
+  let result = '';
+  while (columnNumber > 0) {
+    columnNumber--; // Make it 0-based
+    result = String.fromCharCode(65 + (columnNumber % 26)) + result;
+    columnNumber = Math.floor(columnNumber / 26);
+  }
+  return result;
+}
+
+/**
+ * Get day-level status for a student (SICK or LEAVE takes precedence over individual periods)
+ */
+function getDayStatus(
+  studentId: string,
+  date: Date,
+  attendanceRecords: AttendanceRecord[]
+): 'SICK' | 'LEAVE' | 'NORMAL' {
+  const dateStr = date.toISOString().split('T')[0];
+  const record = attendanceRecords.find(
+    r => r.student_id === studentId && r.date === dateStr
+  );
+
+  if (!record) return 'NORMAL';
+
+  const periods = [
+    record.period_1_status,
+    record.period_2_status,
+    record.period_3_status,
+    record.period_4_status,
+    record.period_5_status,
+    record.period_6_status
+  ];
+
+  // If any period is SICK, the whole day is SICK
+  if (periods.some(status => status === 'SICK')) {
+    return 'SICK';
+  }
+
+  // If any period is LEAVE, the whole day is LEAVE
+  if (periods.some(status => status === 'LEAVE')) {
+    return 'LEAVE';
+  }
+
+  return 'NORMAL';
+}
+
+/**
+ * Calculate attendance summary for a student with proper sick/leave handling
  */
 function calculateAttendanceSummary(
   studentId: string,
-  attendanceRecords: AttendanceRecord[]
+  attendanceRecords: AttendanceRecord[],
+  weekDays: Date[]
 ): {
   presentCount: number;
   absentCount: number;
@@ -133,36 +184,52 @@ function calculateAttendanceSummary(
 
   const studentRecords = attendanceRecords.filter(r => r.student_id === studentId);
 
-  for (const record of studentRecords) {
-    const periods = [
-      record.period_1_status,
-      record.period_2_status,
-      record.period_3_status,
-      record.period_4_status,
-      record.period_5_status,
-      record.period_6_status
-    ];
+  // Process each day
+  weekDays.forEach(day => {
+    const dayStatus = getDayStatus(studentId, day, attendanceRecords);
+    
+    if (dayStatus === 'SICK') {
+      // If sick for the day, count as 6 sick periods
+      sickCount += 6;
+    } else if (dayStatus === 'LEAVE') {
+      // If on leave for the day, count as 6 leave periods
+      leaveCount += 6;
+    } else {
+      // Normal day - count individual periods
+      const dateStr = day.toISOString().split('T')[0];
+      const record = studentRecords.find(r => r.date === dateStr);
+      
+      if (record) {
+        const periods = [
+          record.period_1_status,
+          record.period_2_status,
+          record.period_3_status,
+          record.period_4_status,
+          record.period_5_status,
+          record.period_6_status
+        ];
 
-    for (const status of periods) {
-      if (status === 'PRESENT') presentCount++;
-      else if (status === 'ABSENT') absentCount++;
-      else if (status === 'SICK') sickCount++;
-      else if (status === 'LEAVE') leaveCount++;
+        for (const status of periods) {
+          if (status === 'PRESENT') presentCount++;
+          else if (status === 'ABSENT') absentCount++;
+        }
+      }
     }
-  }
+  });
 
   return { presentCount, absentCount, sickCount, leaveCount };
 }
 
 /**
  * Get attendance status for a specific student, date, and period
+ * Returns null for sick/leave days (will be handled by day-level merging)
  */
 function getAttendanceStatus(
   studentId: string,
   date: Date,
   period: number,
   attendanceRecords: AttendanceRecord[]
-): string {
+): string | null {
   const dateStr = date.toISOString().split('T')[0];
   const record = attendanceRecords.find(
     r => r.student_id === studentId && r.date === dateStr
@@ -170,13 +237,17 @@ function getAttendanceStatus(
 
   if (!record) return '';
 
+  // Check if this is a sick or leave day
+  const dayStatus = getDayStatus(studentId, date, attendanceRecords);
+  if (dayStatus === 'SICK' || dayStatus === 'LEAVE') {
+    return null; // Will be handled by day-level merging
+  }
+
   const statusKey = `period_${period}_status` as keyof AttendanceRecord;
   const status = record[statusKey] as string;
 
   if (status === 'PRESENT') return '✓';
   if (status === 'ABSENT') return 'X';
-  if (status === 'SICK') return 'مریض';
-  if (status === 'LEAVE') return 'رخصت';
   
   return '';
 }
@@ -338,7 +409,7 @@ export async function generateAttendanceReport(
         worksheet.unMergeCells(`A${row}:AU${row}`);
         console.log(`Force unmerged row ${row}`);
       }
-    } catch (error) {
+    } catch {
       console.log(`Force unmerge completed (some may not have been merged)`);
     }
     
@@ -357,7 +428,7 @@ export async function generateAttendanceReport(
           cell.value = null;
           cell.style = {};
           cell.border = {};
-          cell.fill = {};
+          // Skip fill property to avoid type issues
           cell.font = {};
           cell.alignment = {};
         });
@@ -397,7 +468,7 @@ export async function generateAttendanceReport(
         }
       });
       
-      const summary = calculateAttendanceSummary(student.id, attendanceRecords);
+      const summary = calculateAttendanceSummary(student.id, attendanceRecords, weekDays);
       
       // RTL table: Student info on the RIGHT side
       // AU8 = Column 47, AT8 = Column 46, AS8 = Column 45, AR8 = Column 44, AQ8 = Column 43
@@ -427,12 +498,59 @@ export async function generateAttendanceReport(
       // Middle: Attendance for each day and period (AP8 down to G8, RIGHT to LEFT)
       // AP = Column 42, G = Column 7
       let colIndex = 42; // Start from AP (column 42)
-      weekDays.forEach(day => {
-        for (let period = 1; period <= 6; period++) {
-          if (colIndex >= 7) { // Stop at G (column 7)
-            const status = getAttendanceStatus(student.id, day, period, attendanceRecords);
-            row.getCell(colIndex).value = status;
-            colIndex--;
+      const dayMerges: string[] = []; // Track merges for sick/leave days
+      
+      weekDays.forEach((day) => {
+        const dayStatus = getDayStatus(student.id, day, attendanceRecords);
+        const dayStartCol = colIndex - 5; // Start of this day's 6 periods
+        const dayEndCol = colIndex; // End of this day's 6 periods
+        
+        if (dayStatus === 'SICK' || dayStatus === 'LEAVE') {
+          // Merge the 6 cells for this day
+          const startColLetter = getColumnLetter(dayStartCol);
+          const endColLetter = getColumnLetter(dayEndCol);
+          const mergeRange = `${startColLetter}${currentRowNumber}:${endColLetter}${currentRowNumber}`;
+          
+          try {
+            worksheet.mergeCells(mergeRange);
+            dayMerges.push(mergeRange);
+            
+            // Set the status in the first cell of the merged range
+            const firstCell = row.getCell(dayEndCol); // Right-most cell (AP, AJ, etc.)
+            firstCell.value = dayStatus === 'SICK' ? 'مریض' : 'رخصت';
+            
+            // Style the merged cell
+            firstCell.alignment = { horizontal: 'center', vertical: 'middle' };
+            firstCell.font = { bold: true, size: 36 };
+            firstCell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' } // White background
+            };
+            firstCell.border = {
+              top: { style: 'thin' },
+              bottom: { style: 'thin' },
+              left: { style: 'thin' },
+              right: { style: 'thin' }
+            };
+            
+            console.log(`Merged ${mergeRange} for ${dayStatus} - Student: ${student.first_name}`);
+          } catch (error) {
+            console.log(`Could not merge ${mergeRange}:`, error);
+          }
+          
+          // Skip the 6 periods for this day
+          colIndex -= 6;
+        } else {
+          // Normal day - fill individual periods
+          for (let period = 1; period <= 6; period++) {
+            if (colIndex >= 7) { // Stop at G (column 7)
+              const status = getAttendanceStatus(student.id, day, period, attendanceRecords);
+              if (status !== null) {
+                row.getCell(colIndex).value = status;
+              }
+              colIndex--;
+            }
           }
         }
       });

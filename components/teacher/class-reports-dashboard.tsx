@@ -5,8 +5,7 @@ import { motion } from 'framer-motion'
 import { 
   BarChart3, 
   Users, 
-  Calendar,
-  RefreshCw
+  Calendar
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -39,7 +38,6 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
   const [selectedReportData, setSelectedReportData] = React.useState<unknown>(null)
   const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false)
   const [showExportManager, setShowExportManager] = React.useState(false)
-  const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [isGenerating, setIsGenerating] = React.useState<string | null>(null)
   
   // State for class data
@@ -146,27 +144,7 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
     }
   ])
 
-  const handleRefreshReports = async () => {
-    setIsRefreshing(true)
-    try {
-      // Refresh class stats
-      const response = await fetch(`/api/classes/${classId}/stats`)
-      if (response.ok) {
-        const data = await response.json()
-        setClassStats({
-          totalStudents: data.totalStudents,
-          averageAttendance: data.averageAttendance,
-          studentsAtRisk: data.studentsAtRisk,
-          perfectAttendance: data.perfectAttendance,
-          lastUpdated: new Date(data.lastUpdated)
-        })
-      }
-    } catch (error) {
-      console.error('Error refreshing stats:', error)
-    } finally {
-      setIsRefreshing(false)
-    }
-  }
+
 
   const handleGenerateReport = async (reportId: string) => {
     setSelectedReportId(reportId)
@@ -272,21 +250,7 @@ export function ClassReportsDashboard({ classId, className }: ClassReportsDashbo
               </motion.div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3"
-            >
-              <Button
-                onClick={handleRefreshReports}
-                disabled={isRefreshing}
-                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-xl shadow-orange-500/25 rounded-2xl px-6 py-3 text-base font-semibold border-0"
-              >
-                <RefreshCw className={cn("h-5 w-5 mr-2", isRefreshing && "animate-spin")} />
-                {isRefreshing ? 'Refreshing...' : 'Refresh'}
-              </Button>
-            </motion.div>
+
           </div>
         </div>
       </motion.div>

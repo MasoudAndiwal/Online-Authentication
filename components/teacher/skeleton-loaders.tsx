@@ -43,9 +43,9 @@ function SkeletonBase({ className, shimmer = true }: SkeletonProps) {
 export function SkeletonMetricCard({ className }: { className?: string }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-gradient-to-br from-orange-50 to-orange-100/50',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       <CardContent className="p-6">
         <div className="flex items-center gap-4">
           {/* Icon skeleton */}
@@ -69,10 +69,10 @@ export function SkeletonMetricCard({ className }: { className?: string }) {
 export function SkeletonClassCard({ className }: { className?: string }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-gradient-to-br from-orange-50 to-orange-100/50',
       'overflow-hidden',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       <CardHeader className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3 flex-1">
@@ -112,10 +112,10 @@ export function SkeletonClassCard({ className }: { className?: string }) {
 export function SkeletonStudentProgressCard({ className }: { className?: string }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-gradient-to-br from-orange-50 to-orange-100/50',
       'overflow-hidden',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       <CardHeader className="p-5 pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4 flex-1">
@@ -171,10 +171,10 @@ export function SkeletonStudentProgressCard({ className }: { className?: string 
 export function SkeletonReportCard({ className }: { className?: string }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100/50',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-gradient-to-br from-orange-50 to-orange-100/50',
       'overflow-hidden',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       <CardHeader className="p-6 pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4 flex-1">
@@ -229,9 +229,9 @@ export function SkeletonAttendanceGrid({
 }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-white/80 backdrop-blur-xl overflow-hidden',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-white/80 backdrop-blur-xl overflow-hidden',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       {/* Header skeleton */}
       <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 border-b border-orange-200">
         <div className="grid grid-cols-5 gap-4">
@@ -298,9 +298,9 @@ export function SkeletonNotificationItem({ className }: { className?: string }) 
 export function SkeletonChart({ className }: { className?: string }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-white/80 backdrop-blur-xl',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-white/80 backdrop-blur-xl',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       <CardHeader className="p-6">
         <div className="flex items-center justify-between">
           <SkeletonBase className="h-6 w-40" />
@@ -465,7 +465,7 @@ export function SkeletonTeacherDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card className="rounded-2xl shadow-lg border-0 bg-white/60 backdrop-blur-sm p-6">
+        <Card className="rounded-2xl shadow-lg !border-0 !border-transparent bg-white/60 backdrop-blur-sm p-6" style={{ borderWidth: 0, borderStyle: 'none' }}>
           <div className="flex gap-3">
             <SkeletonBase className="h-10 flex-1 rounded-xl" />
             <SkeletonBase className="h-10 flex-1 rounded-xl" />
@@ -492,10 +492,10 @@ export function SkeletonTeacherDashboard() {
 export function SkeletonAttendanceReportGenerator({ className }: { className?: string }) {
   return (
     <Card className={cn(
-      'rounded-2xl shadow-lg border-0 bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50',
+      'rounded-2xl shadow-lg !border-0 !border-transparent bg-gradient-to-br from-orange-50 via-orange-50/80 to-orange-100/50',
       'overflow-hidden',
       className
-    )}>
+    )} style={{ borderWidth: 0, borderStyle: 'none' }}>
       <CardContent className="p-6">
         {/* Header Section */}
         <div className="flex items-start justify-between mb-4">
