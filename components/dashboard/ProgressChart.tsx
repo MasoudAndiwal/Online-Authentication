@@ -20,9 +20,9 @@ interface ProgressChartProps {
  */
 export function ProgressChart({ stats, className = '' }: ProgressChartProps) {
   return (
-    <Card className={`border-0 shadow-lg ${className}`}>
+    <Card className={`border-0 shadow-lg ${className}`} role="region" aria-label="نمای کلی حضور و غیاب">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold text-slate-900 text-center">
+        <CardTitle className="text-xl font-semibold text-slate-900 text-center" id="progress-chart-title">
           نمای کلی حضور و غیاب
         </CardTitle>
       </CardHeader>
@@ -30,7 +30,7 @@ export function ProgressChart({ stats, className = '' }: ProgressChartProps) {
       <CardContent className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Circular Progress Ring */}
-          <div className="flex justify-center">
+          <div className="flex justify-center" role="img" aria-label={`نسبة الحضور: ${Math.round(stats.attendancePercentage)}%`}>
             <ProgressRing
               percentage={stats.attendancePercentage}
               size={200}
@@ -53,28 +53,28 @@ export function ProgressChart({ stats, className = '' }: ProgressChartProps) {
         </div>
         
         {/* Summary Statistics */}
-        <div className="mt-8 pt-6 border-t border-slate-100">
+        <div className="mt-8 pt-6 border-t border-slate-100" role="list" aria-label="ملخص الإحصائيات">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div role="listitem" aria-label={`کل روزها: ${stats.totalDays}`}>
+              <div className="text-2xl font-bold text-slate-900" aria-hidden="true">
                 {stats.totalDays}
               </div>
               <div className="text-sm text-slate-600">کل روزها</div>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-emerald-600">
+            <div role="listitem" aria-label={`حاضر: ${stats.presentDays}`}>
+              <div className="text-2xl font-bold text-emerald-600" aria-hidden="true">
                 {stats.presentDays}
               </div>
               <div className="text-sm text-slate-600">حاضر</div>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-red-600">
+            <div role="listitem" aria-label={`غایب: ${stats.absentDays}`}>
+              <div className="text-2xl font-bold text-red-600" aria-hidden="true">
                 {stats.absentDays}
               </div>
               <div className="text-sm text-slate-600">غایب</div>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600">
+            <div role="listitem" aria-label={`درصد حضور: ${Math.round(stats.attendancePercentage)}%`}>
+              <div className="text-2xl font-bold text-blue-600" aria-hidden="true">
                 {Math.round(stats.attendancePercentage)}%
               </div>
               <div className="text-sm text-slate-600">درصد حضور</div>

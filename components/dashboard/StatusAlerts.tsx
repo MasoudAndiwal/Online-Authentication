@@ -231,11 +231,14 @@ function CertificationAlert({
                 'bg-white text-amber-600 border-0 shadow-md',
                 'hover:bg-white/90 hover:shadow-lg',
                 'transition-all duration-200',
-                'font-semibold'
+                'font-semibold',
+                // Focus styles for keyboard navigation
+                'focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-amber-600'
               )}
               size="sm"
+              aria-label="رفع شهادة طبية"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-4 h-4" aria-hidden="true" />
               Upload Medical Certificate
             </Button>
           )}

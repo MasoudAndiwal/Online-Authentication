@@ -36,29 +36,6 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   /**
-   * Validate file type and size
-   */
-  const validateFile = (file: File): { valid: boolean; error?: string } => {
-    // Check file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return {
-        valid: false,
-        error: 'Invalid file type. Please upload PDF, JPG, or PNG files only.',
-      };
-    }
-
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      return {
-        valid: false,
-        error: 'File size exceeds 5MB limit. Please upload a smaller file.',
-      };
-    }
-
-    return { valid: true };
-  };
-
-  /**
    * Handle file upload
    */
   const handleFileUpload = useCallback(
@@ -66,10 +43,15 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
       // Reset error state
       setUploadError(null);
 
-      // Validate file
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        setUploadError(validation.error!);
+      // Validate file type
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setUploadError('Invalid file type. Please upload PDF, JPG, or PNG files only.');
+        return;
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError('File size exceeds 5MB limit. Please upload a smaller file.');
         return;
       }
 
@@ -109,7 +91,7 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
         setIsUploading(false);
       }
     },
-    [onUpload, validateFile]
+    [onUpload, ALLOWED_TYPES, MAX_FILE_SIZE]
   );
 
   /**
@@ -173,7 +155,9 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
   }, [isUploading]);
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6" aria-labelledby="certificate-upload-title">
+      <h2 id="certificate-upload-title" className="sr-only">Medical Certificate Upload</h2>
+      
       {/* Upload Zone */}
       <div
         onDragEnter={handleDragEnter}
@@ -190,11 +174,14 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
           // Dragging state - gradient background
           isDragging && 'border-blue-400 bg-gradient-to-br from-blue-50 to-violet-50',
           // Uploading state
-          isUploading && 'border-blue-400 bg-blue-50 cursor-not-allowed'
+          isUploading && 'border-blue-400 bg-blue-50 cursor-not-allowed',
+          // Focus styles for keyboard navigation
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
         )}
         role="button"
-        tabIndex={0}
-        aria-label="Upload medical certificate"
+        tabIndex={isUploading ? -1 : 0}
+        aria-label="رفع شهادة طبية - اضغط Enter أو مسافة للتحميل"
+        aria-disabled={isUploading}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -211,6 +198,7 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
               'w-16 h-16 rounded-lg flex items-center justify-center',
               isDragging ? 'bg-blue-100' : 'bg-slate-200'
             )}
+            aria-hidden="true"
           >
             <Upload
               className={cn('w-8 h-8', isDragging ? 'text-blue-600' : 'text-slate-600')}
@@ -229,7 +217,7 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
 
           {/* Upload progress */}
           {uploadProgress !== null && (
-            <div className="w-full max-w-xs space-y-2">
+            <div className="w-full max-w-xs space-y-2" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100} aria-label={`تقدم التحميل: ${uploadProgress}%`}>
               <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
@@ -238,7 +226,7 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
                   className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"
                 />
               </div>
-              <p className="text-xs text-slate-600 text-center">{uploadProgress}%</p>
+              <p className="text-xs text-slate-600 text-center" aria-live="polite">{uploadProgress}%</p>
             </div>
           )}
 
@@ -248,8 +236,10 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg"
+              role="alert"
+              aria-live="assertive"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden="true" />
               <span>{uploadError}</span>
             </motion.div>
           )}
@@ -269,11 +259,11 @@ export function CertificateUpload({ files, onUpload, onDelete }: CertificateUplo
       {/* Uploaded Files List */}
       {files.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-slate-900">Uploaded Certificates</h3>
+          <h3 id="uploaded-files-title" className="text-lg font-semibold text-slate-900">Uploaded Certificates</h3>
           <UploadedFilesList files={files} onDelete={onDelete} />
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -287,7 +277,7 @@ interface UploadedFilesListProps {
  */
 function UploadedFilesList({ files, onDelete }: UploadedFilesListProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" role="list" aria-labelledby="uploaded-files-title">
       <AnimatePresence mode="popLayout">
         {files.map((file, index) => (
           <UploadedFileItem key={file.id} file={file} onDelete={onDelete} index={index} />
@@ -314,7 +304,7 @@ function UploadedFileItem({ file, onDelete, index }: UploadedFileItemProps) {
       setIsDeleting(true);
       try {
         await onDelete(file.id);
-      } catch (error) {
+      } catch {
         setIsDeleting(false);
         alert('Failed to delete file. Please try again.');
       }
@@ -361,8 +351,12 @@ function UploadedFileItem({ file, onDelete, index }: UploadedFileItemProps) {
         // Hover effect
         'transition-all duration-300 hover:shadow-lg',
         // Deleting state
-        isDeleting && 'opacity-50 pointer-events-none'
+        isDeleting && 'opacity-50 pointer-events-none',
+        // Focus styles
+        'focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2'
       )}
+      role="listitem"
+      aria-label={`${file.fileName} - ${formatFileSize(file.fileSize)} - ${file.status}`}
     >
       <div className="flex items-center gap-4">
         {/* File icon */}
@@ -394,20 +388,20 @@ function UploadedFileItem({ file, onDelete, index }: UploadedFileItemProps) {
               // Preview functionality (to be implemented)
               alert('Preview functionality coming soon');
             }}
-            className="transition-transform duration-200 hover:scale-110"
-            aria-label="Preview file"
+            className="transition-transform duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={`معاينة ${file.fileName}`}
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="transition-transform duration-200 hover:scale-110 text-red-600 hover:text-red-700 hover:bg-red-50"
-            aria-label="Delete file"
+            className="transition-transform duration-200 hover:scale-110 text-red-600 hover:text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            aria-label={`حذف ${file.fileName}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

@@ -51,12 +51,20 @@ export function ProgressRing({
   }, [animationDelay]);
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`}>
+    <div 
+      className={`relative inline-flex items-center justify-center ${className}`}
+      role="progressbar"
+      aria-valuenow={Math.round(percentage)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`نسبة الحضور: ${Math.round(percentage)}%`}
+    >
       <svg
         width={size}
         height={size}
         className="transform -rotate-90"
         viewBox={`0 0 ${size} ${size}`}
+        aria-hidden="true"
       >
         {/* Background circle */}
         <circle

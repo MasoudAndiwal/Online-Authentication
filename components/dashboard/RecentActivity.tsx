@@ -20,10 +20,10 @@ export function RecentActivity({ records, onViewFullHistory }: RecentActivityPro
   const recentRecords = records.slice(0, 10);
 
   return (
-    <div className="bg-white border-0 shadow-sm rounded-xl p-4 md:p-6">
+    <section className="bg-white border-0 shadow-sm rounded-xl p-4 md:p-6" aria-labelledby="recent-activity-title">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+        <h2 id="recent-activity-title" className="text-xl sm:text-2xl font-semibold text-slate-900">
           Recent Activity
         </h2>
         <p className="text-sm text-slate-600 mt-1">
@@ -33,14 +33,14 @@ export function RecentActivity({ records, onViewFullHistory }: RecentActivityPro
 
       {/* Activity List */}
       {recentRecords.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+        <div className="text-center py-12" role="status" aria-label="لا توجد سجلات حضور">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center" aria-hidden="true">
             <FileText className="w-8 h-8 text-slate-400" />
           </div>
           <p className="text-slate-600">No attendance records yet</p>
         </div>
       ) : (
-        <StaggerChildren staggerDelay={0.1} className="space-y-2">
+        <StaggerChildren staggerDelay={0.1} className="space-y-2" role="list" aria-label="قائمة سجلات الحضور الأخيرة">
           {recentRecords.map((record) => (
             <StaggerItem key={record.id}>
               <ActivityItem record={record} />
@@ -54,14 +54,15 @@ export function RecentActivity({ records, onViewFullHistory }: RecentActivityPro
         <div className="mt-6 pt-6 border-t border-slate-100">
           <Button
             onClick={onViewFullHistory}
-            className="w-full bg-gradient-to-r from-blue-500 to-violet-500 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 group"
+            className="w-full bg-gradient-to-r from-blue-500 to-violet-500 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="عرض السجل الكامل"
           >
             View Full History
-            <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" />
+            <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
           </Button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -73,9 +74,16 @@ function ActivityItem({ record }: { record: AttendanceRecord }) {
 
   return (
     <div
-      className="group flex items-center gap-4 p-4 rounded-lg transition-all duration-200 hover:bg-slate-50 cursor-pointer"
-      role="article"
+      className="group flex items-center gap-4 p-4 rounded-lg transition-all duration-200 hover:bg-slate-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      role="listitem"
+      tabIndex={0}
       aria-label={`${record.courseName} on ${formatDate(record.date)} - ${statusConfig.label}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          // Could trigger detail view in future
+        }
+      }}
     >
       {/* Status Icon Container (32px) */}
       <div
@@ -83,6 +91,7 @@ function ActivityItem({ record }: { record: AttendanceRecord }) {
           'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:rotate-12',
           statusConfig.bgColor
         )}
+        aria-hidden="true"
       >
         <statusConfig.icon className={cn('w-5 h-5', statusConfig.iconColor)} />
       </div>

@@ -97,7 +97,7 @@ function StatCardItem({ card }: StatCardItemProps) {
   const Icon = card.icon;
 
   return (
-    <div
+    <article
       className={cn(
         // Base styles - borderless with shadow
         'bg-white border-0 shadow-sm rounded-xl p-6',
@@ -107,8 +107,13 @@ function StatCardItem({ card }: StatCardItemProps) {
         // Smooth hover effect
         'transition-all duration-300 hover:shadow-md hover:-translate-y-1',
         // Ensure proper structure
-        'flex flex-col gap-4'
+        'flex flex-col gap-4',
+        // Focus styles for keyboard navigation
+        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
       )}
+      tabIndex={0}
+      role="region"
+      aria-label={`${card.label}: ${card.value}`}
     >
       {/* Icon container with solid color background */}
       <div
@@ -116,21 +121,24 @@ function StatCardItem({ card }: StatCardItemProps) {
           'w-12 h-12 rounded-lg flex items-center justify-center',
           card.colorClasses.bg
         )}
+        aria-hidden="true"
       >
         <Icon className={cn('w-6 h-6', card.colorClasses.icon)} />
       </div>
 
       {/* Number with count-up animation */}
       <div className="flex flex-col gap-1">
-        <CountUp
-          end={card.value}
-          duration={1200}
-          className="text-3xl font-bold text-slate-900"
-        />
+        <div aria-live="polite" aria-atomic="true">
+          <CountUp
+            end={card.value}
+            duration={1200}
+            className="text-3xl font-bold text-slate-900"
+          />
+        </div>
         
         {/* Label */}
         <p className="text-sm text-slate-600">{card.label}</p>
       </div>
-    </div>
+    </article>
   );
 }
