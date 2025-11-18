@@ -13,6 +13,8 @@ import { DashboardMetricsSkeleton } from "@/components/student/dashboard-metrics
 import { useStudentDashboard } from "@/hooks/use-student-dashboard";
 import { WeeklyAttendanceCalendar } from "@/components/student/weekly-attendance-calendar";
 import { useWeeklyAttendance } from "@/hooks/use-weekly-attendance";
+import { StudentErrorBoundary, StudentSectionErrorBoundary } from "@/components/student/error-boundary";
+import { ErrorDisplay, NetworkErrorDisplay } from "@/components/student/error-display";
 import { AlertCircle } from "lucide-react";
 
 // Lazy load heavy components for better initial load performance
@@ -79,156 +81,157 @@ export default function StudentDashboardPage() {
 
   return (
     <StudentGuard>
-      <ModernDashboardLayout
-        user={user || undefined}
-        title="Student Dashboard"
-        subtitle="Welcome to your attendance portal"
-        currentPath="/student/student-dashboard"
-        onNavigate={handleNavigation}
-        onLogout={onLogout}
-        hideSearch={true}
-        notificationTrigger={
-          <NotificationBell
-            unreadCount={unreadNotifications}
-            onClick={handleNotificationClick}
-          />
-        }
-      >
-        <PageContainer>
-          <div className="space-y-6 sm:space-y-8">
-            {/* Welcome Banner */}
-            <WelcomeBanner
-              studentName={user?.firstName || "Student"}
-              attendanceRate={metrics?.attendanceRate || 0}
-              onViewAttendance={handleViewAttendance}
-              onContactTeacher={handleContactTeacher}
+      <StudentErrorBoundary>
+        <ModernDashboardLayout
+          user={user || undefined}
+          title="Student Dashboard"
+          subtitle="Welcome to your attendance portal"
+          currentPath="/student/student-dashboard"
+          onNavigate={handleNavigation}
+          onLogout={onLogout}
+          hideSearch={true}
+          notificationTrigger={
+            <NotificationBell
+              unreadCount={unreadNotifications}
+              onClick={handleNotificationClick}
             />
+          }
+        >
+          <PageContainer>
+            <div className="space-y-6 sm:space-y-8">
+              {/* Welcome Banner */}
+              <StudentSectionErrorBoundary sectionName="Welcome Banner">
+                <WelcomeBanner
+                  studentName={user?.firstName || "Student"}
+                  attendanceRate={metrics?.attendanceRate || 0}
+                  onViewAttendance={handleViewAttendance}
+                  onContactTeacher={handleContactTeacher}
+                />
+              </StudentSectionErrorBoundary>
 
-            {/* Error State */}
-            {metricsError && (
-              <div className="rounded-2xl shadow-xl bg-red-50 border-2 border-red-200 p-4">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <div>
-                    <div className="font-semibold text-red-800">Error</div>
-                    <div className="text-sm text-red-700">
-                      Failed to load dashboard metrics. Please try refreshing the page.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Metrics Cards */}
-            {metricsLoading ? (
-              <DashboardMetricsSkeleton />
-            ) : metrics ? (
-              <DashboardMetrics
-                totalClasses={metrics.totalClasses}
-                attendanceRate={metrics.attendanceRate}
-                presentDays={metrics.presentDays}
-                absentDays={metrics.absentDays}
-              />
-            ) : null}
-
-            {/* Weekly Attendance Calendar */}
-            {weeklyError && (
-              <div className="rounded-2xl shadow-xl bg-red-50 border-2 border-red-200 p-4">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <div>
-                    <div className="font-semibold text-red-800">Error</div>
-                    <div className="text-sm text-red-700">
-                      Failed to load weekly attendance. Please try refreshing the page.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {weeklyLoading ? (
-              <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
-                <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-40 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
-                  ))}
-                </div>
-              </div>
-            ) : weeklyData ? (
-              <WeeklyAttendanceCalendar
-                weekData={weeklyData.days}
-                currentWeek={currentWeek}
-                onWeekChange={handleWeekChange}
-              />
-            ) : null}
-
-            {/* Progress Tracker and Statistics - Lazy loaded for performance */}
-            {metrics && (
-              <>
-                {/* Progress Tracker */}
-                <Suspense fallback={
-                  <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
-                    <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
-                    <div className="h-64 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
-                  </div>
-                }>
-                  <ProgressTracker
-                    attendanceRate={metrics.attendanceRate}
-                    presentHours={metrics.presentDays}
-                    absentHours={metrics.absentDays}
-                    sickHours={metrics.sickDays}
-                    leaveHours={metrics.leaveDays}
-                    totalHours={metrics.totalClasses}
+              {/* Metrics Cards with Error Handling */}
+              <StudentSectionErrorBoundary sectionName="Dashboard Metrics">
+                {metricsError ? (
+                  <ErrorDisplay
+                    error={metricsError}
+                    onRetry={() => window.location.reload()}
+                    variant="compact"
                   />
-                </Suspense>
-
-                {/* Threshold Warnings */}
-                <Suspense fallback={
-                  <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
-                    <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
-                    <div className="h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
-                  </div>
-                }>
-                  <ThresholdWarnings
+                ) : metricsLoading ? (
+                  <DashboardMetricsSkeleton />
+                ) : metrics ? (
+                  <DashboardMetrics
+                    totalClasses={metrics.totalClasses}
                     attendanceRate={metrics.attendanceRate}
-                    absentHours={metrics.absentDays}
-                    totalHours={metrics.totalClasses}
-                    mahroomThreshold={75}
-                    tasdiqThreshold={85}
+                    presentDays={metrics.presentDays}
+                    absentDays={metrics.absentDays}
                   />
-                </Suspense>
+                ) : null}
+              </StudentSectionErrorBoundary>
 
-                {/* Class Average Comparison */}
-                {metrics.classAverage > 0 && (
-                  <Suspense fallback={
-                    <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
-                      <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
-                      <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
-                    </div>
-                  }>
-                    <ClassAverageComparison
-                      studentRate={metrics.attendanceRate}
-                      classAverage={metrics.classAverage}
-                      ranking={metrics.ranking}
-                    />
-                  </Suspense>
-                )}
+              {/* Weekly Attendance Calendar with Error Handling */}
+              <StudentSectionErrorBoundary sectionName="Weekly Attendance">
+                {weeklyError ? (
+                  <ErrorDisplay
+                    error={weeklyError}
+                    onRetry={() => setCurrentWeek(currentWeek)}
+                    variant="compact"
+                  />
+                ) : null}
 
-                {/* Trend Analysis Charts */}
-                <Suspense fallback={
+                {weeklyLoading ? (
                   <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
                     <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
-                    <div className="h-80 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-40 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
+                      ))}
+                    </div>
                   </div>
-                }>
-                  <TrendAnalysisCharts />
-                </Suspense>
-              </>
-            )}
-          </div>
-        </PageContainer>
-      </ModernDashboardLayout>
+                ) : weeklyData ? (
+                  <WeeklyAttendanceCalendar
+                    weekData={weeklyData.days}
+                    currentWeek={currentWeek}
+                    onWeekChange={handleWeekChange}
+                  />
+                ) : null}
+              </StudentSectionErrorBoundary>
+
+              {/* Progress Tracker and Statistics - Lazy loaded for performance */}
+              {metrics && (
+                <>
+                  {/* Progress Tracker */}
+                  <StudentSectionErrorBoundary sectionName="Progress Tracker">
+                    <Suspense fallback={
+                      <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
+                        <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
+                        <div className="h-64 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
+                      </div>
+                    }>
+                      <ProgressTracker
+                        attendanceRate={metrics.attendanceRate}
+                        presentHours={metrics.presentDays}
+                        absentHours={metrics.absentDays}
+                        sickHours={metrics.sickDays}
+                        leaveHours={metrics.leaveDays}
+                        totalHours={metrics.totalClasses}
+                      />
+                    </Suspense>
+                  </StudentSectionErrorBoundary>
+
+                  {/* Threshold Warnings */}
+                  <StudentSectionErrorBoundary sectionName="Threshold Warnings">
+                    <Suspense fallback={
+                      <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
+                        <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
+                        <div className="h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
+                      </div>
+                    }>
+                      <ThresholdWarnings
+                        attendanceRate={metrics.attendanceRate}
+                        absentHours={metrics.absentDays}
+                        totalHours={metrics.totalClasses}
+                        mahroomThreshold={75}
+                        tasdiqThreshold={85}
+                      />
+                    </Suspense>
+                  </StudentSectionErrorBoundary>
+
+                  {/* Class Average Comparison */}
+                  {metrics.classAverage > 0 && (
+                    <StudentSectionErrorBoundary sectionName="Class Average Comparison">
+                      <Suspense fallback={
+                        <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
+                          <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
+                          <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
+                        </div>
+                      }>
+                        <ClassAverageComparison
+                          studentRate={metrics.attendanceRate}
+                          classAverage={metrics.classAverage}
+                          ranking={metrics.ranking}
+                        />
+                      </Suspense>
+                    </StudentSectionErrorBoundary>
+                  )}
+
+                  {/* Trend Analysis Charts */}
+                  <StudentSectionErrorBoundary sectionName="Trend Analysis">
+                    <Suspense fallback={
+                      <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
+                        <div className="h-8 w-48 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
+                        <div className="h-80 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl" />
+                      </div>
+                    }>
+                      <TrendAnalysisCharts />
+                    </Suspense>
+                  </StudentSectionErrorBoundary>
+                </>
+              )}
+            </div>
+          </PageContainer>
+        </ModernDashboardLayout>
+      </StudentErrorBoundary>
     </StudentGuard>
   );
 }

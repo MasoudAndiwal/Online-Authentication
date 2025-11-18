@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
-import { AlertTriangle, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { AlertTriangle, AlertCircle, CheckCircle, XCircle, Pin } from 'lucide-react'
 
 interface ThresholdWarningsProps {
   attendanceRate: number
@@ -133,7 +133,7 @@ export function ThresholdWarnings({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.5 }}
     >
-      <Card className={`rounded-2xl shadow-xl border-2 ${colors.bg} ${colors.border}`}>
+      <Card className={`rounded-2xl shadow-xl border-0 ${colors.bg}`}>
         <CardContent className="p-4 sm:p-5 lg:p-6">
           {/* Header with Icon */}
           <div className="flex items-start gap-3 sm:gap-4 mb-4">
@@ -185,9 +185,12 @@ export function ThresholdWarnings({
 
           {/* Action Message */}
           <div className={`mt-4 sm:mt-6 p-3 sm:p-4 ${colors.badge} rounded-xl`}>
-            <p className="text-xs sm:text-sm font-medium">
-              📌 {warning.action}
-            </p>
+            <div className="flex items-center gap-2">
+              <Pin className="h-4 w-4 flex-shrink-0" />
+              <p className="text-xs sm:text-sm font-medium">
+                {warning.action}
+              </p>
+            </div>
           </div>
 
           {/* Visual Threshold Bar */}

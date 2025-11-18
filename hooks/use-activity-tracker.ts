@@ -26,10 +26,17 @@ export function useActivityTracker() {
   const router = useRouter();
 
   /**
-   * Handle user activity
+   * Handle user activity (throttled to prevent performance issues)
    */
   const handleActivity = useCallback(() => {
-    updateActivity();
+    // Throttle activity updates to once per 5 seconds to prevent performance issues
+    const now = Date.now();
+    const lastUpdate = parseInt(sessionStorage.getItem('lastActivityUpdate') || '0', 10);
+    
+    if (now - lastUpdate > 5000) { // 5 seconds throttle
+      updateActivity();
+      sessionStorage.setItem('lastActivityUpdate', now.toString());
+    }
   }, []);
 
   /**

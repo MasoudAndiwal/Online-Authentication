@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, TrendingUp, Award } from 'lucide-react'
+import { Users, TrendingUp, Award, Star, ThumbsUp, Target, Zap, TrendingDown, AlertCircle } from 'lucide-react'
 
 interface ClassAverageComparisonProps {
   studentRate: number
@@ -39,28 +39,53 @@ export function ClassAverageComparison({
   const isAboveAverage = studentRate >= classAverage
   const difference = Math.abs(studentRate - classAverage)
 
-  // Get encouraging message
-  const getMessage = () => {
+  // Get encouraging message and icon
+  const getMessageData = () => {
     if (isAboveAverage) {
       if (difference >= 10) {
-        return "Outstanding! You're significantly above the class average! 🌟"
+        return {
+          text: "Outstanding! You're significantly above the class average!",
+          icon: Star,
+          iconColor: "text-yellow-500"
+        }
       } else if (difference >= 5) {
-        return "Excellent! You're performing better than the class average! 👏"
+        return {
+          text: "Excellent! You're performing better than the class average!",
+          icon: ThumbsUp,
+          iconColor: "text-emerald-500"
+        }
       } else {
-        return "Great job! You're above the class average! 👍"
+        return {
+          text: "Great job! You're above the class average!",
+          icon: TrendingUp,
+          iconColor: "text-emerald-500"
+        }
       }
     } else {
       if (difference >= 10) {
-        return "Your attendance needs attention. Let's work on improving it! 💪"
+        return {
+          text: "Your attendance needs attention. Let's work on improving it!",
+          icon: AlertCircle,
+          iconColor: "text-orange-500"
+        }
       } else if (difference >= 5) {
-        return "You're slightly below average. A little more effort will help! 📈"
+        return {
+          text: "You're slightly below average. A little more effort will help!",
+          icon: TrendingDown,
+          iconColor: "text-blue-500"
+        }
       } else {
-        return "You're close to the class average. Keep it up! 🎯"
+        return {
+          text: "You're close to the class average. Keep it up!",
+          icon: Target,
+          iconColor: "text-blue-500"
+        }
       }
     }
   }
 
-  const message = getMessage()
+  const messageData = getMessageData()
+  const MessageIcon = messageData.icon
 
   return (
     <motion.div
@@ -77,16 +102,21 @@ export function ClassAverageComparison({
         </CardHeader>
         <CardContent className="p-4 sm:p-5 lg:p-6 space-y-6">
           {/* Encouraging Message */}
-          <div className={`p-4 rounded-xl ${
+          <div className={`p-4 rounded-xl border-0 ${
             isAboveAverage 
-              ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-2 border-emerald-200'
-              : 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-2 border-blue-200'
+              ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50'
+              : 'bg-gradient-to-br from-blue-50 to-blue-100/50'
           }`}>
-            <p className={`text-sm sm:text-base font-medium ${
-              isAboveAverage ? 'text-emerald-700' : 'text-blue-700'
-            }`}>
-              {message}
-            </p>
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg bg-white/80 ${messageData.iconColor}`}>
+                <MessageIcon className="h-5 w-5" />
+              </div>
+              <p className={`text-sm sm:text-base font-medium ${
+                isAboveAverage ? 'text-emerald-700' : 'text-blue-700'
+              }`}>
+                {messageData.text}
+              </p>
+            </div>
           </div>
 
           {/* Comparison Bars */}
@@ -147,7 +177,7 @@ export function ClassAverageComparison({
           </div>
 
           {/* Difference Indicator */}
-          <div className="flex items-center justify-center gap-2 p-4 bg-slate-50 rounded-xl">
+          <div className="flex items-center justify-center gap-2 p-4 bg-slate-50 rounded-xl border-0 shadow-sm">
             <span className="text-sm sm:text-base text-slate-600">
               You are
             </span>
@@ -164,7 +194,7 @@ export function ClassAverageComparison({
           {/* Ranking Card */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Ranking */}
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border-2 border-purple-200">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border-0 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <Award className="h-5 w-5 text-purple-600" />
                 <span className="text-xs sm:text-sm font-medium text-purple-700">
@@ -180,7 +210,7 @@ export function ClassAverageComparison({
             </div>
 
             {/* Percentile */}
-            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4 border-2 border-indigo-200">
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4 border-0 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-5 w-5 text-indigo-600" />
                 <span className="text-xs sm:text-sm font-medium text-indigo-700">

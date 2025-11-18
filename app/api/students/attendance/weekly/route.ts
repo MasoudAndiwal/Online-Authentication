@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { DayAttendance, AttendanceStatus } from '@/types/types';
-import { getSession } from '@/lib/auth/session';
-import { validateStudentDataAccess } from '@/lib/auth/read-only-middleware';
+import { getServerSession, validateServerStudentAccess } from '@/lib/auth/server-session';
 
 /**
  * GET /api/students/attendance/weekly
@@ -24,15 +23,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate data access - students can only view their own data
-    const session = getSession();
-    const accessCheck = validateStudentDataAccess(session, studentId);
+    const session = await getServerSession(request);
+    const accessCheck = validateServerStudentAccess(session, studentId);
     
     if (!accessCheck.allowed) {
+      console.log('Access denied for student:', studentId, 'Error:', accessCheck.error);
       return NextResponse.json(
         { success: false, error: accessCheck.error || 'Access denied' },
         { status: 403 }
       );
     }
+
+    console.log('Fetching weekly attendance for student:', studentId, 'week:', weekNumber);
 
     // Mock data for demonstration
     // In production, this would fetch from the database

@@ -74,7 +74,7 @@ const attendanceData = {
 ```tsx
 <AcademicStandingSection
   attendanceData={attendanceData}
-  onContactTeacher={() => router.push('/student/messages')}
+  onContactTeacher={() => router.push('/student/student-dashboard/messages')}
   onUploadDocumentation={() => router.push('/student/upload')}
   onViewPolicy={() => router.push('/student/help')}
 />
@@ -163,7 +163,7 @@ Opens the messaging system to contact the teacher:
 
 ```tsx
 const handleContactTeacher = () => {
-  router.push('/student/messages?recipient=teacher')
+  router.push('/student/student-dashboard/messages?recipient=teacher')
 }
 ```
 

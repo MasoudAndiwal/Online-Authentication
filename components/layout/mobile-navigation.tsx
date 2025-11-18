@@ -161,7 +161,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
     },
     {
       label: 'Messages',
-      href: '/student/messages',
+      href: '/student/student-dashboard/messages',
       icon: MessageSquare,
       badge: 0 // Will be updated dynamically with unread count
     },

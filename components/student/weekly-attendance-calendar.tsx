@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Check, X, Thermometer, CalendarDays, Clock, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DayAttendance, AttendanceStatus } from "@/types/types";
 
@@ -65,48 +65,42 @@ export function WeeklyAttendanceCalendar({
         return {
           bg: "bg-green-50",
           text: "text-green-700",
-          border: "border-green-200",
-          icon: "✓",
+          icon: <Check className="h-5 w-5" />,
           label: "Present",
         };
       case "absent":
         return {
           bg: "bg-red-50",
           text: "text-red-700",
-          border: "border-red-200",
-          icon: "✗",
+          icon: <X className="h-5 w-5" />,
           label: "Absent",
         };
       case "sick":
         return {
           bg: "bg-yellow-50",
           text: "text-yellow-700",
-          border: "border-yellow-200",
-          icon: "🤒",
+          icon: <Thermometer className="h-5 w-5" />,
           label: "Sick",
         };
       case "leave":
         return {
           bg: "bg-blue-50",
           text: "text-blue-700",
-          border: "border-blue-200",
-          icon: "📅",
+          icon: <CalendarDays className="h-5 w-5" />,
           label: "Leave",
         };
       case "future":
         return {
           bg: "bg-slate-50",
           text: "text-slate-500",
-          border: "border-slate-200",
-          icon: "⏳",
+          icon: <Clock className="h-5 w-5" />,
           label: "Upcoming",
         };
       default:
         return {
           bg: "bg-slate-50",
           text: "text-slate-400",
-          border: "border-slate-200",
-          icon: "-",
+          icon: <Minus className="h-5 w-5" />,
           label: "No Class",
         };
     }
@@ -130,7 +124,7 @@ export function WeeklyAttendanceCalendar({
               variant="outline"
               size="sm"
               onClick={handlePreviousWeek}
-              className="min-h-[44px] min-w-[44px] p-0 rounded-lg border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-colors active:scale-95 touch-manipulation"
+              className="min-h-[44px] min-w-[44px] p-0 rounded-lg border-0 bg-emerald-50 hover:bg-emerald-100 transition-colors active:scale-95 touch-manipulation"
               aria-label="Previous week"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -142,7 +136,7 @@ export function WeeklyAttendanceCalendar({
               variant="outline"
               size="sm"
               onClick={handleNextWeek}
-              className="min-h-[44px] min-w-[44px] p-0 rounded-lg border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-colors active:scale-95 touch-manipulation"
+              className="min-h-[44px] min-w-[44px] p-0 rounded-lg border-0 bg-emerald-50 hover:bg-emerald-100 transition-colors active:scale-95 touch-manipulation"
               aria-label="Next week"
             >
               <ChevronRight className="h-5 w-5" />
@@ -170,9 +164,8 @@ export function WeeklyAttendanceCalendar({
                 <div
                   key={day.date}
                   className={cn(
-                    "flex-shrink-0 w-[160px] rounded-xl border-2 transition-all duration-300",
+                    "flex-shrink-0 w-[160px] rounded-xl border-0 shadow-md transition-all duration-300",
                     statusColors.bg,
-                    statusColors.border,
                     today && "ring-2 ring-emerald-500 ring-offset-2 animate-pulse",
                     "cursor-pointer active:scale-95 touch-manipulation",
                     "min-h-[120px]"
@@ -192,11 +185,11 @@ export function WeeklyAttendanceCalendar({
                       className={cn(
                         "flex items-center justify-center gap-2 py-2 px-3 rounded-lg",
                         statusColors.bg,
-                        "border",
-                        statusColors.border
+                        "border-0 shadow-sm",
+                        statusColors.text
                       )}
                     >
-                      <span className="text-xl">{statusColors.icon}</span>
+                      {statusColors.icon}
                       <span className={cn("text-xs font-medium", statusColors.text)}>
                         {statusColors.label}
                       </span>
@@ -210,17 +203,16 @@ export function WeeklyAttendanceCalendar({
 
                   {/* Expanded session details for mobile */}
                   {isExpanded && day.sessions.length > 0 && (
-                    <div className="border-t border-slate-200 p-3 space-y-2 bg-white/50 animate-in slide-in-from-top duration-300">
+                    <div className="border-t-0 p-3 space-y-2 bg-white/50 animate-in slide-in-from-top duration-300">
                       {day.sessions.map((session, idx) => {
                         const sessionColors = getStatusColor(session.status);
                         return (
                           <div
                             key={idx}
                             className={cn(
-                              "p-2 rounded-lg text-xs",
+                              "p-2 rounded-lg text-xs shadow-sm",
                               sessionColors.bg,
-                              "border",
-                              sessionColors.border
+                              "border-0"
                             )}
                           >
                             <div className="font-semibold text-slate-700">
@@ -232,8 +224,8 @@ export function WeeklyAttendanceCalendar({
                               )}
                             </div>
                             <div className="text-slate-600 truncate">{session.courseName}</div>
-                            <div className={cn("font-medium mt-1", sessionColors.text)}>
-                              {sessionColors.icon} {sessionColors.label}
+                            <div className={cn("font-medium mt-1 flex items-center gap-1", sessionColors.text)}>
+                              {statusColors.icon} {sessionColors.label}
                             </div>
                             {session.markedBy && (
                               <div className="text-slate-500 mt-1 text-[10px]">
@@ -276,9 +268,8 @@ export function WeeklyAttendanceCalendar({
               <div
                 key={day.date}
                 className={cn(
-                  "rounded-xl border-2 transition-all duration-300",
+                  "rounded-xl border-0 shadow-md transition-all duration-300",
                   statusColors.bg,
-                  statusColors.border,
                   today && "ring-2 ring-emerald-500 ring-offset-2 animate-pulse",
                   "cursor-pointer hover:scale-[1.02] hover:shadow-xl"
                 )}
@@ -297,11 +288,11 @@ export function WeeklyAttendanceCalendar({
                     className={cn(
                       "flex items-center justify-center gap-2 py-2 px-3 rounded-lg",
                       statusColors.bg,
-                      "border",
-                      statusColors.border
+                      "border-0 shadow-sm",
+                      statusColors.text
                     )}
                   >
-                    <span className="text-2xl">{statusColors.icon}</span>
+                    {statusColors.icon}
                     <span className={cn("text-sm font-medium", statusColors.text)}>
                       {statusColors.label}
                     </span>
@@ -315,17 +306,16 @@ export function WeeklyAttendanceCalendar({
 
                 {/* Expanded session details for desktop */}
                 {isExpanded && day.sessions.length > 0 && (
-                  <div className="border-t border-slate-200 p-4 space-y-2 bg-white/50 animate-in slide-in-from-top duration-300">
+                  <div className="border-t-0 p-4 space-y-2 bg-white/50 animate-in slide-in-from-top duration-300">
                     {day.sessions.map((session, idx) => {
                       const sessionColors = getStatusColor(session.status);
                       return (
                         <div
                           key={idx}
                           className={cn(
-                            "p-3 rounded-lg text-sm",
+                            "p-3 rounded-lg text-sm shadow-sm",
                             sessionColors.bg,
-                            "border",
-                            sessionColors.border
+                            "border-0"
                           )}
                         >
                           <div className="font-semibold text-slate-700">
@@ -337,7 +327,7 @@ export function WeeklyAttendanceCalendar({
                             )}
                           </div>
                           <div className="text-slate-600 truncate">{session.courseName}</div>
-                          <div className={cn("font-medium mt-1", sessionColors.text)}>
+                          <div className={cn("font-medium mt-1 flex items-center gap-1", sessionColors.text)}>
                             {sessionColors.icon} {sessionColors.label}
                           </div>
                           {session.markedBy && (

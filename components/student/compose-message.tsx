@@ -17,7 +17,11 @@ import {
   X, 
   FileText, 
   Image as ImageIcon,
-  AlertCircle 
+  AlertCircle,
+  MessageCircle,
+  Search,
+  FileUp,
+  AlertOctagon 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -171,7 +175,7 @@ export function ComposeMessage({
   const isNearLimit = remainingChars < 100;
 
   return (
-    <div className="p-4 border-t border-slate-200 bg-white/50">
+    <div className="p-4 border-t-0 bg-white/50 shadow-sm">
       <div className="space-y-3">
         {/* Recipient Info */}
         {recipientName && (
@@ -188,15 +192,35 @@ export function ComposeMessage({
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger 
               id="category"
-              className="w-full bg-white border-slate-200 focus:border-emerald-300 focus:ring-emerald-200"
+              className="w-full bg-white border-0 shadow-sm focus:ring-2 focus:ring-emerald-200"
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="general">💬 General Question</SelectItem>
-              <SelectItem value="attendance_inquiry">🔍 Attendance Inquiry</SelectItem>
-              <SelectItem value="documentation">📄 Documentation Submission</SelectItem>
-              <SelectItem value="urgent">🚨 Urgent Matter</SelectItem>
+              <SelectItem value="general">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>General Question</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="attendance_inquiry">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  <span>Attendance Inquiry</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="documentation">
+                <div className="flex items-center gap-2">
+                  <FileUp className="h-4 w-4" />
+                  <span>Documentation Submission</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="urgent">
+                <div className="flex items-center gap-2">
+                  <AlertOctagon className="h-4 w-4" />
+                  <span>Urgent Matter</span>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -213,8 +237,8 @@ export function ComposeMessage({
             placeholder="Type your message here..."
             className={cn(
               "min-h-[120px] resize-none",
-              "bg-white border-slate-200",
-              "focus:border-emerald-300 focus:ring-emerald-200",
+              "bg-white border-0 shadow-sm",
+              "focus:ring-2 focus:ring-emerald-200",
               "transition-all duration-200"
             )}
             disabled={isLoading}
@@ -236,7 +260,7 @@ export function ComposeMessage({
 
         {/* Error Message */}
         {error && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border-0 shadow-sm">
             <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
@@ -248,7 +272,7 @@ export function ComposeMessage({
             {attachments.map((attachment, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200"
+                className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border-0 shadow-sm"
               >
                 {/* File Icon/Preview */}
                 <div className="flex-shrink-0">
@@ -296,10 +320,10 @@ export function ComposeMessage({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "border-2 border-dashed rounded-lg p-4 text-center transition-all duration-200",
+            "border-0 rounded-lg p-4 text-center transition-all duration-200 shadow-sm",
             isDragging
-              ? "border-emerald-500 bg-emerald-50"
-              : "border-slate-300 bg-slate-50 hover:border-emerald-400 hover:bg-emerald-50/50"
+              ? "bg-emerald-100 shadow-md"
+              : "bg-slate-50 hover:bg-emerald-50/50"
           )}
         >
           <input
@@ -357,7 +381,7 @@ export function ComposeMessage({
               onClick={onCancel}
               variant="outline"
               disabled={isLoading}
-              className="min-h-[44px] border-slate-300 hover:bg-slate-50"
+              className="min-h-[44px] border-0 bg-slate-100 hover:bg-slate-200 shadow-sm"
             >
               Cancel
             </Button>

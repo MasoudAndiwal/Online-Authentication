@@ -4,6 +4,7 @@ import * as React from 'react'
 import { EnhancedMetricCard } from '@/components/ui/enhanced-metric-card'
 import { BookOpen, TrendingUp, CheckCircle, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useOptimizedAnimation } from '@/hooks/use-optimized-animation'
 
 interface DashboardMetricsProps {
   totalClasses: number
@@ -17,6 +18,7 @@ interface DashboardMetricsProps {
  * Displays four metric cards with count-up animations and glass morphism design
  * Features emerald gradient backgrounds and 3D hover effects (disabled on mobile)
  * Responsive grid: 1 column (mobile) → 2 columns (tablet) → 4 columns (desktop)
+ * Optimized with hardware acceleration and reduced motion support
  */
 export function DashboardMetrics({
   totalClasses,
@@ -24,12 +26,28 @@ export function DashboardMetrics({
   presentDays,
   absentDays
 }: DashboardMetricsProps) {
+  const { shouldAnimate, getDuration } = useOptimizedAnimation()
+
+  const containerVariants = shouldAnimate
+    ? {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+      }
+    : {
+        initial: { opacity: 1, y: 0 },
+        animate: { opacity: 1, y: 0 },
+      }
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      initial={containerVariants.initial}
+      animate={containerVariants.animate}
+      transition={{
+        duration: getDuration(500) / 1000,
+        delay: getDuration(200) / 1000,
+      }}
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
+      style={{ willChange: shouldAnimate ? 'transform, opacity' : 'auto' }}
     >
       {/* Total Classes Card */}
       <EnhancedMetricCard

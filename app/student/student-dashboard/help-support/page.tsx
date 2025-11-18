@@ -3,6 +3,11 @@
 import { useState, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { HelpCircle, BookOpen, Phone, Loader2 } from 'lucide-react'
+import { StudentGuard } from '@/components/auth/role-guard'
+import { ModernDashboardLayout, PageContainer } from '@/components/layout/modern-dashboard-layout'
+import { useCurrentUser } from '@/hooks/use-current-user'
+import { handleLogout } from '@/lib/auth/logout'
+import { NotificationBell } from '@/components/student/notification-bell'
 import { type FAQ } from '@/components/student/faq-accordion'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -246,43 +251,63 @@ Your overall attendance rate is calculated based on Present vs. Total sessions. 
 
 export default function HelpSupportPage() {
   const router = useRouter()
+  const { user, loading: userLoading } = useCurrentUser()
+  const [unreadNotifications] = useState(0)
   const [faqFeedback, setFaqFeedback] = useState<Record<string, boolean>>({})
 
   const handleFaqFeedback = (faqId: string, helpful: boolean) => {
     setFaqFeedback((prev) => ({ ...prev, [faqId]: helpful }))
-    // In a real app, this would send feedback to the server
     console.log(`FAQ ${faqId} marked as ${helpful ? 'helpful' : 'not helpful'}`)
   }
 
   const handleSendMessage = () => {
-    router.push('/student/messages')
+    router.push('/student/student-dashboard/messages')
+  }
+
+  const handleNavigation = (href: string) => {
+    router.push(href)
+  }
+
+  const onLogout = async () => {
+    await handleLogout()
+    router.push('/login')
+  }
+
+  const handleNotificationClick = () => {
+    console.log('Notification bell clicked')
+  }
+
+  if (userLoading) {
+    return (
+      <StudentGuard>
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 text-emerald-600 animate-spin" />
+        </div>
+      </StudentGuard>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-slate-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-            <div className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <HelpCircle className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold">
-                Help & Support
-              </h1>
-              <p className="text-emerald-100 text-xs sm:text-sm lg:text-base mt-1">
-                Find answers and get assistance
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        {/* Quick Access Cards - Mobile/Tablet: Single column, Desktop: Three columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:mb-12">
+    <StudentGuard>
+      <ModernDashboardLayout
+        user={user || undefined}
+        title="Help & Support"
+        subtitle="Find answers and get assistance"
+        currentPath="/student/student-dashboard/help-support"
+        onNavigate={handleNavigation}
+        onLogout={onLogout}
+        hideSearch={true}
+        notificationTrigger={
+          <NotificationBell
+            unreadCount={unreadNotifications}
+            onClick={handleNotificationClick}
+          />
+        }
+      >
+        <PageContainer>
+          <div className="space-y-6 sm:space-y-8">
+            {/* Quick Access Cards - Mobile/Tablet: Single column, Desktop: Three columns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:mb-12">
           <Card className="rounded-xl sm:rounded-2xl shadow-sm bg-white border-0 hover:shadow-md transition-shadow">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3 sm:gap-4">
@@ -336,14 +361,14 @@ export default function HelpSupportPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+            </div>
 
-        {/* Main Content Grid - Mobile: Single column, Tablet: Two columns, Desktop: Sidebar layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
-          {/* Main Content Area - Mobile/Tablet: Full width, Desktop: 2 columns */}
-          <div className="lg:col-span-2 space-y-6 sm:space-y-8 lg:space-y-12">
-            {/* FAQ Section */}
-            <section id="faq-section">
+            {/* Main Content Grid - Mobile: Single column, Tablet: Two columns, Desktop: Sidebar layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
+              {/* Main Content Area - Mobile/Tablet: Full width, Desktop: 2 columns */}
+              <div className="lg:col-span-2 space-y-6 sm:space-y-8 lg:space-y-12">
+                {/* FAQ Section */}
+                <section id="faq-section">
               <div className="mb-4 sm:mb-6">
                 <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900 mb-2">
                   Frequently Asked Questions
@@ -352,11 +377,20 @@ export default function HelpSupportPage() {
                   Find answers to common questions about attendance and policies
                 </p>
               </div>
-              <FAQAccordion faqs={sampleFAQs} onFeedback={handleFaqFeedback} />
-            </section>
+              <Suspense fallback={
+                <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 flex items-center justify-center min-h-[300px]">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 text-emerald-600 animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Loading FAQs...</p>
+                  </div>
+                </div>
+              }>
+                <FAQAccordion faqs={sampleFAQs} onFeedback={handleFaqFeedback} />
+              </Suspense>
+                </section>
 
-            {/* Policy Documents Section */}
-            <section id="policies-section">
+                {/* Policy Documents Section */}
+                <section id="policies-section">
               <div className="mb-4 sm:mb-6">
                 <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900 mb-2">
                   Policy Documents
@@ -365,18 +399,40 @@ export default function HelpSupportPage() {
                   Read detailed information about attendance policies and procedures
                 </p>
               </div>
-              <PolicyDocuments />
-            </section>
-          </div>
+              <Suspense fallback={
+                <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 flex items-center justify-center min-h-[300px]">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 text-emerald-600 animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Loading policies...</p>
+                  </div>
+                </div>
+              }>
+                <PolicyDocuments />
+              </Suspense>
+                </section>
+              </div>
 
-          {/* Sidebar - Mobile/Tablet: Below main content, Desktop: Right sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-6 space-y-6">
-              <ContactInformationCard onSendMessage={handleSendMessage} />
+              {/* Sidebar - Mobile/Tablet: Below main content, Desktop: Right sidebar */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-6 space-y-6">
+              <Suspense fallback={
+                <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-6 animate-pulse">
+                  <div className="h-8 w-32 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-4" />
+                  <div className="space-y-3">
+                    <div className="h-4 bg-gradient-to-r from-slate-100 to-slate-200 rounded" />
+                    <div className="h-4 bg-gradient-to-r from-slate-100 to-slate-200 rounded" />
+                    <div className="h-4 bg-gradient-to-r from-slate-100 to-slate-200 rounded" />
+                  </div>
+                </div>
+              }>
+                <ContactInformationCard onSendMessage={handleSendMessage} />
+                  </Suspense>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </PageContainer>
+      </ModernDashboardLayout>
+    </StudentGuard>
   )
 }

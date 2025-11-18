@@ -31,22 +31,22 @@ export function WelcomeBanner({
   const getMotivationalMessage = (rate: number) => {
     if (rate >= 95) {
       return {
-        message: "Outstanding attendance! Keep up the excellent work! 🌟",
+        message: "Outstanding attendance! Keep up the excellent work!",
         status: 'excellent' as const
       }
     } else if (rate >= 85) {
       return {
-        message: "Great job! You're doing well. Stay consistent! 👍",
+        message: "Great job! You're doing well. Stay consistent!",
         status: 'good' as const
       }
     } else if (rate >= 75) {
       return {
-        message: "Your attendance needs attention. Let's improve together! ⚠️",
+        message: "Your attendance needs attention. Let's improve together!",
         status: 'warning' as const
       }
     } else {
       return {
-        message: "Urgent: Your attendance is at risk. Please contact your teacher. 🚨",
+        message: "Urgent: Your attendance is at risk. Please contact your teacher.",
         status: 'critical' as const
       }
     }

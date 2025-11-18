@@ -83,7 +83,7 @@ export default function ClassInfoPage() {
 
   const handleContactTeacher = () => {
     // TODO: Navigate to messaging interface with teacher pre-selected
-    router.push("/student/messages");
+    router.push("/student/student-dashboard/messages");
     console.log("Contact teacher clicked - navigating to messages");
   };
 

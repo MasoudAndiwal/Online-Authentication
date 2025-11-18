@@ -29,8 +29,17 @@ export function useWeeklyAttendance(studentId: string | undefined, weekNumber: n
         throw new Error('Student ID is required')
       }
 
+      // Get session data to include in request
+      const sessionData = localStorage.getItem('user_session');
+      
       const response = await fetch(
-        `/api/students/attendance/weekly?studentId=${studentId}&week=${weekNumber}`
+        `/api/students/attendance/weekly?studentId=${studentId}&week=${weekNumber}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionData && { 'x-session-data': sessionData }),
+          },
+        }
       )
       
       if (!response.ok) {

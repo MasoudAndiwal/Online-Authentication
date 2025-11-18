@@ -1,5 +1,6 @@
 import { useInView, useMotionValue, useSpring } from 'motion/react';
 import { useCallback, useEffect, useRef } from 'react';
+import { prefersReducedMotion } from '@/lib/utils/animation-utils';
 
 interface CountUpProps {
   to: number;
@@ -29,8 +30,12 @@ export default function CountUp({
   const ref = useRef<HTMLSpanElement>(null);
   const motionValue = useMotionValue(direction === 'down' ? to : from);
 
-  const damping = 20 + 40 * (1 / duration);
-  const stiffness = 100 * (1 / duration);
+  // Optimize animation based on user preferences
+  const reducedMotion = prefersReducedMotion();
+  const optimizedDuration = reducedMotion ? 0.01 : duration;
+
+  const damping = 20 + 40 * (1 / optimizedDuration);
+  const stiffness = 100 * (1 / optimizedDuration);
 
   const springValue = useSpring(motionValue, {
     damping,
@@ -91,7 +96,7 @@ export default function CountUp({
             onEnd();
           }
         },
-        delay * 1000 + duration * 1000
+        delay * 1000 + optimizedDuration * 1000
       );
 
       return () => {
@@ -99,7 +104,7 @@ export default function CountUp({
         clearTimeout(durationTimeoutId);
       };
     }
-  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, duration]);
+  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, optimizedDuration]);
 
   useEffect(() => {
     const unsubscribe = springValue.on('change', (latest: number) => {

@@ -221,7 +221,7 @@ import { AcademicStandingSection } from '@/components/student'
     sickHours: 0,
     leaveHours: 0
   }}
-  onContactTeacher={() => router.push('/student/messages')}
+  onContactTeacher={() => router.push('/student/student-dashboard/messages')}
   onUploadDocumentation={() => router.push('/student/upload')}
   onViewPolicy={() => router.push('/student/help')}
 />
@@ -286,7 +286,7 @@ The Academic Standing Alert System integrates seamlessly with the student dashbo
   {/* Academic Standing Alert */}
   <AcademicStandingSection
     attendanceData={attendanceData}
-    onContactTeacher={() => router.push('/student/messages')}
+    onContactTeacher={() => router.push('/student/student-dashboard/messages')}
     onUploadDocumentation={() => router.push('/student/upload')}
     onViewPolicy={() => router.push('/student/help')}
   />

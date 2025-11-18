@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
+  // Optimize bundle splitting for better performance
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@/components/ui', '@/components/student'],
+  },
+  // Enable SWC minification for better performance
+  swcMinify: true,
 };
 
 

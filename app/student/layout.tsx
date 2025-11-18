@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { StudentGuard } from "@/components/auth/role-guard";
 import { useActivityTracker } from "@/hooks/use-activity-tracker";
+import { StudentErrorBoundary } from "@/components/student/error-boundary";
 
 // Note: metadata export is not supported in client components
 // Move metadata to a parent server component if needed
@@ -25,9 +26,19 @@ export default function StudentLayout({
 }) {
   return (
     <StudentGuard>
-      <StudentLayoutContent>
-        {children}
-      </StudentLayoutContent>
+      <StudentErrorBoundary
+        onError={(error, errorInfo) => {
+          // Log errors in development
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Student Layout Error:', error, errorInfo);
+          }
+          // In production, send to error tracking service
+        }}
+      >
+        <StudentLayoutContent>
+          {children}
+        </StudentLayoutContent>
+      </StudentErrorBoundary>
     </StudentGuard>
   );
 }

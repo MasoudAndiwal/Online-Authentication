@@ -98,13 +98,17 @@ export function EnhancedMetricCard({
       hover={true}
       role="article"
       aria-label={`${title}: ${value}${trend ? `, ${trend} ${trendLabel || ''}` : ''}`}
+      style={{ willChange: 'transform' }}
     >
-      {/* Background Pattern */}
+      {/* Background Pattern - Hardware accelerated */}
       <div className="absolute top-0 right-0 w-32 h-32 opacity-5" aria-hidden="true">
-        <div className={cn(
-          'w-full h-full rounded-full bg-gradient-to-br transform translate-x-8 -translate-y-8',
-          colors.bg
-        )} />
+        <div 
+          className={cn(
+            'w-full h-full rounded-full bg-gradient-to-br',
+            colors.bg
+          )}
+          style={{ transform: 'translate3d(2rem, -2rem, 0)' }}
+        />
       </div>
 
       <div className="relative z-10">
@@ -121,9 +125,16 @@ export function EnhancedMetricCard({
                 `bg-gradient-to-br ${colors.bg} ${colors.glow}`
               )}
               aria-hidden="true"
+              style={{ willChange: 'transform' }}
             >
-              {/* Icon shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000" />
+              {/* Icon shine effect - Hardware accelerated */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -skew-x-12 group-hover:translate-x-[-200%] transition-transform duration-1000"
+                style={{ 
+                  transform: 'translate3d(100%, 0, 0)',
+                  willChange: 'transform'
+                }}
+              />
               <div className="relative z-10 text-white">
                 {icon}
               </div>
@@ -131,11 +142,12 @@ export function EnhancedMetricCard({
           )}
         </div>
 
-        {/* Value with Count-up Animation */}
+        {/* Value with Count-up Animation - Hardware accelerated */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 + delay }}
+          style={{ willChange: 'transform, opacity' }}
         >
           <p 
             className="text-3xl font-bold text-slate-900 mb-2 tracking-tight"

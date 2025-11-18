@@ -158,7 +158,7 @@ export default function StudentMessagesPage() {
         user={user || undefined}
         title="Messages"
         subtitle="Communicate with teachers and office"
-        currentPath="/student/messages"
+        currentPath="/student/student-dashboard/messages"
         onNavigate={handleNavigation}
         onLogout={onLogout}
         hideSearch={true}

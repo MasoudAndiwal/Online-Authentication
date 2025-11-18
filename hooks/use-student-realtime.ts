@@ -150,7 +150,7 @@ export function useStudentRealtime(
               title: "New Message",
               message: `${payload.senderName} sent you a message`,
               isRead: false,
-              actionUrl: `/student/messages?conversation=${payload.conversationId}`,
+              actionUrl: `/student/student-dashboard/messages?conversation=${payload.conversationId}`,
             });
 
             // Call custom handler if provided

@@ -40,7 +40,7 @@ interface AcademicStandingSectionProps {
  *     sickHours: 0,
  *     leaveHours: 0
  *   }}
- *   onContactTeacher={() => router.push('/student/messages')}
+ *   onContactTeacher={() => router.push('/student/student-dashboard/messages')}
  *   onUploadDocumentation={() => router.push('/student/upload')}
  *   onViewPolicy={() => router.push('/student/help')}
  * />

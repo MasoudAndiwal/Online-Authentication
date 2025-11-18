@@ -139,26 +139,55 @@ export function useStudentDashboardMetrics(studentId: string | undefined) {
         throw new Error('Student ID is required')
       }
 
-      const response = await fetch(`/api/students/dashboard?studentId=${studentId}`)
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to fetch dashboard metrics')
-      }
+      try {
+        const response = await fetch(`/api/students/dashboard?studentId=${studentId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          const error: any = new Error(errorData.error || 'Failed to fetch dashboard metrics')
+          error.status = response.status
+          throw error
+        }
 
-      const result: StudentDashboardResponse = await response.json()
-      return result.data
+        const result: StudentDashboardResponse = await response.json()
+        
+        // Validate response data
+        if (!result.data) {
+          throw new Error('Invalid response format')
+        }
+        
+        return result.data
+      } catch (error: any) {
+        // Network error
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          const networkError: any = new Error('Network error. Please check your connection.')
+          networkError.name = 'NetworkError'
+          throw networkError
+        }
+        throw error
+      }
     },
     enabled: !!studentId,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: true,
-    retry: (failureCount, error) => {
-      // Don't retry on 4xx errors
-      if (error.message.includes('404') || error.message.includes('403')) {
+    retry: (failureCount, error: any) => {
+      // Don't retry on client errors (4xx)
+      if (error.status >= 400 && error.status < 500) {
         return false
       }
+      // Don't retry on network errors if offline
+      if (error.name === 'NetworkError' && !navigator.onLine) {
+        return false
+      }
+      // Retry up to 3 times for server errors and network issues
       return failureCount < 3
     },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   })
 }
 
@@ -192,40 +221,75 @@ export function useStudentAttendance(
         throw new Error('Student ID is required')
       }
 
-      // Calculate date range for the week
-      const today = new Date()
-      const currentDay = today.getDay()
-      const diff = currentDay === 6 ? 0 : currentDay === 0 ? -1 : currentDay + 1 // Saturday = 0
-      const weekStart = new Date(today)
-      weekStart.setDate(today.getDate() - diff + (weekOffset * 7))
-      
-      const weekEnd = new Date(weekStart)
-      weekEnd.setDate(weekStart.getDate() + 4) // Saturday to Thursday (5 days)
+      try {
+        // Calculate date range for the week
+        const today = new Date()
+        const currentDay = today.getDay()
+        const diff = currentDay === 6 ? 0 : currentDay === 0 ? -1 : currentDay + 1 // Saturday = 0
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - diff + (weekOffset * 7))
+        
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 4) // Saturday to Thursday (5 days)
 
-      const response = await fetch(
-        `/api/students/attendance/weekly?studentId=${studentId}&startDate=${weekStart.toISOString()}&endDate=${weekEnd.toISOString()}`
-      )
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to fetch attendance data')
+        const response = await fetch(
+          `/api/students/attendance/weekly?studentId=${studentId}&startDate=${weekStart.toISOString()}&endDate=${weekEnd.toISOString()}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }
+        )
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          const error: any = new Error(errorData.error || 'Failed to fetch attendance data')
+          error.status = response.status
+          throw error
+        }
+
+        const result = await response.json()
+        
+        // Validate response data
+        if (!result.data || !Array.isArray(result.data)) {
+          throw new Error('Invalid response format')
+        }
+        
+        // Transform dates from strings to Date objects
+        return result.data.map((day: any) => ({
+          ...day,
+          date: new Date(day.date),
+          sessions: day.sessions.map((session: any) => ({
+            ...session,
+            markedAt: new Date(session.markedAt),
+          })),
+        }))
+      } catch (error: any) {
+        // Network error
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          const networkError: any = new Error('Network error. Please check your connection.')
+          networkError.name = 'NetworkError'
+          throw networkError
+        }
+        throw error
       }
-
-      const result = await response.json()
-      
-      // Transform dates from strings to Date objects
-      return result.data.map((day: any) => ({
-        ...day,
-        date: new Date(day.date),
-        sessions: day.sessions.map((session: any) => ({
-          ...session,
-          markedAt: new Date(session.markedAt),
-        })),
-      }))
     },
     enabled: !!studentId,
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,
+    retry: (failureCount, error: any) => {
+      // Don't retry on client errors (4xx)
+      if (error.status >= 400 && error.status < 500) {
+        return false
+      }
+      // Don't retry on network errors if offline
+      if (error.name === 'NetworkError' && !navigator.onLine) {
+        return false
+      }
+      return failureCount < 3
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   })
 }
 

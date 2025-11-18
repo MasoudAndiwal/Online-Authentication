@@ -96,7 +96,7 @@ export function TrendAnalysisCharts({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-4 bg-slate-50 rounded-xl border-2 border-slate-200"
+              className="mt-4 p-4 bg-slate-50 rounded-xl border-0 shadow-sm"
             >
               <div className="text-sm sm:text-base font-semibold text-slate-800 mb-2">
                 {currentData[hoveredIndex].label}

@@ -219,23 +219,23 @@ const getNavigationItems = (role: string): NavigationItem[] => {
     },
     {
       label: "My Attendance",
-      href: "/student/attendance",
+      href: "/student/student-dashboard/attendance-history",
       icon: ClipboardList,
     },
     {
       label: "Class Information",
-      href: "/student/class-info",
+      href: "/student/student-dashboard/class-info",
       icon: BookOpen,
     },
     {
       label: "Messages",
-      href: "/student/messages",
+      href: "/student/student-dashboard/messages",
       icon: MessageSquare,
       badge: 0, // Will be updated dynamically with unread count
     },
     {
       label: "Help & Support",
-      href: "/student/help",
+      href: "/student/student-dashboard/help-support",
       icon: HelpCircle,
     },
   ];

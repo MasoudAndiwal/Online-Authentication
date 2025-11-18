@@ -35,10 +35,15 @@ export function saveSession(userData: Omit<UserSession, 'loginTime' | 'lastActiv
  * Update last activity timestamp
  */
 export function updateActivity(): void {
-  const session = getSession();
-  if (session) {
-    session.lastActivity = Date.now();
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  try {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (sessionData) {
+      const session = JSON.parse(sessionData) as UserSession;
+      session.lastActivity = Date.now();
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+  } catch (error) {
+    console.error('Error updating activity:', error);
   }
 }
 
@@ -70,9 +75,6 @@ export function getSession(): UserSession | null {
       clearSession();
       return null;
     }
-    
-    // Update last activity
-    updateActivity();
     
     return session;
   } catch (error) {

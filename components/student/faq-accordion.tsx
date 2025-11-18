@@ -72,7 +72,7 @@ export function FAQAccordion({ faqs, onFeedback }: FAQAccordionProps) {
               'rounded-full text-xs sm:text-sm min-h-[36px] sm:min-h-[40px] px-3 sm:px-4 touch-manipulation',
               selectedCategory === category
                 ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white border-0 shadow-lg shadow-emerald-500/25'
-                : 'bg-white hover:bg-emerald-50 text-slate-700 border-slate-200'
+                : 'bg-white hover:bg-emerald-50 text-slate-700 border-0 shadow-sm hover:shadow-md'
             )}
           >
             {category}
@@ -152,7 +152,7 @@ export function FAQAccordion({ faqs, onFeedback }: FAQAccordionProps) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleFeedback(faq.id, true)}
-                                className="rounded-lg min-h-[36px] sm:min-h-[40px] px-3 sm:px-4 touch-manipulation hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-500"
+                                className="rounded-lg min-h-[36px] sm:min-h-[40px] px-3 sm:px-4 touch-manipulation hover:bg-emerald-50 hover:text-emerald-700 border-0 shadow-sm hover:shadow-md"
                               >
                                 <ThumbsUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                 <span className="text-xs sm:text-sm">Yes</span>
@@ -161,7 +161,7 @@ export function FAQAccordion({ faqs, onFeedback }: FAQAccordionProps) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleFeedback(faq.id, false)}
-                                className="rounded-lg min-h-[36px] sm:min-h-[40px] px-3 sm:px-4 touch-manipulation hover:bg-red-50 hover:text-red-700 hover:border-red-500"
+                                className="rounded-lg min-h-[36px] sm:min-h-[40px] px-3 sm:px-4 touch-manipulation hover:bg-red-50 hover:text-red-700 border-0 shadow-sm hover:shadow-md"
                               >
                                 <ThumbsDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                 <span className="text-xs sm:text-sm">No</span>

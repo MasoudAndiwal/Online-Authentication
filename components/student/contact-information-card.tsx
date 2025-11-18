@@ -158,7 +158,7 @@ export function ContactInformationCard({
 
           {/* Emergency Contact */}
           {contactInfo.emergencyContact && (
-            <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-gradient-to-br from-red-50 to-orange-50 border border-red-100">
+            <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-gradient-to-br from-red-50 to-orange-50 border-0 shadow-sm">
               <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/25">
                 <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
@@ -196,10 +196,10 @@ export function ContactInformationCard({
                   onClick={link.action}
                   variant="outline"
                   className={cn(
-                    'justify-start h-auto py-3 px-4 rounded-xl touch-manipulation min-h-[44px] text-left',
+                    'justify-start h-auto py-3 px-4 rounded-xl touch-manipulation min-h-[44px] text-left border-0 shadow-sm',
                     isEmergency
-                      ? 'bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 border-red-200 text-red-700 hover:text-red-800'
-                      : 'bg-white hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-500'
+                      ? 'bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 text-red-700 hover:text-red-800 hover:shadow-md'
+                      : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 hover:shadow-md'
                   )}
                 >
                   <Icon

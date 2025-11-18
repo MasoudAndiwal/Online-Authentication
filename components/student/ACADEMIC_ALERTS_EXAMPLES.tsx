@@ -49,7 +49,7 @@ export function Example2_WithRouter() {
   }
 
   const handleContactTeacher = () => {
-    // router.push('/student/messages?recipient=teacher')
+    // router.push('/student/student-dashboard/messages?recipient=teacher')
     console.log('Navigate to messages')
   }
 
