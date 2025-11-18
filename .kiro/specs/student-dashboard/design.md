@@ -2,1167 +2,1102 @@
 
 ## Overview
 
-The Student Dashboard is a modern, visually stunning React-based web application that provides students with a personalized view of their attendance records and academic status. The design emphasizes smooth animations, gradient backgrounds, borderless cards with shadows, and an engaging user experience that matches the quality of the existing login page. The interface is built using Next.js 14 with App Router, TypeScript, Tailwind CSS, and Framer Motion for animations.
+The Student Dashboard is a visually stunning, user-friendly interface that serves as the central hub for students within the University Attendance System. Built with Next.js 15, React 19, and modern UI libraries, the dashboard emphasizes visual excellence through glassmorphism design, smooth animations, and intuitive interactions. The design follows the established UI guidelines with gradient backgrounds, shadow-based depth, and responsive layouts that work seamlessly across all devices.
+
+The dashboard uses a **green color scheme** as the primary theme, creating a fresh, motivating, and positive learning environment. The primary colors are `emerald-50`, `emerald-100`, `emerald-500`, `emerald-600`, and `emerald-700` with gradients like `from-emerald-50 to-emerald-100/50`.
+
+The dashboard is organized into distinct functional areas: Attendance Overview, Weekly Calendar, Progress Tracking, Class Information, Messaging System, and Help & Support. Each area features modern card-based layouts with animated transitions, 3D hover effects, and contextual information that enhances the student experience.
+
+### Student Color Palette
+
+- **Primary Green**: `emerald-500` (#10b981) - Main action buttons and icons
+- **Light Green**: `emerald-50` - Card backgrounds and subtle highlights
+- **Medium Green**: `emerald-100` - Hover states and secondary backgrounds
+- **Dark Green**: `emerald-600`, `emerald-700` - Text and emphasis elements
+- **Gradient**: `bg-gradient-to-br from-emerald-50 to-emerald-100/50` - Card backgrounds
+- **Text Colors**: `text-emerald-600`, `text-emerald-700` - Consistent with student theme
+- **Accent Colors**: 
+  - Success/Present: `green-500` (#22c55e)
+  - Warning/Approaching: `yellow-500` (#eab308)
+  - Alert/Critical: `orange-500` (#f97316)
+  - Danger/Absent: `red-500` (#ef4444)
 
 ### Design Principles
 
-1. **Sophisticated Color Schema**: Use a cohesive color palette with strategic gradient accents, not overwhelming gradients everywhere
-2. **Borderless with Shadows**: All cards use `border-0` with subtle shadow-based depth for modern, clean look
-3. **Smooth Micro Animations**: Subtle, purposeful animations that enhance UX without being distracting
-4. **Fully Responsive**: Mobile-first approach with seamless adaptation across all screen sizes
-5. **Proper Icon Treatment**: Icons sized appropriately (20-24px standard) with optional gradient containers only where it makes sense
-6. **Thoughtful Hover States**: Smooth transitions on interactive elements without excessive effects
+1. **Read-Only Interface**: All data displays are view-only with no edit capabilities
+2. **Motivational Design**: Positive reinforcement through colors, messages, and achievements
+3. **Transparency**: Clear visibility into attendance records and academic standing
+4. **Accessibility**: WCAG 2.1 AA compliant with full keyboard and screen reader support
+5. **Fully Responsive**: Mobile-first design with adaptive layouts for all screen sizes (375px to 2560px+)
+6. **Performance**: Fast loading with skeleton screens and optimized animations
 
-### What We DON'T Do
+### Responsive Design Strategy
 
-❌ **NO Shadcn default outline buttons** - They look generic and don't fit our design
-❌ **NO borders on cards** - Always use `border-0` with shadows for depth
-❌ **NO plain borders anywhere** - Use shadows and background colors for separation
-❌ **NO unsized or improperly sized icons** - Always specify width/height
-❌ **NO missing hover effects** - Every interactive element needs smooth transitions
-❌ **NO excessive gradients** - Use strategically, not everywhere
+The student dashboard follows a **mobile-first approach** with progressive enhancement:
+
+**Core Responsive Features:**
+- ✅ Fluid layouts that adapt from 375px (mobile) to 2560px+ (large desktop)
+- ✅ Touch-optimized interactions with 44px minimum touch targets
+- ✅ Collapsible sidebar navigation on mobile devices
+- ✅ Responsive typography scaling across breakpoints
+- ✅ Adaptive component layouts (single column → multi-column)
+- ✅ Mobile-specific UI patterns (bottom sheets, floating action buttons)
+- ✅ Optimized images and assets for different screen sizes
+- ✅ Smooth animations that respect reduced motion preferences
+
+**Breakpoint Strategy:**
+```typescript
+// Tailwind breakpoints used throughout
+xs: '375px'   // Small mobile
+sm: '640px'   // Large mobile
+md: '768px'   // Tablet
+lg: '1024px'  // Desktop
+xl: '1280px'  // Large desktop
+2xl: '1536px' // Extra large desktop
+```
+
 
 ## Architecture
 
-### Technology Stack
+### Component Architecture
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS with custom gradient utilities
-- **Animation**: Framer Motion
-- **UI Components**: Custom components (NO Shadcn default variants)
-- **State Management**: React Server Components + Client Components with hooks
-- **Data Fetching**: Server Actions and API Routes
-- **Authentication**: NextAuth.js with JWT tokens
-- **File Upload**: React Dropzone with client-side validation
-
-### Project Structure
-
+```mermaid
+graph TB
+    A[StudentDashboard] --> B[DashboardLayout]
+    B --> C[Sidebar]
+    B --> D[DashboardHeader]
+    B --> E[StudentMainContent]
+    
+    E --> F[WelcomeSection]
+    E --> G[MetricsSection]
+    E --> H[AttendanceCalendar]
+    E --> I[ProgressTracker]
+    E --> J[AlertsSection]
+    
+    C --> K[NavigationMenu]
+    C --> L[ProfileCard]
+    C --> M[NotificationBadges]
+    
+    G --> N[MetricCard]
+    H --> O[WeeklyCalendarView]
+    I --> P[ProgressChart]
+    I --> Q[StatusBadge]
+    J --> R[AlertCard]
 ```
-src/
-├── app/
-│   ├── dashboard/
-│   │   ├── page.tsx                 # Main dashboard page (Server Component)
-│   │   ├── loading.tsx              # Loading skeleton
-│   │   └── error.tsx                # Error boundary
-│   ├── api/
-│   │   ├── attendance/
-│   │   │   └── route.ts             # Attendance data API
-│   │   └── upload/
-│   │       └── route.ts             # File upload API
-│   └── layout.tsx
-├── components/
-│   ├── dashboard/
-│   │   ├── WelcomeSection.tsx       # Personalized greeting
-│   │   ├── StatsCards.tsx           # Metric cards grid
-│   │   ├── StatusAlerts.tsx         # Warning banners
-│   │   ├── WeeklyCalendar.tsx       # Calendar view
-│   │   ├── ProgressChart.tsx        # Circular progress ring
-│   │   ├── RecentActivity.tsx       # Timeline list
-│   │   └── CertificateUpload.tsx    # File upload interface
-│   ├── ui/
-│   │   ├── Button.tsx               # Custom button (NO outline variant)
-│   │   ├── Card.tsx                 # Borderless card with shadows
-│   │   ├── IconContainer.tsx        # Gradient icon wrapper
-│   │   ├── ProgressRing.tsx         # Animated circular progress
-│   │   └── Skeleton.tsx             # Loading skeletons
-│   └── animations/
-│       ├── FadeIn.tsx               # Fade entrance animation
-│       ├── StaggerChildren.tsx      # Staggered list animation
-│       └── CountUp.tsx              # Number count-up animation
-├── lib/
-│   ├── types.ts                     # TypeScript interfaces
-│   ├── api.ts                       # API client functions
-│   ├── utils.ts                     # Utility functions
-│   └── constants.ts                 # Color schemes and thresholds
-└── hooks/
-    ├── useAttendance.ts             # Attendance data hook
-    └── useFileUpload.ts             # File upload hook
+
+### Data Flow Architecture
+
+```mermaid
+graph LR
+    A[Student Authentication] --> B[Dashboard State Management]
+    B --> C[Attendance Data Fetching]
+    B --> D[Class Data Fetching]
+    B --> E[Messages Fetching]
+    
+    C --> F[Attendance Components]
+    D --> G[Class Info Components]
+    E --> H[Messaging Components]
+    
+    F --> I[Real-time Updates]
+    G --> I
+    H --> I
 ```
+
+### State Management Strategy
+
+The dashboard uses a combination of React Query for server state management and Zustand for client state management:
+
+- **Server State**: Attendance records, class information, messages, notifications
+- **Client State**: UI preferences, filter states, modal states, sidebar collapsed state
+- **Real-time Updates**: WebSocket connections for live attendance updates and message notifications
+
 
 ## Components and Interfaces
 
-### 1. Core Data Types
+### 1. Dashboard Layout Structure
+
+#### Main Dashboard Container
+
+The student dashboard reuses the existing dashboard layout pattern with student-specific content and green theme:
 
 ```typescript
-// lib/types.ts
-
-export interface Student {
-  id: string;
-  name: string;
-  studentNumber: string;
-  email: string;
+interface StudentDashboardProps {
+  student: Student;
+  attendanceData: AttendanceData;
+  classInfo: ClassInfo;
+  initialMetrics: DashboardMetrics;
+  layoutProps: DashboardLayoutProps;
 }
 
-export type AttendanceStatus = 'present' | 'absent' | 'sick' | 'leave';
-
-export interface AttendanceRecord {
-  id: string;
-  date: string;
-  dayOfWeek: string;
-  status: AttendanceStatus;
-  courseName: string;
-  period: number;
-  notes?: string;
-}
-
-export interface AttendanceStats {
-  totalDays: number;
+interface DashboardMetrics {
+  totalClasses: number;
+  attendanceRate: number;
   presentDays: number;
   absentDays: number;
   sickDays: number;
   leaveDays: number;
-  attendancePercentage: number;
-  pureAbsenceHours: number;
-  combinedAbsenceHours: number;
+  academicStatus: 'good' | 'warning' | 'mahroom' | 'tasdiq';
+  remainingAbsences: number;
 }
 
-export interface AcademicStatus {
-  isDisqualified: boolean;        // محروم
-  needsCertification: boolean;    // تصدیق طلب
-  disqualificationThreshold: number;
-  certificationThreshold: number;
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  studentId: string;
+  classId: string;
+  className: string;
+  avatar?: string;
+  enrollmentDate: Date;
+}
+```
+
+#### Layout Structure
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              [Dashboard Header - Green Theme]                │
+│  [Student Avatar] [Welcome Message] [Notifications] [Menu]  │
+├──────────┬──────────────────────────────────────────────────┤
+│ Sidebar  │                                                  │
+│          │  ┌────────────────────────────────────────────┐  │
+│ ├ Dash   │  │         Welcome Section                    │  │
+│ ├ Attend │  │  "Welcome back, Ahmed!"                    │  │
+│ ├ Class  │  │  [View Attendance] [Contact Teacher]       │  │
+│ ├ Message│  └────────────────────────────────────────────┘  │
+│ └ Help   │                                                  │
+│          │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐          │
+│ Profile  │  │Total │ │Attend│ │Prese │ │Absen │          │
+│ Ahmed    │  │Class │ │Rate  │ │nt    │ │t     │          │
+│ CS 101   │  │  36  │ │94.2% │ │  34  │ │  2   │          │
+│          │  └──────┘ └──────┘ └──────┘ └──────┘          │
+│ [Logout] │                                                  │
+│          │  ┌────────────────────────────────────────────┐  │
+│          │  │      Weekly Attendance Calendar            │  │
+│          │  │  Sat  Sun  Mon  Tue  Wed  Thu              │  │
+│          │  │  [✓]  [✓]  [✓]  [✗]  [✓]  [✓]             │  │
+│          │  └────────────────────────────────────────────┘  │
+│          │                                                  │
+│          │  ┌────────────────────────────────────────────┐  │
+│          │  │      Academic Standing                     │  │
+│          │  │  Status: ✅ Good Standing                  │  │
+│          │  │  Progress: ████████░░ 94.2%                │  │
+│          │  └────────────────────────────────────────────┘  │
+└──────────┴──────────────────────────────────────────────────┘
+```
+
+
+#### Design Specifications
+
+**Header Section:**
+- Uses the existing dashboard header component with role-based customization
+- Same height, gradient background, and layout as teacher/office dashboards
+- Student avatar with green accent ring
+- Welcome message adapted for student role with motivational greeting
+- Notification bell icon with green badge for unread messages
+- Mobile hamburger menu with green theme
+
+**Sidebar Navigation:**
+- Glass morphism design with `bg-white/80 backdrop-blur-xl` and `border-0`
+- Green gradient for active items: `bg-gradient-to-r from-emerald-500 to-emerald-600`
+- Navigation items with icons:
+  - 🏠 Dashboard
+  - 📊 My Attendance
+  - 📚 Class Information
+  - 💬 Messages (with unread badge)
+  - ❓ Help & Support
+- Profile section at top with:
+  - Student avatar with green ring
+  - Student name
+  - Class name and code
+  - Student ID
+- Logout button at bottom with confirmation dialog
+- Collapsible on mobile with smooth slide animation
+- Width: 280px on desktop, full-screen overlay on mobile
+
+**Metric Cards:**
+- Glass morphism design with `bg-white/80 backdrop-blur-xl` and `border-0`
+- Green gradient backgrounds: `bg-gradient-to-br from-emerald-50 to-emerald-100/50`
+- 3D hover effects with `hover:scale-[1.02] hover:shadow-xl` (disabled on mobile)
+- Count-up animations for numeric values
+- Icon backgrounds with `bg-emerald-500` and white icons
+- **Fully Responsive Grid:**
+  - Mobile (375px-639px): `grid-cols-1` - Single column, stacked vertically
+  - Small Mobile (640px-767px): `grid-cols-2` - Two columns
+  - Tablet (768px-1023px): `grid-cols-2` - Two columns with more spacing
+  - Desktop (1024px+): `grid-cols-4` - Four columns, full layout
+- **Responsive Padding:**
+  - Mobile: `p-4` with `gap-3`
+  - Tablet: `p-5` with `gap-4`
+  - Desktop: `p-6` with `gap-6`
+- **Responsive Text:**
+  - Title: `text-xs sm:text-sm` (uppercase, tracking-wide)
+  - Value: `text-xl sm:text-2xl lg:text-3xl` (bold)
+  - Label: `text-xs sm:text-sm`
+
+
+### 2. Welcome Section
+
+#### Welcome Banner Design
+
+```typescript
+interface WelcomeSectionProps {
+  studentName: string;
+  greeting: string;
+  motivationalMessage: string;
+  academicStatus: AcademicStatus;
 }
 
-export interface WeekData {
-  weekNumber: number;
-  startDate: string;
-  endDate: string;
-  days: DayAttendance[];
+interface AcademicStatus {
+  status: 'excellent' | 'good' | 'warning' | 'critical';
+  message: string;
+  icon: string;
+}
+```
+
+**Visual Design:**
+- Full-width banner with green gradient background
+- Animated floating elements (hidden on mobile for performance)
+- Personalized greeting with student's first name
+- Motivational message based on attendance performance
+- Quick action buttons with filled backgrounds (no outline variants)
+
+**Motivational Messages by Status:**
+- **Excellent (95%+)**: "Outstanding attendance! Keep up the excellent work! 🌟"
+- **Good (85-94%)**: "Great job! You're doing well. Stay consistent! 👍"
+- **Warning (75-84%)**: "Your attendance needs attention. Let's improve together! ⚠️"
+- **Critical (<75%)**: "Urgent: Your attendance is at risk. Please contact your teacher. 🚨"
+
+**Quick Action Buttons:**
+- "View Attendance" button: `bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-xl shadow-emerald-500/25 border-0`
+- "Contact Teacher" button: `bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg border-0`
+
+
+### 3. Attendance Calendar Component
+
+#### Weekly Calendar View
+
+```typescript
+interface AttendanceCalendarProps {
+  weekData: WeekAttendance[];
+  currentWeek: number;
+  onWeekChange: (week: number) => void;
+  onDayClick: (date: Date) => void;
 }
 
-export interface DayAttendance {
-  date: string;
+interface WeekAttendance {
+  date: Date;
   dayName: string;
-  status: AttendanceStatus | 'future';
+  status: 'present' | 'absent' | 'sick' | 'leave' | 'no-class';
   sessions: SessionAttendance[];
 }
 
-export interface SessionAttendance {
-  period: number;
-  courseName: string;
-  status: AttendanceStatus;
+interface SessionAttendance {
+  sessionNumber: number;
+  time: string;
+  status: 'present' | 'absent' | 'sick' | 'leave';
+  markedBy: string;
+  markedAt: Date;
+}
+```
+
+**Visual Design:**
+- Card with glass morphism: `bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border-0`
+- Week navigation with arrow buttons and week number display
+- Grid layout showing Saturday to Thursday (5 days)
+- Each day card with:
+  - Day name and date
+  - Large status icon with color coding
+  - Session count indicator
+  - Click to expand for session details
+
+**Status Color Coding:**
+- **Present**: `bg-green-50 text-green-700 border-green-200` with ✓ icon
+- **Absent**: `bg-red-50 text-red-700 border-red-200` with ✗ icon
+- **Sick**: `bg-yellow-50 text-yellow-700 border-yellow-200` with 🤒 icon
+- **Leave**: `bg-blue-50 text-blue-700 border-blue-200` with 📅 icon
+- **No Class**: `bg-slate-50 text-slate-400 border-slate-200` with - icon
+
+**Interactive Features:**
+- Hover effect: `hover:scale-[1.02] hover:shadow-lg transition-all duration-300`
+- Click to expand: Smooth accordion animation showing session details
+- Week navigation: Smooth slide transition between weeks
+- Current day highlight: Green ring and pulsing animation
+
+
+### 4. Progress Tracker Component
+
+#### Progress Visualization
+
+```typescript
+interface ProgressTrackerProps {
+  attendanceRate: number;
+  presentHours: number;
+  absentHours: number;
+  sickHours: number;
+  leaveHours: number;
+  totalHours: number;
+  mahroomThreshold: number;
+  tasdiqThreshold: number;
+  remainingAbsences: number;
+}
+```
+
+**Card Design:**
+- Glass morphism container with green gradient
+- Animated circular progress indicator showing attendance percentage
+- Horizontal progress bars for each status type
+- Warning indicators when approaching thresholds
+- Comparison with class average
+
+**Progress Bars:**
+- Present: Green gradient with animated fill
+- Absent: Red gradient with warning pulse if high
+- Sick: Yellow gradient
+- Leave: Blue gradient
+- Each bar shows hours and percentage
+
+**Threshold Warnings:**
+- Green zone (>85%): "Excellent! Keep it up!"
+- Yellow zone (75-85%): "Good, but watch your absences"
+- Orange zone (approaching محروم): "Warning: X absences remaining"
+- Red zone (محروم or تصدیق طلب): Critical alert with action required
+
+
+### 5. Academic Standing Alert Cards
+
+#### Alert Card Component
+
+```typescript
+interface AlertCardProps {
+  type: 'info' | 'warning' | 'critical';
+  title: string;
+  message: string;
+  actionRequired: boolean;
+  actionButton?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+```
+
+**Alert Types:**
+
+1. **Good Standing (Info)**
+   - Background: `bg-gradient-to-br from-green-50 to-green-100/50`
+   - Icon: ✅ with green color
+   - Message: "You're in good standing! Keep up the great work."
+   - No action required
+
+2. **Approaching Warning (Warning)**
+   - Background: `bg-gradient-to-br from-yellow-50 to-yellow-100/50`
+   - Icon: ⚠️ with yellow color
+   - Message: "You have X absences remaining before reaching the threshold."
+   - Action: "View Attendance Policy"
+
+3. **محروم Status (Critical)**
+   - Background: `bg-gradient-to-br from-red-50 to-red-100/50`
+   - Icon: 🚫 with red color and pulsing animation
+   - Title: "Disqualified (محروم)"
+   - Message: "You have exceeded the maximum allowed absences. You are not eligible for final exams."
+   - Action: "Contact Teacher" or "Contact Office"
+
+4. **تصدیق طلب Status (Critical)**
+   - Background: `bg-gradient-to-br from-orange-50 to-orange-100/50`
+   - Icon: 📋 with orange color
+   - Title: "Certification Required (تصدیق طلب)"
+   - Message: "You need to submit medical certificates to restore exam eligibility."
+   - Action: "Upload Documentation"
+
+
+### 6. Messaging System
+
+#### Message Interface Component
+
+```typescript
+interface MessagingSystemProps {
+  conversations: Conversation[];
+  onSendMessage: (message: Message) => void;
+  onAttachFile: (file: File) => void;
 }
 
-export interface UploadedFile {
+interface Conversation {
   id: string;
-  fileName: string;
+  recipientType: 'teacher' | 'office';
+  recipientName: string;
+  messages: Message[];
+  unreadCount: number;
+  lastMessageAt: Date;
+}
+
+interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'student' | 'teacher' | 'office';
+  content: string;
+  category: 'attendance_inquiry' | 'documentation' | 'general' | 'urgent';
+  attachments: Attachment[];
+  timestamp: Date;
+  isRead: boolean;
+}
+
+interface Attachment {
+  id: string;
+  filename: string;
+  fileType: string;
   fileSize: number;
-  uploadDate: string;
-  status: 'pending' | 'approved' | 'rejected';
-  rejectionReason?: string;
+  url: string;
 }
 ```
 
-### 2. UI Component: Custom Button
+**Message Interface Design:**
+
+**Conversation List:**
+- Left sidebar showing all conversations
+- Each conversation card shows:
+  - Recipient avatar and name
+  - Last message preview
+  - Timestamp
+  - Unread badge with green background
+- Active conversation highlighted with green gradient
+
+**Message Thread:**
+- Chat-style interface with message bubbles
+- Student messages: Right-aligned with green background
+- Teacher/Office messages: Left-aligned with gray background
+- Timestamp below each message
+- Attachment previews with download buttons
+- Read receipts (✓✓ for read, ✓ for sent)
+
+**Compose Message:**
+- Text area with placeholder: "Type your message..."
+- Category selector dropdown
+- File attachment button with drag-and-drop support
+- Send button: `bg-gradient-to-r from-emerald-600 to-emerald-700 border-0`
+- Character count indicator
+- Attachment preview with remove option
+
+**Message Categories:**
+- 🔍 Attendance Inquiry
+- 📄 Documentation Submission
+- 💬 General Question
+- 🚨 Urgent Matter
+
+
+### 7. Class Information Section
+
+#### Class Details Component
 
 ```typescript
-// components/ui/Button.tsx
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  icon?: React.ReactNode;
-  loading?: boolean;
+interface ClassInfoProps {
+  classData: ClassData;
+  teacherInfo: TeacherInfo;
+  schedule: ClassSchedule[];
+  attendancePolicy: AttendancePolicy;
 }
 
-// Design Implementation:
-// ✅ Primary: Solid blue background with white text
-//    className="bg-blue-500 text-white border-0 shadow-md hover:bg-blue-600 hover:shadow-lg transition-all duration-200"
-//
-// ✅ Secondary: Solid violet background with white text
-//    className="bg-violet-500 text-white border-0 shadow-md hover:bg-violet-600 hover:shadow-lg transition-all duration-200"
-//
-// ✅ Ghost: Transparent with colored text, subtle hover background
-//    className="bg-transparent text-blue-600 border-0 hover:bg-blue-50 transition-all duration-200"
-//
-// ❌ NO outline variant - we don't use borders
-// ✅ Always includes smooth hover transition
-// ✅ Proper icon sizing: w-5 h-5 (20px) for md, w-4 h-4 (16px) for sm
-```
-
-### 3. UI Component: Card
-
-```typescript
-// components/ui/Card.tsx
-
-interface CardProps {
-  children: React.ReactNode;
-  variant?: 'default' | 'elevated' | 'flat';
-  hover?: boolean;
-  className?: string;
+interface ClassData {
+  id: string;
+  name: string;
+  code: string;
+  semester: number;
+  academicYear: string;
+  credits: number;
+  room: string;
+  building: string;
 }
 
-// Design Implementation:
-// ✅ Default: White background with subtle shadow
-//    className="bg-white border-0 shadow-sm rounded-xl p-6"
-//
-// ✅ Elevated: White background with more prominent shadow
-//    className="bg-white border-0 shadow-md rounded-xl p-6"
-//
-// ✅ Flat: White background, no shadow (for nested cards)
-//    className="bg-white border-0 rounded-xl p-6"
-//
-// ✅ Hover effect (when hover=true):
-//    className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-//
-// ❌ NEVER use border classes (except border-0 to reset)
-// ✅ Always use shadows for depth
-// ✅ Smooth micro animation on hover
-// ✅ Responsive padding: p-4 md:p-6
-```
-
-### 4. UI Component: Icon (Properly Sized)
-
-```typescript
-// components/ui/Icon.tsx
-
-interface IconProps {
-  icon: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg';
-  color?: string;
-  withBackground?: boolean;
-  backgroundColor?: string;
+interface TeacherInfo {
+  id: string;
+  name: string;
+  email: string;
+  officeHours: string;
+  officeLocation: string;
+  avatar?: string;
 }
 
-// Design Implementation:
-// ✅ Standard sizes:
-//    sm: w-4 h-4 (16px)
-//    md: w-5 h-5 (20px) - default for most UI
-//    lg: w-6 h-6 (24px)
-//
-// ✅ With background (optional, use sparingly):
-//    className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center"
-//    Icon inside: w-5 h-5 text-blue-600
-//
-// ✅ Hover effect (for interactive icons):
-//    className="transition-transform duration-200 hover:scale-110"
-//
-// ❌ NO gradient containers everywhere - use solid colors
-// ✅ Always specify exact width and height
-// ✅ Use semantic colors from STATUS_COLORS or BRAND_COLORS
-```
-
-### 5. Dashboard Component: WelcomeSection
-
-```typescript
-// components/dashboard/WelcomeSection.tsx
-
-interface WelcomeSectionProps {
-  student: Student;
-  currentTime: string;
+interface ClassSchedule {
+  day: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  sessionType: 'lecture' | 'lab' | 'tutorial';
 }
 
-// Design:
-// - Full-width gradient background (purple to blue)
-// - Animated greeting text with fade-in
-// - Student name with gradient text effect
-// - Current date/time display
-// - Decorative animated shapes in background
-```
-
-### 6. Dashboard Component: StatsCards
-
-```typescript
-// components/dashboard/StatsCards.tsx
-
-interface StatsCardsProps {
-  stats: AttendanceStats;
+interface AttendancePolicy {
+  maxAbsences: number;
+  mahroomThreshold: number;
+  tasdiqThreshold: number;
+  policyText: string;
 }
-
-// Design Implementation:
-// ✅ Fully responsive grid:
-//    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
-//
-// ✅ Each card structure:
-//    - White background with colored accent
-//    - className="bg-white border-0 shadow-sm rounded-xl p-6"
-//    - Left border accent: border-l-4 border-{color}-500
-//    - Icon: w-12 h-12 rounded-lg bg-{color}-100 with w-6 h-6 icon inside
-//    - Number: Large, bold, with count-up animation
-//    - Label: text-sm text-slate-600
-//
-// ✅ Status colors:
-//    - Present: emerald (green)
-//    - Absent: red
-//    - Sick: amber (orange)
-//    - Leave: cyan (blue)
-//
-// ✅ Smooth hover effect:
-//    className="transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-//
-// ✅ Staggered entrance animation:
-//    Framer Motion with staggerChildren: 0.1
-//
-// ❌ NO gradient backgrounds on every card
-// ❌ NO colored shadows (too much)
-// ✅ Clean, professional look with subtle accents
 ```
 
-### 7. Dashboard Component: StatusAlerts
+**Visual Layout:**
+
+**Class Overview Card:**
+- Glass morphism design with green accents
+- Class name and code prominently displayed
+- Semester, year, and credits information
+- Room and building location
+- Schedule grid showing weekly timetable
+
+**Teacher Information Card:**
+- Teacher avatar with green ring
+- Teacher name and title
+- Contact email (clickable to open messaging)
+- Office hours and location
+- "Contact Teacher" button with green gradient
+
+**Attendance Policy Card:**
+- Clear explanation of attendance rules
+- Visual representation of thresholds
+- محروم (Disqualified) explanation in English
+- تصدیق طلب (Certification Required) explanation in English
+- FAQ accordion for common questions
+
+
+### 8. Attendance History View
+
+#### History Component
 
 ```typescript
-// components/dashboard/StatusAlerts.tsx
-
-interface StatusAlertsProps {
-  status: AcademicStatus;
-  stats: AttendanceStats;
-}
-
-// Design:
-// - Disqualification Alert (محروم):
-//   - Red gradient background with red shadow
-//   - Animated warning icon with shake effect
-//   - Progress bar showing hours vs threshold
-//   - Bold warning text
-// - Certification Alert (تصدیق طلب):
-//   - Amber gradient background with amber shadow
-//   - Animated document icon with pulse
-//   - Call-to-action button to upload section
-//   - Progress bar with certification status
-// - Both: borderless, shadow-lg, rounded-2xl
-```
-
-### 8. Dashboard Component: WeeklyCalendar
-
-```typescript
-// components/dashboard/WeeklyCalendar.tsx
-
-interface WeeklyCalendarProps {
-  weekData: WeekData;
-  onWeekChange: (direction: 'prev' | 'next') => void;
-}
-
-// Design:
-// - Header: Week range with navigation buttons
-// - Grid: 7 columns on desktop, 2 on mobile
-// - Day Cards:
-//   - Borderless with shadow-md
-//   - Gradient background based on status:
-//     - Present: green gradient
-//     - Absent: red gradient
-//     - Sick: amber gradient
-//     - Leave: cyan gradient
-//     - Future: slate gradient
-//   - Day name and date
-//   - Session indicators (colored dots)
-//   - Hover: scale-105 + shadow-lg
-// - Staggered entrance (100ms delay per card)
-// - Navigation buttons: gradient with icons
-```
-
-### 9. Dashboard Component: ProgressChart
-
-```typescript
-// components/dashboard/ProgressChart.tsx
-
-interface ProgressChartProps {
-  stats: AttendanceStats;
-}
-
-// Design:
-// - Circular Progress Ring:
-//   - SVG-based with gradient stroke
-//   - Animated from 0 to percentage (1.5s)
-//   - Center: Large percentage with gradient text
-//   - Size: 200px diameter
-// - Breakdown Bars:
-//   - Horizontal bars for each status
-//   - Gradient fills matching status colors
-//   - Animated width transition (300ms delay after ring)
-//   - Labels with icons in gradient containers
-// - Container: borderless card with shadow-lg
-```
-
-### 10. Dashboard Component: RecentActivity
-
-```typescript
-// components/dashboard/RecentActivity.tsx
-
-interface RecentActivityProps {
+interface AttendanceHistoryProps {
   records: AttendanceRecord[];
+  filters: HistoryFilters;
+  onFilterChange: (filters: HistoryFilters) => void;
+  onExport: (format: 'pdf' | 'csv') => void;
 }
 
-// Design:
-// - List of recent 10 records
-// - Each item:
-//   - Borderless with hover background transition
-//   - Status icon in gradient container (32px)
-//   - Course name and date
-//   - Status badge with colored background
-//   - Hover: bg-slate-50 + icon rotate-12
-// - Staggered entrance (100ms delay)
-// - "View Full History" button:
-//   - Gradient background
-//   - Shadow-md with colored shadow
-//   - Hover: scale-105
+interface AttendanceRecord {
+  id: string;
+  date: Date;
+  sessionNumber: number;
+  status: 'present' | 'absent' | 'sick' | 'leave';
+  markedBy: string;
+  markedAt: Date;
+  notes?: string;
+}
+
+interface HistoryFilters {
+  dateRange: { start: Date; end: Date };
+  statusTypes: string[];
+  month?: number;
+}
 ```
 
-### 11. Dashboard Component: CertificateUpload
+**Visual Design:**
+
+**Filter Panel:**
+- Date range picker with calendar dropdown
+- Status type multi-select checkboxes
+- Month selector for quick filtering
+- "Reset Filters" button
+- Export buttons for PDF and CSV
+
+**Timeline View:**
+- Vertical timeline with date markers
+- Each record displayed as a card with:
+  - Date and session number
+  - Status badge with color coding
+  - Time marked and by whom
+  - Any notes or comments
+- Infinite scroll for large datasets
+- Skeleton loading for smooth UX
+
+**Statistics Summary:**
+- Total records displayed
+- Breakdown by status type
+- Date range covered
+- Visual mini-charts
+
+
+### 9. Help & Support Section
+
+#### Help Interface Component
 
 ```typescript
-// components/dashboard/CertificateUpload.tsx
-
-interface CertificateUploadProps {
-  files: UploadedFile[];
-  onUpload: (file: File) => Promise<void>;
-  onDelete: (fileId: string) => Promise<void>;
+interface HelpSupportProps {
+  faqs: FAQ[];
+  policies: Policy[];
+  contactInfo: ContactInfo;
 }
 
-// Design:
-// - Drag-and-drop zone:
-//   - Dashed border (only exception to borderless rule)
-//   - Gradient background on hover
-//   - Upload icon in gradient container
-//   - File type and size limits displayed
-// - File list:
-//   - Each file: borderless card with shadow-md
-//   - File icon, name, size, date
-//   - Status badge (pending/approved/rejected)
-//   - Preview and delete buttons with hover effects
-// - Upload progress: animated progress bar
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+interface Policy {
+  id: string;
+  title: string;
+  content: string;
+  lastUpdated: Date;
+}
+
+interface ContactInfo {
+  officeEmail: string;
+  officePhone: string;
+  officeHours: string;
+  emergencyContact: string;
+}
 ```
+
+**Visual Layout:**
+
+**FAQ Accordion:**
+- Searchable FAQ list
+- Categories: Attendance, Policies, Technical, General
+- Expandable accordion items with smooth animation
+- Green highlight for active item
+- "Was this helpful?" feedback buttons
+
+**Policy Documents:**
+- Attendance Policy (English)
+- محروم (Disqualified) Explanation
+- تصدیق طلب (Certification Required) Process
+- Student Rights and Responsibilities
+- Each policy in expandable card format
+
+**Contact Information:**
+- Office contact details
+- Emergency contact information
+- "Send Message to Office" button
+- Office hours and location
+- Quick links to common actions
+
+**Helpful Resources:**
+- Video tutorials (if available)
+- Step-by-step guides
+- Downloadable forms
+- System status and announcements
+
 
 ## Data Models
 
-### API Response Structures
+### Student Dashboard State
 
 ```typescript
-// GET /api/attendance
-export interface AttendanceResponse {
+interface StudentDashboardState {
   student: Student;
-  stats: AttendanceStats;
-  status: AcademicStatus;
-  weekData: WeekData;
-  recentRecords: AttendanceRecord[];
-  uploadedFiles: UploadedFile[];
+  attendanceData: AttendanceData;
+  classInfo: ClassInfo;
+  messages: Message[];
+  notifications: Notification[];
+  preferences: StudentPreferences;
+  activeView: DashboardView;
 }
 
-// POST /api/upload
-export interface UploadRequest {
-  file: File;
-  studentId: string;
+interface AttendanceData {
+  weeklyRecords: WeekAttendance[];
+  statistics: AttendanceStatistics;
+  history: AttendanceRecord[];
+  academicStatus: AcademicStatus;
 }
 
-export interface UploadResponse {
-  success: boolean;
-  file?: UploadedFile;
-  error?: string;
+interface AttendanceStatistics {
+  totalClasses: number;
+  presentCount: number;
+  absentCount: number;
+  sickCount: number;
+  leaveCount: number;
+  attendanceRate: number;
+  classAverage: number;
+  ranking: number;
+  remainingAbsences: number;
+}
+
+interface StudentPreferences {
+  theme: 'light' | 'dark' | 'auto';
+  notificationSettings: NotificationSettings;
+  displaySettings: DisplaySettings;
+}
+
+interface DisplaySettings {
+  animationsEnabled: boolean;
+  compactMode: boolean;
+  language: 'en';
+}
+
+interface NotificationSettings {
+  attendanceMarked: boolean;
+  statusChanges: boolean;
+  messageReceived: boolean;
+  scheduleChanges: boolean;
+  emailNotifications: boolean;
 }
 ```
 
-### Database Schema (Reference)
+### Real-time Data Updates
 
-```sql
--- Students table
-CREATE TABLE students (
-  id UUID PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  student_number VARCHAR(50) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Attendance records table
-CREATE TABLE attendance_records (
-  id UUID PRIMARY KEY,
-  student_id UUID REFERENCES students(id),
-  date DATE NOT NULL,
-  course_name VARCHAR(255) NOT NULL,
-  period INTEGER NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Medical certificates table
-CREATE TABLE medical_certificates (
-  id UUID PRIMARY KEY,
-  student_id UUID REFERENCES students(id),
-  file_name VARCHAR(255) NOT NULL,
-  file_path VARCHAR(500) NOT NULL,
-  file_size INTEGER NOT NULL,
-  upload_date TIMESTAMP DEFAULT NOW(),
-  status VARCHAR(20) DEFAULT 'pending',
-  rejection_reason TEXT,
-  reviewed_at TIMESTAMP,
-  reviewed_by UUID
-);
+```typescript
+interface RealtimeUpdate {
+  type: 'attendance_marked' | 'message_received' | 'status_changed' | 'notification';
+  payload: any;
+  timestamp: Date;
+}
 ```
+
 
 ## Error Handling
 
-### Error States
+### User Experience Error Handling
 
-1. **Authentication Error**
-   - Redirect to login page
-   - Display "Session expired" message
-   - Clear local storage
-
-2. **Authorization Error**
-   - Show permission denied card
-   - Display "You don't have access to this data"
-   - Provide contact support button
-
-3. **Network Error**
-   - Show error card with retry button
-   - Display "Unable to load data"
-   - Implement exponential backoff for retries
-
-4. **Data Not Found**
-   - Show empty state card
-   - Display "No attendance records yet"
-   - Provide helpful message
-
-5. **File Upload Error**
-   - Show inline error message
-   - Display specific error (file too large, invalid type)
-   - Allow user to try again
-
-### Error Component Design
+#### Loading States
+- **Skeleton Cards**: Replace content with animated skeleton placeholders (never simple spinners)
+- **Progressive Loading**: Load critical content first, then secondary information
+- **Shimmer Effects**: Gradient shimmer animations during data fetching
 
 ```typescript
-// components/ui/ErrorState.tsx
-
-interface ErrorStateProps {
-  title: string;
-  message: string;
-  onRetry?: () => void;
-}
-
-// Design:
-// - Borderless card with shadow-lg
-// - Error icon in red gradient container
-// - Clear error message
-// - Retry button with gradient background
-// - Hover effects on button
+const SkeletonMetricCard = () => (
+  <Card className="rounded-2xl shadow-sm bg-white border-0">
+    <CardContent className="p-5">
+      <div className="animate-pulse">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 bg-gradient-to-br from-emerald-200 to-emerald-300 rounded-xl animate-shimmer" />
+            <div>
+              <div className="h-5 w-32 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-2 animate-shimmer" />
+              <div className="h-4 w-24 bg-gradient-to-r from-slate-200 to-slate-300 rounded animate-shimmer" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
 ```
+
+#### Error States
+- **Network Errors**: Retry mechanism with exponential backoff
+- **Data Not Found**: Friendly message with helpful suggestions
+- **Permission Errors**: Clear explanation with contact information
+
+#### Offline Handling
+- **Service Worker**: Cache critical dashboard data for offline viewing
+- **Offline Indicator**: Visual indicator when connection is lost
+- **Read-Only Mode**: All data remains viewable offline
+
 
 ## Testing Strategy
 
-### Unit Tests
+### Component Testing
+- **Unit Tests**: Individual component functionality and props handling
+- **Integration Tests**: Component interaction and data flow
+- **Visual Regression Tests**: Screenshot comparison for UI consistency
 
-1. **Component Tests**
-   - Test each dashboard component renders correctly
-   - Verify props are handled properly
-   - Test conditional rendering based on data
-   - Verify accessibility attributes
+### User Experience Testing
+- **Accessibility Testing**: WCAG 2.1 AA compliance verification
+- **Performance Testing**: Load time optimization and animation smoothness
+- **Responsive Testing**: Cross-device compatibility and touch interactions
 
-2. **Hook Tests**
-   - Test useAttendance data fetching
-   - Test useFileUpload file validation
-   - Verify error handling in hooks
-   - Test loading states
+### Business Logic Testing
+- **Attendance Calculation**: Verify attendance rate and status calculations
+- **Permission Testing**: Ensure read-only access is enforced
+- **Data Privacy**: Validate that students can only see their own data
 
-3. **Utility Tests**
-   - Test date formatting functions
-   - Test percentage calculations
-   - Test status determination logic
-   - Test file validation functions
+## Performance Optimizations
 
-### Integration Tests
+### Rendering Performance
+- **Memoization**: React.memo for expensive components
+- **Code Splitting**: Lazy load secondary features
+- **Virtual Scrolling**: For large attendance history lists
 
-1. **Dashboard Flow**
-   - Test complete dashboard rendering with mock data
-   - Verify all components receive correct props
-   - Test navigation between weeks
-   - Test file upload flow
-
-2. **API Integration**
-   - Test API route handlers
-   - Verify authentication middleware
-   - Test error responses
-   - Test file upload endpoint
-
-### E2E Tests
-
-1. **User Flows**
-   - Login and view dashboard
-   - Navigate weekly calendar
-   - Upload medical certificate
-   - View recent activity
-
-2. **Responsive Design**
-   - Test mobile layout
-   - Test tablet layout
-   - Test desktop layout
-   - Test touch interactions
-
-### Accessibility Tests
-
-1. **Automated Tests**
-   - Run axe-core on all pages
-   - Verify ARIA labels
-   - Test keyboard navigation
-   - Check color contrast ratios
-
-2. **Manual Tests**
-   - Test with screen reader
-   - Test keyboard-only navigation
-   - Test with reduced motion preference
-   - Test with high contrast mode
-
-## Smooth Micro Animations
-
-### Entrance Animations (Subtle)
-
-```typescript
-// Fade In - smooth and subtle
-const fadeIn = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: "easeOut" }
-};
-
-// Stagger Children - creates flow
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.08  // Subtle 80ms delay
-    }
-  }
-};
-
-// Slide In - for cards and panels
-const slideIn = {
-  initial: { opacity: 0, x: -20 },
-  animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.4, ease: "easeOut" }
-};
-```
-
-### Hover Effects (Smooth Transitions)
-
-```typescript
-// Card Hover - subtle lift
-className="transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1"
-
-// Button Hover - gentle feedback
-className="transition-all duration-200 ease-out hover:shadow-md hover:brightness-110"
-
-// Icon Hover - minimal scale
-className="transition-transform duration-200 ease-out hover:scale-110"
-
-// Link Hover - color transition
-className="transition-colors duration-200 ease-out hover:text-blue-600"
-```
-
-### Progress Animations (Smooth)
-
-```typescript
-// Count Up Numbers - smooth increment
-<CountUp 
-  end={value} 
-  duration={1.2}
-  easingFn={(t, b, c, d) => c * t / d + b}  // Linear easing
-/>
-
-// Progress Ring - smooth draw
-<motion.circle
-  strokeDashoffset={circumference - (percentage / 100) * circumference}
-  initial={{ strokeDashoffset: circumference }}
-  animate={{ strokeDashoffset: circumference - (percentage / 100) * circumference }}
-  transition={{ duration: 1.2, ease: "easeInOut" }}
-/>
-
-// Progress Bar - smooth width transition
-<motion.div
-  initial={{ width: 0 }}
-  animate={{ width: `${percentage}%` }}
-  transition={{ duration: 0.8, ease: "easeOut" }}
-/>
-
-// Skeleton Loading - subtle shimmer
-className="animate-pulse bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%]"
-```
-
-### Loading States
-
-```typescript
-// Spinner - smooth rotation
-className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"
-
-// Pulse - subtle breathing effect
-className="animate-pulse"
-
-// Shimmer - smooth shine effect
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-```
-
-## Styling Guidelines
-
-### Color Schema
-
-```typescript
-// lib/constants.ts
-
-// Primary brand colors - use consistently throughout
-export const BRAND_COLORS = {
-  primary: {
-    main: '#3B82F6',      // blue-500
-    light: '#60A5FA',     // blue-400
-    dark: '#2563EB',      // blue-600
-    bg: '#EFF6FF'         // blue-50
-  },
-  secondary: {
-    main: '#8B5CF6',      // violet-500
-    light: '#A78BFA',     // violet-400
-    dark: '#7C3AED',      // violet-600
-    bg: '#F5F3FF'         // violet-50
-  }
-};
-
-// Status colors - semantic and accessible
-export const STATUS_COLORS = {
-  present: {
-    main: '#10B981',      // emerald-500
-    light: '#34D399',     // emerald-400
-    bg: '#D1FAE5',        // emerald-100
-    text: '#065F46',      // emerald-800
-    shadow: 'shadow-emerald-500/20'
-  },
-  absent: {
-    main: '#EF4444',      // red-500
-    light: '#F87171',     // red-400
-    bg: '#FEE2E2',        // red-100
-    text: '#991B1B',      // red-800
-    shadow: 'shadow-red-500/20'
-  },
-  sick: {
-    main: '#F59E0B',      // amber-500
-    light: '#FBBF24',     // amber-400
-    bg: '#FEF3C7',        // amber-100
-    text: '#92400E',      // amber-800
-    shadow: 'shadow-amber-500/20'
-  },
-  leave: {
-    main: '#06B6D4',      // cyan-500
-    light: '#22D3EE',     // cyan-400
-    bg: '#CFFAFE',        // cyan-100
-    text: '#164E63',      // cyan-900
-    shadow: 'shadow-cyan-500/20'
-  }
-};
-
-// Neutral colors for backgrounds and text
-export const NEUTRAL_COLORS = {
-  background: '#F8FAFC',  // slate-50
-  surface: '#FFFFFF',     // white
-  border: '#E2E8F0',      // slate-200 (use sparingly, prefer shadows)
-  text: {
-    primary: '#0F172A',   // slate-900
-    secondary: '#475569', // slate-600
-    tertiary: '#94A3B8'   // slate-400
-  }
-};
-
-// Use gradients sparingly - only for hero sections and key CTAs
-export const GRADIENT_ACCENTS = {
-  hero: 'bg-gradient-to-br from-blue-500 via-violet-500 to-purple-600',
-  cta: 'bg-gradient-to-r from-blue-500 to-violet-500',
-  subtle: 'bg-gradient-to-b from-white to-slate-50'
-};
-```
-
-### Complete Responsive Design
-
-```typescript
-// Mobile-first approach - design for mobile, enhance for desktop
-
-// Breakpoints
-const breakpoints = {
-  sm: '640px',   // Mobile landscape / Small tablet
-  md: '768px',   // Tablet
-  lg: '1024px',  // Desktop
-  xl: '1280px',  // Large desktop
-  '2xl': '1536px' // Extra large
-};
-
-// Responsive Grid Patterns
-// ✅ Stats cards: 
-//    Mobile: 1 column (full width)
-//    Tablet: 2 columns
-//    Desktop: 4 columns
-//    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-
-// ✅ Calendar: 
-//    Mobile: 1 column (stacked days)
-//    Tablet: 3-4 columns
-//    Desktop: 7 columns (full week)
-//    className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3"
-
-// ✅ Two-column layout:
-//    Mobile: Stacked (1 column)
-//    Desktop: Side by side (2 columns)
-//    className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-
-// Responsive Spacing
-// ✅ Container padding:
-//    className="px-4 sm:px-6 lg:px-8"
-
-// ✅ Section spacing:
-//    className="space-y-4 md:space-y-6 lg:space-y-8"
-
-// ✅ Card padding:
-//    className="p-4 md:p-6"
-
-// Responsive Typography
-// ✅ Headings scale with screen size:
-//    h1: className="text-2xl sm:text-3xl lg:text-4xl font-bold"
-//    h2: className="text-xl sm:text-2xl lg:text-3xl font-semibold"
-//    h3: className="text-lg sm:text-xl lg:text-2xl font-semibold"
-//    body: className="text-sm sm:text-base"
-
-// Touch Targets (Mobile)
-// ✅ Minimum 44x44px for all interactive elements:
-//    className="min-h-[44px] min-w-[44px] sm:min-h-[40px] sm:min-w-[40px]"
-
-// Responsive Images
-// ✅ Use Next.js Image with responsive sizes:
-//    <Image 
-//      src="..." 
-//      alt="..."
-//      width={400}
-//      height={300}
-//      className="w-full h-auto"
-//      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-//    />
-
-// Hide/Show based on screen size
-// ✅ Mobile only: className="block lg:hidden"
-// ✅ Desktop only: className="hidden lg:block"
-// ✅ Tablet and up: className="hidden md:block"
-```
-
-### Shadow System
-
-```typescript
-// All cards use shadows instead of borders
-const shadows = {
-  sm: 'shadow-sm',      // Subtle depth
-  md: 'shadow-md',      // Standard cards
-  lg: 'shadow-lg',      // Important cards
-  xl: 'shadow-xl',      // Hover state
-  colored: 'shadow-{color}-500/50' // Colored shadows for gradients
-};
-
-// NEVER use border classes except for upload zone dashed border
-```
-
-## Performance Optimization
-
-### Code Splitting
-
-```typescript
-// Lazy load heavy components
-const CertificateUpload = dynamic(() => import('@/components/dashboard/CertificateUpload'), {
-  loading: () => <Skeleton className="h-64" />,
-  ssr: false
-});
-
-const ProgressChart = dynamic(() => import('@/components/dashboard/ProgressChart'), {
-  loading: () => <Skeleton className="h-80" />
-});
-```
-
-### Image Optimization
-
-```typescript
-// Use Next.js Image component
-import Image from 'next/image';
-
-<Image
-  src="/icons/attendance.svg"
-  alt="Attendance"
-  width={48}
-  height={48}
-  priority={false}
-/>
-```
+### Data Management
+- **Caching Strategy**: Intelligent caching of attendance data
+- **Background Sync**: Periodic data refresh without user interruption
+- **Optimistic UI**: Show data immediately while fetching updates
 
 ### Animation Performance
+- **Hardware Acceleration**: Use transform3d for smooth animations
+- **Reduced Motion**: Respect user preferences for motion sensitivity
+- **Frame Rate Optimization**: Maintain 60fps for all interactions
 
+
+## Accessibility Features
+
+### Keyboard Navigation
+- **Tab Order**: Logical navigation through all interactive elements
+- **Keyboard Shortcuts**: Quick access to common sections
+- **Focus Management**: Clear focus indicators and proper focus trapping in modals
+
+### Screen Reader Support
+- **ARIA Labels**: Comprehensive labeling for all interactive elements
+- **Live Regions**: Announce dynamic content changes (attendance updates, messages)
+- **Semantic HTML**: Proper heading hierarchy and landmark roles
+
+### Visual Accessibility
+- **High Contrast**: Support for high contrast mode
+- **Color Independence**: Information not conveyed by color alone (icons + text)
+- **Text Scaling**: Support for 200% text scaling without horizontal scrolling
+- **Focus Indicators**: Clear, visible focus indicators with green theme
+
+## Mobile Responsiveness
+
+### Responsive Breakpoints
+The student dashboard follows a mobile-first approach with these breakpoints:
+- **Mobile**: 375px - 767px (xs, sm)
+- **Tablet**: 768px - 1023px (md)
+- **Desktop**: 1024px - 1439px (lg)
+- **Large Desktop**: 1440px+ (xl, 2xl)
+
+### Touch Interactions
+- **Touch Targets**: Minimum 44px touch targets for all interactive elements
+- **Gesture Support**: Swipe gestures for calendar navigation and sidebar
+- **Haptic Feedback**: Tactile feedback for important actions (messages sent, attendance viewed)
+- **Touch-Optimized Buttons**: All buttons use `touch-manipulation` CSS class
+
+### Mobile Layout Adaptations (375px - 767px)
+
+**Sidebar Navigation:**
+- Full-screen overlay on mobile
+- Hamburger menu button in header
+- Smooth slide-in animation from left
+- Backdrop blur overlay when open
+- Swipe-to-close gesture support
+
+**Metric Cards:**
+- Single column layout: `grid-cols-1`
+- Stacked vertically with spacing
+- Reduced padding: `p-4` instead of `p-6`
+- Smaller text sizes: `text-sm` for labels, `text-xl` for values
+
+**Welcome Section:**
+- Reduced padding: `p-4 sm:p-6 lg:p-12`
+- Smaller heading: `text-xl sm:text-2xl lg:text-5xl`
+- Stacked buttons: `flex-col` instead of `flex-row`
+- Full-width buttons on mobile
+
+**Attendance Calendar:**
+- Horizontal scroll for week view
+- Larger touch targets for day cards
+- Bottom sheet for session details
+- Simplified view with essential info only
+
+**Progress Tracker:**
+- Vertical layout for progress bars
+- Larger circular progress indicator
+- Simplified statistics display
+
+**Messaging Interface:**
+- Full-screen on mobile
+- Bottom sheet for compose message
+- Simplified conversation list
+- Floating action button for new message
+
+### Tablet Layout Adaptations (768px - 1023px)
+
+**Sidebar Navigation:**
+- Collapsible sidebar (can be toggled)
+- Reduced width: 240px instead of 280px
+- Icons with abbreviated labels
+
+**Metric Cards:**
+- Two columns: `grid-cols-2`
+- Medium padding: `p-5`
+
+**Attendance Calendar:**
+- Full week visible without scroll
+- Medium-sized day cards
+
+**Messaging Interface:**
+- Split view: conversation list + active thread
+- Side-by-side layout
+
+### Desktop Layout Adaptations (1024px+)
+
+**Sidebar Navigation:**
+- Always visible sidebar (280px width)
+- Full labels and icons
+- Smooth hover effects
+
+**Metric Cards:**
+- Four columns: `grid-cols-4`
+- Full padding: `p-6`
+- 3D hover effects enabled
+
+**Attendance Calendar:**
+- Full week view with spacious layout
+- Hover effects and tooltips
+
+**Messaging Interface:**
+- Three-column layout: contacts + thread + details
+- Full feature set visible
+
+### Responsive Typography
 ```typescript
-// Use transform and opacity for animations (GPU accelerated)
-// Avoid animating: width, height, top, left, margin, padding
+// Heading sizes
+h1: "text-xl sm:text-2xl md:text-3xl lg:text-5xl"
+h2: "text-lg sm:text-xl lg:text-2xl xl:text-3xl"
+h3: "text-base sm:text-lg lg:text-xl"
 
-// Good
-className="transition-transform duration-300 hover:scale-105"
+// Body text
+body: "text-sm sm:text-base"
+small: "text-xs sm:text-sm"
 
-// Bad
-className="transition-all duration-300 hover:w-full"
+// Button text
+button: "text-sm sm:text-base lg:text-lg"
 ```
+
+### Responsive Spacing
+```typescript
+// Container padding
+container: "p-4 sm:p-6 lg:p-8 xl:p-12"
+
+// Card padding
+card: "p-4 sm:p-5 lg:p-6"
+
+// Section margins
+section: "mb-6 sm:mb-8 lg:mb-12"
+
+// Gap between elements
+gap: "gap-3 sm:gap-4 lg:gap-6"
+```
+
+### Responsive Images and Icons
+```typescript
+// Icon sizes
+small: "h-4 w-4 sm:h-5 sm:w-5"
+medium: "h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
+large: "h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8"
+
+// Avatar sizes
+avatar: "h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14"
+```
+
+### Progressive Web App Features
+- **Offline Support**: View attendance data without internet
+- **Push Notifications**: Real-time alerts for attendance updates
+- **Home Screen Installation**: Add to home screen capability
+- **Responsive Images**: Optimized images for different screen sizes
+- **Lazy Loading**: Load images and components as needed
+
+
+## Language and Localization
+
+### English Interface
+All interface elements are displayed in English with the following guidelines:
+
+**Status Labels:**
+- Present (not "Attended")
+- Absent (not "Missing")
+- Sick (with 🤒 icon)
+- Leave (with 📅 icon)
+
+**Arabic Terms with English Translations:**
+- **محروم (Disqualified)**: "You have exceeded the maximum allowed absences and are not eligible for final exams."
+- **تصدیق طلب (Certification Required)**: "You need to submit medical certificates to restore your exam eligibility."
+
+**Buttons and Actions:**
+- View Attendance (not "Check Attendance")
+- Contact Teacher (not "Message Teacher")
+- Upload Documentation (not "Submit Files")
+- Export Records (not "Download Data")
+
+**Help Documentation:**
+- All FAQs in English
+- Policy documents in English
+- Error messages in English
+- Success notifications in English
 
 ## Security Considerations
 
-### Authentication Flow
+### Data Privacy
+- Students can only view their own attendance data
+- No access to other students' information
+- Secure session management with auto-logout
+- HTTPS for all data transmission
 
-1. User logs in via NextAuth.js
-2. JWT token stored in HTTP-only cookie
-3. Token includes student ID and role
-4. Every API request validates token
-5. Student ID from token must match requested data
+### Read-Only Access
+- All attendance data is read-only for students
+- No ability to modify or delete records
+- Clear messaging when attempting unauthorized actions
+- Audit trail for all data access
 
 ### File Upload Security
+- File type validation for attachments
+- File size limits (max 10MB per file)
+- Virus scanning for uploaded files
+- Secure storage with access controls
 
-1. **Client-side validation**
-   - File type: PDF, JPG, PNG only
-   - File size: Maximum 5MB
-   - File name sanitization
 
-2. **Server-side validation**
-   - Re-validate file type using magic numbers
-   - Re-validate file size
-   - Scan for malware (if available)
-   - Generate unique file name
-   - Store in secure location outside public directory
+## Responsive Design Implementation Checklist
 
-3. **Access control**
-   - Only authenticated students can upload
-   - Students can only view their own files
-   - Admin approval required for certificate acceptance
+### ✅ Layout Responsiveness
+- [ ] All components use responsive Tailwind classes (sm:, md:, lg:, xl:)
+- [ ] Grid layouts adapt: 1 column (mobile) → 2 columns (tablet) → 4 columns (desktop)
+- [ ] Flexbox layouts switch between column and row based on screen size
+- [ ] Sidebar collapses to hamburger menu on mobile (<768px)
+- [ ] All modals and dialogs use bottom sheets on mobile
+- [ ] Floating action buttons appear only on mobile for quick actions
 
-### API Security
+### ✅ Typography Responsiveness
+- [ ] All headings scale: `text-xl sm:text-2xl lg:text-5xl`
+- [ ] Body text scales: `text-sm sm:text-base`
+- [ ] Button text scales: `text-sm sm:text-base lg:text-lg`
+- [ ] Line heights adjust for readability on small screens
+- [ ] Text truncation with ellipsis on mobile where needed
 
-```typescript
-// Middleware for authentication
-export async function authMiddleware(req: Request) {
-  const token = await getToken({ req });
-  
-  if (!token) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-  
-  return token;
-}
+### ✅ Spacing Responsiveness
+- [ ] Container padding: `p-4 sm:p-6 lg:p-12`
+- [ ] Card padding: `p-4 sm:p-5 lg:p-6`
+- [ ] Section margins: `mb-6 sm:mb-8 lg:mb-12`
+- [ ] Gap between elements: `gap-3 sm:gap-4 lg:gap-6`
+- [ ] Consistent spacing scale across all components
 
-// Middleware for authorization
-export async function authorizeStudent(req: Request, studentId: string) {
-  const token = await authMiddleware(req);
-  
-  if (token.studentId !== studentId) {
-    return new Response('Forbidden', { status: 403 });
-  }
-  
-  return true;
-}
-```
+### ✅ Interactive Elements
+- [ ] All buttons minimum 44px height on mobile: `min-h-[44px]`
+- [ ] Touch targets properly sized with `touch-manipulation` class
+- [ ] Hover effects disabled on mobile: `hover:scale-[1.02]` wrapped in `!isMobile` check
+- [ ] Click/tap feedback with scale animations: `whileTap={{ scale: 0.95 }}`
+- [ ] Swipe gestures for navigation on mobile
 
-## Accessibility Implementation
+### ✅ Images and Icons
+- [ ] Icons scale: `h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6`
+- [ ] Avatars scale: `h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14`
+- [ ] Images use responsive srcset for different resolutions
+- [ ] Lazy loading for images below the fold
+- [ ] Optimized image formats (WebP with fallbacks)
 
-### Keyboard Navigation
+### ✅ Navigation
+- [ ] Sidebar: 280px on desktop, full-screen overlay on mobile
+- [ ] Hamburger menu icon visible only on mobile
+- [ ] Navigation items stack vertically on mobile
+- [ ] Active page indicator adapts to mobile layout
+- [ ] Smooth slide animations for mobile menu
 
-```typescript
-// All interactive elements must be keyboard accessible
-<button
-  className="..."
-  onKeyDown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      handleClick();
-    }
-  }}
-  tabIndex={0}
->
-  Click me
-</button>
+### ✅ Forms and Inputs
+- [ ] Input fields full-width on mobile: `w-full`
+- [ ] Labels above inputs on mobile, inline on desktop
+- [ ] Form buttons full-width on mobile, auto-width on desktop
+- [ ] File upload optimized for mobile camera access
+- [ ] Keyboard avoidance on mobile when inputs are focused
 
-// Focus indicators
-className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-```
+### ✅ Tables and Data Display
+- [ ] Tables scroll horizontally on mobile with `overflow-x-auto`
+- [ ] Card-based layout for data on mobile instead of tables
+- [ ] Simplified data display on mobile (show essential info only)
+- [ ] Expandable rows for detailed information on mobile
 
-### ARIA Labels
+### ✅ Performance
+- [ ] Animations disabled on mobile if performance is poor
+- [ ] Reduced motion respected: `prefers-reduced-motion`
+- [ ] Lazy loading for off-screen components
+- [ ] Code splitting for mobile-specific components
+- [ ] Optimized bundle size for mobile networks
 
-```typescript
-// Status indicators
-<div
-  role="status"
-  aria-label={`Attendance percentage: ${percentage}%`}
->
-  {percentage}%
-</div>
-
-// Progress bars
-<div
-  role="progressbar"
-  aria-valuenow={value}
-  aria-valuemin={0}
-  aria-valuemax={100}
-  aria-label="Attendance progress"
->
-  <div style={{ width: `${value}%` }} />
-</div>
-
-// Alerts
-<div
-  role="alert"
-  aria-live="polite"
->
-  You are approaching the absence threshold
-</div>
-```
-
-### Reduced Motion
-
-```typescript
-// Respect user preference
-const prefersReducedMotion = useReducedMotion();
-
-<motion.div
-  animate={prefersReducedMotion ? {} : { scale: 1.05 }}
-  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3 }}
->
-  Content
-</motion.div>
-```
-
-## Mobile Considerations
-
-### Touch Targets
-
-```typescript
-// Minimum 44x44px for touch targets
-className="min-h-[44px] min-w-[44px]"
-
-// Adequate spacing between interactive elements
-className="space-y-4" // Minimum 16px vertical spacing
-```
-
-### Swipe Gestures
-
-```typescript
-// Use framer-motion for swipe detection
-<motion.div
-  drag="x"
-  dragConstraints={{ left: 0, right: 0 }}
-  onDragEnd={(e, { offset, velocity }) => {
-    if (offset.x > 100) {
-      handleSwipeRight();
-    } else if (offset.x < -100) {
-      handleSwipeLeft();
-    }
-  }}
->
-  Calendar content
-</motion.div>
-```
-
-### Responsive Typography
-
-```typescript
-// Scale text appropriately
-const typography = {
-  h1: 'text-3xl md:text-4xl lg:text-5xl',
-  h2: 'text-2xl md:text-3xl lg:text-4xl',
-  h3: 'text-xl md:text-2xl lg:text-3xl',
-  body: 'text-base md:text-lg',
-  small: 'text-sm md:text-base'
-};
-```
-
-## Implementation Notes
-
-### Critical Design Rules
-
-#### What We DON'T Do ❌
-
-1. ❌ **NO Shadcn default outline buttons**
-   - They look generic and have borders
-   - Use custom solid buttons instead
-
-2. ❌ **NO borders on cards**
-   - Never use border, border-2, etc.
-   - Always use `border-0` to reset any default borders
-
-3. ❌ **NO plain borders for separation**
-   - Don't use border-t, border-b for dividers
-   - Use shadows, background colors, or spacing instead
-
-4. ❌ **NO unsized icons**
-   - Never use icons without explicit w-{n} h-{n}
-   - Don't use arbitrary sizes
-
-5. ❌ **NO missing hover effects**
-   - Every button, card, link needs transition
-   - No instant state changes
-
-6. ❌ **NO excessive gradients**
-   - Don't put gradients on everything
-   - Use strategically for accents only
-
-#### What We DO ✅
-
-1. ✅ **Use solid color buttons with shadows**
-   ```tsx
-   className="bg-blue-500 text-white border-0 shadow-md hover:bg-blue-600 hover:shadow-lg transition-all duration-200"
-   ```
-
-2. ✅ **Use border-0 with shadows on all cards**
-   ```tsx
-   className="bg-white border-0 shadow-sm rounded-xl hover:shadow-md transition-all duration-300"
-   ```
-
-3. ✅ **Use shadows and spacing for separation**
-   ```tsx
-   // Instead of border-t
-   className="pt-4 mt-4 shadow-[0_-1px_0_0_rgb(226,232,240)]"
-   // Or just use spacing
-   className="mt-6"
-   ```
-
-4. ✅ **Always size icons properly**
-   ```tsx
-   // Standard UI icons
-   <Icon className="w-5 h-5" />
-   // Larger feature icons
-   <Icon className="w-6 h-6" />
-   // Icon in background container
-   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-     <Icon className="w-5 h-5 text-blue-600" />
-   </div>
-   ```
-
-5. ✅ **Add smooth transitions to everything interactive**
-   ```tsx
-   // Cards
-   className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-   // Buttons
-   className="transition-all duration-200 hover:shadow-md"
-   // Links
-   className="transition-colors duration-200 hover:text-blue-600"
-   // Icons
-   className="transition-transform duration-200 hover:scale-110"
-   ```
-
-6. ✅ **Use good color schema with strategic accents**
-   - Primary: Blue (#3B82F6)
-   - Secondary: Violet (#8B5CF6)
-   - Status colors: Emerald, Red, Amber, Cyan
-   - Neutral: Slate shades for text and backgrounds
-   - Gradients: Only for hero sections and key CTAs
-
-7. ✅ **Ensure complete responsiveness**
-   ```tsx
-   // Mobile-first grid
-   className="grid grid
-
-### Development Workflow
-
-1. Start with Server Components for initial render
-2. Use Client Components for interactive elements
-3. Implement skeleton loading states first
-4. Add animations after functionality works
-5. Test accessibility throughout development
-6. Optimize performance before deployment
-
-### Code Quality Standards
-
-- TypeScript strict mode enabled
-- ESLint with accessibility plugin
-- Prettier for code formatting
-- Husky for pre-commit hooks
-- Jest for unit tests
-- Playwright for E2E tests
+### ✅ Testing Requirements
+- [ ] Test on iPhone SE (375px) - smallest mobile
+- [ ] Test on iPhone 12/13/14 (390px) - standard mobile
+- [ ] Test on iPad (768px) - tablet
+- [ ] Test on iPad Pro (1024px) - large tablet
+- [ ] Test on Desktop (1440px) - standard desktop
+- [ ] Test on 4K (2560px) - large desktop
+- [ ] Test landscape and portrait orientations
+- [ ] Test with browser zoom at 200%
+- [ ] Test with touch interactions on actual devices
+- [ ] Test with keyboard navigation on all screen sizes
 

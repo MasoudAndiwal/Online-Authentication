@@ -35,7 +35,7 @@ export function useAuth(options: UseAuthOptions = {}) {
       const rolePaths = {
         OFFICE: '/dashboard',
         TEACHER: '/teacher/dashboard',
-        STUDENT: '/student/dashboard',
+        STUDENT: '/student/student-dashboard',
       };
       
       router.push(rolePaths[session.role] || '/login');
@@ -69,7 +69,7 @@ export function usePublicRoute() {
       const rolePaths = {
         OFFICE: '/dashboard',
         TEACHER: '/teacher/dashboard',
-        STUDENT: '/student/dashboard',
+        STUDENT: '/student/student-dashboard',
       };
       
       router.push(rolePaths[session.role] || '/dashboard');

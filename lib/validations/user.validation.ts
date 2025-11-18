@@ -37,7 +37,7 @@ export const StudentCreateSchema = z.object({
         .trim(),
     studentId: z.string()
         .min(4, 'Student ID must be at least 4 digits')
-        .max(10, 'Student ID must be 10 digits or less')
+        .max(12, 'Student ID must be 12 digits or less')
         .regex(numbersOnlyPattern, 'Student ID must contain only numbers')
         .trim(),
     dateOfBirth: z.string()

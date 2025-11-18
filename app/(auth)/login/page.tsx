@@ -50,7 +50,7 @@ const createLoginSchema = (role: Role) => {
       ...baseSchema,
       studentId: z
         .string()
-        .min(6, "Student ID must be at least 6 digits")
+        .min(4, "Student ID must be at least 4 digits")
         .max(12, "Student ID must be at most 12 digits")
         .regex(/^\d+$/, "Student ID must contain only numbers"),
     });

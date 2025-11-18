@@ -15,7 +15,9 @@ import {
   ChevronRight,
   Search,
   User,
-  LogOut
+  LogOut,
+  MessageSquare,
+  HelpCircle
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -142,16 +144,31 @@ const getNavigationItems = (role: string): NavigationItem[] => {
 
   // Student navigation
   return [
-    ...baseItems,
+    {
+      label: 'Dashboard',
+      href: '/student/student-dashboard',
+      icon: Home
+    },
     {
       label: 'My Attendance',
-      href: '/attendance',
+      href: '/student/attendance',
       icon: ClipboardList
     },
     {
-      label: 'My Progress',
-      href: '/progress',
-      icon: BarChart3
+      label: 'Class Information',
+      href: '/student/class-info',
+      icon: BookOpen
+    },
+    {
+      label: 'Messages',
+      href: '/student/messages',
+      icon: MessageSquare,
+      badge: 0 // Will be updated dynamically with unread count
+    },
+    {
+      label: 'Help & Support',
+      href: '/student/help',
+      icon: HelpCircle
     }
   ]
 }
@@ -312,6 +329,7 @@ export function MobileNavigation({
                       onToggle={() => toggleExpanded(item.href)}
                       onNavigate={handleNavigation}
                       level={0}
+                      role={user?.role}
                     />
                   </motion.div>
                 ))}
@@ -430,10 +448,28 @@ function MobileNavigationItem({
   isExpanded,
   onToggle,
   onNavigate,
-  level
-}: MobileNavigationItemProps) {
+  level,
+  role
+}: MobileNavigationItemProps & { role?: string }) {
   const Icon = item.icon
   const hasChildren = item.children && item.children.length > 0
+
+  // Determine colors based on role
+  const getActiveColors = () => {
+    if (role === 'STUDENT') {
+      return {
+        bg: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
+        badge: 'bg-emerald-100 text-emerald-700'
+      };
+    }
+    // Default to blue for OFFICE and TEACHER
+    return {
+      bg: 'bg-gradient-to-r from-blue-500 to-blue-600',
+      badge: 'bg-blue-100 text-blue-700'
+    };
+  };
+
+  const colors = getActiveColors();
 
   return (
     <div>
@@ -450,7 +486,7 @@ function MobileNavigationItem({
         className={cn(
           'w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300',
           'hover:bg-white/80 hover:shadow-md active:scale-95',
-          isActive && 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg',
+          isActive && `${colors.bg} text-white shadow-lg`,
           !isActive && 'text-slate-700',
           level > 0 && 'ml-4 text-xs py-2'
         )}
@@ -458,7 +494,7 @@ function MobileNavigationItem({
         <Icon className={cn('h-5 w-5 flex-shrink-0', level > 0 && 'h-4 w-4')} />
         <span className="flex-1 text-left">{item.label}</span>
         
-        {item.badge && (
+        {item.badge !== undefined && item.badge > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -466,7 +502,7 @@ function MobileNavigationItem({
               'px-2 py-1 text-xs rounded-full font-semibold',
               isActive 
                 ? 'bg-white/20 text-white' 
-                : 'bg-blue-100 text-blue-700'
+                : colors.badge
             )}
           >
             {item.badge}
@@ -507,6 +543,7 @@ function MobileNavigationItem({
                   onToggle={() => {}}
                   onNavigate={onNavigate}
                   level={level + 1}
+                  role={role}
                 />
               </motion.div>
             ))}

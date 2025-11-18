@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {Home,Users,Calendar,BarChart3,Settings,BookOpen,ClipboardList,FileText,UserPlus,Shield,Clock,TrendingUp,ChevronRight,GraduationCap,User,LogOut,MoreHorizontal,
+import {Home,Users,Calendar,BarChart3,Settings,BookOpen,ClipboardList,FileText,UserPlus,Shield,Clock,TrendingUp,ChevronRight,GraduationCap,User,LogOut,MoreHorizontal,MessageSquare,HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -212,16 +212,31 @@ const getNavigationItems = (role: string): NavigationItem[] => {
 
   // Student navigation
   return [
-    ...baseItems,
+    {
+      label: "Dashboard",
+      href: "/student/student-dashboard",
+      icon: Home,
+    },
     {
       label: "My Attendance",
-      href: "/attendance",
+      href: "/student/attendance",
       icon: ClipboardList,
     },
     {
-      label: "My Progress",
-      href: "/progress",
-      icon: TrendingUp,
+      label: "Class Information",
+      href: "/student/class-info",
+      icon: BookOpen,
+    },
+    {
+      label: "Messages",
+      href: "/student/messages",
+      icon: MessageSquare,
+      badge: 0, // Will be updated dynamically with unread count
+    },
+    {
+      label: "Help & Support",
+      href: "/student/help",
+      icon: HelpCircle,
     },
   ];
 };
@@ -367,6 +382,7 @@ export function AnimatedSidebar({
               onNavigate={handleNavigation}
               level={0}
               currentPath={currentPath}
+              role={user?.role}
             />
           </motion.div>
         ))}
@@ -396,7 +412,8 @@ function NavigationItem({
   onNavigate,
   level,
   currentPath,
-}: NavigationItemProps) {
+  role,
+}: NavigationItemProps & { role?: string }) {
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
   const [childExpandedItems, setChildExpandedItems] = React.useState<string[]>(
@@ -415,6 +432,25 @@ function NavigationItem({
     return childExpandedItems.includes(href);
   };
 
+  // Determine colors based on role
+  const getActiveColors = () => {
+    if (role === 'STUDENT') {
+      return {
+        bg: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
+        hover: 'hover:bg-emerald-50/80 hover:text-emerald-700',
+        badge: 'bg-emerald-100 text-emerald-700'
+      };
+    }
+    // Default to blue for OFFICE and TEACHER
+    return {
+      bg: 'bg-blue-600',
+      hover: 'hover:bg-blue-50/80 hover:text-blue-700',
+      badge: 'bg-blue-100 text-blue-700'
+    };
+  };
+
+  const colors = getActiveColors();
+
   return (
     <div>
       <motion.button
@@ -429,8 +465,8 @@ function NavigationItem({
         }}
         className={cn(
           "w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300",
-          "hover:bg-blue-50/80 hover:text-blue-700",
-          isActive && "bg-blue-600 text-white shadow-md",
+          colors.hover,
+          isActive && `${colors.bg} text-white shadow-md`,
           !isActive && "text-slate-700",
           level > 0 && "ml-6 text-xs py-2 px-3"
         )}
@@ -438,13 +474,13 @@ function NavigationItem({
         <Icon className={cn("h-5 w-5 flex-shrink-0", level > 0 && "h-4 w-4")} />
         <span className="flex-1 text-left">{item.label}</span>
 
-        {item.badge && (
+        {item.badge !== undefined && item.badge > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className={cn(
               "px-2 py-1 text-xs rounded-full font-semibold",
-              isActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
+              isActive ? "bg-white/20 text-white" : colors.badge
             )}
           >
             {item.badge}
@@ -486,6 +522,7 @@ function NavigationItem({
                   onNavigate={onNavigate}
                   level={level + 1}
                   currentPath={currentPath}
+                  role={role}
                 />
               </motion.div>
             ))}
@@ -516,6 +553,9 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Get role-specific colors
+  const roleColor = roleColors[user.role];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -531,14 +571,17 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
             className="w-full h-auto p-3 justify-start hover:bg-slate-50/80 transition-all duration-300 rounded-xl border-0"
           >
             <div className="flex items-center space-x-3 w-full">
-              {/* Avatar - Hidden on mobile devices */}
+              {/* Avatar with role-based ring color */}
               {!isMobile && (
-                <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">
+                <div className={cn(
+                  "h-10 w-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-md",
+                  roleColor.bg
+                )}>
                   {user.avatar ? (
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className="h-8 w-8 rounded-lg object-cover"
+                      className="h-10 w-10 rounded-lg object-cover"
                     />
                   ) : (
                     user.name
@@ -556,8 +599,8 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
                 <p className="text-sm font-medium text-slate-900 truncate">
                   {user.name}
                 </p>
-                <p className="text-xs text-slate-500 truncate">
-                  {user.role.toLowerCase()}
+                <p className={cn("text-xs font-semibold truncate", roleColor.text)}>
+                  {user.role === 'STUDENT' ? 'Student' : user.role.toLowerCase()}
                 </p>
               </div>
 

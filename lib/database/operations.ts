@@ -44,7 +44,7 @@ export async function createStudent(data: StudentCreateInput): Promise<Student> 
             class_section: data.classSection,
             time_slot: data.timeSlot,
             username: data.username,
-            student_id_ref: data.studentIdRef,
+            student_id_ref: data.studentId,
             password: data.password,
             status: data.status || StudentStatus.ACTIVE,
             created_at: new Date().toISOString(),
@@ -134,7 +134,7 @@ export async function updateStudent(id: string, data: StudentUpdateInput): Promi
         if (data.classSection !== undefined) updateData.class_section = data.classSection
         if (data.timeSlot !== undefined) updateData.time_slot = data.timeSlot
         if (data.username !== undefined) updateData.username = data.username
-        if (data.studentIdRef !== undefined) updateData.student_id_ref = data.studentIdRef
+        if (data.studentId !== undefined) updateData.student_id_ref = data.studentId
         if (data.password !== undefined) updateData.password = data.password
         if (data.status !== undefined) updateData.status = data.status
 

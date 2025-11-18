@@ -1,410 +1,539 @@
-# Implementation Plan
+# Student Dashboard Implementation Tasks
 
-- [x] 1. Set up project structure and core types
+## Overview
+This task list outlines the implementation of the Student Dashboard for the University Attendance System. The dashboard features a green color theme, fully responsive design, messaging system, and comprehensive attendance tracking for students.
 
+## Task List
 
+- [x] 1. Set up project structure and routing
 
 
 
-  - Create directory structure for components, lib, hooks, and app routes
-  - Define TypeScript interfaces in lib/types.ts for Student, AttendanceRecord, AttendanceStats, AcademicStatus, WeekData, DayAttendance, SessionAttendance, and UploadedFile
-  - Create constants file with BRAND_COLORS, STATUS_COLORS, NEUTRAL_COLORS, and GRADIENT_ACCENTS
-  - Set up Tailwind config with custom animations and color extensions
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7_
 
-- [x] 2. Create base UI components with proper styling
 
+  - Create student dashboard route at `/student/student-dashboard`
+  - Create student layout file with metadata
+  - Set up authentication guard for STUDENT role
+  - Configure routing and navigation
+  - _Requirements: 14.1, 10.1_
 
+- [x] 2. Create dashboard layout and sidebar navigation
 
 
 
 
-  - [x] 2.1 Implement custom Button component
+  - [x] 2.1 Implement sidebar component with green theme
 
-    - Create Button.tsx with primary, secondary, and ghost variants (NO outline variant)
-    - Ensure all buttons use border-0 with shadow-md and smooth hover transitions
-    - Add proper icon sizing support (w-4 h-4 for sm, w-5 h-5 for md)
-    - Include loading state with spinner animation
-    - _Requirements: 1.4, 1.5, 1.7_
-  
 
-  - [x] 2.2 Implement Card component
-
-    - Create Card.tsx with default, elevated, and flat variants
-    - Ensure all cards use border-0 with shadow-based depth
-    - Add optional hover effect with scale and shadow transitions
-    - Implement responsive padding (p-4 md:p-6)
-    - _Requirements: 1.4, 1.7, 7.1, 7.2, 7.3_
-  
-  - [x] 2.3 Implement Icon component with proper sizing
-
-
-    - Create Icon.tsx with sm (16px), md (20px), lg (24px) size options
-    - Add optional background container with solid colors (not gradients everywhere)
-    - Include hover scale effect for interactive icons
-    - _Requirements: 1.5, 1.7_
-  
-  - [x] 2.4 Create ProgressRing component
-
-
-    - Build SVG-based circular progress with gradient stroke
-    - Implement smooth animation from 0 to percentage over 1.5 seconds
-    - Add gradient text styling for center percentage value
-    - _Requirements: 4.1, 4.2, 4.3_
-  
-  - [x] 2.5 Create Skeleton loading component
-
-
-    - Build skeleton screens with shimmer animation
-    - Match actual content layout structure
-    - _Requirements: 1.6, 9.1, 9.2_
-
-
-
-- [ ] 3. Build animation components
-
-
-
-  - [x] 3.1 Create FadeIn animation wrapper
-
-
-    - Implement smooth fade-in with subtle y-offset (10px)
-    - Use 400ms duration with easeOut timing
-    - _Requirements: 1.1, 1.7_
-  
-  - [x] 3.2 Create StaggerChildren animation wrapper
-
-
-    - Implement staggered entrance with 80-100ms delay between children
-    - Support customizable stagger delay
-    - _Requirements: 3.3, 5.2_
-  
-
-  - [x] 3.3 Create CountUp animation component
-
-    - Build number count-up animation with 1.2s duration
-    - Support decimal places and formatting
-    - _Requirements: 1.2, 4.3_
-- [ ] 4. Implement WelcomeSection component
-
-
-
-- [ ] 4. Implement WelcomeSection component
-
-  - Create personalized greeting with gradient background (purple to blue)
-  - Add animated greeting text with fade-in effect
-  - Display student name with gradient text effect
-  - Show current date and time
-  - Add decorative animated shapes in background
-  - Ensure responsive layout for mobile devices
-  - _Requirements: 1.1, 7.1_
-
-- [x] 5. Implement StatsCards component
-
-
-
-
-
-  - [x] 5.1 Create stats card grid layout
-
-
-    - Build responsive grid (1 col mobile, 2 col tablet, 4 col desktop)
-    - Implement card structure with white background, border-0, and shadow-sm
-    - Add left border accent with status colors
-    - _Requirements: 1.3, 1.4, 7.1, 7.2_
-  
-  - [x] 5.2 Add stats card content and animations
-
-    - Create icon containers with solid color backgrounds (emerald, red, amber, cyan)
-    - Implement count-up animation for numbers
-    - Add smooth hover effect with scale and shadow transitions
-    - Implement staggered entrance animation (100ms delay)
-    - _Requirements: 1.2, 1.3, 1.5, 1.7_
--
-
-- [x] 6. Implement StatusAlerts component
-
-
-
-
-  - [x] 6.1 Create disqualification alert (محروم)
-
-
-    - Build alert banner with red gradient background and shadow
-    - Add animated warning icon with shake effect
-    - Display progress bar showing hours vs threshold
-    - Include bold warning text
-    - _Requirements: 2.1, 2.3, 2.4, 2.5_
-  
-  - [x] 6.2 Create certification required alert (تصدیق طلب)
-
-    - Build alert banner with amber gradient background and shadow
-    - Add animated document icon with pulse effect
-    - Display progress bar with certification status
-    - Include call-to-action button to upload section
-    - _Requirements: 2.2, 2.3, 2.4, 2.5_
--
-
-- [x] 7. Implement WeeklyCalendar component
-
-
-
-
-  - [x] 7.1 Create calendar header and navigation
-
-
-    - Build header showing week range
-    - Add previous and next navigation buttons with gradient styling
-    - Implement week change handler
-    - _Requirements: 3.6, 7.5_
-  
-  - [x] 7.2 Create day cards with status visualization
-
-    - Build responsive grid (1 col mobile, 3-4 col tablet, 7 col desktop)
-    - Create day cards with gradient backgrounds based on status (green, red, amber, cyan, slate)
-    - Ensure all cards use border-0 with shadow-md
-    - Display day name, date, and session indicators (colored dots)
-    - _Requirements: 3.1, 3.2, 7.2_
-  
-  - [x] 7.3 Add calendar animations and interactions
-
-
-    - Implement staggered entrance animation (100ms delay per card)
-    - Add hover effects with scale-105 and shadow-lg
-    - Support swipe gestures for mobile navigation
-    - _Requirements: 3.3, 3.4, 7.5_
--
-
-- [x] 8. Implement ProgressChart component
-
-
-
-
-  - [x] 8.1 Create circular progress ring
-
-
-    - Build SVG-based ring with gradient stroke
-    - Implement animation from 0 to percentage (1.5s duration)
-    - Display large percentage value in center with gradient text
-    - Set ring diameter to 200px
-    - _Requirements: 4.1, 4.2, 4.3_
-  
-  - [x] 8.2 Create breakdown progress bars
-
-
-    - Build horizontal bars for Present, Absent, Sick, Leave statuses
-    - Use gradient fills matching status colors
-    - Implement animated width transition (300ms delay after ring)
-    - Add labels with properly sized icons in solid color containers
-    - _Requirements: 4.4, 4.5_
-
-- [x] 9. Implement RecentActivity component
-
-
-
-
-
-  - Create list displaying 10 most recent attendance records
-  - Build activity items with borderless design and hover background transition
-  - Add status icons in solid color containers (32px)
-  - Display course name, date, and status badge with colored background
-  - Implement staggered entrance animation (100ms delay)
-  - Add hover effects (bg-slate-50 + icon rotate-12)
-  - Create "View Full History" button with gradient background and shadow
-  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
-
-- [x] 10. Implement CertificateUpload component
-
-
-
-
-
-  - [x] 10.1 Create drag-and-drop upload zone
-
-
-    - Build upload zone with dashed border (only exception to borderless rule)
-    - Add gradient background on hover state
-    - Display upload icon in solid color container
-    - Show file type and size limits
-    - _Requirements: 6.1, 6.2_
-  
-
-  - [x] 10.2 Implement file validation and upload
-
-    - Validate file type (PDF, JPG, PNG) on client side
-    - Validate file size (max 5MB) on client side
-    - Implement upload progress indicator with animation
-    - Handle upload errors with inline error messages
-    - _Requirements: 6.3, 6.6_
-
-  
-  - [x] 10.3 Create uploaded files list
-
-    - Build file list with borderless cards and shadow-md
-    - Display file icon, name, size, and upload date
-    - Add status badge (Pending, Approved, Rejected)
-    - Include preview and delete buttons with hover scale effects
-    - _Requirements: 6.4, 6.5_
--
-
-- [x] 11. Create API routes and data fetching
-
-
-
-
-  - [x] 11.1 Implement attendance data API route
-
-
-    - Create GET /api/attendance route handler
-    - Implement authentication middleware with JWT validation
-    - Add authorization check to ensure student can only access own data
-    - Fetch student info, stats, status, week data, recent records, and uploaded files
-    - Return AttendanceResponse with all required data
-    - _Requirements: 10.1, 10.2, 10.3_
-  
-  - [x] 11.2 Implement file upload API route
-
-
-    - Create POST /api/upload route handler
-    - Implement authentication and authorization middleware
-    - Validate file type using magic numbers on server side
-    - Validate file size on server side
-    - Generate unique file name and store securely
-    - Return UploadResponse with file info or error
-    - _Requirements: 6.3, 10.4_
-
-- [x] 12. Create custom hooks for data management
-
-
-
-
-
-  - [x] 12.1 Create useAttendance hook
-
-
-    - Implement data fetching with loading and error states
-    - Handle authentication errors with redirect to login
-    - Implement retry logic with exponential backoff
-    - _Requirements: 9.3, 10.1, 10.2_
-  
-  - [x] 12.2 Create useFileUpload hook
-
-
-    - Implement file upload with progress tracking
-    - Handle client-side validation
-    - Manage upload state (idle, uploading, success, error)
-    - _Requirements: 6.3, 6.6_
-
-- [x] 13. Build main dashboard page
-
-
-
-
-  - [x] 13.1 Create dashboard page layout
-
-
-    - Set up app/dashboard/page.tsx as Server Component
-    - Implement responsive container with proper padding (px-4 sm:px-6 lg:px-8)
-    - Create section spacing (space-y-4 md:space-y-6 lg:space-y-8)
-    - _Requirements: 7.1, 7.2, 7.3, 7.4_
-  
-  - [x] 13.2 Integrate all dashboard components
-
-    - Add WelcomeSection with student data
-    - Add StatsCards with attendance statistics
-    - Add StatusAlerts with academic status
-    - Add WeeklyCalendar with week data
-    - Add ProgressChart with stats
-    - Add RecentActivity with recent records
-    - Add CertificateUpload for students with تصدیق طلب status
-    - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 4.1, 5.1, 6.1_
-  
-  - [x] 13.3 Implement loading and error states
-
-
-    - Create loading.tsx with skeleton screens matching layout
-    - Create error.tsx with error state component and retry button
-    - Handle empty state when no attendance data exists
-    - _Requirements: 9.1, 9.2, 9.3, 9.4_
-
-- [x] 14. Implement accessibility features
-
-
-
-
-
-  - [x] 14.1 Add keyboard navigation support
-
-
-    - Ensure all interactive elements are keyboard accessible
-    - Add visible focus indicators with ring-2 ring-blue-500
-    - Implement proper tab order
-    - _Requirements: 8.1_
-  
-  - [x] 14.2 Add ARIA labels and semantic HTML
-
-    - Add ARIA labels to all interactive elements and status indicators
-    - Use proper HTML5 semantic elements (main, section, article, nav)
-    - Add role attributes for status, progressbar, and alert elements
-    - _Requirements: 8.2, 8.5_
-  
-  - [x] 14.3 Ensure color contrast and reduced motion
-
-
-    - Verify minimum 4.5:1 contrast ratio for all text
-    - Implement prefers-reduced-motion support to disable non-essential animations
-    - _Requirements: 8.3, 8.4_
-
-- [ ] 15. Implement performance optimizations
-  - [ ] 15.1 Add code splitting and lazy loading
-    - Lazy load CertificateUpload component with dynamic import
-    - Lazy load ProgressChart component with dynamic import
-    - Add Suspense boundaries with skeleton loading states
+    - Reuse existing ModernDashboardLayout component
+    - Configure sidebar with student navigation items (Dashboard, My Attendance, Class Information, Messages, Help & Support)
+    - Add student profile section with avatar, name, class, and student ID
+    - Implement notification badges for unread messages
+    - Add logout button with confirmation dialog
+    - Style with emerald/green color scheme
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.6, 14.7_
+
+  - [x] 2.2 Make sidebar fully responsive
+
+
+    - Implement collapsible sidebar for mobile (<768px)
+    - Add hamburger menu button in header
+    - Create smooth slide-in/slide-out animations
+    - Add backdrop overlay for mobile menu
+    - Implement swipe-to-close gesture
+    - Test on mobile (375px), tablet (768px), and desktop (1024px+)
+    - _Requirements: 7.1, 14.5_
+
+  - [x] 2.3 Create dashboard header with green theme
+
+
+    - Implement header with student avatar and welcome message
+    - Add notification bell icon with green badge
+    - Style with emerald gradient accents
+    - Make header responsive across all breakpoints
+    - _Requirements: 1.1, 15.1_
+
+- [-] 3. Implement welcome section and metrics cards
+
+
+  - [ ] 3.1 Create welcome banner component
+    - Display personalized greeting with student's first name
+    - Add motivational message based on attendance performance
+    - Implement green gradient background with floating elements
+    - Add quick action buttons (View Attendance, Contact Teacher)
+    - Make fully responsive with adaptive text sizes and button layouts
+    - _Requirements: 1.1, 6.2, 15.1_
+
+  - [ ] 3.2 Create metric cards with count-up animations
+    - Implement four metric cards: Total Classes, Attendance Rate, Present Days, Absent Days
+    - Add glass morphism design with emerald gradient backgrounds
+    - Implement count-up animations for numeric values
+    - Add 3D hover effects (disabled on mobile)
+    - Create responsive grid: 1 column (mobile) → 2 columns (tablet) → 4 columns (desktop)
+    - Use EnhancedMetricCard component with green theme
+    - _Requirements: 1.2, 6.1, 6.3_
+
+  - [ ] 3.3 Fetch and display dashboard metrics
+    - Create API hook for student dashboard metrics
+    - Implement loading states with skeleton cards
+    - Handle error states gracefully
+    - Display real-time attendance data
+    - _Requirements: 1.2, 3.1_
+
+- [ ] 4. Build weekly attendance calendar
+  - [ ] 4.1 Create calendar component with week view
+    - Display Saturday to Thursday (5 days) in grid layout
+    - Show day name, date, and status for each day
+    - Implement color-coded status badges (green=Present, red=Absent, yellow=Sick, blue=Leave)
+    - Add week navigation with arrow buttons
+    - Highlight current day with green ring and pulsing animation
+    - _Requirements: 2.1, 2.2, 2.5, 15.3_
+
+  - [ ] 4.2 Implement session-level details
+    - Create expandable day cards with smooth accordion animation
+    - Show session number, time, and status for each session
+    - Display who marked attendance and when
+    - Add click handler to expand/collapse session details
+    - _Requirements: 2.3_
+
+  - [ ] 4.3 Make calendar fully responsive
+    - Mobile: Horizontal scroll for week view with larger touch targets
+    - Tablet: Full week visible without scroll
+    - Desktop: Spacious layout with hover effects
+    - Implement smooth slide transitions between weeks
+    - Test on all breakpoints (375px to 1440px+)
+    - _Requirements: 2.4, 7.1_
+
+- [ ] 5. Create progress tracker and statistics
+  - [ ] 5.1 Implement progress visualization component
+    - Create circular progress indicator showing attendance percentage
+    - Add horizontal progress bars for Present, Absent, Sick, Leave hours
+    - Display total hours and percentages for each status
+    - Implement animated fill effects for progress bars
+    - Style with green gradients for positive metrics
+    - _Requirements: 3.1, 3.2_
+
+  - [ ] 5.2 Add threshold warnings and remaining absences
+    - Calculate and display remaining allowable absences
+    - Show distance to محروم (Disqualified) threshold
+    - Show distance to تصدیق طلب (Certification Required) threshold
+    - Implement color-coded warning zones (green, yellow, orange, red)
+    - Display warning messages with specific numbers
+    - _Requirements: 3.3, 3.5, 15.4_
+
+  - [ ] 5.3 Add class average comparison
+    - Fetch and display class average attendance rate
+    - Show student's ranking/percentile (anonymized)
+    - Create visual comparison chart
+    - Display encouraging message when exceeding class average
+    - _Requirements: 12.1, 12.2, 12.3, 12.4_
+
+  - [ ] 5.4 Implement trend analysis charts
+    - Create interactive charts showing attendance patterns over time
+    - Display weekly and monthly breakdowns
+    - Add hover tooltips with detailed information
+    - Make charts responsive and touch-friendly
+    - _Requirements: 3.4_
+
+- [ ] 6. Build academic standing alert system
+  - [ ] 6.1 Create alert card components
+    - Implement four alert types: Good Standing, Warning, محروم, تصدیق طلب
+    - Style each type with appropriate colors and icons
+    - Add pulsing animations for critical alerts
+    - Include action buttons where applicable
+    - _Requirements: 1.3, 4.1, 4.2, 4.3, 4.4, 15.4_
+
+  - [ ] 6.2 Implement alert logic and display
+    - Calculate academic status based on attendance data
+    - Display appropriate alert based on status
+    - Show remaining absences before reaching thresholds
+    - Provide clear explanations in English with Arabic terms
+    - Add "Contact Teacher" or "Upload Documentation" action buttons
+    - _Requirements: 4.5, 6.2, 15.4_
+
+  - [ ] 6.3 Make alerts fully responsive
+    - Adapt alert layout for mobile, tablet, and desktop
+    - Ensure action buttons are touch-friendly (44px minimum)
+    - Test alert visibility and readability on all screen sizes
+    - _Requirements: 7.1, 7.2_
+
+- [ ] 7. Implement messaging system
+  - [ ] 7.1 Create messaging interface layout
+    - Build three-column layout: conversation list, message thread, details (desktop)
+    - Implement two-column layout for tablet
+    - Create full-screen layout for mobile with bottom sheet
+    - Add floating action button for new message on mobile
+    - _Requirements: 13.1, 13.2_
+
+  - [ ] 7.2 Build conversation list component
+    - Display all conversations with teachers and office
+    - Show recipient avatar, name, last message preview
+    - Display timestamp and unread badge with green background
+    - Highlight active conversation with green gradient
+    - Implement search/filter functionality
+    - _Requirements: 13.1, 13.2_
+
+  - [ ] 7.3 Create message thread component
+    - Implement chat-style interface with message bubbles
+    - Style student messages (right-aligned, green background)
+    - Style teacher/office messages (left-aligned, gray background)
+    - Display timestamps and read receipts
+    - Show attachment previews with download buttons
+    - _Requirements: 13.4, 13.5, 13.7_
+
+  - [ ] 7.4 Build compose message interface
+    - Create text area with placeholder
+    - Add message category selector (Attendance Inquiry, Documentation, General, Urgent)
+    - Implement file attachment with drag-and-drop support
+    - Add character count indicator
+    - Create send button with green gradient
+    - Show attachment preview with remove option
+    - _Requirements: 13.3, 13.6_
+
+  - [ ] 7.5 Implement message API integration
+    - Create API hooks for fetching conversations
+    - Implement send message functionality
+    - Add file upload with validation (type, size limits)
+    - Handle real-time message updates with WebSocket
+    - Display confirmation on message sent
+    - _Requirements: 13.4, 13.5_
+
+  - [ ] 7.6 Make messaging system fully responsive
+    - Mobile: Full-screen with bottom sheet for compose
+    - Tablet: Split view with conversation list and thread
+    - Desktop: Three-column layout with all features
+    - Ensure 44px minimum touch targets for all buttons
+    - Test file upload on mobile devices
+    - _Requirements: 7.1, 7.2_
+
+- [ ] 8. Create class information section
+  - [ ] 8.1 Build class overview card
+    - Display class name, code, semester, year, credits
+    - Show room and building location
+    - Create weekly schedule grid
+    - Style with glass morphism and green accents
+    - _Requirements: 5.1, 5.3_
+
+  - [ ] 8.2 Create teacher information card
+    - Display teacher avatar with green ring
+    - Show teacher name, title, and contact email
+    - Add office hours and location
+    - Implement "Contact Teacher" button (opens messaging)
+    - _Requirements: 5.4_
+
+  - [ ] 8.3 Build attendance policy card
+    - Display attendance rules in clear English
+    - Show visual representation of thresholds
+    - Explain محروم (Disqualified) in English
+    - Explain تصدیق طلب (Certification Required) in English
+    - Create FAQ accordion for common questions
+    - _Requirements: 5.2, 9.1, 9.2, 9.3, 9.4, 15.4, 15.6_
+
+  - [ ] 8.4 Make class information fully responsive
+    - Stack cards vertically on mobile
+    - Two-column layout on tablet
+    - Multi-column layout on desktop
+    - Ensure schedule grid is readable on all screen sizes
+    - _Requirements: 7.1_
+
+- [ ] 9. Implement attendance history view
+  - [ ] 9.1 Create history timeline component
+    - Display chronological list of all attendance records
+    - Show date, session number, status, marked by, marked at
+    - Implement vertical timeline with date markers
+    - Add notes/comments display
+    - Style with color-coded status badges
+    - _Requirements: 8.1, 8.2_
+
+  - [ ] 9.2 Build filter panel
+    - Add date range picker with calendar dropdown
+    - Create status type multi-select checkboxes
+    - Implement month selector for quick filtering
+    - Add "Reset Filters" button
+    - Display active filters with remove chips
+    - _Requirements: 8.3_
+
+  - [ ] 9.3 Add export functionality
+    - Implement export to PDF button
+    - Implement export to CSV button
+    - Show download progress animation
+    - Generate files with proper formatting
+    - _Requirements: 8.4_
+
+  - [ ] 9.4 Implement statistics summary
+    - Display total records count
+    - Show breakdown by status type
+    - Add date range covered
+    - Create visual mini-charts
+    - _Requirements: 8.5_
+
+  - [ ] 9.5 Make history view fully responsive
+    - Mobile: Card-based layout with simplified data
+    - Tablet: Timeline with medium-sized cards
+    - Desktop: Full timeline with all details
+    - Implement infinite scroll for large datasets
+    - Add skeleton loading states
+    - _Requirements: 7.1_
+
+- [ ] 10. Build help & support section
+  - [ ] 10.1 Create FAQ accordion component
+    - Implement searchable FAQ list
+    - Organize by categories (Attendance, Policies, Technical, General)
+    - Add expandable accordion items with smooth animation
+    - Highlight active item with green theme
+    - Include "Was this helpful?" feedback buttons
+    - _Requirements: 9.5, 15.5_
+
+  - [ ] 10.2 Build policy documents section
+    - Display Attendance Policy in English
+    - Show محروم (Disqualified) explanation
+    - Show تصدیق طلب (Certification Required) process
+    - Add Student Rights and Responsibilities
+    - Create expandable card format for each policy
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 15.5, 15.6_
+
+  - [ ] 10.3 Create contact information card
+    - Display office contact details
+    - Show emergency contact information
+    - Add "Send Message to Office" button
+    - Display office hours and location
+    - Include quick links to common actions
     - _Requirements: 9.5_
-  
-  - [ ] 15.2 Optimize images and animations
-    - Use Next.js Image component for all images
-    - Ensure animations use transform and opacity (GPU accelerated)
-    - Avoid animating width, height, margin, padding
-    - _Requirements: 9.1_
 
-- [ ] 16. Add security measures
-  - Implement authentication check on dashboard page
-  - Add authorization middleware to verify student can only access own data
-  - Implement secure file upload with server-side validation
-  - Store uploaded files outside public directory
-  - Sanitize file names before storage
-  - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+  - [ ] 10.4 Make help section fully responsive
+    - Mobile: Single-column layout with full-width cards
+    - Tablet: Two-column layout
+    - Desktop: Multi-column layout with sidebar
+    - Ensure FAQ search works on all devices
+    - _Requirements: 7.1_
 
-- [ ]* 17. Write comprehensive tests
-  - [ ]* 17.1 Write unit tests for components
-    - Test Button component with all variants and states
-    - Test Card component with hover effects
-    - Test Icon component with different sizes
-    - Test ProgressRing animation
-    - Test CountUp animation
-    - _Requirements: All_
-  
-  - [ ]* 17.2 Write unit tests for hooks
-    - Test useAttendance data fetching and error handling
-    - Test useFileUpload validation and upload flow
-    - _Requirements: 9.3, 6.3_
-  
-  - [ ]* 17.3 Write integration tests
-    - Test complete dashboard rendering with mock data
-    - Test navigation between weeks in calendar
-    - Test file upload flow end-to-end
-    - _Requirements: All_
-  
-  - [ ]* 17.4 Write E2E tests
-    - Test login and view dashboard flow
-    - Test responsive design on mobile, tablet, desktop
+- [ ] 11. Implement notification system
+  - [ ] 11.1 Create notification center component
+    - Build slide-out panel from right side
+    - Display notifications with type-specific colors
+    - Show unread count badge with green background
+    - Implement mark as read functionality
+    - Add mark all as read button
+    - _Requirements: 11.1, 11.5_
+
+  - [ ] 11.2 Implement notification types
+    - Attendance marked notifications
+    - Warning threshold notifications (75% of max absences)
+    - Critical alerts (محروم, تصدیق طلب status)
+    - Schedule change notifications
+    - Message received notifications
+    - _Requirements: 11.1, 11.2, 11.3, 11.4_
+
+  - [ ] 11.3 Add notification preferences
+    - Create settings dialog for notification preferences
+    - Allow enabling/disabling notification types
+    - Add email notification toggle
+    - Implement quiet hours settings
+    - _Requirements: 11.5_
+
+  - [ ] 11.4 Make notifications fully responsive
+    - Mobile: Full-screen notification panel
+    - Tablet: Slide-out panel (medium width)
+    - Desktop: Slide-out panel (standard width)
+    - Ensure notification cards are touch-friendly
+    - _Requirements: 7.1, 7.2_
+
+- [ ] 12. Implement data fetching and state management
+  - [ ] 12.1 Create API hooks for student data
+    - Create useStudentDashboardMetrics hook
+    - Create useStudentAttendance hook
+    - Create useStudentClass hook
+    - Create useStudentMessages hook
+    - Implement React Query for server state management
+    - _Requirements: 1.2, 3.1, 5.1_
+
+  - [ ] 12.2 Set up client state management
+    - Configure Zustand for UI preferences
+    - Manage sidebar collapsed state
+    - Handle modal and dialog states
+    - Store filter and sort preferences
+    - _Requirements: 7.1_
+
+  - [ ] 12.3 Implement real-time updates
+    - Set up WebSocket connection for live updates
+    - Handle attendance marked events
+    - Handle new message events
+    - Handle status change events
+    - Update UI optimistically
+    - _Requirements: 11.1, 13.5_
+
+- [ ] 13. Add authentication and security
+  - [ ] 13.1 Implement student role guard
+    - Use existing StudentGuard component
+    - Protect all student routes
+    - Redirect unauthorized users
+    - Handle authentication errors
+    - _Requirements: 10.1, 10.3_
+
+  - [ ] 13.2 Enforce read-only access
+    - Disable all edit/delete actions
+    - Show clear messaging for read-only data
+    - Prevent API calls for modifications
+    - Display appropriate error messages
+    - _Requirements: 10.3, 10.4_
+
+  - [ ] 13.3 Implement data privacy controls
+    - Ensure students only see their own data
+    - Block access to other students' records
+    - Validate data access on API level
+    - Implement auto-logout after inactivity
+    - _Requirements: 10.2, 10.4_
+
+  - [ ] 13.4 Add file upload security
+    - Validate file types (PDF, JPG, PNG only)
+    - Enforce file size limits (max 10MB)
+    - Implement virus scanning for uploads
+    - Use secure storage with access controls
+    - _Requirements: 13.3_
+
+- [ ] 14. Implement accessibility features
+  - [ ] 14.1 Add keyboard navigation
+    - Implement logical tab order
+    - Add keyboard shortcuts for common actions
+    - Ensure all interactive elements are keyboard accessible
+    - Add clear focus indicators with green theme
+    - Implement focus trapping in modals
+    - _Requirements: 7.3, 7.4_
+
+  - [ ] 14.2 Implement screen reader support
+    - Add comprehensive ARIA labels
+    - Implement live regions for dynamic content
+    - Use semantic HTML throughout
+    - Add descriptive alt text for images
+    - Announce important state changes
+    - _Requirements: 7.4_
+
+  - [ ] 14.3 Ensure visual accessibility
+    - Verify 4.5:1 color contrast ratio (WCAG 2.1 AA)
+    - Ensure information not conveyed by color alone
+    - Support 200% text scaling without horizontal scroll
+    - Add high contrast mode support
+    - Test with color blindness simulators
+    - _Requirements: 7.5_
+
+- [ ] 15. Optimize performance
+  - [ ] 15.1 Implement code splitting
+    - Lazy load secondary features (messaging, help)
+    - Split routes for faster initial load
+    - Use dynamic imports for heavy components
+    - Optimize bundle size
+    - _Requirements: 7.1_
+
+  - [ ] 15.2 Add loading optimizations
+    - Implement skeleton screens for all data loading
+    - Use progressive loading (critical content first)
+    - Add shimmer effects for loading states
+    - Optimize images with WebP format
+    - Implement lazy loading for images
+    - _Requirements: 6.3_
+
+  - [ ] 15.3 Optimize animations
+    - Use hardware acceleration (transform3d)
+    - Respect prefers-reduced-motion
+    - Disable hover effects on mobile
+    - Maintain 60fps for all interactions
+    - Optimize animation performance
+    - _Requirements: 6.3, 7.1_
+
+- [ ] 16. Testing and quality assurance
+  - [ ] 16.1 Test responsive design
+    - Test on iPhone SE (375px)
+    - Test on iPhone 12/13/14 (390px)
+    - Test on iPad (768px)
+    - Test on iPad Pro (1024px)
+    - Test on Desktop (1440px)
+    - Test on 4K (2560px)
+    - Test landscape and portrait orientations
+    - Test with browser zoom at 200%
+    - _Requirements: 7.1_
+
+  - [ ] 16.2 Test touch interactions
+    - Verify 44px minimum touch targets
+    - Test swipe gestures on mobile
+    - Test haptic feedback
+    - Test on actual touch devices
+    - Verify touch-manipulation CSS
+    - _Requirements: 7.2_
+
+  - [ ] 16.3 Test accessibility
+    - Run automated accessibility tests
+    - Test with screen readers (NVDA, JAWS, VoiceOver)
     - Test keyboard navigation
-    - _Requirements: 7.1, 7.2, 7.3, 8.1_
-  
-  - [ ]* 17.5 Run accessibility tests
-    - Run axe-core automated tests
-    - Test with screen reader
-    - Verify keyboard-only navigation
-    - Test with reduced motion preference
-    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+    - Verify ARIA labels
+    - Check color contrast ratios
+    - _Requirements: 7.3, 7.4, 7.5_
+
+  - [ ] 16.4 Test performance
+    - Measure load time on 3G network
+    - Check bundle size
+    - Verify animation frame rates
+    - Test with slow devices
+    - Optimize based on results
+    - _Requirements: 6.3_
+
+- [ ] 17. Final integration and polish
+  - [ ] 17.1 Integrate with existing system
+    - Connect to authentication system
+    - Integrate with attendance API
+    - Connect to messaging system
+    - Link to class management
+    - Test end-to-end flows
+    - _Requirements: 10.1, 10.5_
+
+  - [ ] 17.2 Add error handling
+    - Implement network error handling
+    - Add data validation errors
+    - Handle permission errors
+    - Show user-friendly error messages
+    - Add retry mechanisms
+    - _Requirements: 15.2_
+
+  - [ ] 17.3 Polish UI and animations
+    - Fine-tune all animations
+    - Ensure consistent spacing
+    - Verify color consistency
+    - Check typography hierarchy
+    - Test all micro-interactions
+    - _Requirements: 6.3, 6.4_
+
+  - [ ] 17.4 Final responsive testing
+    - Complete responsive design checklist
+    - Test all breakpoints thoroughly
+    - Verify touch interactions
+    - Check accessibility compliance
+    - Perform cross-browser testing
+    - _Requirements: 7.1, 7.2_
+
+- [ ] 18. Documentation and deployment
+  - [ ] 18.1 Create user documentation
+    - Write student user guide
+    - Document messaging system usage
+    - Explain attendance policies
+    - Create FAQ content
+    - Add troubleshooting guide
+    - _Requirements: 9.5, 15.5_
+
+  - [ ] 18.2 Prepare for deployment
+    - Run final tests
+    - Optimize production build
+    - Configure environment variables
+    - Set up monitoring and analytics
+    - Create deployment checklist
+    - _Requirements: 10.5_
+
+## Notes
+
+- All tasks should maintain the green color theme (emerald-500, emerald-600, emerald-700)
+- Every component must be fully responsive (375px to 2560px+)
+- All interactive elements must have 44px minimum touch targets on mobile
+- Hover effects should be disabled on mobile devices
+- All text must be in English with Arabic terms translated and explained
+- Follow existing design patterns from teacher and office dashboards
+- Use existing components where possible (ModernDashboardLayout, EnhancedMetricCard, etc.)
+- Maintain WCAG 2.1 AA accessibility compliance throughout
+- Test on actual devices, not just browser dev tools

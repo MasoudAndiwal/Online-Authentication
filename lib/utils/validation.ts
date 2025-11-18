@@ -54,7 +54,7 @@ export const ValidationMessages = {
         required: 'Student ID is required',
         pattern: 'Student ID must contain only numbers',
         minLength: 'Student ID must be at least 4 digits',
-        maxLength: 'Student ID must be 10 digits or less',
+        maxLength: 'Student ID must be 12 digits or less',
     },
     teacherId: {
         required: 'Teacher ID is required',
@@ -152,7 +152,7 @@ export const validateId = (value: string, type: 'studentId' | 'teacherId'): stri
         return messages.minLength;
     }
 
-    if (value.length > 10) {
+    if (value.length > 12) {
         return messages.maxLength;
     }
 

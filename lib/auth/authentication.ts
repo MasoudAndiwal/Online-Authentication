@@ -120,22 +120,47 @@ export async function authenticateTeacher(username: string, password: string): P
 // Student authentication (requires username, studentId, and password)
 export async function authenticateStudent(
   username: string,
-  studentIdRef: string,
+  studentId: string,
   password: string
 ): Promise<AuthResponse> {
   try {
+    console.log('🔐 Student Authentication Attempt:', {
+      username,
+      studentId,
+      passwordLength: password.length
+    });
+
     // Find student by username
     const student: Student | null = await findStudentByUsername(username);
 
     if (!student) {
+      console.log('❌ Student not found with username:', username);
       return {
         success: false,
         message: 'Invalid credentials. Please check your username, student ID, and password.',
       };
     }
 
-    // Verify student ID reference matches
-    if (student.studentIdRef !== studentIdRef) {
+    console.log('✅ Student found:', {
+      id: student.id,
+      username: student.username,
+      studentId: student.studentId,
+      studentIdRef: student.studentIdRef,
+      status: student.status
+    });
+
+    // Verify student ID matches (check both studentId and studentIdRef for flexibility)
+    const studentIdMatches = student.studentId === studentId || student.studentIdRef === studentId;
+    
+    console.log('🔍 Student ID Check:', {
+      providedStudentId: studentId,
+      dbStudentId: student.studentId,
+      dbStudentIdRef: student.studentIdRef,
+      matches: studentIdMatches
+    });
+    
+    if (!studentIdMatches) {
+      console.log('❌ Student ID does not match');
       return {
         success: false,
         message: 'Invalid credentials. Please check your username, student ID, and password.',
@@ -144,6 +169,7 @@ export async function authenticateStudent(
 
     // Check if student is active
     if (student.status !== 'ACTIVE') {
+      console.log('❌ Student account is not active:', student.status);
       return {
         success: false,
         message: 'Your account is inactive. Please contact administration.',
@@ -151,14 +177,20 @@ export async function authenticateStudent(
     }
 
     // Compare password with stored hashed password
+    console.log('🔑 Comparing passwords...');
     const isPasswordValid = await comparePassword(password, student.password);
 
+    console.log('🔑 Password validation result:', isPasswordValid);
+
     if (!isPasswordValid) {
+      console.log('❌ Password is invalid');
       return {
         success: false,
         message: 'Invalid credentials. Please check your username, student ID, and password.',
       };
     }
+
+    console.log('✅ Authentication successful for student:', student.username);
 
     return {
       success: true,
@@ -172,7 +204,7 @@ export async function authenticateStudent(
       },
     };
   } catch (error) {
-    console.error('Student authentication error:', error);
+    console.error('❌ Student authentication error:', error);
     return {
       success: false,
       message: 'An error occurred during authentication. Please try again.',
