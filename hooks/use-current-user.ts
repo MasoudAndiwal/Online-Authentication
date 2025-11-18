@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
 
 interface UserProfile {
+  id: string
   name: string
   email: string
+  firstName: string
+  lastName: string
   role: 'OFFICE' | 'TEACHER' | 'STUDENT'
   avatar?: string
 }
@@ -25,8 +28,11 @@ export function useCurrentUser() {
       if (session) {
         // Convert session to user profile format
         const userProfile: UserProfile = {
+          id: session.id,
           name: session.username || `${session.firstName} ${session.lastName}`.trim() || 'User',
           email: session.email || 'user@university.edu',
+          firstName: session.firstName,
+          lastName: session.lastName,
           role: session.role,
           avatar: undefined, // Can be extended to include avatar URL from session
         }

@@ -10,7 +10,8 @@ import { getSession } from '@/lib/auth/session';
 import type { UploadedFile, UploadResponse } from '@/types/types';
 
 // File validation constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Requirements: 13.3 - File upload security
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
 
@@ -49,8 +50,14 @@ function validateMimeType(mimeType: string): boolean {
  * - Upload progress tracking
  * - State management (idle, uploading, success, error)
  * - Error handling
+ * - Secure file type validation
  * 
- * Requirements: 6.3, 6.6
+ * Security:
+ * - File type validation (PDF, JPG, PNG only)
+ * - File size limits (max 10MB)
+ * - MIME type validation
+ * 
+ * Requirements: 13.3 - File upload security
  */
 export function useFileUpload(): UseFileUploadReturn {
   const [uploadState, setUploadState] = useState<UploadState>('idle');
@@ -60,13 +67,22 @@ export function useFileUpload(): UseFileUploadReturn {
 
   /**
    * Validate file before upload
+   * Performs client-side validation for security
    */
   const validateFile = useCallback((file: File): { valid: boolean; error?: string } => {
-    // Validate file size
+    // Validate file size (max 10MB)
     if (file.size > MAX_FILE_SIZE) {
       return {
         valid: false,
         error: `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+      };
+    }
+
+    // Validate minimum file size (prevent empty files)
+    if (file.size < 100) {
+      return {
+        valid: false,
+        error: 'File is too small or empty',
       };
     }
 

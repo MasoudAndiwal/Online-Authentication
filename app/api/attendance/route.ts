@@ -1,13 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth/session';
 
 /**
  * POST /api/attendance
  * Save attendance records for a class on a specific date
  * Backward compatible: Works with current table structure
+ * 
+ * Requirements: 10.3, 10.4 - Read-only access enforcement
  */
 export async function POST(request: NextRequest) {
   try {
+    // Enforce read-only access - students cannot mark attendance
+    const session = getSession();
+    if (session?.role === 'STUDENT') {
+      return NextResponse.json(
+        { 
+          error: 'Access denied. Students have read-only access and cannot mark attendance.',
+          code: 'READ_ONLY_ACCESS'
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { classId, date, records, markedBy } = body;
 

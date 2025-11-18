@@ -10,7 +10,8 @@ import { randomUUID } from 'crypto';
 import type { UploadedFile, UploadResponse } from '@/types/types';
 
 // File validation constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Requirements: 13.3 - File upload security
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (increased from 5MB)
 const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
 
@@ -143,17 +144,34 @@ async function saveFileMetadata(
 
 /**
  * Upload medical certificate file
+ * 
+ * Security features:
+ * - File type validation (PDF, JPG, PNG only)
+ * - File size limits (max 10MB)
+ * - Magic number validation to prevent file type spoofing
+ * - Secure file naming to prevent path traversal
+ * - Files stored outside public directory
+ * 
+ * Requirements: 13.3 - File upload security
  */
 export async function uploadMedicalCertificate(
   studentId: string,
   file: File
 ): Promise<UploadResponse> {
   try {
-    // Validate file size
+    // Validate file size (max 10MB)
     if (file.size > MAX_FILE_SIZE) {
       return {
         success: false,
         error: `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+      };
+    }
+
+    // Validate minimum file size (prevent empty files)
+    if (file.size < 100) {
+      return {
+        success: false,
+        error: 'File is too small or empty',
       };
     }
 
@@ -177,7 +195,7 @@ export async function uploadMedicalCertificate(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Validate file type using magic numbers
+    // Validate file type using magic numbers (prevents file type spoofing)
     if (!validateFileType(buffer, file.type)) {
       return {
         success: false,

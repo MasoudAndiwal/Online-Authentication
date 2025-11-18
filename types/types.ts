@@ -55,6 +55,9 @@ export interface SessionAttendance {
   period: number;
   courseName: string;
   status: AttendanceStatus;
+  time?: string;
+  markedBy?: string;
+  markedAt?: string;
 }
 
 export interface UploadedFile {

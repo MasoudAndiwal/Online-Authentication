@@ -4,6 +4,8 @@ import type { Student } from '@/lib/database/models';
 import { DatabaseError, handleApiError } from '@/lib/database/errors';
 import { ZodError } from 'zod';
 import { hashPassword } from '@/lib/utils/password';
+import { getSession } from '@/lib/auth/session';
+import { validateStudentDataAccess } from '@/lib/auth/read-only-middleware';
 
 export async function GET(
   request: NextRequest,
@@ -11,6 +13,17 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // Validate data access - students can only view their own data
+    const session = getSession();
+    const accessCheck = validateStudentDataAccess(session, id);
+    
+    if (!accessCheck.allowed) {
+      return NextResponse.json(
+        { error: accessCheck.error || 'Access denied' },
+        { status: 403 }
+      );
+    }
 
     // Fetch student by ID
     const student = await findStudentById(id);
@@ -50,6 +63,19 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+
+    // Enforce read-only access - students cannot modify data
+    const session = getSession();
+    if (session?.role === 'STUDENT') {
+      return NextResponse.json(
+        { 
+          error: 'Access denied. Students have read-only access and cannot modify data.',
+          code: 'READ_ONLY_ACCESS'
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     // Check if student exists
@@ -148,6 +174,18 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    // Enforce read-only access - students cannot delete data
+    const session = getSession();
+    if (session?.role === 'STUDENT') {
+      return NextResponse.json(
+        { 
+          error: 'Access denied. Students have read-only access and cannot delete data.',
+          code: 'READ_ONLY_ACCESS'
+        },
+        { status: 403 }
+      );
+    }
 
     // Check if student exists
     const existingStudent = await findStudentById(id);

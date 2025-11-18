@@ -11,24 +11,49 @@ export interface UserSession {
   lastName: string;
   role: 'OFFICE' | 'TEACHER' | 'STUDENT';
   loginTime: number;
+  lastActivity: number;
 }
 
 const SESSION_KEY = 'user_session';
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 /**
  * Save user session after successful login
  */
-export function saveSession(userData: Omit<UserSession, 'loginTime'>): void {
+export function saveSession(userData: Omit<UserSession, 'loginTime' | 'lastActivity'>): void {
+  const now = Date.now();
   const session: UserSession = {
     ...userData,
-    loginTime: Date.now(),
+    loginTime: now,
+    lastActivity: now,
   };
   
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 /**
+ * Update last activity timestamp
+ */
+export function updateActivity(): void {
+  const session = getSession();
+  if (session) {
+    session.lastActivity = Date.now();
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+}
+
+/**
+ * Check if session has expired due to inactivity
+ */
+export function isSessionExpired(session: UserSession): boolean {
+  const now = Date.now();
+  const timeSinceLastActivity = now - session.lastActivity;
+  return timeSinceLastActivity > INACTIVITY_TIMEOUT;
+}
+
+/**
  * Get current user session
+ * Automatically clears session if expired
  */
 export function getSession(): UserSession | null {
   try {
@@ -37,7 +62,19 @@ export function getSession(): UserSession | null {
       return null;
     }
     
-    return JSON.parse(sessionData) as UserSession;
+    const session = JSON.parse(sessionData) as UserSession;
+    
+    // Check if session has expired
+    if (isSessionExpired(session)) {
+      console.log('Session expired due to inactivity');
+      clearSession();
+      return null;
+    }
+    
+    // Update last activity
+    updateActivity();
+    
+    return session;
   } catch (error) {
     console.error('Error reading session:', error);
     return null;
