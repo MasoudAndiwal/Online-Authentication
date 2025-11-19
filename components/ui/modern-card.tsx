@@ -15,8 +15,8 @@ interface ModernCardProps {
 const variantClasses = {
   default: 'bg-white border border-slate-200/60 shadow-sm',
   elevated: 'bg-white border-0 shadow-lg shadow-slate-200/50',
-  glass: 'bg-white/70 backdrop-blur-xl border border-white/20 shadow-lg shadow-slate-200/30',
-  gradient: 'bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 border border-slate-200/40 shadow-md'
+  glass: 'bg-white/70 backdrop-blur-xl border-0 shadow-lg shadow-slate-200/30',
+  gradient: 'bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 border-0 shadow-md'
 }
 
 const paddingClasses = {

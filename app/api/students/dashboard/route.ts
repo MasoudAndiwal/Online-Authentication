@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth/session';
-import { validateStudentDataAccess } from '@/lib/auth/read-only-middleware';
 
 /**
  * GET /api/students/dashboard
@@ -22,13 +20,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate data access - students can only view their own data
-    const session = getSession();
-    const accessCheck = validateStudentDataAccess(session, studentId);
-    
-    if (!accessCheck.allowed) {
+    // Verify student exists in the database
+    const { data: student, error: studentCheckError } = await supabase
+      .from('students')
+      .select('id, student_id, first_name, last_name, status')
+      .eq('id', studentId)
+      .single();
+
+    if (studentCheckError || !student) {
+      console.error('[Student Dashboard API] Student not found:', studentCheckError);
       return NextResponse.json(
-        { error: accessCheck.error || 'Access denied' },
+        { error: 'Student not found' },
+        { status: 404 }
+      );
+    }
+
+    if (student.status !== 'ACTIVE') {
+      return NextResponse.json(
+        { error: 'Student account is not active' },
         { status: 403 }
       );
     }

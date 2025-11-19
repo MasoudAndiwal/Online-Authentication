@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -38,6 +42,7 @@
     "exceljs": "^4.4.0",
     "framer-motion": "^12.23.22",
     "gsap": "^3.13.0",
+    "ioredis": "^5.8.2",
     "jspdf": "^3.0.3",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.544.0",
@@ -63,13 +68,17 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
+    "@types/ioredis": "^4.28.10",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/ui": "^4.0.10",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
+    "fast-check": "^4.3.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.10"
   }
 }

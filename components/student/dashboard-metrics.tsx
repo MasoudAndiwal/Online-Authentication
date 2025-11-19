@@ -57,7 +57,7 @@ export function DashboardMetrics({
         color="emerald"
         animateValue={true}
         delay={0}
-        className="bg-gradient-to-br from-emerald-50 to-emerald-100/50"
+        className="bg-emerald-50/50"
       />
 
       {/* Attendance Rate Card */}
@@ -68,7 +68,7 @@ export function DashboardMetrics({
         color="emerald"
         animateValue={true}
         delay={0.1}
-        className="bg-gradient-to-br from-emerald-50 to-emerald-100/50"
+        className="bg-emerald-50/50"
       />
 
       {/* Present Days Card */}
@@ -79,7 +79,7 @@ export function DashboardMetrics({
         color="emerald"
         animateValue={true}
         delay={0.2}
-        className="bg-gradient-to-br from-emerald-50 to-emerald-100/50"
+        className="bg-emerald-50/50"
       />
 
       {/* Absent Days Card */}
@@ -90,7 +90,7 @@ export function DashboardMetrics({
         color="red"
         animateValue={true}
         delay={0.3}
-        className="bg-gradient-to-br from-red-50 to-red-100/50"
+        className="bg-red-50/50"
       />
     </motion.div>
   )

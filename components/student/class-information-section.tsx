@@ -65,9 +65,6 @@ export function ClassInformationSection({
   classCode,
   semester,
   academicYear,
-  credits,
-  room,
-  building,
   schedule,
   major,
   studentCount,
@@ -91,9 +88,6 @@ export function ClassInformationSection({
           classCode={classCode}
           semester={semester}
           academicYear={academicYear}
-          credits={credits}
-          room={room}
-          building={building}
           schedule={schedule}
           major={major}
           studentCount={studentCount}

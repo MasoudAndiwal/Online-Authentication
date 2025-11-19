@@ -4,56 +4,53 @@
 -- This script creates a test student account for development/testing
 -- Username: AliKhan
 -- Student ID: 0704
--- Password: student123 (hashed)
+-- Password: student123
 -- ============================================
 
--- Note: This assumes you're using Supabase Auth
--- The password will be hashed by Supabase when creating the user
-
--- Step 1: Create the auth user (Run this in Supabase Dashboard > Authentication > Users > Add User)
--- OR use the Supabase API/Dashboard to create user with:
--- Email: alikhan@student.edu (or any email format your system uses)
--- Password: student123
--- Then get the user ID and use it below
-
--- Step 2: Insert student record
--- Replace 'USER_ID_HERE' with the actual UUID from auth.users after creating the user
-
+-- Insert student record with your table structure
 INSERT INTO public.students (
-  id,
+  first_name,
+  last_name,
+  father_name,
+  grandfather_name,
   student_id,
-  full_name,
-  email,
-  phone,
   date_of_birth,
-  gender,
+  phone,
+  father_phone,
   address,
-  emergency_contact_name,
-  emergency_contact_phone,
-  enrollment_date,
-  status,
-  created_at,
-  updated_at
+  programs,
+  semester,
+  enrollment_year,
+  class_section,
+  time_slot,
+  username,
+  student_id_ref,
+  password,
+  status
 ) VALUES (
-  'USER_ID_HERE'::uuid,  -- Replace with actual user ID from auth.users
-  '0704',
-  'Ali Khan',
-  'alikhan@student.edu',
-  '+93 700 123 456',
-  '2005-01-15',
-  'male',
+  'Ali',
+  'Khan',
+  'Ahmad Khan',
+  'Mohammad Khan',
+  '2024070401',  -- 10-digit student ID: 2024 (year) + 0704 (sequence) + 01 (section)
+  '2005-01-15'::timestamp with time zone,
+  '0700123456',  -- 10-digit phone number (no symbols)
+  '0700123457',  -- 10-digit father phone number (no symbols)
   'Kabul, Afghanistan',
-  'Khan Family',
-  '+93 700 123 457',
-  '2024-01-15',
-  'active',
-  NOW(),
-  NOW()
+  'Computer Science',
+  'Semester 1',
+  '2024',
+  'CS-101-A',
+  'MORNING',
+  'AliKhan',
+  '2024070401',  -- Same as student_id
+  'student123',  -- Note: In production, this should be hashed
+  'ACTIVE'
 )
-ON CONFLICT (id) DO UPDATE SET
+ON CONFLICT (username) DO UPDATE SET
+  first_name = EXCLUDED.first_name,
+  last_name = EXCLUDED.last_name,
   student_id = EXCLUDED.student_id,
-  full_name = EXCLUDED.full_name,
-  email = EXCLUDED.email,
   updated_at = NOW();
 
 -- ============================================

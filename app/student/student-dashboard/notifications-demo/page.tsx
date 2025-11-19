@@ -42,6 +42,7 @@ export default function StudentNotificationsDemoPage() {
   const handleCreateAttendance = async () => {
     await createAttendanceNotification(
       Math.floor(Math.random() * 5) + 1,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ['present', 'absent', 'sick', 'leave'][Math.floor(Math.random() * 4)] as any,
       'Dr. Ahmed Hassan'
     )

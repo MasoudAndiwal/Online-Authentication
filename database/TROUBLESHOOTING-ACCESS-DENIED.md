@@ -2,7 +2,9 @@
 
 ## Problem: "Access Denied - You do not have permission to view this information"
 
-This error appears on the student dashboard when the system cannot verify that the logged-in user has permission to view the data.
+This error appears on the student dashboard when the system cannot find or access the student's data.
+
+**Your System**: Custom authentication with `students` table (NOT Supabase Auth)
 
 ---
 
@@ -10,28 +12,52 @@ This error appears on the student dashboard when the system cannot verify that t
 
 ### ✅ Cause 1: Student Record Doesn't Exist
 
-**Problem**: The user exists in `auth.users` but there's no matching record in the `students` table.
+**Problem**: No student record exists in the `students` table.
 
 **Solution**:
 ```sql
 -- Check if student record exists
-SELECT * FROM students WHERE id = 'YOUR_USER_ID_HERE';
+SELECT * FROM students WHERE username = 'AliKhan' OR student_id = '0704';
 
 -- If no record found, create one:
 INSERT INTO public.students (
-  id,                    -- MUST match auth.users.id
+  first_name,
+  last_name,
+  father_name,
+  grandfather_name,
   student_id,
-  full_name,
-  email,
-  enrollment_date,
+  date_of_birth,
+  phone,
+  father_phone,
+  address,
+  programs,
+  semester,
+  enrollment_year,
+  class_section,
+  time_slot,
+  username,
+  student_id_ref,
+  password,
   status
 ) VALUES (
-  'YOUR_USER_ID_HERE'::uuid,  -- Get this from auth.users
-  '0704',                      -- Student ID number
-  'Ali Khan',
-  'alikhan@student.edu',
-  CURRENT_DATE,
-  'active'
+  'Ali',
+  'Khan',
+  'Ahmad Khan',
+  'Mohammad Khan',
+  '0704',
+  '2005-01-15'::timestamp with time zone,
+  '+93 700 123 456',
+  '+93 700 123 457',
+  'Kabul, Afghanistan',
+  'Computer Science',
+  'Semester 1',
+  '2024',
+  'CS-101-A',
+  'MORNING',
+  'AliKhan',
+  '0704',
+  'student123',
+  'ACTIVE'
 );
 ```
 
