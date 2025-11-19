@@ -7,6 +7,7 @@ import { ModernDashboardLayout, PageContainer } from "@/components/layout/modern
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { handleLogout } from "@/lib/auth/logout";
 import { NotificationBell } from "@/components/student/notification-bell";
+import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
 import { ClassInformationSection } from "@/components/student/class-information-section";
 import { AlertCircle } from "lucide-react";
 
@@ -21,7 +22,35 @@ import { AlertCircle } from "lucide-react";
 export default function ClassInfoPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
-  const [unreadNotifications] = React.useState(0);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const [notifications, setNotifications] = React.useState<Notification[]>([
+    {
+      id: "1",
+      type: "info",
+      title: "Class Schedule Updated",
+      message: "Your Computer Science 101 schedule has been updated for next week.",
+      timestamp: new Date(Date.now() - 3600000), // 1 hour ago
+      read: false,
+    },
+    {
+      id: "2",
+      type: "warning",
+      title: "Attendance Warning",
+      message: "Your attendance rate is below 85%. Please maintain regular attendance.",
+      timestamp: new Date(Date.now() - 7200000), // 2 hours ago
+      read: false,
+    },
+    {
+      id: "3",
+      type: "message",
+      title: "New Message from Dr. Ahmad Hassan",
+      message: "Please check the updated assignment deadline for this week.",
+      timestamp: new Date(Date.now() - 86400000), // 1 day ago
+      read: true,
+    },
+  ]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // TODO: Fetch actual class data from API
   // For now, using mock data that matches the student's class
@@ -33,6 +62,9 @@ export default function ClassInfoPage() {
     credits: 3,
     room: "Room 204",
     building: "Engineering Building",
+    major: "Computer Science",
+    studentCount: 45,
+    session: "MORNING",
     schedule: [
       {
         day: "Saturday",
@@ -56,12 +88,39 @@ export default function ClassInfoPage() {
         sessionType: "lecture" as const
       }
     ],
-    teacherName: "Dr. Ahmad Hassan",
-    teacherTitle: "Associate Professor of Computer Science",
-    teacherEmail: "ahmad.hassan@university.edu",
-    officeHours: "Sunday & Tuesday, 10:00 AM - 12:00 PM",
-    officeLocation: "Office 305, Engineering Building",
-    teacherAvatar: undefined,
+    teachers: [
+      {
+        id: "teacher-1",
+        name: "Dr. Ahmad Hassan",
+        title: "Associate Professor of Computer Science",
+        avatar: undefined,
+        sessions: [
+          {
+            day: "Saturday",
+            time: "08:00 AM - 10:00 AM",
+            type: "lecture"
+          },
+          {
+            day: "Wednesday",
+            time: "02:00 PM - 04:00 PM",
+            type: "lecture"
+          }
+        ]
+      },
+      {
+        id: "teacher-2",
+        name: "Prof. Sarah Johnson",
+        title: "Senior Lecturer",
+        avatar: undefined,
+        sessions: [
+          {
+            day: "Monday",
+            time: "10:00 AM - 12:00 PM",
+            type: "lab"
+          }
+        ]
+      }
+    ],
     maxAbsences: 10,
     mahroomThreshold: 75,
     tasdiqThreshold: 85
@@ -77,14 +136,28 @@ export default function ClassInfoPage() {
   };
 
   const handleNotificationClick = () => {
-    // TODO: Open notification panel in future tasks
-    console.log("Notification bell clicked");
+    setIsNotificationPanelOpen(!isNotificationPanelOpen);
   };
 
-  const handleContactTeacher = () => {
+  const handleMarkAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+    setIsNotificationPanelOpen(false);
+  };
+
+  const handleContactTeacher = (teacherId: string) => {
     // TODO: Navigate to messaging interface with teacher pre-selected
     router.push("/student/student-dashboard/messages");
-    console.log("Contact teacher clicked - navigating to messages");
+    console.log(`Contact teacher clicked - Teacher ID: ${teacherId} - navigating to messages`);
   };
 
   if (userLoading) {
@@ -109,8 +182,9 @@ export default function ClassInfoPage() {
         hideSearch={true}
         notificationTrigger={
           <NotificationBell
-            unreadCount={unreadNotifications}
+            unreadCount={unreadCount}
             onClick={handleNotificationClick}
+            isActive={isNotificationPanelOpen}
           />
         }
       >
@@ -136,12 +210,10 @@ export default function ClassInfoPage() {
               room={classData.room}
               building={classData.building}
               schedule={classData.schedule}
-              teacherName={classData.teacherName}
-              teacherTitle={classData.teacherTitle}
-              teacherEmail={classData.teacherEmail}
-              officeHours={classData.officeHours}
-              officeLocation={classData.officeLocation}
-              teacherAvatar={classData.teacherAvatar}
+              major={classData.major}
+              studentCount={classData.studentCount}
+              session={classData.session}
+              teachers={classData.teachers}
               maxAbsences={classData.maxAbsences}
               mahroomThreshold={classData.mahroomThreshold}
               tasdiqThreshold={classData.tasdiqThreshold}
@@ -149,16 +221,18 @@ export default function ClassInfoPage() {
             />
 
             {/* Help Note */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-5">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-0 shadow-sm rounded-xl p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-sm sm:text-base font-semibold text-blue-800 mb-1">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25">
+                  <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm sm:text-base font-bold text-blue-800 mb-2">
                     Need Help?
                   </h3>
-                  <p className="text-xs sm:text-sm text-blue-700">
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                     If you have questions about your class, schedule, or attendance policy, 
-                    use the "Contact Teacher" button above to send a message directly to your instructor.
+                    use the &quot;Contact Teacher&quot; button above to send a message directly to your instructor.
                   </p>
                 </div>
               </div>
@@ -166,6 +240,16 @@ export default function ClassInfoPage() {
           </div>
         </PageContainer>
       </ModernDashboardLayout>
+
+      {/* Notification Panel */}
+      <NotificationPanel
+        isOpen={isNotificationPanelOpen}
+        onClose={() => setIsNotificationPanelOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+        onClearAll={handleClearAll}
+      />
     </StudentGuard>
   );
 }

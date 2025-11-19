@@ -48,7 +48,7 @@ export function AttendancePolicyCard({
         </CardHeader>
         <CardContent className="p-4 sm:p-5 lg:p-6 space-y-6">
           {/* Policy Overview */}
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 sm:p-5 border border-emerald-200/50">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 sm:p-5 border-0 shadow-sm">
             <h3 className="text-base sm:text-lg font-bold text-emerald-700 mb-3 flex items-center gap-2">
               <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
               Attendance Requirements
@@ -155,26 +155,22 @@ function ThresholdItem({ icon, title, description, color, percentage, details }:
 
   const colorClasses = {
     green: {
-      bg: 'bg-green-50',
-      border: 'border-green-200',
+      bg: 'bg-gradient-to-br from-green-50 to-green-100/50',
       text: 'text-green-700',
       iconBg: 'bg-green-500'
     },
     yellow: {
-      bg: 'bg-yellow-50',
-      border: 'border-yellow-200',
+      bg: 'bg-gradient-to-br from-yellow-50 to-yellow-100/50',
       text: 'text-yellow-700',
       iconBg: 'bg-yellow-500'
     },
     orange: {
-      bg: 'bg-orange-50',
-      border: 'border-orange-200',
+      bg: 'bg-gradient-to-br from-orange-50 to-orange-100/50',
       text: 'text-orange-700',
       iconBg: 'bg-orange-500'
     },
     red: {
-      bg: 'bg-red-50',
-      border: 'border-red-200',
+      bg: 'bg-gradient-to-br from-red-50 to-red-100/50',
       text: 'text-red-700',
       iconBg: 'bg-red-500'
     }
@@ -183,7 +179,7 @@ function ThresholdItem({ icon, title, description, color, percentage, details }:
   const colors = colorClasses[color]
 
   return (
-    <div className={`${colors.bg} ${colors.border} border rounded-lg p-3 sm:p-4`}>
+    <div className={`${colors.bg} border-0 shadow-sm rounded-lg p-3 sm:p-4`}>
       <div className="flex items-start gap-3">
         <div className={`${colors.iconBg} p-2 rounded-lg text-white flex-shrink-0`}>
           {icon}

@@ -7,6 +7,7 @@ import { ModernDashboardLayout, PageContainer } from "@/components/layout/modern
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { handleLogout } from "@/lib/auth/logout";
 import { NotificationBell } from "@/components/student/notification-bell";
+import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
 import { WelcomeBanner } from "@/components/student/welcome-banner";
 import { DashboardMetrics } from "@/components/student/dashboard-metrics";
 import { DashboardMetricsSkeleton } from "@/components/student/dashboard-metrics-skeleton";
@@ -14,8 +15,7 @@ import { useStudentDashboard } from "@/hooks/use-student-dashboard";
 import { WeeklyAttendanceCalendar } from "@/components/student/weekly-attendance-calendar";
 import { useWeeklyAttendance } from "@/hooks/use-weekly-attendance";
 import { StudentErrorBoundary, StudentSectionErrorBoundary } from "@/components/student/error-boundary";
-import { ErrorDisplay, NetworkErrorDisplay } from "@/components/student/error-display";
-import { AlertCircle } from "lucide-react";
+import { ErrorDisplay } from "@/components/student/error-display";
 
 // Lazy load heavy components for better initial load performance
 const ProgressTracker = lazy(() => import("@/components/student/progress-tracker").then(mod => ({ default: mod.ProgressTracker })));
@@ -32,8 +32,28 @@ const TrendAnalysisCharts = lazy(() => import("@/components/student/trend-analys
 export default function StudentDashboardPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
-  const [unreadNotifications] = React.useState(0);
   const [currentWeek, setCurrentWeek] = React.useState(1);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const [notifications, setNotifications] = React.useState<Notification[]>([
+    {
+      id: "1",
+      type: "info",
+      title: "Welcome to Your Dashboard",
+      message: "Check your attendance metrics and stay on track with your academic goals.",
+      timestamp: new Date(Date.now() - 3600000),
+      read: false,
+    },
+    {
+      id: "2",
+      type: "success",
+      title: "Great Attendance!",
+      message: "You've maintained excellent attendance this week. Keep it up!",
+      timestamp: new Date(Date.now() - 7200000),
+      read: false,
+    },
+  ]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Fetch student dashboard metrics
   const { data: metrics, isLoading: metricsLoading, error: metricsError } = useStudentDashboard(user?.id);
@@ -51,8 +71,22 @@ export default function StudentDashboardPage() {
   };
 
   const handleNotificationClick = () => {
-    // TODO: Open notification panel in future tasks
-    console.log("Notification bell clicked");
+    setIsNotificationPanelOpen(!isNotificationPanelOpen);
+  };
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+    setIsNotificationPanelOpen(false);
   };
 
   const handleViewAttendance = () => {
@@ -92,8 +126,9 @@ export default function StudentDashboardPage() {
           hideSearch={true}
           notificationTrigger={
             <NotificationBell
-              unreadCount={unreadNotifications}
+              unreadCount={unreadCount}
               onClick={handleNotificationClick}
+              isActive={isNotificationPanelOpen}
             />
           }
         >
@@ -232,6 +267,16 @@ export default function StudentDashboardPage() {
           </PageContainer>
         </ModernDashboardLayout>
       </StudentErrorBoundary>
+
+      {/* Notification Panel */}
+      <NotificationPanel
+        isOpen={isNotificationPanelOpen}
+        onClose={() => setIsNotificationPanelOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+        onClearAll={handleClearAll}
+      />
     </StudentGuard>
   );
 }

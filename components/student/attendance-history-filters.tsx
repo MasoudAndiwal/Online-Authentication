@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Filter, X, RotateCcw } from "lucide-react";
+import { CalendarIcon, Filter, X, RotateCcw, CheckCircle, XCircle, Heart, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { AttendanceStatus } from "@/types/types";
@@ -45,11 +45,11 @@ export function AttendanceHistoryFilters({
 }: AttendanceHistoryFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const statusOptions: { value: AttendanceStatus; label: string; icon: string }[] = [
-    { value: "present", label: "Present", icon: "✓" },
-    { value: "absent", label: "Absent", icon: "✗" },
-    { value: "sick", label: "Sick", icon: "🤒" },
-    { value: "leave", label: "Leave", icon: "📅" },
+  const statusOptions: { value: AttendanceStatus; label: string; icon: React.ComponentType<{ className?: string }>; iconColor: string }[] = [
+    { value: "present", label: "Present", icon: CheckCircle, iconColor: "text-emerald-600" },
+    { value: "absent", label: "Absent", icon: XCircle, iconColor: "text-red-600" },
+    { value: "sick", label: "Sick", icon: Heart, iconColor: "text-yellow-600" },
+    { value: "leave", label: "Leave", icon: CalendarDays, iconColor: "text-blue-600" },
   ];
 
   const monthOptions = [
@@ -239,7 +239,7 @@ export function AttendanceHistoryFilters({
                       htmlFor={option.value}
                       className="text-sm font-medium cursor-pointer flex items-center gap-1.5 flex-1"
                     >
-                      <span>{option.icon}</span>
+                      {React.createElement(option.icon, { className: cn("h-4 w-4", option.iconColor) })}
                       <span>{option.label}</span>
                     </Label>
                   </div>
@@ -288,7 +288,7 @@ export function AttendanceHistoryFilters({
                 variant="outline"
                 className="bg-emerald-50 text-emerald-700 border-emerald-300 pl-3 pr-2 py-1.5 gap-2 min-h-[32px] touch-manipulation"
               >
-                <span>{option.icon}</span>
+                {React.createElement(option.icon, { className: cn("h-3 w-3", option.iconColor) })}
                 <span className="text-xs sm:text-sm">{option.label}</span>
                 <button
                   onClick={() => removeStatusFilter(status)}

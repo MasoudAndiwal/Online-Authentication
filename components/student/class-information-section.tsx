@@ -13,6 +13,18 @@ interface ClassSchedule {
   sessionType: 'lecture' | 'lab' | 'tutorial'
 }
 
+interface Teacher {
+  id: string
+  name: string
+  title?: string
+  avatar?: string
+  sessions: {
+    day: string
+    time: string
+    type: string
+  }[]
+}
+
 interface ClassInformationSectionProps {
   // Class data
   className: string
@@ -23,14 +35,12 @@ interface ClassInformationSectionProps {
   room: string
   building: string
   schedule: ClassSchedule[]
+  major?: string
+  studentCount?: number
+  session?: string
   
-  // Teacher data
-  teacherName: string
-  teacherTitle?: string
-  teacherEmail: string
-  officeHours: string
-  officeLocation: string
-  teacherAvatar?: string
+  // Teachers data
+  teachers: Teacher[]
   
   // Policy data
   maxAbsences: number
@@ -38,7 +48,7 @@ interface ClassInformationSectionProps {
   tasdiqThreshold: number
   
   // Callbacks
-  onContactTeacher: () => void
+  onContactTeacher: (teacherId: string) => void
 }
 
 /**
@@ -59,12 +69,10 @@ export function ClassInformationSection({
   room,
   building,
   schedule,
-  teacherName,
-  teacherTitle,
-  teacherEmail,
-  officeHours,
-  officeLocation,
-  teacherAvatar,
+  major,
+  studentCount,
+  session,
+  teachers,
   maxAbsences,
   mahroomThreshold,
   tasdiqThreshold,
@@ -87,6 +95,9 @@ export function ClassInformationSection({
           room={room}
           building={building}
           schedule={schedule}
+          major={major}
+          studentCount={studentCount}
+          session={session}
         />
       </div>
 
@@ -94,12 +105,7 @@ export function ClassInformationSection({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Teacher Information Card */}
         <TeacherInformationCard
-          teacherName={teacherName}
-          teacherTitle={teacherTitle}
-          email={teacherEmail}
-          officeHours={officeHours}
-          officeLocation={officeLocation}
-          avatar={teacherAvatar}
+          teachers={teachers}
           onContactTeacher={onContactTeacher}
         />
 

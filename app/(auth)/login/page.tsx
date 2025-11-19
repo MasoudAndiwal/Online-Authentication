@@ -202,7 +202,7 @@ export default function OfficeLoginPage() {
         const defaultPaths = {
           office: "/dashboard",
           teacher: "/teacher/dashboard",
-          student: "/student/dashboard",
+          student: "/student/student-dashboard",
         };
         
         router.push(redirectPath !== '/dashboard' ? redirectPath : defaultPaths[selectedRole]);

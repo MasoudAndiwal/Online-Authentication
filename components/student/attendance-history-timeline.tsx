@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, Calendar, FileText } from "lucide-react";
+import { Clock, User, Calendar, FileText, CheckCircle, XCircle, Heart, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AttendanceRecord, AttendanceStatus } from "@/types/types";
 
@@ -26,51 +26,56 @@ export function AttendanceHistoryTimeline({
     switch (status) {
       case "present":
         return {
-          bg: "bg-green-50",
-          text: "text-green-700",
-          border: "border-green-200",
-          badge: "bg-green-100 text-green-700 border-green-300",
-          icon: "✓",
+          bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/50",
+          text: "text-emerald-700",
+          border: "border-0",
+          badge: "bg-emerald-100 text-emerald-700 border-0",
+          icon: CheckCircle,
+          iconColor: "text-emerald-600",
           label: "Present",
-          dotColor: "bg-green-500",
+          dotColor: "bg-emerald-500",
         };
       case "absent":
         return {
-          bg: "bg-red-50",
+          bg: "bg-gradient-to-br from-red-50 to-red-100/50",
           text: "text-red-700",
-          border: "border-red-200",
-          badge: "bg-red-100 text-red-700 border-red-300",
-          icon: "✗",
+          border: "border-0",
+          badge: "bg-red-100 text-red-700 border-0",
+          icon: XCircle,
+          iconColor: "text-red-600",
           label: "Absent",
           dotColor: "bg-red-500",
         };
       case "sick":
         return {
-          bg: "bg-yellow-50",
+          bg: "bg-gradient-to-br from-yellow-50 to-yellow-100/50",
           text: "text-yellow-700",
-          border: "border-yellow-200",
-          badge: "bg-yellow-100 text-yellow-700 border-yellow-300",
-          icon: "🤒",
+          border: "border-0",
+          badge: "bg-yellow-100 text-yellow-700 border-0",
+          icon: Heart,
+          iconColor: "text-yellow-600",
           label: "Sick",
           dotColor: "bg-yellow-500",
         };
       case "leave":
         return {
-          bg: "bg-blue-50",
+          bg: "bg-gradient-to-br from-blue-50 to-blue-100/50",
           text: "text-blue-700",
-          border: "border-blue-200",
-          badge: "bg-blue-100 text-blue-700 border-blue-300",
-          icon: "📅",
+          border: "border-0",
+          badge: "bg-blue-100 text-blue-700 border-0",
+          icon: CalendarDays,
+          iconColor: "text-blue-600",
           label: "Leave",
           dotColor: "bg-blue-500",
         };
       default:
         return {
-          bg: "bg-slate-50",
+          bg: "bg-gradient-to-br from-slate-50 to-slate-100/50",
           text: "text-slate-700",
-          border: "border-slate-200",
-          badge: "bg-slate-100 text-slate-700 border-slate-300",
-          icon: "-",
+          border: "border-0",
+          badge: "bg-slate-100 text-slate-700 border-0",
+          icon: FileText,
+          iconColor: "text-slate-600",
           label: "Unknown",
           dotColor: "bg-slate-500",
         };
@@ -149,25 +154,31 @@ export function AttendanceHistoryTimeline({
             </div>
 
             {/* Timeline Records */}
-            <div className="ml-5 sm:ml-6 border-l-2 border-slate-200 pl-6 sm:pl-8 space-y-4 sm:space-y-6">
+            <div className="ml-5 sm:ml-6 pl-6 sm:pl-8 space-y-4 sm:space-y-6">
               {dayRecords.map((record, recordIndex) => {
                 const statusConfig = getStatusConfig(record.status);
                 const isLastRecord = isLastDate && recordIndex === dayRecords.length - 1;
 
                 return (
                   <div key={record.id} className="relative">
-                    {/* Timeline Dot */}
-                    <div
-                      className={cn(
-                        "absolute -left-[33px] sm:-left-[37px] top-3 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-md",
+                    {/* Timeline Dot - Modern Design */}
+                    <div className="absolute -left-[41px] sm:-left-[45px] top-2">
+                      <div className={cn(
+                        "relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl rotate-45 shadow-lg",
                         statusConfig.dotColor
-                      )}
-                    />
+                      )}>
+                        <div className="absolute inset-0 flex items-center justify-center -rotate-45">
+                          {React.createElement(statusConfig.icon, { 
+                            className: "h-4 w-4 sm:h-5 sm:w-5 text-white" 
+                          })}
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Record Card */}
                     <Card
                       className={cn(
-                        "rounded-xl border-2 transition-all duration-300 hover:shadow-lg",
+                        "rounded-xl transition-all duration-300 hover:shadow-lg shadow-sm",
                         statusConfig.bg,
                         statusConfig.border,
                         "cursor-default"
@@ -177,7 +188,9 @@ export function AttendanceHistoryTimeline({
                         {/* Header */}
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3">
-                            <span className="text-2xl sm:text-3xl">{statusConfig.icon}</span>
+                            <div className={cn("p-2 rounded-lg bg-white/80 shadow-sm", statusConfig.iconColor)}>
+                              {React.createElement(statusConfig.icon, { className: "h-5 w-5 sm:h-6 sm:w-6" })}
+                            </div>
                             <div>
                               <h4 className="text-sm sm:text-base font-bold text-slate-800">
                                 {record.courseName}
@@ -190,7 +203,7 @@ export function AttendanceHistoryTimeline({
                           <Badge
                             variant="outline"
                             className={cn(
-                              "font-semibold border-2 self-start",
+                              "font-semibold self-start shadow-sm",
                               statusConfig.badge
                             )}
                           >
@@ -237,9 +250,7 @@ export function AttendanceHistoryTimeline({
                     </Card>
 
                     {/* Connector Line (hidden for last record) */}
-                    {!isLastRecord && (
-                      <div className="absolute -left-[29px] sm:-left-[33px] top-8 w-0.5 h-full bg-slate-200" />
-                    )}
+                   
                   </div>
                 );
               })}

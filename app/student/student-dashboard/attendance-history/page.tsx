@@ -7,6 +7,7 @@ import { ModernDashboardLayout, PageContainer } from "@/components/layout/modern
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { handleLogout } from "@/lib/auth/logout";
 import { NotificationBell } from "@/components/student/notification-bell";
+import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
 import type { AttendanceRecord } from "@/types/types";
 import { Loader2 } from "lucide-react";
 
@@ -22,7 +23,19 @@ const AttendanceHistoryView = lazy(() => import("@/components/student/attendance
 export default function AttendanceHistoryPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
-  const [unreadNotifications] = React.useState(0);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const [notifications, setNotifications] = React.useState<Notification[]>([
+    {
+      id: "1",
+      type: "info",
+      title: "Attendance Record Updated",
+      message: "Your attendance for today's class has been marked.",
+      timestamp: new Date(Date.now() - 1800000),
+      read: false,
+    },
+  ]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Mock data for demonstration
   const mockRecords: AttendanceRecord[] = generateMockRecords();
@@ -37,7 +50,22 @@ export default function AttendanceHistoryPage() {
   };
 
   const handleNotificationClick = () => {
-    console.log("Notification bell clicked");
+    setIsNotificationPanelOpen(!isNotificationPanelOpen);
+  };
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+    setIsNotificationPanelOpen(false);
   };
 
   if (userLoading) {
@@ -62,8 +90,9 @@ export default function AttendanceHistoryPage() {
         hideSearch={true}
         notificationTrigger={
           <NotificationBell
-            unreadCount={unreadNotifications}
+            unreadCount={unreadCount}
             onClick={handleNotificationClick}
+            isActive={isNotificationPanelOpen}
           />
         }
       >

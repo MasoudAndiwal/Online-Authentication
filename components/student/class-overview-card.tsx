@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Calendar, MapPin, Clock } from 'lucide-react'
+import { BookOpen, Calendar, Clock } from 'lucide-react'
 
 interface ClassSchedule {
   day: string
@@ -22,6 +22,9 @@ interface ClassOverviewCardProps {
   room: string
   building: string
   schedule: ClassSchedule[]
+  major?: string
+  studentCount?: number
+  session?: string
 }
 
 /**
@@ -40,7 +43,10 @@ export function ClassOverviewCard({
   credits,
   room,
   building,
-  schedule
+  schedule,
+  major,
+  studentCount,
+  session
 }: ClassOverviewCardProps) {
   return (
     <motion.div
@@ -84,26 +90,32 @@ export function ClassOverviewCard({
                 value={academicYear}
               />
 
-              {/* Credits */}
-              <InfoItem
-                icon={<BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />}
-                label="Credits"
-                value={`${credits} Credits`}
-              />
+              {/* Session */}
+              {session && (
+                <InfoItem
+                  icon={<Clock className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  label="Session"
+                  value={session}
+                />
+              )}
 
-              {/* Room */}
-              <InfoItem
-                icon={<MapPin className="h-4 w-4 sm:h-5 sm:w-5" />}
-                label="Room"
-                value={room}
-              />
+              {/* Major */}
+              {major && (
+                <InfoItem
+                  icon={<BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  label="Major"
+                  value={major}
+                />
+              )}
 
-              {/* Building */}
-              <InfoItem
-                icon={<MapPin className="h-4 w-4 sm:h-5 sm:w-5" />}
-                label="Building"
-                value={building}
-              />
+              {/* Student Count */}
+              {studentCount !== undefined && (
+                <InfoItem
+                  icon={<BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  label="Students Enrolled"
+                  value={`${studentCount} Students`}
+                />
+              )}
             </div>
           </div>
 
@@ -137,7 +149,7 @@ interface InfoItemProps {
 
 function InfoItem({ icon, label, value }: InfoItemProps) {
   return (
-    <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-slate-200/50">
+    <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 sm:p-4 border-0 shadow-sm">
       <div className="flex items-center gap-2 mb-1">
         <div className="text-emerald-600">
           {icon}
@@ -179,32 +191,19 @@ function ScheduleItem({ session }: ScheduleItemProps) {
   const colors = sessionTypeColors[session.sessionType]
 
   return (
-    <div className={`${colors.bg} ${colors.border} border rounded-lg p-3 sm:p-4`}>
+    <div className={`${colors.bg} rounded-lg p-3 sm:p-4 border-0 shadow-sm`}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-        {/* Day and Type */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className={`${colors.bg} ${colors.text} px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-semibold border ${colors.border}`}>
-            {session.day}
-          </div>
-          <span className={`${colors.text} text-xs sm:text-sm font-medium capitalize`}>
-            {session.sessionType}
-          </span>
+        {/* Day */}
+        <div className={`${colors.bg} ${colors.text} px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-semibold border-0 shadow-sm`}>
+          {session.day}
         </div>
 
-        {/* Time and Room */}
-        <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-600">
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="font-medium">
-              {session.startTime} - {session.endTime}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="font-medium">
-              {session.room}
-            </span>
-          </div>
+        {/* Time */}
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-600">
+          <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="font-medium">
+            {session.startTime} - {session.endTime}
+          </span>
         </div>
       </div>
     </div>

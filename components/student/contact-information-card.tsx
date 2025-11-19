@@ -182,40 +182,44 @@ export function ContactInformationCard({
 
         {/* Quick Links */}
         <div className="pt-4 sm:pt-6 border-t border-slate-100">
-          <h3 className="text-sm sm:text-base font-semibold text-slate-900 mb-3 sm:mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-            {links.map((link) => {
-              const Icon = iconMap[link.icon]
-              const isEmergency = link.variant === 'emergency'
+  <h3 className="text-sm sm:text-base font-semibold text-slate-900 mb-3 sm:mb-4">
+    Quick Actions
+  </h3>
 
-              return (
-                <Button
-                  key={link.id}
-                  onClick={link.action}
-                  variant="outline"
-                  className={cn(
-                    'justify-start h-auto py-3 px-4 rounded-xl touch-manipulation min-h-[44px] text-left border-0 shadow-sm',
-                    isEmergency
-                      ? 'bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 text-red-700 hover:text-red-800 hover:shadow-md'
-                      : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 hover:shadow-md'
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 flex-shrink-0',
-                      isEmergency ? 'text-red-600' : 'text-emerald-600'
-                    )}
-                  />
-                  <span className="text-xs sm:text-sm font-medium">
-                    {link.label}
-                  </span>
-                </Button>
-              )
-            })}
-          </div>
-        </div>
+    <div className="grid grid-cols-1 gap-2 sm:gap-3">
+      {links.map((link) => {
+        const Icon = iconMap[link.icon]
+        const isEmergency = link.variant === 'emergency'
+
+        return (
+          <Button
+            key={link.id}
+            onClick={link.action}
+            variant="outline"
+            className={cn(
+              'justify-start items-start flex h-auto py-3 px-4 rounded-xl touch-manipulation min-h-[44px] text-left border-0 shadow-sm w-full',
+              isEmergency
+                ? 'bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 text-red-700 hover:text-red-800 hover:shadow-md'
+                : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 hover:shadow-md'
+            )}
+          >
+            <Icon
+              className={cn(
+                'h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 flex-shrink-0 mt-0.5',
+                isEmergency ? 'text-red-600' : 'text-emerald-600'
+              )}
+            />
+            
+            {/* FIXED TEXT WRAPPING */}
+            <span className="text-xs sm:text-sm font-medium flex-1 whitespace-normal break-words text-left">
+              {link.label}
+            </span>
+          </Button>
+        )
+      })}
+    </div>
+  </div>
+
 
         {/* Additional Info */}
         <div className="pt-4 sm:pt-6 border-t border-slate-100">

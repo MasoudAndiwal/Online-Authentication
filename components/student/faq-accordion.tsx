@@ -56,7 +56,7 @@ export function FAQAccordion({ faqs, onFeedback }: FAQAccordionProps) {
           placeholder="Search frequently asked questions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+          className="pl-10 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base rounded-xl border-0 shadow-sm focus:ring-2 focus:ring-emerald-500"
         />
       </div>
 

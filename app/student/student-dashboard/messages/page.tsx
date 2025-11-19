@@ -116,6 +116,7 @@ export default function StudentMessagesPage() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDownloadAttachment = async (attachment: any) => {
     try {
       const response = await fetch(attachment.url);
@@ -175,7 +176,7 @@ export default function StudentMessagesPage() {
 
             {/* Error State */}
             {conversationsError && (
-              <div className="rounded-2xl shadow-xl bg-red-50 border-2 border-red-200 p-4 mb-4">
+              <div className="rounded-2xl shadow-xl bg-red-50 border-0 p-4 mb-4">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5 text-red-600" />
                   <div>

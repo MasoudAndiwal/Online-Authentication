@@ -176,10 +176,9 @@ export function AttendanceHistoryStats({
                       <Badge
                         variant="outline"
                         className={cn(
-                          "font-semibold border-2",
+                          "font-semibold border-0 shadow-sm",
                           status.bgColor,
-                          status.color,
-                          status.borderColor
+                          status.color
                         )}
                       >
                         {status.count}
@@ -208,19 +207,43 @@ export function AttendanceHistoryStats({
           {/* Mini Chart Visualization */}
           <div className="mt-6 pt-6 border-t border-slate-200">
             <h4 className="text-sm font-semibold text-slate-700 mb-3">Visual Distribution</h4>
-            <div className="flex h-8 rounded-lg overflow-hidden shadow-inner">
+            <div className="relative h-8 rounded-lg overflow-hidden shadow-inner">
+              {/* Gradient Background */}
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to right, 
+                    rgb(34, 197, 94) 0%, 
+                    rgb(34, 197, 94) ${presentCount > 0 ? (presentCount / totalRecords) * 100 : 0}%,
+                    ${presentCount > 0 && absentCount > 0 ? `rgb(239, 68, 68) ${((presentCount + absentCount) / totalRecords) * 100}%,` : ''}
+                    ${absentCount > 0 && sickCount > 0 ? `rgb(234, 179, 8) ${((presentCount + absentCount + sickCount) / totalRecords) * 100}%,` : ''}
+                    ${sickCount > 0 && leaveCount > 0 ? `rgb(59, 130, 246) 100%` : ''}
+                  )`
+                }}
+              />
+              
+              {/* Interactive Segments */}
               {statusBreakdown.map((status, index) => {
                 if (status.count === 0) return null;
+                
+                // Calculate cumulative position
+                const previousPercentage = statusBreakdown
+                  .slice(0, index)
+                  .reduce((sum, s) => sum + s.percentage, 0);
+                
                 return (
                   <div
                     key={status.label}
-                    className={cn(
-                      "relative group cursor-default transition-all duration-300 hover:opacity-80",
-                      status.bgColor.replace("100", "500")
-                    )}
-                    style={{ width: `${status.percentage}%` }}
+                    className="absolute top-0 h-full group cursor-default"
+                    style={{ 
+                      left: `${previousPercentage}%`,
+                      width: `${status.percentage}%`
+                    }}
                     title={`${status.label}: ${status.count} (${status.percentage.toFixed(1)}%)`}
                   >
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/20 transition-all duration-300" />
+                    
                     {/* Tooltip on hover */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                       {status.label}: {status.count}
