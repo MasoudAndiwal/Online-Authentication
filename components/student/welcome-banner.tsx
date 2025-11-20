@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Calendar, MessageSquare } from 'lucide-react'
+import { useMessagingAvailability } from '@/hooks/use-offline-mode'
 
 interface WelcomeBannerProps {
   studentName: string
@@ -26,6 +27,7 @@ export function WelcomeBanner({
   onContactTeacher
 }: WelcomeBannerProps) {
   const isMobile = useIsMobile()
+  const { canSendMessages, messagingDisabledMessage } = useMessagingAvailability()
 
   // Determine motivational message based on attendance rate
   const getMotivationalMessage = (rate: number) => {
@@ -143,9 +145,11 @@ export function WelcomeBanner({
             View Attendance
           </Button>
           <Button
-            onClick={onContactTeacher}
+            onClick={canSendMessages ? onContactTeacher : undefined}
             variant="secondary"
-            className="bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg border-0 text-emerald-700 hover:text-emerald-800 min-h-[44px] text-sm sm:text-base"
+            disabled={!canSendMessages}
+            title={!canSendMessages ? messagingDisabledMessage : undefined}
+            className="bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg border-0 text-emerald-700 hover:text-emerald-800 min-h-[44px] text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             size="lg"
           >
             <MessageSquare className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />

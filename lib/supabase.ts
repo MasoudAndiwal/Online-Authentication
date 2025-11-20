@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { getOptimizedSupabaseClient, executePooledQuery } from './config/database-pool'
 
 let _supabaseClient: SupabaseClient | null = null
 
@@ -9,6 +10,15 @@ function getSupabaseClient(): SupabaseClient {
     return _supabaseClient
   }
 
+  // Try to use optimized pooled client first
+  try {
+    _supabaseClient = getOptimizedSupabaseClient()
+    return _supabaseClient
+  } catch (error) {
+    console.warn('Failed to get optimized client, falling back to basic client:', error)
+  }
+
+  // Fallback to basic client configuration
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -36,26 +46,51 @@ export const supabase = new Proxy({} as SupabaseClient, {
   }
 })
 
-// Connection test function
+// Connection test function with pooled query execution
 export async function testSupabaseConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('students')
-      .select('count')
-      .limit(1)
+    // Use pooled query execution for better performance
+    const result = await executePooledQuery(async (client) => {
+      const { data, error } = await client
+        .from('students')
+        .select('count')
+        .limit(1)
+      
+      if (error) {
+        throw new Error(`Connection test failed: ${error.message}`)
+      }
+      
+      return data
+    })
     
-    if (error) {
-      console.error('Supabase connection test failed:', error.message)
-      return false
-    }
-    
-    console.log('Supabase connection successful')
+    console.log('Supabase connection successful (pooled)')
     return true
   } catch (error) {
     console.error('Supabase connection test error:', error)
-    return false
+    
+    // Fallback to direct client test
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('count')
+        .limit(1)
+      
+      if (error) {
+        console.error('Supabase connection test failed:', error.message)
+        return false
+      }
+      
+      console.log('Supabase connection successful (fallback)')
+      return true
+    } catch (fallbackError) {
+      console.error('Supabase fallback connection test error:', fallbackError)
+      return false
+    }
   }
 }
+
+// Export pooled query execution utility
+export { executePooledQuery }
 
 // Export the client as default for convenience
 export default supabase

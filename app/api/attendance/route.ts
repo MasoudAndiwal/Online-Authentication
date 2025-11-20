@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth/session';
+import { getSSEService } from '@/lib/services/sse-service';
+import { getDashboardService } from '@/lib/services/dashboard-service';
 
 /**
  * POST /api/attendance
@@ -126,6 +128,88 @@ export async function POST(request: NextRequest) {
 
       console.log(`[Attendance API] Successfully saved ${data?.length || 0} student records`);
 
+      // ============================================================================
+      // SSE Integration: Broadcast attendance updates
+      // Implements Requirements 2.1, 2.3: Trigger SSE events and broadcast to class
+      // ============================================================================
+      
+      try {
+        const sseService = getSSEService();
+        const dashboardService = getDashboardService();
+        
+        // Process each updated student record
+        for (const record of attendanceData) {
+          const studentId = record.student_id;
+          
+          // Invalidate cache for this student and class
+          await dashboardService.invalidateAttendanceUpdate(studentId, classId);
+          
+          // Create attendance update event for the specific student
+          const attendanceEvent = {
+            type: 'attendance_update' as const,
+            data: {
+              studentId,
+              date,
+              classId,
+              status: 'updated', // General status for new structure
+              markedBy: markedBy || 'system',
+              timestamp: new Date().toISOString(),
+            },
+            timestamp: new Date(),
+            id: `attendance_${studentId}_${Date.now()}`,
+          };
+          
+          // Send update to the specific student
+          await sseService.sendToStudent(studentId, attendanceEvent);
+          
+          // Get updated metrics for the student
+          try {
+            const updatedMetrics = await dashboardService.getStudentMetrics(studentId);
+            
+            const metricsEvent = {
+              type: 'metrics_update' as const,
+              data: {
+                studentId,
+                attendanceRate: updatedMetrics.attendanceRate,
+                totalClasses: updatedMetrics.totalClasses,
+                presentDays: updatedMetrics.presentDays,
+                ranking: updatedMetrics.ranking,
+                classAverage: updatedMetrics.classAverage,
+                trend: updatedMetrics.trend,
+              },
+              timestamp: new Date(),
+              id: `metrics_${studentId}_${Date.now()}`,
+            };
+            
+            // Send metrics update to the student
+            await sseService.sendToStudent(studentId, metricsEvent);
+          } catch (metricsError) {
+            console.error(`[Attendance API] Failed to send metrics update for student ${studentId}:`, metricsError);
+          }
+        }
+        
+        // Broadcast class-wide update to all students in the class
+        const classUpdateEvent = {
+          type: 'attendance_update' as const,
+          data: {
+            classId,
+            date,
+            studentsUpdated: attendanceData.length,
+            markedBy: markedBy || 'system',
+            timestamp: new Date().toISOString(),
+          },
+          timestamp: new Date(),
+          id: `class_update_${classId}_${Date.now()}`,
+        };
+        
+        await sseService.broadcastToClass(classId, classUpdateEvent);
+        
+        console.log(`[Attendance API] SSE broadcasts sent for ${attendanceData.length} students in class ${classId}`);
+      } catch (sseError) {
+        console.error('[Attendance API] Failed to send SSE broadcasts:', sseError);
+        // Don't fail the request if SSE fails - attendance was still saved
+      }
+
       return NextResponse.json({
         success: true,
         saved: data?.length || 0,
@@ -173,6 +257,101 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`[Attendance API] Successfully saved ${data?.length || 0} records`);
+
+      // ============================================================================
+      // SSE Integration: Broadcast attendance updates (Old Structure)
+      // Implements Requirements 2.1, 2.3: Trigger SSE events and broadcast to class
+      // ============================================================================
+      
+      try {
+        const sseService = getSSEService();
+        const dashboardService = getDashboardService();
+        
+        // Group records by student for efficient processing
+        const studentUpdates = new Map<string, any[]>();
+        
+        attendanceData.forEach((record) => {
+          const studentId = record.student_id;
+          if (!studentUpdates.has(studentId)) {
+            studentUpdates.set(studentId, []);
+          }
+          studentUpdates.get(studentId)!.push(record);
+        });
+        
+        // Process each student's updates
+        for (const [studentId, studentRecords] of studentUpdates) {
+          // Invalidate cache for this student and class
+          await dashboardService.invalidateAttendanceUpdate(studentId, classId);
+          
+          // Send individual attendance updates for each period
+          for (const record of studentRecords) {
+            const attendanceEvent = {
+              type: 'attendance_update' as const,
+              data: {
+                studentId,
+                date: record.date,
+                period: record.period_number,
+                status: record.status,
+                subject: record.subject || 'Unknown',
+                markedBy: record.marked_by || 'system',
+                classId,
+              },
+              timestamp: new Date(),
+              id: `attendance_${studentId}_${record.period_number}_${Date.now()}`,
+            };
+            
+            // Send update to the specific student
+            await sseService.sendToStudent(studentId, attendanceEvent);
+          }
+          
+          // Get updated metrics for the student
+          try {
+            const updatedMetrics = await dashboardService.getStudentMetrics(studentId);
+            
+            const metricsEvent = {
+              type: 'metrics_update' as const,
+              data: {
+                studentId,
+                attendanceRate: updatedMetrics.attendanceRate,
+                totalClasses: updatedMetrics.totalClasses,
+                presentDays: updatedMetrics.presentDays,
+                ranking: updatedMetrics.ranking,
+                classAverage: updatedMetrics.classAverage,
+                trend: updatedMetrics.trend,
+              },
+              timestamp: new Date(),
+              id: `metrics_${studentId}_${Date.now()}`,
+            };
+            
+            // Send metrics update to the student
+            await sseService.sendToStudent(studentId, metricsEvent);
+          } catch (metricsError) {
+            console.error(`[Attendance API] Failed to send metrics update for student ${studentId}:`, metricsError);
+          }
+        }
+        
+        // Broadcast class-wide update to all students in the class
+        const classUpdateEvent = {
+          type: 'attendance_update' as const,
+          data: {
+            classId,
+            date,
+            studentsUpdated: studentUpdates.size,
+            periodsUpdated: attendanceData.length,
+            markedBy: markedBy || 'system',
+            timestamp: new Date().toISOString(),
+          },
+          timestamp: new Date(),
+          id: `class_update_${classId}_${Date.now()}`,
+        };
+        
+        await sseService.broadcastToClass(classId, classUpdateEvent);
+        
+        console.log(`[Attendance API] SSE broadcasts sent for ${studentUpdates.size} students (${attendanceData.length} periods) in class ${classId}`);
+      } catch (sseError) {
+        console.error('[Attendance API] Failed to send SSE broadcasts:', sseError);
+        // Don't fail the request if SSE fails - attendance was still saved
+      }
 
       return NextResponse.json({
         success: true,

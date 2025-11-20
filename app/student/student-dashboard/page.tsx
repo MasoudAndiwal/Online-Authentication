@@ -14,8 +14,11 @@ import { DashboardMetricsSkeleton } from "@/components/student/dashboard-metrics
 import { useStudentDashboard } from "@/hooks/use-student-dashboard";
 import { WeeklyAttendanceCalendar } from "@/components/student/weekly-attendance-calendar";
 import { useWeeklyAttendance } from "@/hooks/use-weekly-attendance";
+import { useSyncService, useAutoSync } from "@/hooks/use-sync-service";
 import { StudentErrorBoundary, StudentSectionErrorBoundary } from "@/components/student/error-boundary";
 import { ErrorDisplay } from "@/components/student/error-display";
+import { OfflineStatus, OfflineModeOverlay } from "@/components/ui/offline-indicator";
+import { useOfflineMode } from "@/hooks/use-offline-mode";
 
 // Lazy load heavy components for better initial load performance
 const ProgressTracker = lazy(() => import("@/components/student/progress-tracker").then(mod => ({ default: mod.ProgressTracker })));
@@ -60,6 +63,35 @@ export default function StudentDashboardPage() {
   
   // Fetch weekly attendance data
   const { data: weeklyData, isLoading: weeklyLoading, error: weeklyError } = useWeeklyAttendance(user?.id, currentWeek);
+
+  // Offline mode management
+  const offlineMode = useOfflineMode({
+    disableUploads: true,
+    disableExports: true,
+    disablePreferenceChanges: true,
+    disableMessaging: true,
+    showOfflineIndicators: true,
+    enableOfflineToasts: true
+  });
+
+  // Sync service for automatic data synchronization
+  const syncService = useSyncService({
+    studentId: user?.id,
+    autoSync: true,
+    syncOnReconnect: true,
+    syncOnMount: true,
+    syncInterval: 5 * 60 * 1000 // 5 minutes
+  });
+
+  // Auto sync on various events
+  useAutoSync({
+    studentId: user?.id,
+    enabled: true,
+    syncOnReconnect: true,
+    syncOnFocus: true,
+    syncOnVisibilityChange: true,
+    minSyncInterval: 30000 // 30 seconds
+  });
 
   const handleNavigation = (href: string) => {
     router.push(href);
@@ -134,6 +166,15 @@ export default function StudentDashboardPage() {
         >
           <PageContainer>
             <div className="space-y-6 sm:space-y-8">
+              {/* Offline Status Indicators */}
+              <OfflineStatus
+                lastUpdated={syncService.lastSync?.getTime()}
+                onRefresh={syncService.syncAll}
+                isRefreshing={syncService.isSyncing || metricsLoading}
+                showStalenessWarning={true}
+                staleThreshold={24 * 60 * 60 * 1000} // 24 hours
+              />
+
               {/* Welcome Banner */}
               <StudentSectionErrorBoundary sectionName="Welcome Banner">
                 <WelcomeBanner

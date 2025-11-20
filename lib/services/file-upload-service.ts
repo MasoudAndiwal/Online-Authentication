@@ -8,6 +8,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import type { UploadedFile, UploadResponse } from '@/types/types';
+import { getAuditLoggerService } from './audit-logger-service';
 
 // File validation constants
 // Requirements: 13.3 - File upload security
@@ -153,14 +154,35 @@ async function saveFileMetadata(
  * - Files stored outside public directory
  * 
  * Requirements: 13.3 - File upload security
+ * 
+ * @param studentId - ID of the student uploading the file
+ * @param file - File to upload
+ * @param ipAddress - Optional IP address for audit logging
+ * @param userAgent - Optional user agent for audit logging
  */
 export async function uploadMedicalCertificate(
   studentId: string,
-  file: File
+  file: File,
+  ipAddress?: string,
+  userAgent?: string
 ): Promise<UploadResponse> {
+  const auditLogger = getAuditLoggerService();
+  
   try {
     // Validate file size (max 10MB)
     if (file.size > MAX_FILE_SIZE) {
+      // Log failed upload attempt
+      await auditLogger.logFileUpload(
+        studentId,
+        file.name,
+        file.size,
+        file.type,
+        ipAddress,
+        userAgent,
+        false,
+        `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`
+      );
+      
       return {
         success: false,
         error: `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
@@ -169,6 +191,18 @@ export async function uploadMedicalCertificate(
 
     // Validate minimum file size (prevent empty files)
     if (file.size < 100) {
+      // Log failed upload attempt
+      await auditLogger.logFileUpload(
+        studentId,
+        file.name,
+        file.size,
+        file.type,
+        ipAddress,
+        userAgent,
+        false,
+        'File is too small or empty'
+      );
+      
       return {
         success: false,
         error: 'File is too small or empty',
@@ -177,6 +211,18 @@ export async function uploadMedicalCertificate(
 
     // Validate file extension
     if (!validateFileExtension(file.name)) {
+      // Log failed upload attempt
+      await auditLogger.logFileUpload(
+        studentId,
+        file.name,
+        file.size,
+        file.type,
+        ipAddress,
+        userAgent,
+        false,
+        'Invalid file extension'
+      );
+      
       return {
         success: false,
         error: 'Invalid file type. Only PDF, JPG, and PNG files are allowed',
@@ -185,6 +231,18 @@ export async function uploadMedicalCertificate(
 
     // Validate MIME type
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      // Log failed upload attempt
+      await auditLogger.logFileUpload(
+        studentId,
+        file.name,
+        file.size,
+        file.type,
+        ipAddress,
+        userAgent,
+        false,
+        'Invalid MIME type'
+      );
+      
       return {
         success: false,
         error: 'Invalid file type. Only PDF, JPG, and PNG files are allowed',
@@ -197,6 +255,18 @@ export async function uploadMedicalCertificate(
 
     // Validate file type using magic numbers (prevents file type spoofing)
     if (!validateFileType(buffer, file.type)) {
+      // Log failed upload attempt
+      await auditLogger.logFileUpload(
+        studentId,
+        file.name,
+        file.size,
+        file.type,
+        ipAddress,
+        userAgent,
+        false,
+        'File type validation failed - magic number mismatch'
+      );
+      
       return {
         success: false,
         error: 'File type validation failed. The file may be corrupted or not a valid PDF/JPG/PNG',
@@ -219,11 +289,34 @@ export async function uploadMedicalCertificate(
     );
 
     if (!uploadedFile) {
+      // Log failed upload
+      await auditLogger.logFileUpload(
+        studentId,
+        file.name,
+        file.size,
+        file.type,
+        ipAddress,
+        userAgent,
+        false,
+        'Failed to save file metadata'
+      );
+      
       return {
         success: false,
         error: 'Failed to save file metadata',
       };
     }
+
+    // Log successful upload
+    await auditLogger.logFileUpload(
+      studentId,
+      file.name,
+      file.size,
+      file.type,
+      ipAddress,
+      userAgent,
+      true
+    );
 
     return {
       success: true,
@@ -231,6 +324,19 @@ export async function uploadMedicalCertificate(
     };
   } catch (error) {
     console.error('Error uploading file:', error);
+    
+    // Log failed upload
+    await auditLogger.logFileUpload(
+      studentId,
+      file.name,
+      file.size,
+      file.type,
+      ipAddress,
+      userAgent,
+      false,
+      error instanceof Error ? error.message : 'Failed to upload file'
+    );
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to upload file',

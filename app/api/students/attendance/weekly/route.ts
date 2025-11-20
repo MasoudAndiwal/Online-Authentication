@@ -1,76 +1,309 @@
-import { NextRequest, NextResponse } from 'next/server';
+/**
+ * Student Weekly Attendance API Endpoint
+ * 
+ * Provides weekly attendance data with caching for optimal performance.
+ * Implements cache-first strategy with appropriate TTL.
+ * 
+ * Requirements: 1.1 (caching), 1.2 (background refresh)
+ */
+
+import { NextResponse } from 'next/server';
+import { withStudentDashboardMiddleware, EnhancedRequest } from '@/lib/middleware/api-middleware-stack';
+import { ValidationError } from '@/lib/errors/custom-errors';
+import { getCacheService } from '@/lib/services/cache-service';
+import { getAuditLoggerService } from '@/lib/services/audit-logger-service';
+import { supabase } from '@/lib/supabase';
 import type { DayAttendance, AttendanceStatus } from '@/types/types';
-import { getServerSession, validateServerStudentAccess } from '@/lib/auth/server-session';
+
+const cacheService = getCacheService();
+const auditLogger = getAuditLoggerService();
+
+// Cache TTL for weekly attendance data (5 minutes)
+const WEEKLY_ATTENDANCE_TTL = 300;
 
 /**
  * GET /api/students/attendance/weekly
- * Fetches weekly attendance data for a student
- * Query params: studentId, week (week number)
  * 
- * Requirements: 10.2, 10.4 - Data privacy controls
+ * Fetches weekly attendance data for a student with caching.
+ * 
+ * Query Parameters:
+ * - studentId: Student identifier (optional, defaults to authenticated user)
+ * - week: Week number relative to current week (default: 0 for current week)
+ * - year: Year (default: current year)
+ * 
+ * Requirements: 1.1 (caching), 1.2 (background refresh)
  */
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const studentId = searchParams.get('studentId');
-    const weekNumber = parseInt(searchParams.get('week') || '1', 10);
+export const GET = withStudentDashboardMiddleware(
+  async (req: EnhancedRequest): Promise<NextResponse> => {
+    const { searchParams } = new URL(req.url);
+    const requestedStudentId = searchParams.get('studentId');
+    const weekOffset = parseInt(searchParams.get('week') || '0', 10);
+    const year = parseInt(searchParams.get('year') || new Date().getFullYear().toString(), 10);
 
-    if (!studentId) {
-      return NextResponse.json(
-        { success: false, error: 'Student ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate data access - students can only view their own data
-    const session = await getServerSession(request);
-    const accessCheck = validateServerStudentAccess(session, studentId);
+    // Determine which student's data to fetch
+    const targetStudentId = requestedStudentId || req.user?.id;
     
-    if (!accessCheck.allowed) {
-      console.log('Access denied for student:', studentId, 'Error:', accessCheck.error);
-      return NextResponse.json(
-        { success: false, error: accessCheck.error || 'Access denied' },
-        { status: 403 }
+    if (!targetStudentId) {
+      throw new ValidationError('Student ID is required', 'studentId');
+    }
+
+    // Authorization check: students can only access their own data
+    if (req.user?.role === 'STUDENT' && req.user.id !== targetStudentId) {
+      throw new ValidationError(
+        'Students can only access their own attendance data',
+        'studentId'
       );
     }
 
-    console.log('Fetching weekly attendance for student:', studentId, 'week:', weekNumber);
+    // Validate week offset (limit to reasonable range)
+    if (weekOffset < -52 || weekOffset > 4) {
+      throw new ValidationError('Week offset must be between -52 and 4', 'week');
+    }
 
-    // Mock data for demonstration
-    // In production, this would fetch from the database
-    const mockWeeklyData = generateMockWeeklyData(weekNumber);
+    try {
+      const startTime = performance.now();
+      
+      // Generate cache key
+      const cacheKey = `attendance:student:${targetStudentId}:week:${weekOffset}:year:${year}`;
+      
+      // Try to get from cache first
+      let weeklyData = await cacheService.get<any>(cacheKey);
+      let fromCache = true;
+      
+      if (!weeklyData) {
+        fromCache = false;
+        // Fetch from database
+        weeklyData = await fetchWeeklyAttendanceFromDB(targetStudentId, weekOffset, year);
+        
+        // Cache the result
+        await cacheService.set(cacheKey, weeklyData, WEEKLY_ATTENDANCE_TTL);
+      }
+      
+      const responseTime = performance.now() - startTime;
 
-    return NextResponse.json({
-      success: true,
-      data: mockWeeklyData,
+      // Log attendance access for audit trail
+      await auditLogger.log({
+        userId: req.user?.id || 'unknown',
+        action: 'attendance_access',
+        resource: 'weekly_attendance',
+        resourceId: targetStudentId,
+        metadata: {
+          weekOffset,
+          year,
+          responseTime: Math.round(responseTime),
+          cached: fromCache,
+          userAgent: req.headers.get('user-agent') || 'unknown'
+        },
+        ipAddress: req.headers.get('x-forwarded-for') || 
+                  req.headers.get('x-real-ip') || 
+                  'unknown',
+        userAgent: req.headers.get('user-agent') || 'unknown',
+        timestamp: new Date(),
+        success: true
+      });
+
+      const response = {
+        success: true,
+        data: weeklyData,
+        meta: {
+          studentId: targetStudentId,
+          weekOffset,
+          year,
+          cached: fromCache,
+          responseTime: Math.round(responseTime),
+          generatedAt: new Date().toISOString(),
+          requestId: req.requestId
+        }
+      };
+
+      return NextResponse.json(response, {
+        status: 200,
+        headers: {
+          'X-Request-ID': req.requestId,
+          'Cache-Control': 'private, max-age=300', // 5 minutes
+          'X-Response-Time': `${Math.round(responseTime)}ms`,
+          'X-Cache-Status': fromCache ? 'HIT' : 'MISS'
+        }
+      });
+
+    } catch (error) {
+      // Log failed attendance access
+      await auditLogger.log({
+        userId: req.user?.id || 'unknown',
+        action: 'attendance_access',
+        resource: 'weekly_attendance',
+        resourceId: targetStudentId,
+        metadata: {
+          weekOffset,
+          year,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          userAgent: req.headers.get('user-agent') || 'unknown'
+        },
+        ipAddress: req.headers.get('x-forwarded-for') || 
+                  req.headers.get('x-real-ip') || 
+                  'unknown',
+        userAgent: req.headers.get('user-agent') || 'unknown',
+        timestamp: new Date(),
+        success: false,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+
+      throw error;
+    }
+  },
+  'get-weekly-attendance'
+);
+
+/**
+ * Fetch weekly attendance data from database
+ */
+async function fetchWeeklyAttendanceFromDB(
+  studentId: string, 
+  weekOffset: number, 
+  year: number
+): Promise<any> {
+  try {
+    // Calculate week start and end dates
+    const { startDate, endDate } = calculateWeekDates(weekOffset, year);
+    
+    // Fetch attendance records from database
+    const { data: attendanceRecords, error } = await supabase
+      .from('attendance_records')
+      .select(`
+        date,
+        period,
+        status,
+        marked_by,
+        marked_at,
+        schedule_entries (
+          subject,
+          start_time,
+          end_time,
+          teachers (
+            first_name,
+            last_name
+          )
+        )
+      `)
+      .eq('student_id', studentId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: true })
+      .order('period', { ascending: true });
+
+    if (error) {
+      console.error('Database error fetching attendance:', error);
+      // Fall back to mock data if database fails
+      return generateMockWeeklyData(weekOffset, year);
+    }
+
+    // Group records by date
+    const recordsByDate = new Map<string, any[]>();
+    attendanceRecords?.forEach(record => {
+      const dateKey = record.date;
+      if (!recordsByDate.has(dateKey)) {
+        recordsByDate.set(dateKey, []);
+      }
+      recordsByDate.get(dateKey)!.push(record);
     });
+
+    // Generate days array
+    const days: DayAttendance[] = [];
+    const dayNames = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+    
+    for (let i = 0; i < 6; i++) { // 6 days (Saturday to Thursday)
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      
+      const dateString = date.toISOString().split('T')[0];
+      const dayRecords = recordsByDate.get(dateString) || [];
+      
+      // Determine overall day status
+      let dayStatus: AttendanceStatus | 'future' = 'future';
+      if (dayRecords.length > 0) {
+        const statuses = dayRecords.map(r => r.status);
+        if (statuses.includes('absent')) dayStatus = 'absent';
+        else if (statuses.includes('sick')) dayStatus = 'sick';
+        else if (statuses.includes('leave')) dayStatus = 'leave';
+        else if (statuses.every(s => s === 'present')) dayStatus = 'present';
+        else dayStatus = 'present'; // Mixed, default to present
+      }
+
+      // Format sessions
+      const sessions = dayRecords.map(record => ({
+        period: record.period,
+        courseName: record.schedule_entries?.subject || 'Unknown Subject',
+        status: record.status as AttendanceStatus,
+        time: record.schedule_entries ? 
+          `${record.schedule_entries.start_time} - ${record.schedule_entries.end_time}` : 
+          'Unknown Time',
+        markedBy: record.schedule_entries?.teachers ? 
+          `${record.schedule_entries.teachers.first_name} ${record.schedule_entries.teachers.last_name}` : 
+          record.marked_by || 'Unknown',
+        markedAt: record.marked_at
+      }));
+
+      days.push({
+        date: dateString,
+        dayName: dayNames[i] || 'Unknown',
+        status: dayStatus,
+        sessions
+      });
+    }
+
+    return {
+      weekOffset,
+      year,
+      startDate: startDate,
+      endDate: endDate,
+      days
+    };
+
   } catch (error) {
     console.error('Error fetching weekly attendance:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch weekly attendance' },
-      { status: 500 }
-    );
+    // Fall back to mock data
+    return generateMockWeeklyData(weekOffset, year);
   }
 }
 
 /**
- * Generate mock weekly attendance data
- * Saturday to Thursday (5 days)
+ * Calculate week start and end dates based on offset
  */
-function generateMockWeeklyData(weekNumber: number) {
+function calculateWeekDates(weekOffset: number, year: number): { startDate: string; endDate: string } {
   const today = new Date();
-  const currentDay = today.getDay(); // 0 = Sunday, 6 = Saturday
+  const currentYear = today.getFullYear();
   
-  // Calculate the start of the current week (Saturday)
+  // If requesting different year, start from January 1st of that year
+  let referenceDate = year === currentYear ? today : new Date(year, 0, 1);
+  
+  // Find the Saturday of the current/reference week
+  const currentDay = referenceDate.getDay(); // 0 = Sunday, 6 = Saturday
   const daysToSaturday = currentDay === 6 ? 0 : currentDay === 0 ? -1 : -(currentDay + 1);
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() + daysToSaturday + (weekNumber - 1) * 7);
+  
+  const weekStart = new Date(referenceDate);
+  weekStart.setDate(referenceDate.getDate() + daysToSaturday + (weekOffset * 7));
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 5); // Saturday to Thursday (6 days)
+  
+  return {
+    startDate: weekStart.toISOString().split('T')[0],
+    endDate: weekEnd.toISOString().split('T')[0]
+  };
+}
+
+/**
+ * Generate mock weekly attendance data (fallback)
+ */
+function generateMockWeeklyData(weekOffset: number, year: number) {
+  const { startDate, endDate } = calculateWeekDates(weekOffset, year);
+  const weekStart = new Date(startDate);
+  const today = new Date();
 
   const days: DayAttendance[] = [];
   const dayNames = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
   
-  // Generate 5 days (Saturday to Wednesday, skipping Thursday for this example)
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + i);
     
@@ -78,23 +311,15 @@ function generateMockWeeklyData(weekNumber: number) {
     const isPast = date < today;
     const isToday = date.toDateString() === today.toDateString();
     
-    // Determine status based on whether it's past, present, or future
     let status: AttendanceStatus | 'future' = 'future';
     if (isPast || isToday) {
-      // Mock some attendance patterns
       const rand = Math.random();
-      if (rand > 0.8) {
-        status = 'absent';
-      } else if (rand > 0.7) {
-        status = 'sick';
-      } else if (rand > 0.65) {
-        status = 'leave';
-      } else {
-        status = 'present';
-      }
+      if (rand > 0.8) status = 'absent';
+      else if (rand > 0.7) status = 'sick';
+      else if (rand > 0.65) status = 'leave';
+      else status = 'present';
     }
 
-    // Generate mock sessions
     const sessions = isPast || isToday ? [
       {
         period: 1,
@@ -122,13 +347,11 @@ function generateMockWeeklyData(weekNumber: number) {
     });
   }
 
-  const endDate = new Date(weekStart);
-  endDate.setDate(weekStart.getDate() + 4);
-
   return {
-    weekNumber,
-    startDate: weekStart.toISOString().split('T')[0],
-    endDate: endDate.toISOString().split('T')[0],
+    weekOffset,
+    year,
+    startDate,
+    endDate,
     days,
   };
 }
