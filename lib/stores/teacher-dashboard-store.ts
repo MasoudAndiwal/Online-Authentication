@@ -111,8 +111,6 @@ export const useTeacherDashboardStore = create<TeacherDashboardStore>()(
 
       // Classes actions
       setClasses: (classes) => {
-        console.log('Store setClasses called with:', classes);
-        console.log('Store classes length:', classes?.length);
         set({ classes }, false, 'setClasses');
       },
       
@@ -201,9 +199,6 @@ export const useTeacherDashboardStore = create<TeacherDashboardStore>()(
 // Selectors for computed values
 export const useTeacherDashboardSelectors = () => {
   const store = useTeacherDashboardStore();
-  
-  console.log('useTeacherDashboardSelectors - store.classes:', store.classes);
-  console.log('useTeacherDashboardSelectors - classes length:', store.classes?.length);
   
   return {
     // Computed values

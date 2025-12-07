@@ -109,9 +109,6 @@ export async function GET(request: NextRequest) {
     // Create SSE connection
     const sseResponse = await sseService.createConnection(studentId, request);
     
-    // Log successful connection
-    console.log(`SSE connection established for student ${studentId} from IP ${clientIP}`);
-    
     return sseResponse;
 
   } catch (error) {

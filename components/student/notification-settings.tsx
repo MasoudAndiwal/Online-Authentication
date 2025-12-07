@@ -133,9 +133,6 @@ export function StudentNotificationSettings({
       await onSave(preferences)
       setHasChanges(false)
       
-      // Show success message (you can add a toast here)
-      console.log('Notification preferences saved successfully')
-      
       // Close dialog after a short delay
       setTimeout(() => {
         onClose()

@@ -27,14 +27,6 @@ export async function GET(request: NextRequest) {
     const dateParam = searchParams.get('date');
     const type = searchParams.get('type') || 'periods';
 
-    console.log('[Teacher Schedule API] Request params:', {
-      teacherId,
-      classId,
-      dayOfWeek,
-      dateParam,
-      type
-    });
-
     // Validate required parameters
     if (!teacherId) {
       return NextResponse.json(
@@ -60,8 +52,6 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-
-      console.log('[Teacher Schedule API] Fetching daily schedule for:', teacherId, 'date:', date.toISOString());
 
       const dailySchedule: TeacherDailySchedule = await periodAssignmentService.getTeacherDailySchedule(
         teacherId,
@@ -106,12 +96,6 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('[Teacher Schedule API] Fetching periods for:', {
-      teacherId,
-      classId,
-      dayOfWeek: targetDayOfWeek
-    });
 
     // Fetch teacher's assigned periods
     const periods: TeacherPeriodAssignment[] = await periodAssignmentService.getTeacherPeriods(
@@ -211,13 +195,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { teacherId, classId, periodNumber, dayOfWeek } = body;
-
-    console.log('[Teacher Schedule API] Validation request:', {
-      teacherId,
-      classId,
-      periodNumber,
-      dayOfWeek
-    });
 
     // Validate required parameters
     if (!teacherId || !classId || !periodNumber) {

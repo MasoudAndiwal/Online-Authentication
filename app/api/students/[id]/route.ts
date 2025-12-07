@@ -16,11 +16,6 @@ export async function GET(
     // Try to get session for access control
     const session = await getServerSession(request);
     
-    // Log session info for debugging
-    if (!session) {
-      console.log('No session found for student profile request, allowing access to own data');
-    }
-    
     // For students, we allow access if:
     // 1. Session exists and matches the requested ID, OR
     // 2. No session but we're fetching by ID (client-side auth handles this)

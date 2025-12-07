@@ -36,9 +36,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
   const toggleMenu = () => {
-    console.log('Toggle menu - current state:', mobileMenuOpen);
     setMobileMenuOpen(prev => !prev);
-    console.log('Toggle menu - new state will be:', !mobileMenuOpen);
   };
 
   return (

@@ -10,12 +10,9 @@ export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const toast = useCallback((toast: Toast) => {
-    // For now, just use console.log
     // In a real implementation, this would show a toast notification
     if (toast.variant === "destructive") {
       console.error(`${toast.title}: ${toast.description}`);
-    } else {
-      console.log(`${toast.title}: ${toast.description}`);
     }
     
     setToasts((prev) => [...prev, toast]);

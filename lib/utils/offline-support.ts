@@ -197,9 +197,8 @@ export class SyncQueue {
   /**
    * Process individual item (override this method)
    */
-  protected async processItem(item: SyncQueueItem): Promise<void> {
+  protected async processItem(_item: SyncQueueItem): Promise<void> {
     // This should be overridden by specific implementations
-    console.log('Processing item:', item)
     throw new Error('processItem must be implemented')
   }
 
@@ -319,7 +318,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
       scope: '/'
     })
 
-    console.log('Service Worker registered:', registration)
+    // Service Worker registered successfully
 
     // Check for updates
     registration.addEventListener('updatefound', () => {
@@ -327,8 +326,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New service worker available
-            console.log('New service worker available')
+            // New service worker available - can trigger update notification
           }
         })
       }

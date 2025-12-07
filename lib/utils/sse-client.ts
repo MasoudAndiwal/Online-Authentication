@@ -52,7 +52,7 @@ export class SSEClient {
    */
   connect(): void {
     if (this.eventSource && this.eventSource.readyState !== EventSource.CLOSED) {
-      console.log('SSE: Already connected or connecting');
+      // SSE: Already connected or connecting
       return;
     }
 
@@ -60,7 +60,7 @@ export class SSEClient {
     this.connectionState = 'connecting';
     
     try {
-      console.log(`SSE: Connecting to ${this.options.url}`);
+      // SSE: Connecting to endpoint
       
       this.eventSource = new EventSource(this.options.url, {
         withCredentials: true,
@@ -91,7 +91,7 @@ export class SSEClient {
     }
 
     this.reconnectAttempts = 0;
-    console.log('SSE: Manually disconnected');
+    // SSE: Manually disconnected
   }
 
   /**
@@ -123,7 +123,7 @@ export class SSEClient {
 
     // Connection opened
     this.eventSource.onopen = (event) => {
-      console.log('SSE: Connection opened');
+      // SSE: Connection opened
       this.connectionState = 'connected';
       this.reconnectAttempts = 0;
       
@@ -137,8 +137,7 @@ export class SSEClient {
     // Message received
     this.eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        console.log('SSE: Message received:', data);
+        JSON.parse(event.data);
         this.options.onMessage(event);
       } catch (error) {
         console.error('SSE: Failed to parse message:', error);
@@ -171,7 +170,6 @@ export class SSEClient {
     this.eventSource.addEventListener('attendance_update', (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('SSE: Attendance update received:', data);
         
         // Dispatch custom event for attendance updates
         window.dispatchEvent(new CustomEvent('sse-attendance-update', {
@@ -186,7 +184,6 @@ export class SSEClient {
     this.eventSource.addEventListener('metrics_update', (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('SSE: Metrics update received:', data);
         
         // Dispatch custom event for metrics updates
         window.dispatchEvent(new CustomEvent('sse-metrics-update', {
@@ -201,7 +198,6 @@ export class SSEClient {
     this.eventSource.addEventListener('notification', (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('SSE: Notification received:', data);
         
         // Dispatch custom event for notifications
         window.dispatchEvent(new CustomEvent('sse-notification', {
@@ -216,7 +212,6 @@ export class SSEClient {
     this.eventSource.addEventListener('ping', (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('SSE: Ping received:', data.timestamp);
         
         // Update last ping time for connection health monitoring
         window.dispatchEvent(new CustomEvent('sse-ping', {
@@ -253,8 +248,7 @@ export class SSEClient {
     const exponentialDelay = baseDelay * Math.pow(2, this.reconnectAttempts - 1);
     const delay = Math.min(exponentialDelay, this.options.maxReconnectDelay);
 
-    console.log(`SSE: Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.options.maxReconnectAttempts})`);
-    
+    // SSE: Reconnecting with exponential backoff
     this.options.onReconnecting(this.reconnectAttempts, delay);
 
     // Close existing connection
@@ -280,23 +274,23 @@ export function createStudentSSEClient(options: Partial<SSEClientOptions> = {}):
     url: '/api/students/notifications/sse',
     maxReconnectAttempts: 10,
     maxReconnectDelay: 30000,
-    onMessage: (event) => {
-      console.log('SSE message:', event.data);
+    onMessage: (_event) => {
+      // SSE message received
     },
     onError: (error) => {
       console.error('SSE error:', error);
     },
     onOpen: () => {
-      console.log('SSE connected');
+      // SSE connected
     },
     onClose: () => {
-      console.log('SSE disconnected');
+      // SSE disconnected
     },
-    onReconnecting: (attempt, delay) => {
-      console.log(`SSE reconnecting (attempt ${attempt}, delay ${delay}ms)`);
+    onReconnecting: (_attempt, _delay) => {
+      // SSE reconnecting
     },
     onReconnected: () => {
-      console.log('SSE reconnected successfully');
+      // SSE reconnected successfully
     },
     onMaxRetriesReached: () => {
       console.error('SSE max retries reached, giving up');

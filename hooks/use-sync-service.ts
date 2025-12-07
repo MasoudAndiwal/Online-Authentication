@@ -122,7 +122,7 @@ export function useSyncService(options: UseSyncServiceOptions = {}): SyncService
 
     const handleReconnect = () => {
       if (offlineStatus.isOnline && offlineStatus.wasOffline && studentId) {
-        console.log('🔄 Auto-syncing on reconnection...')
+        // Auto-syncing on reconnection
         syncAll()
       }
     }
@@ -265,7 +265,7 @@ export function useAutoSync(options: AutoSyncOptions = {}) {
 
     const handleOnline = () => {
       if (shouldSync()) {
-        console.log('🔄 Auto-syncing on reconnection...')
+        // Auto-syncing on reconnection
         performSync()
       }
     }
@@ -280,7 +280,7 @@ export function useAutoSync(options: AutoSyncOptions = {}) {
 
     const handleFocus = () => {
       if (shouldSync()) {
-        console.log('🔄 Auto-syncing on focus...')
+        // Auto-syncing on focus
         performSync()
       }
     }
@@ -295,7 +295,7 @@ export function useAutoSync(options: AutoSyncOptions = {}) {
 
     const handleVisibilityChange = () => {
       if (!document.hidden && shouldSync()) {
-        console.log('🔄 Auto-syncing on visibility change...')
+        // Auto-syncing on visibility change
         performSync()
       }
     }

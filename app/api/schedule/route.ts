@@ -89,11 +89,8 @@ export async function GET(request: NextRequest) {
     // First, try to fetch from the database
     let dbClassId = classId;
 
-    console.log('[Schedule API] Request params:', { classId, className, session, dayOfWeek });
-
     // If we don't have classId but have className and session, look up the class
     if (!dbClassId && className && session) {
-      console.log('[Schedule API] Looking up class by name and session...');
       const { data: classData, error: classError } = await supabase
         .from('classes')
         .select('id')
@@ -101,31 +98,19 @@ export async function GET(request: NextRequest) {
         .eq('session', session)
         .single();
 
-      if (classError) {
-        console.log('[Schedule API] Class lookup error:', classError);
-      }
-
       if (!classError && classData) {
         dbClassId = classData.id;
-        console.log('[Schedule API] Found class ID:', dbClassId);
       }
     }
 
     // Fetch schedule entries from database
     if (dbClassId) {
-      console.log('[Schedule API] Fetching schedule entries for class:', dbClassId, 'day:', dayOfWeek);
       const { data: scheduleEntries, error: scheduleError } = await supabase
         .from('schedule_entries')
         .select('*')
         .eq('class_id', dbClassId)
         .eq('day_of_week', dayOfWeek.toLowerCase())
         .order('start_time', { ascending: true });
-
-      if (scheduleError) {
-        console.log('[Schedule API] Schedule fetch error:', scheduleError);
-      }
-
-      console.log('[Schedule API] Found schedule entries:', scheduleEntries?.length || 0);
 
       if (!scheduleError && scheduleEntries && scheduleEntries.length > 0) {
         // Map database entries to the expected format
@@ -186,9 +171,6 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        console.log('[Schedule API] Expanded schedule entries:', expandedSchedule.length);
-        console.log('[Schedule API] Returning database schedule with teachers:', expandedSchedule.map(s => s.teacherName));
-
         return NextResponse.json(
           {
             success: true,
@@ -202,8 +184,6 @@ export async function GET(request: NextRequest) {
             }
           }
         );
-      } else {
-        console.log('[Schedule API] No schedule entries found in database for this day');
       }
     }
 
@@ -240,7 +220,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Last resort: Generate default schedule
-    console.log('No schedule found in database or sample data. Generating default schedule.');
     const defaultSchedule = generateDefaultSchedule(dayOfWeek, session || 'MORNING');
 
     return NextResponse.json({

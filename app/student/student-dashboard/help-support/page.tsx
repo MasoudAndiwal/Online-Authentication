@@ -259,7 +259,6 @@ export default function HelpSupportPage() {
 
   const handleFaqFeedback = (faqId: string, helpful: boolean) => {
     setFaqFeedback((prev) => ({ ...prev, [faqId]: helpful }))
-    console.log(`FAQ ${faqId} marked as ${helpful ? 'helpful' : 'not helpful'}`)
   }
 
   const handleSendMessage = () => {
@@ -279,7 +278,7 @@ export default function HelpSupportPage() {
   }
 
   const handleNotificationClick = () => {
-    console.log('Notification bell clicked')
+    // Notification bell clicked
   }
 
   if (userLoading) {

@@ -230,7 +230,6 @@ export function useMessageWebSocket(studentId?: string) {
     const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws/messages?studentId=${studentId}`);
 
     ws.onopen = () => {
-      console.log("WebSocket connected");
       setIsConnected(true);
     };
 
@@ -261,7 +260,6 @@ export function useMessageWebSocket(studentId?: string) {
     };
 
     ws.onclose = () => {
-      console.log("WebSocket disconnected");
       setIsConnected(false);
     };
 

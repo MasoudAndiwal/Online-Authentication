@@ -100,8 +100,6 @@ export function useStudentRealtime(
         const data: RealtimeEvent = JSON.parse(event.data);
         setLastEvent(data);
 
-        console.log("[Student Realtime] Received event:", data.type);
-
         switch (data.type) {
           case "attendance_marked": {
             const payload = data.payload as AttendanceMarkedEvent;
@@ -235,12 +233,10 @@ export function useStudentRealtime(
 
     // Don't reconnect if already connected
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("[Student Realtime] Already connected");
       return;
     }
 
     try {
-      console.log("[Student Realtime] Connecting...");
       
       // Determine protocol based on current page protocol
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -250,7 +246,6 @@ export function useStudentRealtime(
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("[Student Realtime] Connected");
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttemptsRef.current = 0;
@@ -263,17 +258,13 @@ export function useStudentRealtime(
         setConnectionError("Connection error occurred");
       };
 
-      ws.onclose = (event) => {
-        console.log("[Student Realtime] Disconnected:", event.code, event.reason);
+      ws.onclose = () => {
         setIsConnected(false);
         wsRef.current = null;
 
         // Attempt to reconnect with exponential backoff
         if (enabled && reconnectAttemptsRef.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
-          console.log(
-            `[Student Realtime] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`
-          );
           
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
@@ -293,8 +284,6 @@ export function useStudentRealtime(
    * Disconnect from WebSocket server
    */
   const disconnect = useCallback(() => {
-    console.log("[Student Realtime] Disconnecting...");
-    
     // Clear reconnect timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -348,7 +337,6 @@ export function useStudentRealtime(
       if (document.visibilityState === "visible" && enabled && studentId) {
         // Reconnect if disconnected
         if (!isConnected && wsRef.current?.readyState !== WebSocket.OPEN) {
-          console.log("[Student Realtime] Tab visible, reconnecting...");
           reconnect();
         }
       }

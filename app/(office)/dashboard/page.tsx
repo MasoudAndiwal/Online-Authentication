@@ -106,8 +106,8 @@ export default function OfficeDashboardPage() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   // Get appropriate greeting based on time of day

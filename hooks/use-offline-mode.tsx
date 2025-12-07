@@ -86,13 +86,11 @@ export function useOfflineMode(config: OfflineModeConfig = {}) {
     if (!mergedConfig.enableOfflineToasts) return
 
     if (!offlineStatus.isOnline && !hasShownOfflineToast) {
-      // Show offline toast
-      console.log('📱 Offline mode activated - some features are disabled')
+      // Offline mode activated
       setHasShownOfflineToast(true)
       setHasShownOnlineToast(false)
     } else if (offlineStatus.isOnline && offlineStatus.wasOffline && !hasShownOnlineToast) {
-      // Show online toast
-      console.log('🌐 Connection restored - all features are available')
+      // Connection restored
       setHasShownOnlineToast(true)
       setHasShownOfflineToast(false)
     }

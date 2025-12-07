@@ -130,13 +130,8 @@ export function useAttendance(options: UseAttendanceOptions = {}): UseAttendance
             // Retry network errors and server errors (5xx)
             return attempt < 3;
           },
-          onRetry: (error, attempt, delay) => {
-            if (process.env.NODE_ENV === 'development') {
-              console.log(
-                `Retrying attendance fetch (attempt ${attempt}/3) after ${Math.round(delay)}ms`,
-                error
-              );
-            }
+          onRetry: (_error, _attempt, _delay) => {
+            // Retry callback - can be used for debugging
           },
         }
       );

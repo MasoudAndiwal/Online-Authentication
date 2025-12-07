@@ -227,8 +227,8 @@ export default function EditTeacherPage({ params }: EditTeacherPageProps) {
     await performLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   const handleInputChange = (

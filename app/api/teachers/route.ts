@@ -10,7 +10,6 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    console.log(body)
 
     // Validate request body using TeacherCreateSchema
     const validatedData = TeacherCreateSchema.parse(body);

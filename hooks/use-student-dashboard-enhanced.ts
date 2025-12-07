@@ -335,8 +335,6 @@ export function useSyncManager(options: SyncManagerOptions = {}) {
     lastSyncRef.current = now
 
     try {
-      console.log('🔄 Syncing student data...')
-      
       // Invalidate and refetch all student-related queries
       await Promise.all([
         queryClient.invalidateQueries({ 
@@ -349,10 +347,8 @@ export function useSyncManager(options: SyncManagerOptions = {}) {
           queryKey: [`academic-status-${studentId}`] 
         })
       ])
-
-      console.log('✅ Data sync completed')
-    } catch (error) {
-      console.error('❌ Data sync failed:', error)
+    } catch {
+      // Data sync failed
     }
   }, [studentId, offlineStatus.isOnline, queryClient])
 
@@ -363,7 +359,6 @@ export function useSyncManager(options: SyncManagerOptions = {}) {
     const handleReconnect = (state: any) => {
       // When coming back online after being offline
       if (state.isOnline && state.wasOffline) {
-        console.log('🌐 Connection restored, syncing data...')
         setTimeout(syncData, 1000) // Small delay to ensure connection is stable
       }
     }

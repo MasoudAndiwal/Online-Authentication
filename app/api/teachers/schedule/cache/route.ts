@@ -53,8 +53,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, classId, teacherId, dayOfWeek, teacherIds, classIds, days } = body;
 
-    console.log('[Cache API] Cache management request:', { action, classId, teacherId, dayOfWeek });
-
     if (!action) {
       return NextResponse.json(
         { 

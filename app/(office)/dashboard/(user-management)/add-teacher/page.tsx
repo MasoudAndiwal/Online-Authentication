@@ -136,8 +136,8 @@ export default function AddTeacherPage() {
     await performLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   // Fetch classes from database

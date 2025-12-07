@@ -828,9 +828,7 @@ export default function OfficeLoginPage() {
                         variant="outline"
                         className="w-full h-12 text-base font-medium border-2 hover:bg-gray-50 transition-all duration-200"
                         onClick={() => {
-                          console.log(
-                            `SSO login initiated for ${selectedRole}`
-                          );
+                          // SSO login - to be implemented
                         }}
                       >
                         <div className="flex items-center gap-3">

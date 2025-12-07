@@ -220,9 +220,7 @@ export function useCacheCleanup(options: {
           clientCache.evictOldest(1024 * 1024) // Free 1MB
         }
 
-        if (expiredCount > 0) {
-          console.log(`Cleaned up ${expiredCount} expired cache entries`)
-        }
+        // Cache cleanup completed - expiredCount entries removed
       } catch (error) {
         console.error('Cache cleanup failed:', error)
       }

@@ -12,8 +12,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const teacherId = searchParams.get('teacherId');
 
-    console.log('[Teacher Classes API] Fetching classes for teacher:', teacherId);
-
     // Step 1: Get teacher's assigned classes
     let teacherClasses: string[] = [];
     
@@ -31,7 +29,6 @@ export async function GET(request: NextRequest) {
       }
 
       teacherClasses = teacher?.classes || [];
-      console.log('[Teacher Classes API] Teacher assigned classes:', teacherClasses);
     }
 
     // Step 2: Get all classes from database
@@ -46,7 +43,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!allClasses || allClasses.length === 0) {
-      console.log('[Teacher Classes API] No classes found in database');
       return NextResponse.json([]);
     }
 
@@ -61,11 +57,6 @@ export async function GET(request: NextRequest) {
         return teacherClasses.includes(classKey);
       });
       
-      console.log('[Teacher Classes API] Filtered to', filteredClasses.length, 'assigned classes');
-    } else {
-      // If no teacherId provided or no classes assigned, return all classes for now
-      // This allows the system to work even without proper teacher assignment
-      console.log('[Teacher Classes API] No teacher filter applied, returning all classes');
     }
 
     // Get class IDs for additional data
@@ -94,7 +85,6 @@ export async function GET(request: NextRequest) {
       .select('class_section');
 
     if (!studentsError && students) {
-      console.log('[Teacher Classes API] All students class_sections:', students.map(s => s.class_section));
       studentCountByClass = students.reduce((acc, s) => {
         const key = s.class_section || '';
         if (key) {
@@ -102,7 +92,6 @@ export async function GET(request: NextRequest) {
         }
         return acc;
       }, {} as Record<string, number>);
-      console.log('[Teacher Classes API] Student count by class:', studentCountByClass);
     }
 
     // Transform classes to match frontend interface
@@ -110,10 +99,6 @@ export async function GET(request: NextRequest) {
       const session = cls.session || 'MORNING';
       // Database actually stores as "AI-401-A - AFTERNOON" (uppercase session)
       const classKey = `${cls.name} - ${session}`;
-      
-      console.log('[Teacher Classes API] Looking for students with classKey:', classKey);
-      console.log('[Teacher Classes API] Available class sections:', Object.keys(studentCountByClass));
-      console.log('[Teacher Classes API] Found student count:', studentCountByClass[classKey] || 0);
       
       return {
         id: cls.id,
@@ -129,8 +114,6 @@ export async function GET(request: NextRequest) {
         nextSession: new Date(Date.now() + 24 * 60 * 60 * 1000), // TODO: Calculate from schedule
       };
     });
-
-    console.log('[Teacher Classes API] Successfully fetched', transformedClasses.length, 'classes');
 
     return NextResponse.json(transformedClasses);
 

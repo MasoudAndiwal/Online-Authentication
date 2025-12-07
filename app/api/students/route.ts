@@ -7,15 +7,12 @@ import { ZodError, ZodIssue } from 'zod';
 import type { Student } from '@/lib/database/models';
 
 export async function POST(request: NextRequest) {
-  console.log('=== POST /api/students called ===');
   try {
     // Parse request body
     const body = await request.json();
-    console.log('Request body received:', JSON.stringify(body, null, 2));
 
     // Validate request body using StudentCreateSchema
     const validatedData = StudentCreateSchema.parse(body);
-    console.log('Validation passed');
 
     // Pre-check unique fields (studentId, username, phone) to return clear 409s before DB insert
     const [existingById, existingByUsername, existingByPhone] = await Promise.all([
@@ -23,43 +20,34 @@ export async function POST(request: NextRequest) {
       findStudentByUsername(validatedData.username),
       findStudentByField('phone' as keyof Student, validatedData.phone),
     ]);
-    console.log('Unique checks completed');
 
     if (existingById) {
-      console.log('Student ID already exists');
       const { response, status } = createUniqueConstraintError('Student', 'studentId');
       return NextResponse.json(response, { status });
     }
 
     if (existingByUsername) {
-      console.log('Username already exists');
       const { response, status } = createUniqueConstraintError('Student', 'username');
       return NextResponse.json(response, { status });
     }
 
     if (existingByPhone) {
-      console.log('Phone already exists');
       const { response, status } = createUniqueConstraintError('Student', 'phone');
       return NextResponse.json(response, { status });
     }
 
     // Hash password before storing
-    console.log('Hashing password...');
     const hashedPassword = await hashPassword(validatedData.password);
-    console.log('Password hashed successfully');
 
     // Convert dateOfBirth string to Date if provided
     const dateOfBirth = validatedData.dateOfBirth
       ? new Date(validatedData.dateOfBirth)
       : null;
-    console.log('Date of birth processed:', dateOfBirth);
 
     // Convert programs array to comma-separated string for DB model
     const programsString = validatedData.programs.join(', ');
-    console.log('Programs string:', programsString);
 
     // Create student record using Supabase operations
-    console.log('Creating student in database...');
     const student = await createStudent({
       firstName: validatedData.firstName,
       lastName: validatedData.lastName,
@@ -79,7 +67,6 @@ export async function POST(request: NextRequest) {
       studentIdRef: validatedData.studentIdRef,
       password: hashedPassword,
     });
-    console.log('Student created successfully');
 
     // Return created student data excluding password field
     const { password: _password, ...studentWithoutPassword } = student;
@@ -127,7 +114,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  console.log('=== GET /api/students called ===');
   try {
     // Get query parameters from URL
     const { searchParams } = new URL(request.url);
@@ -135,8 +121,6 @@ export async function GET(request: NextRequest) {
     const program = searchParams.get('program') || undefined;
     const classSection = searchParams.get('classSection') || undefined;
     const status = searchParams.get('status') || undefined;
-
-    console.log('Filters:', { search, program, classSection, status });
 
     // Check Supabase connection
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -153,9 +137,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('Supabase URL configured:', !!supabaseUrl);
-    console.log('Fetching students from database...');
-
     // Fetch all students with filters
     const students = await getAllStudents({
       search,
@@ -163,8 +144,6 @@ export async function GET(request: NextRequest) {
       classSection,
       status,
     });
-
-    console.log(`Successfully fetched ${students.length} students`);
 
     // Remove password field from all students
     const studentsWithoutPassword = students.map(({ password: _p, ...student }) => {

@@ -110,7 +110,7 @@ export async function GET(
 
 /**
  * PUT /api/teachers/[id]
- * Update teacher profile (professional information only)
+ * Update teacher profile (personal and professional information)
  */
 export async function PUT(
   request: NextRequest,
@@ -133,13 +133,27 @@ export async function PUT(
 
     const supabase = getSupabase();
 
-    // Only allow updating professional information fields
-    const allowedFields = ['qualification', 'experience', 'specialization'];
-    const updateData: Record<string, string> = {};
+    // Map frontend camelCase to database snake_case
+    const fieldMapping: Record<string, string> = {
+      phone: 'phone',
+      secondaryPhone: 'secondary_phone',
+      address: 'address',
+      dateOfBirth: 'date_of_birth',
+      qualification: 'qualification',
+      experience: 'experience',
+      specialization: 'specialization',
+    };
+
+    const updateData: Record<string, string | null> = {};
     
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) {
-        updateData[field] = body[field];
+    for (const [frontendField, dbField] of Object.entries(fieldMapping)) {
+      if (body[frontendField] !== undefined) {
+        // Handle date field - convert empty string to null
+        if (frontendField === 'dateOfBirth') {
+          updateData[dbField] = body[frontendField] ? body[frontendField] : null;
+        } else {
+          updateData[dbField] = body[frontendField];
+        }
       }
     }
 
@@ -174,6 +188,9 @@ export async function PUT(
       id: updatedTeacher.id,
       firstName: updatedTeacher.first_name,
       lastName: updatedTeacher.last_name,
+      phone: updatedTeacher.phone,
+      secondaryPhone: updatedTeacher.secondary_phone,
+      address: updatedTeacher.address,
       qualification: updatedTeacher.qualification,
       experience: updatedTeacher.experience,
       specialization: updatedTeacher.specialization,

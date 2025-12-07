@@ -235,7 +235,6 @@ export function MobileNavigation({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     // Handle search logic here
-    console.log('Search:', searchQuery)
   }
 
   return (

@@ -21,7 +21,7 @@ function getSupabaseClient(): SupabaseClient {
     throw new Error('Missing Supabase environment variables. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env file.')
   }
 
-  console.log('🔧 Creating basic Supabase client (pooling disabled)');
+  // Creating basic Supabase client (pooling disabled)
   _supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: false, // Disable session persistence for server-side usage
@@ -59,7 +59,7 @@ export async function testSupabaseConnection(): Promise<boolean> {
       return data
     })
     
-    console.log('Supabase connection successful (pooled)')
+    // Supabase connection successful (pooled)
     return true
   } catch (error) {
     console.error('Supabase connection test error:', error)
@@ -76,7 +76,7 @@ export async function testSupabaseConnection(): Promise<boolean> {
         return false
       }
       
-      console.log('Supabase connection successful (fallback)')
+      // Supabase connection successful (fallback)
       return true
     } catch (fallbackError) {
       console.error('Supabase fallback connection test error:', fallbackError)

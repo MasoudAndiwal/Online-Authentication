@@ -13,8 +13,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const classId = searchParams.get('classId');
 
-    console.log('[Schedule Class API] Request params:', { classId });
-
     if (!classId) {
       return NextResponse.json(
         { error: 'classId is required' },
@@ -40,8 +38,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('[Schedule Class API] Found', scheduleEntries?.length || 0, 'schedule entries');
 
     // Map database entries to the expected format
     const mappedEntries = (scheduleEntries || []).map((entry: any) => ({

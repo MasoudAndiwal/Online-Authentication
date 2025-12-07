@@ -11,8 +11,8 @@ import {ModernCard,ModernCardHeader,ModernCardTitle,ModernCardContent,
 } from "@/components/ui/modern-card";
 import { EnhancedMetricCard } from "@/components/ui/enhanced-metric-card";
 import { Modern3DIcons } from "@/components/ui/modern-3d-icons";
-import { Button } from "@/components/ui/button";
-import {BookOpen,CheckCircle,BarChart3,Sparkles,
+
+import {BookOpen,Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTeacherDashboardMetrics, useTeacherClasses, useTeacherNotifications } from "@/lib/hooks/use-teacher-dashboard";
@@ -35,7 +35,7 @@ export default function TeacherDashboardPage() {
   
   // Responsive and touch support
   const { isMobile, isTouch } = useResponsive();
-  const { lightTap, success: successHaptic } = useHapticFeedback();
+  const { lightTap } = useHapticFeedback();
   
 
   
@@ -340,102 +340,56 @@ export default function TeacherDashboardPage() {
                 </motion.div>
               </div>
 
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4"
-              >
-                <motion.div
-                  whileHover={!isMobile ? { scale: 1.05 } : {}}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Button
-                    size={isMobile ? "default" : "lg"}
-                    onClick={() => {
-                      handleMarkAttendance();
-                      announce('Navigating to attendance marking interface');
-                      if (isTouch) successHaptic();
-                    }}
-                    className="w-full sm:w-auto min-h-[44px] bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-xl shadow-blue-500/25 rounded-xl sm:rounded-2xl px-5 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300 border-0 touch-manipulation"
-                    aria-label="Mark attendance for your classes"
-                  >
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2 sm:mr-3" aria-hidden="true" />
-                    Mark Attendance
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={!isMobile ? { scale: 1.05 } : {}}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Button
-                    variant="outline"
-                    size={isMobile ? "default" : "lg"}
-                    onClick={() => {
-                      handleViewReports();
-                      announce('Opening reports and analytics');
-                      if (isTouch) lightTap();
-                    }}
-                    className="w-full sm:w-auto min-h-[44px] border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-xl sm:rounded-2xl px-5 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300 touch-manipulation"
-                    aria-label="View attendance reports and analytics"
-                  >
-                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2 sm:mr-3" aria-hidden="true" />
-                    <span className="hidden sm:inline">View Reports</span>
-                    <span className="sm:hidden">Reports</span>
-                  </Button>
-                </motion.div>
-              </motion.div>
+
             </div>
           </div>
         </motion.div>
 
-        {/* Enhanced Metrics Cards with Count-up Animations - Orange Theme - Mobile Optimized */}
+        {/* Enhanced Metrics Cards - Teacher Dashboard - Mobile Optimized */}
         <div id="metrics" role="region" aria-label="Dashboard metrics" className="mb-6 sm:mb-8 lg:mb-12">
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <EnhancedMetricCard
-            title="Total Students"
-            value={loadingMetrics ? '...' : metrics?.totalStudents || 0}
-            icon={<Modern3DIcons.Users3D size={isMobile ? "md" : "lg"} variant="primary" />}
-            trend="+12"
-            trendLabel="vs last month"
+            title="Today's Classes"
+            value={loadingMetrics ? '...' : metrics?.totalClasses || 0}
+            icon={<Modern3DIcons.Calendar3D size={isMobile ? "md" : "lg"} variant="primary" />}
+            trend=""
+            trendLabel="scheduled today"
             color="blue"
             className="border-0 shadow-lg sm:shadow-2xl shadow-blue-500/10 bg-gradient-to-br from-blue-50 to-blue-100/50 backdrop-blur-xl touch-manipulation"
             animateValue={!loadingMetrics}
             delay={0}
           />
           <EnhancedMetricCard
-            title="Active Classes"
-            value={loadingMetrics ? '...' : metrics?.totalClasses || 0}
-            icon={<Modern3DIcons.Calendar3D size={isMobile ? "md" : "lg"} variant="success" />}
-            trend="+2"
-            trendLabel="new this term"
+            title="Class Students"
+            value={loadingMetrics ? '...' : metrics?.totalStudents || 0}
+            icon={<Modern3DIcons.Users3D size={isMobile ? "md" : "lg"} variant="success" />}
+            trend=""
+            trendLabel="in your classes"
             color="emerald"
             className="border-0 shadow-lg sm:shadow-2xl shadow-emerald-500/10 bg-gradient-to-br from-emerald-50 to-emerald-100/50 backdrop-blur-xl touch-manipulation"
             animateValue={!loadingMetrics}
             delay={0.2}
           />
           <EnhancedMetricCard
-            title="Attendance Rate"
-            value={loadingMetrics ? '...' : `${metrics?.weeklyAttendanceRate || 0}%`}
-            icon={<Modern3DIcons.Chart3D size={isMobile ? "md" : "lg"} variant="primary" />}
-            trend="+2.1%"
-            trendLabel="vs last week"
-            color="purple"
-            className="border-0 shadow-lg sm:shadow-2xl shadow-purple-500/10 bg-gradient-to-br from-purple-50 to-purple-100/50 backdrop-blur-xl touch-manipulation"
+            title="Pending Attendance"
+            value={loadingMetrics ? '...' : metrics?.totalClasses || 0}
+            icon={<Modern3DIcons.Clipboard3D size={isMobile ? "md" : "lg"} variant="warning" />}
+            trend=""
+            trendLabel="not marked yet"
+            color="orange"
+            className="border-0 shadow-lg sm:shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl touch-manipulation"
             animateValue={!loadingMetrics}
             delay={0.4}
           />
           <EnhancedMetricCard
-            title="At-Risk Students"
-            value={loadingMetrics ? '...' : metrics?.studentsAtRisk || 0}
-            icon={<Modern3DIcons.Clipboard3D size={isMobile ? "md" : "lg"} variant="warning" />}
-            trend="-3"
-            trendLabel="need attention"
-            color="orange"
-            className="border-0 shadow-lg sm:shadow-2xl shadow-orange-500/10 bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-xl touch-manipulation"
-            animateValue={!loadingMetrics}
+            title="Next Class"
+            value={loadingMetrics ? '...' : classes[0]?.name || 'No class'}
+            icon={<Modern3DIcons.Chart3D size={isMobile ? "md" : "lg"} variant="primary" />}
+            trend=""
+            trendLabel={classes[0]?.session === 'MORNING' ? 'Morning session' : classes[0]?.session === 'AFTERNOON' ? 'Afternoon session' : 'upcoming'}
+            color="purple"
+            className="border-0 shadow-lg sm:shadow-2xl shadow-purple-500/10 bg-gradient-to-br from-purple-50 to-purple-100/50 backdrop-blur-xl touch-manipulation"
+            animateValue={false}
             delay={0.6}
           />
         </div>
