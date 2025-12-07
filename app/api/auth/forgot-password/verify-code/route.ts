@@ -17,9 +17,6 @@ export async function POST(request: NextRequest) {
     }
 
     // TODO: Implement actual code verification logic
-    // For now, return success for demo purposes
-    console.log(`[Verify Code API] Verifying code for email: ${email}`);
-
     // Mock verification - in real implementation, check against stored codes
     if (code === '123456') {
       return NextResponse.json({

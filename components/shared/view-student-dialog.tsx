@@ -9,7 +9,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   User,
   Phone,
@@ -99,8 +98,8 @@ export function ViewStudentDialog({
     if (!value) return null;
 
     return (
-      <div className={cn("flex items-start gap-3 p-3 rounded-lg bg-slate-50", className)}>
-        <Icon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+      <div className={cn("flex items-start gap-3 p-3 rounded-lg bg-slate-50/80", className)}>
+        <Icon className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-slate-500 font-medium mb-1">{label}</p>
           <p className="text-sm text-slate-900 font-medium break-words">{value}</p>
@@ -142,33 +141,32 @@ export function ViewStudentDialog({
         {!loading && !error && student && (
           <div className="space-y-6">
             {/* Header with Name and Status */}
-            <div className="flex items-start justify-between p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+            <div className="flex items-start justify-between p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/80">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 mb-1">
                   {student.firstName} {student.lastName}
                 </h3>
                 <p className="text-sm text-slate-600 mb-2">Student ID: {student.studentId}</p>
-                <Badge
-                  variant="outline"
+                <span
                   className={cn(
-                    "text-xs font-semibold",
+                    "text-xs font-semibold px-3 py-1 rounded-full",
                     student.status === "ACTIVE"
-                      ? "bg-green-100 text-green-800 border-green-200"
+                      ? "bg-emerald-100 text-emerald-700"
                       : student.status === "SICK"
-                      ? "bg-red-100 text-red-800 border-red-200"
-                      : "bg-slate-100 text-slate-800 border-slate-200"
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-slate-100 text-slate-700"
                   )}
                 >
                   {student.status === "ACTIVE" ? "Active" : student.status === "SICK" ? "Sick" : "Inactive"}
-                </Badge>
+                </span>
               </div>
-              <User className="h-12 w-12 text-green-600" />
+              <User className="h-12 w-12 text-emerald-600" />
             </div>
 
             {/* Personal Information */}
             <div>
               <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <User className="h-4 w-4 text-green-600" />
+                <User className="h-4 w-4 text-emerald-600" />
                 Personal Information
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -187,7 +185,7 @@ export function ViewStudentDialog({
             {/* Contact Information */}
             <div>
               <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <Phone className="h-4 w-4 text-green-600" />
+                <Phone className="h-4 w-4 text-emerald-600" />
                 Contact Information
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -200,7 +198,7 @@ export function ViewStudentDialog({
             {/* Academic Information */}
             <div>
               <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-green-600" />
+                <GraduationCap className="h-4 w-4 text-emerald-600" />
                 Academic Information
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -222,24 +220,23 @@ export function ViewStudentDialog({
             {/* Programs */}
             <div>
               <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-green-600" />
+                <BookOpen className="h-4 w-4 text-emerald-600" />
                 Enrolled Programs
               </h4>
               <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-slate-50">
+                <div className="p-3 rounded-lg bg-slate-50/80">
                   <p className="text-xs text-slate-500 font-medium mb-2">Programs/Classes</p>
                   <div className="flex flex-wrap gap-2">
                     {(Array.isArray(student.programs)
                       ? student.programs
                       : student.programs.split(",")
                     ).map((program, index) => (
-                      <Badge
+                      <span
                         key={index}
-                        variant="outline"
-                        className="bg-green-100 text-green-800 border-green-200"
+                        className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 text-xs font-medium"
                       >
                         {typeof program === "string" ? program.trim() : program}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -247,11 +244,10 @@ export function ViewStudentDialog({
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end pt-4 border-t">
+            <div className="flex justify-end pt-4 border-t border-slate-100">
               <Button
-                variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="gap-2"
+                className="gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border-0"
               >
                 <X className="h-4 w-4" />
                 Close

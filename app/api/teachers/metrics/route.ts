@@ -18,28 +18,31 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get teacher's classes
-    const { data: teacherClasses, error: classesError } = await supabase
-      .from('class_subjects')
-      .select('class_name')
-      .eq('teacher_id', teacherId);
+    // Get teacher's assigned classes from teachers table
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('classes')
+      .eq('id', teacherId)
+      .single();
 
-    if (classesError) {
-      console.error('Error fetching teacher classes:', classesError);
+    if (teacherError) {
+      console.error('Error fetching teacher:', teacherError);
     }
 
-    const classNames = teacherClasses?.map(c => c.class_name) || [];
-    const totalClasses = classNames.length;
+    const teacherClasses = teacher?.classes || [];
+    const totalClasses = teacherClasses.length;
 
     // Get total students in teacher's classes
     let totalStudents = 0;
     let studentsAtRisk = 0;
 
-    if (classNames.length > 0) {
+    if (teacherClasses.length > 0) {
+      // Teacher classes are stored as "ClassName - SESSION" format
+      // Students class_section is also stored in same format
       const { data: students, error: studentsError } = await supabase
         .from('students')
         .select('id')
-        .in('class_section', classNames);
+        .in('class_section', teacherClasses);
 
       if (studentsError) {
         console.error('Error fetching students:', studentsError);

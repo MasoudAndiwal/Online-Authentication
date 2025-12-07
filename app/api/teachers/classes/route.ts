@@ -97,8 +97,12 @@ export async function GET(request: NextRequest) {
     // Transform classes to match frontend interface
     const transformedClasses = filteredClasses.map((cls) => {
       const session = cls.session || 'MORNING';
-      // Database actually stores as "AI-401-A - AFTERNOON" (uppercase session)
-      const classKey = `${cls.name} - ${session}`;
+      // Database stores class_section as "AI-401-A - AFTERNOON" (uppercase session)
+      const classKey = `${cls.name} - ${session.toUpperCase()}`;
+      
+      // Also try lowercase session format
+      const classKeyLower = `${cls.name} - ${session}`;
+      const count = studentCountByClass[classKey] || studentCountByClass[classKeyLower] || 0;
       
       return {
         id: cls.id,
@@ -106,12 +110,11 @@ export async function GET(request: NextRequest) {
         session: session,
         major: cls.major || '',
         semester: Number(cls.semester || 1),
-        studentCount: studentCountByClass[classKey] || 0,
+        studentCount: count,
         scheduleCount: scheduleCountByClass[cls.id] || 0,
         // Additional fields for teacher dashboard
         schedule: [], // TODO: Fetch actual schedule
         attendanceRate: 94.2, // TODO: Calculate from attendance records
-        nextSession: new Date(Date.now() + 24 * 60 * 60 * 1000), // TODO: Calculate from schedule
       };
     });
 

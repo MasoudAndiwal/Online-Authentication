@@ -1,10 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Phone, Edit, Trash2, Eye } from "lucide-react";
 
 interface Teacher {
@@ -23,73 +19,63 @@ interface Teacher {
 
 interface TeacherCardProps {
   teacher: Teacher;
-  index: number;
+  index?: number;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export function TeacherCard({ teacher, index, onView, onEdit, onDelete }: TeacherCardProps) {
+export function TeacherCard({ teacher, onView, onEdit, onDelete }: TeacherCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.3 }}
-    >
-      <Card className="p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:border-orange-300 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100 border-slate-200/60 bg-white">
+    <div className="p-5 rounded-xl bg-gradient-to-br from-slate-50 to-white shadow-sm hover:shadow-md transition-all duration-300 border-0">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-slate-900">
                   {teacher.name}
                 </h3>
                 <p className="text-sm text-slate-500">
-                  {teacher.teacherId || teacher.id}
+                  ID: {teacher.teacherId || teacher.id}
                 </p>
               </div>
-              <Badge
-                variant="outline"
-                className={
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   teacher.status === "Active"
-                    ? "bg-green-100 text-green-800 border-green-200"
+                    ? "bg-emerald-100 text-emerald-700"
                     : teacher.status === "Inactive"
-                    ? "bg-red-100 text-red-800 border-red-200"
-                    : "bg-yellow-100 text-yellow-800 border-yellow-200"
-                }
+                    ? "bg-rose-100 text-rose-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}
               >
                 {teacher.status}
-              </Badge>
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-slate-500">Department:</span>
-                <p className="font-medium text-slate-900">
-                  {teacher.department}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
+              <div className="bg-slate-50/80 rounded-lg p-2">
+                <span className="text-slate-500 text-xs">Department</span>
+                <p className="font-medium text-slate-900 truncate">
+                  {teacher.department || '-'}
                 </p>
               </div>
-              <div>
-                <span className="text-slate-500">
-                  Qualification:
-                </span>
-                <p className="font-medium text-slate-900">
-                  {teacher.qualification}
+              <div className="bg-slate-50/80 rounded-lg p-2">
+                <span className="text-slate-500 text-xs">Qualification</span>
+                <p className="font-medium text-slate-900 truncate">
+                  {teacher.qualification || '-'}
                 </p>
               </div>
-              <div>
-                <span className="text-slate-500">Experience:</span>
+              <div className="bg-slate-50/80 rounded-lg p-2">
+                <span className="text-slate-500 text-xs">Experience</span>
                 <p className="font-medium text-slate-900">
-                  {teacher.experience}
+                  {teacher.experience || '-'}
                 </p>
               </div>
-              <div>
-                <span className="text-slate-500">
-                  Active Classes:
-                </span>
+              <div className="bg-slate-50/80 rounded-lg p-2">
+                <span className="text-slate-500 text-xs">Classes</span>
                 <p className="font-medium text-slate-900">
                   {teacher.classes}
                 </p>
@@ -97,53 +83,50 @@ export function TeacherCard({ teacher, index, onView, onEdit, onDelete }: Teache
             </div>
 
             {teacher.subjects && teacher.subjects.length > 0 && (
-              <div className="mt-3">
-                <span className="text-slate-500 text-sm">Subjects:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
+              <div className="mb-3">
+                <span className="text-slate-500 text-xs">Subjects</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
                   {teacher.subjects.map((subject, idx) => (
-                    <Badge
+                    <span
                       key={idx}
-                      variant="outline"
-                      className="text-xs bg-orange-50 text-orange-700 border-orange-200"
+                      className="text-xs px-2 py-1 rounded-md bg-orange-50 text-orange-700 font-medium"
                     >
                       {subject}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
-              <div className="flex items-center gap-1">
-                <Phone className="h-4 w-4" />
-                <span>{teacher.phone}</span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Phone className="h-4 w-4 text-orange-500" />
+              <span>{teacher.phone}</span>
             </div>
           </div>
 
           <div className="flex gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="border-blue-200 text-blue-700 hover:bg-blue-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
               onClick={() => onView?.(teacher.id)}
             >
               <Eye className="h-4 w-4 mr-1" />
               View
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="border-orange-200 text-orange-700 hover:bg-orange-50 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 transition-colors"
               onClick={() => onEdit?.(teacher.id)}
             >
               <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="border-red-200 text-red-700 hover:bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors"
               onClick={() => onDelete?.(teacher.id)}
             >
               <Trash2 className="h-4 w-4 mr-1" />
@@ -151,7 +134,55 @@ export function TeacherCard({ teacher, index, onView, onEdit, onDelete }: Teache
             </Button>
           </div>
         </div>
-      </Card>
-    </motion.div>
+      </div>
+  );
+}
+
+// Skeleton loading component
+export function TeacherCardSkeleton() {
+  return (
+    <div className="p-5 rounded-xl bg-gradient-to-br from-slate-50 to-white shadow-sm border-0 animate-pulse">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-12 w-12 bg-slate-200 rounded-xl" />
+            <div className="flex-1">
+              <div className="h-5 w-32 bg-slate-200 rounded mb-2" />
+              <div className="h-4 w-24 bg-slate-200 rounded" />
+            </div>
+            <div className="h-6 w-16 bg-slate-200 rounded-full" />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-slate-100 rounded-lg p-2">
+                <div className="h-3 w-16 bg-slate-200 rounded mb-1" />
+                <div className="h-4 w-20 bg-slate-200 rounded" />
+              </div>
+            ))}
+          </div>
+
+          <div className="mb-3">
+            <div className="h-3 w-14 bg-slate-200 rounded mb-2" />
+            <div className="flex gap-1.5">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-6 w-16 bg-slate-200 rounded-md" />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 bg-slate-200 rounded" />
+            <div className="h-4 w-28 bg-slate-200 rounded" />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <div className="h-8 w-16 bg-slate-200 rounded" />
+          <div className="h-8 w-16 bg-slate-200 rounded" />
+          <div className="h-8 w-16 bg-slate-200 rounded" />
+        </div>
+      </div>
+    </div>
   );
 }

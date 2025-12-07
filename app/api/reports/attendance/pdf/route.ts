@@ -6,10 +6,7 @@ const PDFDocument = require('pdfkit')
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('PDF generation started')
-    
     const body = await request.json()
-    console.log('Request body:', body)
     
     const { classId, dateRange, customStartDate, customEndDate } = body
 
@@ -25,8 +22,6 @@ export async function POST(request: NextRequest) {
     let weekStart: Date
     let weekEnd: Date
     const weekDays: Date[] = []
-
-    console.log('Processing date range:', dateRange)
 
     if (dateRange === 'current-week') {
       const today = new Date()
@@ -66,8 +61,6 @@ export async function POST(request: NextRequest) {
       weekEnd = new Date(customEndDate)
     }
 
-    console.log('Date range:', { weekStart, weekEnd })
-
     // Generate array of all days in the week
     for (let i = 0; i < 6; i++) {
       const day = new Date(weekStart)
@@ -76,7 +69,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch class information
-    console.log('Fetching class info for ID:', classId)
     const { data: classInfo, error: classError } = await supabase
       .from('classes')
       .select('id, name, semester, major, session')
@@ -91,11 +83,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Class info:', classInfo)
     const classSection = `${classInfo.name} - ${classInfo.session}`
 
     // Fetch students
-    console.log('Fetching students for section:', classSection)
     const { data: students, error: studentsError } = await supabase
       .from('students')
       .select('id, student_id, first_name, last_name, father_name, grandfather_name')
@@ -110,10 +100,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Students found:', students?.length || 0)
-
     // Fetch attendance records
-    console.log('Fetching attendance records')
     const { data: attendanceRecords, error: attendanceError } = await supabase
       .from('attendance_records_new')
       .select('*')
@@ -129,8 +116,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log('Attendance records found:', attendanceRecords?.length || 0)
 
     // Helper function to get attendance status
     function getAttendanceStatus(studentId: string, date: Date, period: number): string {
@@ -153,14 +138,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create PDF document
-    console.log('Creating PDF document')
-    
-    // Create PDF document
-    console.log('Creating PDF document')
-    console.log('PDFDocument type:', typeof PDFDocument)
-    
     if (typeof PDFDocument !== 'function') {
-      console.error('PDFDocument is not a function, it is:', typeof PDFDocument)
+      console.error('PDFDocument is not a constructor')
       return NextResponse.json(
         { error: 'PDFDocument is not a constructor. Type: ' + typeof PDFDocument },
         { status: 500 }
@@ -172,7 +151,6 @@ export async function POST(request: NextRequest) {
       layout: 'landscape',
       margins: { top: 50, bottom: 50, left: 50, right: 50 }
     })
-    console.log('PDF document created successfully')
 
     // Set up response headers
     const chunks: Buffer[] = []
@@ -181,7 +159,6 @@ export async function POST(request: NextRequest) {
     return new Promise<NextResponse>((resolve, reject) => {
       doc.on('end', () => {
         try {
-          console.log('PDF generation completed')
           const pdfBuffer = Buffer.concat(chunks)
           
           const response = new NextResponse(pdfBuffer, {
@@ -204,8 +181,6 @@ export async function POST(request: NextRequest) {
       })
 
       try {
-        console.log('Adding content to PDF')
-        
         // Add simple content to PDF first
         doc.fontSize(16)
         doc.text('Weekly Attendance Report', 100, 100)
@@ -269,7 +244,6 @@ export async function POST(request: NextRequest) {
         currentY += 15
         doc.text(`Report Generated: ${new Date().toLocaleString()}`, startX, currentY)
 
-        console.log('Finalizing PDF')
         doc.end()
       } catch (pdfError) {
         console.error('Error generating PDF content:', pdfError)

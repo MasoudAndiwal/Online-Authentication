@@ -376,11 +376,6 @@ export default function MarkAttendanceClassPage() {
     if (!classData) return;
     
     try {
-      console.log('[LoadAttendance] Fetching existing attendance for:', {
-        classId: classData.id,
-        date: selectedDate.toISOString().split('T')[0]
-      });
-      
       const params = new URLSearchParams({
         classId: classData.id,
         date: selectedDate.toISOString().split('T')[0]
@@ -390,14 +385,12 @@ export default function MarkAttendanceClassPage() {
       if (!response.ok) {
         // If no records found, that's okay - just means no attendance marked yet
         if (response.status === 404) {
-          console.log('[LoadAttendance] No existing attendance records found');
           return;
         }
         throw new Error("Failed to fetch existing attendance");
       }
       
       const result = await response.json();
-      console.log('[LoadAttendance] API Response:', result);
       
       if (result.success && result.data && Array.isArray(result.data)) {
         const existingRecords = new Map<string, AttendanceRecord>();
@@ -413,13 +406,7 @@ export default function MarkAttendanceClassPage() {
             subject: record.subject,
           };
           existingRecords.set(key, attendanceRecord);
-          
-          // Debug logging for each record
-          console.log(`[LoadAttendance] Record ${key}:`, attendanceRecord);
         });
-        
-        console.log('[LoadAttendance] Loaded', existingRecords.size, 'existing attendance records');
-        console.log('[LoadAttendance] All records:', Array.from(existingRecords.entries()));
         
         setAttendanceRecords(existingRecords);
         setOriginalAttendanceRecords(new Map(existingRecords)); // Store original state
@@ -452,7 +439,6 @@ export default function MarkAttendanceClassPage() {
       setStudentsError(null);
       // Database stores sessions in uppercase format
       const classSectionKey = `${classData.name} - ${classData.session}`;
-      console.log('Mark Attendance - Fetching students with classSection:', classSectionKey);
       const response = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`);
       if (!response.ok) throw new Error("Failed to fetch students");
       const data: Student[] = await response.json();
@@ -525,12 +511,6 @@ export default function MarkAttendanceClassPage() {
         uniqueStudents.add(studentId);
       }
     });
-    
-    // Debug logging
-    console.log(`[Statistics] ${status} count:`, uniqueStudents.size);
-    console.log(`[Statistics] ${status} students:`, Array.from(uniqueStudents));
-    console.log(`[Statistics] Total attendance records:`, attendanceRecords.size);
-    console.log(`[Statistics] Student status map:`, Array.from(studentStatusMap.entries()));
     
     return uniqueStudents.size;
   }, [attendanceRecords]);

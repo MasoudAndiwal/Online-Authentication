@@ -35,8 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Attendance API] Saving ${records.length} attendance records for class ${classId} on ${date}`);
-
     // Check if new table structure exists by trying to query the new table
     let useNewStructure = false;
     try {
@@ -47,10 +45,9 @@ export async function POST(request: NextRequest) {
       
       if (!checkError) {
         useNewStructure = true;
-        console.log('[Attendance API] Using new table structure (attendance_records_new)');
       }
-    } catch (e) {
-      console.log('[Attendance API] Using old table structure (attendance_records)');
+    } catch (_e) {
+      // Using old table structure
     }
 
     if (useNewStructure) {
@@ -125,8 +122,6 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-
-      console.log(`[Attendance API] Successfully saved ${data?.length || 0} student records`);
 
       // ============================================================================
       // SSE Integration: Broadcast attendance updates
@@ -203,8 +198,6 @@ export async function POST(request: NextRequest) {
         };
         
         await sseService.broadcastToClass(classId, classUpdateEvent);
-        
-        console.log(`[Attendance API] SSE broadcasts sent for ${attendanceData.length} students in class ${classId}`);
       } catch (sseError) {
         console.error('[Attendance API] Failed to send SSE broadcasts:', sseError);
         // Don't fail the request if SSE fails - attendance was still saved
@@ -255,8 +248,6 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-
-      console.log(`[Attendance API] Successfully saved ${data?.length || 0} records`);
 
       // ============================================================================
       // SSE Integration: Broadcast attendance updates (Old Structure)
@@ -346,8 +337,6 @@ export async function POST(request: NextRequest) {
         };
         
         await sseService.broadcastToClass(classId, classUpdateEvent);
-        
-        console.log(`[Attendance API] SSE broadcasts sent for ${studentUpdates.size} students (${attendanceData.length} periods) in class ${classId}`);
       } catch (sseError) {
         console.error('[Attendance API] Failed to send SSE broadcasts:', sseError);
         // Don't fail the request if SSE fails - attendance was still saved
@@ -380,8 +369,6 @@ export async function GET(request: NextRequest) {
     const classId = searchParams.get('classId');
     const date = searchParams.get('date');
 
-    console.log('[Attendance API GET] Request params:', { classId, date });
-
     if (!classId || !date) {
       return NextResponse.json(
         { error: 'Missing required parameters: classId, date' },
@@ -401,11 +388,10 @@ export async function GET(request: NextRequest) {
       if (!checkError) {
         useNewStructure = true;
         tableName = 'attendance_records_new';
-        console.log('[Attendance API GET] Using new table structure (attendance_records_new)');
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e) {
-      console.log('[Attendance API GET] Using old table structure (attendance_records)');
+    } catch (_e) {
+      // Using old table structure
     }
 
     const { data, error } = await supabase
@@ -471,13 +457,9 @@ export async function GET(request: NextRequest) {
         }
       });
       
-      console.log('[Attendance API GET] Successfully fetched', data.length, 'student records, expanded to', expandedRecords.length, 'period records');
-      console.log('[Attendance API GET] Sample expanded records:', expandedRecords.slice(0, 3));
     } else {
       // OLD STRUCTURE: Return data as is
       expandedRecords = data || [];
-      console.log('[Attendance API GET] Successfully fetched', expandedRecords.length, 'period records');
-      console.log('[Attendance API GET] Sample records:', expandedRecords.slice(0, 3));
     }
 
     return NextResponse.json({

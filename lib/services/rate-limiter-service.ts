@@ -1,6 +1,3 @@
-import Redis from 'ioredis';
-import { getRedisClient } from '../config/redis';
-
 /**
  * Rate limit configuration for different endpoints
  */
@@ -45,20 +42,21 @@ export interface RateLimitUsage {
   windowEnd: Date;
 }
 
+// In-memory storage for rate limiting
+const rateLimitStore = new Map<string, { timestamps: number[] }>();
+
 /**
  * RateLimiterService
- * Implements distributed rate limiting using Redis with sliding window algorithm
+ * Implements in-memory rate limiting with sliding window algorithm
  * Protects API endpoints from abuse with configurable rate limits
  */
 export class RateLimiterService {
-  private redis: Redis;
-
-  constructor(redisClient?: Redis) {
-    this.redis = redisClient || getRedisClient();
+  constructor() {
+    // In-memory rate limiting - no external dependencies
   }
 
   /**
-   * Generate Redis key for rate limiting
+   * Generate key for rate limiting
    */
   private getRateLimitKey(userId: string, endpoint: string): string {
     return `ratelimit:${endpoint}:${userId}`;
@@ -83,48 +81,41 @@ export class RateLimiterService {
     const now = Date.now();
     const windowStart = now - (config.window * 1000);
 
-    try {
-      // Use sliding window algorithm with sorted sets
-      // Remove old entries outside the current window
-      await this.redis.zremrangebyscore(key, 0, windowStart);
-
-      // Count requests in current window
-      const requestCount = await this.redis.zcard(key);
-
-      // Check if limit exceeded
-      const allowed = requestCount < config.requests;
-
-      // Calculate remaining requests
-      const remaining = Math.max(0, config.requests - requestCount);
-
-      // Calculate reset time (end of current window)
-      const oldestEntry = await this.redis.zrange(key, 0, 0, 'WITHSCORES');
-      const windowStartTime = oldestEntry.length >= 2
-        ? parseInt(oldestEntry[1], 10) 
-        : now;
-      const resetAt = new Date(windowStartTime + (config.window * 1000));
-
-      // Calculate retry after if not allowed
-      let retryAfter: number | undefined;
-      if (!allowed) {
-        retryAfter = Math.ceil((resetAt.getTime() - now) / 1000);
-      }
-
-      return {
-        allowed,
-        remaining,
-        resetAt,
-        retryAfter,
-      };
-    } catch (error) {
-      console.error(`Rate limit check error for ${userId}:${endpoint}:`, error);
-      // Fail open - allow request if Redis is down
-      return {
-        allowed: true,
-        remaining: config.requests,
-        resetAt: new Date(now + config.window * 1000),
-      };
+    // Get or create entry
+    let entry = rateLimitStore.get(key);
+    if (!entry) {
+      entry = { timestamps: [] };
+      rateLimitStore.set(key, entry);
     }
+
+    // Remove old entries outside the current window
+    entry.timestamps = entry.timestamps.filter(ts => ts > windowStart);
+
+    // Count requests in current window
+    const requestCount = entry.timestamps.length;
+
+    // Check if limit exceeded
+    const allowed = requestCount < config.requests;
+
+    // Calculate remaining requests
+    const remaining = Math.max(0, config.requests - requestCount);
+
+    // Calculate reset time (end of current window)
+    const oldestTimestamp = entry.timestamps.length > 0 ? entry.timestamps[0] : now;
+    const resetAt = new Date(oldestTimestamp + (config.window * 1000));
+
+    // Calculate retry after if not allowed
+    let retryAfter: number | undefined;
+    if (!allowed) {
+      retryAfter = Math.ceil((resetAt.getTime() - now) / 1000);
+    }
+
+    return {
+      allowed,
+      remaining,
+      resetAt,
+      retryAfter,
+    };
   }
 
   /**
@@ -145,24 +136,18 @@ export class RateLimiterService {
     const now = Date.now();
     const windowStart = now - (config.window * 1000);
 
-    try {
-      // Use Redis pipeline for atomic operations
-      const pipeline = this.redis.pipeline();
-
-      // Remove old entries
-      pipeline.zremrangebyscore(key, 0, windowStart);
-
-      // Add current request with timestamp as score
-      pipeline.zadd(key, now, `${now}:${Math.random()}`);
-
-      // Set expiry on the key (window + buffer)
-      pipeline.expire(key, config.window + 60);
-
-      await pipeline.exec();
-    } catch (error) {
-      console.error(`Rate limit record error for ${userId}:${endpoint}:`, error);
-      // Don't throw - failing to record shouldn't break the request
+    // Get or create entry
+    let entry = rateLimitStore.get(key);
+    if (!entry) {
+      entry = { timestamps: [] };
+      rateLimitStore.set(key, entry);
     }
+
+    // Remove old entries
+    entry.timestamps = entry.timestamps.filter(ts => ts > windowStart);
+
+    // Add current request
+    entry.timestamps.push(now);
   }
 
   /**
@@ -183,27 +168,8 @@ export class RateLimiterService {
     const now = Date.now();
     const windowStart = now - (config.window * 1000);
 
-    try {
-      // Remove old entries
-      await this.redis.zremrangebyscore(key, 0, windowStart);
-
-      // Count current requests
-      const requestCount = await this.redis.zcard(key);
-
-      // Get oldest entry to determine window start
-      const oldestEntry = await this.redis.zrange(key, 0, 0, 'WITHSCORES');
-      const actualWindowStart = oldestEntry.length >= 2
-        ? parseInt(oldestEntry[1], 10) 
-        : now;
-
-      return {
-        requests: requestCount,
-        limit: config.requests,
-        windowStart: new Date(actualWindowStart),
-        windowEnd: new Date(actualWindowStart + config.window * 1000),
-      };
-    } catch (error) {
-      console.error(`Rate limit usage error for ${userId}:${endpoint}:`, error);
+    const entry = rateLimitStore.get(key);
+    if (!entry) {
       return {
         requests: 0,
         limit: config.requests,
@@ -211,6 +177,18 @@ export class RateLimiterService {
         windowEnd: new Date(now + config.window * 1000),
       };
     }
+
+    // Remove old entries
+    entry.timestamps = entry.timestamps.filter(ts => ts > windowStart);
+
+    const actualWindowStart = entry.timestamps.length > 0 ? entry.timestamps[0] : now;
+
+    return {
+      requests: entry.timestamps.length,
+      limit: config.requests,
+      windowStart: new Date(actualWindowStart),
+      windowEnd: new Date(actualWindowStart + config.window * 1000),
+    };
   }
 
   /**
@@ -221,33 +199,18 @@ export class RateLimiterService {
    * @returns Number of keys deleted
    */
   async resetLimits(userId: string): Promise<number> {
-    try {
-      const pattern = `ratelimit:*:${userId}`;
-      let cursor = '0';
-      let deletedCount = 0;
-
-      do {
-        const [nextCursor, keys] = await this.redis.scan(
-          cursor,
-          'MATCH',
-          pattern,
-          'COUNT',
-          100
-        );
-
-        cursor = nextCursor;
-
-        if (keys.length > 0) {
-          const deleted = await this.redis.del(...keys);
-          deletedCount += deleted;
-        }
-      } while (cursor !== '0');
-
-      return deletedCount;
-    } catch (error) {
-      console.error(`Rate limit reset error for ${userId}:`, error);
-      return 0;
+    let deletedCount = 0;
+    const prefix = `ratelimit:`;
+    const suffix = `:${userId}`;
+    
+    for (const key of rateLimitStore.keys()) {
+      if (key.startsWith(prefix) && key.endsWith(suffix)) {
+        rateLimitStore.delete(key);
+        deletedCount++;
+      }
     }
+    
+    return deletedCount;
   }
 
   /**
@@ -258,14 +221,8 @@ export class RateLimiterService {
    * @returns True if key was deleted
    */
   async resetEndpointLimit(userId: string, endpoint: string): Promise<boolean> {
-    try {
-      const key = this.getRateLimitKey(userId, endpoint);
-      const deleted = await this.redis.del(key);
-      return deleted > 0;
-    } catch (error) {
-      console.error(`Rate limit endpoint reset error for ${userId}:${endpoint}:`, error);
-      return false;
-    }
+    const key = this.getRateLimitKey(userId, endpoint);
+    return rateLimitStore.delete(key);
   }
 
   /**
@@ -274,29 +231,7 @@ export class RateLimiterService {
    * @returns Array of active rate limit keys
    */
   async getActiveRateLimits(): Promise<string[]> {
-    try {
-      const pattern = 'ratelimit:*';
-      let cursor = '0';
-      const allKeys: string[] = [];
-
-      do {
-        const [nextCursor, keys] = await this.redis.scan(
-          cursor,
-          'MATCH',
-          pattern,
-          'COUNT',
-          100
-        );
-
-        cursor = nextCursor;
-        allKeys.push(...keys);
-      } while (cursor !== '0');
-
-      return allKeys;
-    } catch (error) {
-      console.error('Error getting active rate limits:', error);
-      return [];
-    }
+    return Array.from(rateLimitStore.keys());
   }
 }
 

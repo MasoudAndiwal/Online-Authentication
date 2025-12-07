@@ -11,8 +11,6 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
     const dateRange = searchParams.get('dateRange') || '30'; // Default 30 days
     
-    console.log('[Attendance History API] Request params:', { classId, startDate, endDate, dateRange });
-    
     if (!classId) {
       return NextResponse.json(
         { error: 'Class ID is required' },
@@ -40,15 +38,10 @@ export async function GET(request: NextRequest) {
       
       if (!checkError) {
         useNewStructure = true;
-        console.log('[Attendance History API] Using new table structure (attendance_records_new)');
-      } else {
-        console.log('[Attendance History API] New table check error:', checkError.message);
       }
-    } catch (e) {
-      console.log('[Attendance History API] Exception checking new table:', e);
+    } catch (_e) {
+      // Using old table structure
     }
-    
-    console.log('[Attendance History API] Using table structure:', useNewStructure ? 'NEW' : 'OLD');
 
     let attendanceRecords: Array<{
       id: string;
@@ -65,8 +58,6 @@ export async function GET(request: NextRequest) {
 
     if (useNewStructure) {
       // NEW STRUCTURE: Fetch from attendance_records_new
-      console.log('[Attendance History API] Querying attendance_records_new with:', { classId, startDateStr, endDateStr });
-      
       const { data, error: attendanceError } = await supabase
         .from('attendance_records_new')
         .select('*')
@@ -77,19 +68,11 @@ export async function GET(request: NextRequest) {
 
       if (attendanceError) {
         console.error('[Attendance History API] Error fetching from attendance_records_new:', attendanceError);
-        console.error('[Attendance History API] Error details:', {
-          message: attendanceError.message,
-          details: attendanceError.details,
-          hint: attendanceError.hint,
-          code: attendanceError.code
-        });
         return NextResponse.json(
           { error: 'Failed to fetch attendance records from new table', details: attendanceError.message },
           { status: 500 }
         );
       }
-      
-      console.log('[Attendance History API] Fetched', data?.length || 0, 'records from new table');
 
       // Transform new structure to flat records
       attendanceRecords = [];
@@ -114,8 +97,6 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // OLD STRUCTURE: Fetch from attendance_records
-      console.log('[Attendance History API] Querying attendance_records with:', { classId, startDateStr, endDateStr });
-      
       const { data, error: attendanceError } = await supabase
         .from('attendance_records')
         .select('*')
@@ -126,19 +107,11 @@ export async function GET(request: NextRequest) {
 
       if (attendanceError) {
         console.error('[Attendance History API] Error fetching from attendance_records:', attendanceError);
-        console.error('[Attendance History API] Error details:', {
-          message: attendanceError.message,
-          details: attendanceError.details,
-          hint: attendanceError.hint,
-          code: attendanceError.code
-        });
         return NextResponse.json(
           { error: 'Failed to fetch attendance records from old table', details: attendanceError.message },
           { status: 500 }
         );
       }
-      
-      console.log('[Attendance History API] Fetched', data?.length || 0, 'records from old table');
 
       // Transform old structure to flat records
       attendanceRecords = data?.map(record => ({
@@ -157,10 +130,8 @@ export async function GET(request: NextRequest) {
 
     // Get unique student IDs
     const studentIds = [...new Set(attendanceRecords?.map(r => r.student_id) || [])];
-    console.log('[Attendance History API] Found', studentIds.length, 'unique student IDs:', studentIds.slice(0, 3));
 
     if (studentIds.length === 0) {
-      console.log('[Attendance History API] No attendance records found, returning empty result');
       return NextResponse.json({
         success: true,
         data: {
@@ -183,7 +154,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch student information
-    // Try to match by id first (student_id in attendance is the UUID from students.id)
     let students: Array<{
       id: string;
       student_id: string;
@@ -203,11 +173,8 @@ export async function GET(request: NextRequest) {
       students = result.data || [];
       studentsError = result.error as Error | null;
       
-      console.log('[Attendance History API] Fetched', students.length, 'students by id');
-      
       // If no students found by id, try matching by student_id field
       if (students.length === 0 && !studentsError) {
-        console.log('[Attendance History API] No students found by id, trying student_id field');
         const result2 = await supabase
           .from('students')
           .select('id, student_id, first_name, last_name, class_section, programs')
@@ -215,7 +182,6 @@ export async function GET(request: NextRequest) {
         
         students = result2.data || [];
         studentsError = result2.error as Error | null;
-        console.log('[Attendance History API] Fetched', students.length, 'students by student_id');
       }
     } catch (e) {
       console.error('[Attendance History API] Exception fetching students:', e);
@@ -224,24 +190,11 @@ export async function GET(request: NextRequest) {
 
     if (studentsError) {
       console.error('[Attendance History API] Error fetching students:', studentsError);
-      if (studentsError && typeof studentsError === 'object' && 'message' in studentsError) {
-        console.error('[Attendance History API] Student query error details:', {
-          message: (studentsError as any).message,
-          details: (studentsError as any).details,
-          hint: (studentsError as any).hint,
-          code: (studentsError as any).code
-        });
-      }
-      
       // Don't fail the whole request, just return records without student details
-      console.warn('[Attendance History API] Continuing without student details');
       students = [];
     }
-    
-    console.log('[Attendance History API] Final student count:', students?.length || 0);
 
     // Create a map of student info for quick lookup
-    // Map by both id and student_id to handle different storage formats
     const studentMap = new Map<string, {
       studentId: string;
       studentName: string;
@@ -260,8 +213,6 @@ export async function GET(request: NextRequest) {
       studentMap.set(s.id, studentInfo);
       studentMap.set(s.student_id, studentInfo);
     });
-    
-    console.log('[Attendance History API] Created student map with', studentMap.size, 'entries');
 
     // Combine attendance records with student info
     const records = attendanceRecords?.map(record => ({
@@ -294,7 +245,7 @@ export async function GET(request: NextRequest) {
     for (const date of uniqueDates) {
       const dateRecords = attendanceRecords?.filter(r => r.date === date) || [];
       
-      // Get unique students for this date (count each student once per day)
+      // Get unique students for this date
       const uniqueStudents = new Map<string, string>();
       dateRecords.forEach(r => {
         if (!uniqueStudents.has(r.student_id)) {
@@ -345,12 +296,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('[Attendance History API] Unexpected error:', error);
-    console.error('[Attendance History API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       { 
         error: 'Internal server error', 
         details: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     );

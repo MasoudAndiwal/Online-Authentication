@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       classes: validatedData.classes,
       username: validatedData.username,
       password: hashedPassword,
+      status: validatedData.status || 'ACTIVE',
     });
 
     // Return created teacher data excluding password field

@@ -54,6 +54,7 @@ const sampleStudentData = {
   enrollmentYear: "1400",
   classSection: "CS-101-A - Morning", // Default class
   timeSlot: "morning",
+  status: "ACTIVE" as const,
 };
 
 // Form state interface
@@ -72,6 +73,7 @@ interface FormData {
   enrollmentYear: string;
   classSection: string;
   timeSlot: string;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 // Form validation errors
@@ -90,6 +92,7 @@ interface FormErrors {
   enrollmentYear?: string;
   classSection?: string;
   timeSlot?: string;
+  status?: string;
 }
 
 export default function EditStudentPage() {
@@ -115,6 +118,7 @@ export default function EditStudentPage() {
     enrollmentYear: sampleStudentData.enrollmentYear,
     classSection: sampleStudentData.classSection,
     timeSlot: sampleStudentData.timeSlot,
+    status: sampleStudentData.status,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -186,6 +190,7 @@ export default function EditStudentPage() {
           enrollmentYear: data.enrollmentYear ? data.enrollmentYear.toString() : '',
           classSection: data.classSection || '',
           timeSlot: data.timeSlot || 'morning',
+          status: (data.status === 'ACTIVE' || data.status === 'INACTIVE') ? data.status : 'ACTIVE',
         };
         
         setFormData(transformedData);
@@ -351,6 +356,7 @@ export default function EditStudentPage() {
         enrollmentYear: parseInt(formData.enrollmentYear),
         classSection: formData.classSection,
         timeSlot: formData.timeSlot,
+        status: formData.status,
       };
 
       const response = await fetch(`/api/students/${studentId}`, {
@@ -1135,6 +1141,44 @@ export default function EditStudentPage() {
                                   {formErrors.timeSlot}
                                 </p>
                               )}
+                            </motion.div>
+
+                            {/* Status Radio Buttons */}
+                            <motion.div whileHover={{ scale: 1.02 }} className="space-y-3">
+                              <Label className="text-sm font-semibold text-slate-700">
+                                Account Status *
+                              </Label>
+                              <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="status"
+                                    value="ACTIVE"
+                                    checked={formData.status === "ACTIVE"}
+                                    onChange={(e) =>
+                                      handleInputChange("status", e.target.value as 'ACTIVE' | 'INACTIVE')
+                                    }
+                                    className="w-4 h-4 text-green-600 border-slate-300 focus:ring-green-500"
+                                  />
+                                  <span className="text-sm font-medium text-slate-700">Active</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="status"
+                                    value="INACTIVE"
+                                    checked={formData.status === "INACTIVE"}
+                                    onChange={(e) =>
+                                      handleInputChange("status", e.target.value as 'ACTIVE' | 'INACTIVE')
+                                    }
+                                    className="w-4 h-4 text-green-600 border-slate-300 focus:ring-green-500"
+                                  />
+                                  <span className="text-sm font-medium text-slate-700">Inactive</span>
+                                </label>
+                              </div>
+                              <p className="text-xs text-slate-500">
+                                Set the account status for this student
+                              </p>
                             </motion.div>
                           </div>
                         </div>

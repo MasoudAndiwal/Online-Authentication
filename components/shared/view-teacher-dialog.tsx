@@ -9,7 +9,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   User,
   Phone,
@@ -145,23 +144,22 @@ export function ViewTeacherDialog({
         {!loading && !error && teacher && (
           <div className="space-y-6">
             {/* Header with Name and Status */}
-            <div className="flex items-start justify-between p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200">
+            <div className="flex items-start justify-between p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/80">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 mb-1">
                   {teacher.firstName} {teacher.lastName}
                 </h3>
                 <p className="text-sm text-slate-600 mb-2">Teacher ID: {teacher.teacherId}</p>
-                <Badge
-                  variant="outline"
+                <span
                   className={cn(
-                    "text-xs font-semibold",
+                    "text-xs font-semibold px-3 py-1 rounded-full",
                     teacher.status === "ACTIVE"
-                      ? "bg-green-100 text-green-800 border-green-200"
-                      : "bg-red-100 text-red-800 border-red-200"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-rose-100 text-rose-700"
                   )}
                 >
                   {teacher.status === "ACTIVE" ? "Active" : "Inactive"}
-                </Badge>
+                </span>
               </div>
               <User className="h-12 w-12 text-orange-600" />
             </div>
@@ -219,56 +217,53 @@ export function ViewTeacherDialog({
                 Teaching Details
               </h4>
               <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-slate-50">
+                <div className="p-3 rounded-lg bg-slate-50/80">
                   <p className="text-xs text-slate-500 font-medium mb-2">Departments</p>
                   <div className="flex flex-wrap gap-2">
                     {(Array.isArray(teacher.departments)
                       ? teacher.departments
                       : teacher.departments.split(",")
                     ).map((dept, index) => (
-                      <Badge
+                      <span
                         key={index}
-                        variant="outline"
-                        className="bg-orange-100 text-orange-800 border-orange-200"
+                        className="px-2.5 py-1 rounded-md bg-orange-100 text-orange-700 text-xs font-medium"
                       >
                         {typeof dept === "string" ? dept.trim() : dept}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-slate-50">
+                <div className="p-3 rounded-lg bg-slate-50/80">
                   <p className="text-xs text-slate-500 font-medium mb-2">Subjects</p>
                   <div className="flex flex-wrap gap-2">
                     {(Array.isArray(teacher.subjects)
                       ? teacher.subjects
                       : teacher.subjects.split(",")
                     ).map((subject, index) => (
-                      <Badge
+                      <span
                         key={index}
-                        variant="outline"
-                        className="bg-blue-100 text-blue-800 border-blue-200"
+                        className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium"
                       >
                         {typeof subject === "string" ? subject.trim() : subject}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-slate-50">
+                <div className="p-3 rounded-lg bg-slate-50/80">
                   <p className="text-xs text-slate-500 font-medium mb-2">Classes</p>
                   <div className="flex flex-wrap gap-2">
                     {(Array.isArray(teacher.classes)
                       ? teacher.classes
                       : teacher.classes.split(",")
                     ).map((classItem, index) => (
-                      <Badge
+                      <span
                         key={index}
-                        variant="outline"
-                        className="bg-purple-100 text-purple-800 border-purple-200"
+                        className="px-2.5 py-1 rounded-md bg-purple-100 text-purple-700 text-xs font-medium"
                       >
                         {typeof classItem === "string" ? classItem.trim() : classItem}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>

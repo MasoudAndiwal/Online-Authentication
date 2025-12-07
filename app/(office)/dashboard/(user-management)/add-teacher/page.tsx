@@ -68,6 +68,7 @@ interface FormData {
   employmentType: string;
   username: string;
   password: string;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 // Form validation errors
@@ -90,6 +91,7 @@ interface FormErrors {
   employmentType?: string;
   username?: string;
   password?: string;
+  status?: string;
 }
 
 export default function AddTeacherPage() {
@@ -115,6 +117,7 @@ export default function AddTeacherPage() {
     employmentType: "",
     username: "",
     password: "",
+    status: "ACTIVE",
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -347,6 +350,7 @@ export default function AddTeacherPage() {
         employmentType: formData.employmentType,
         username: formData.username,
         password: formData.password,
+        status: formData.status,
       };
 
       // Call API
@@ -1707,6 +1711,47 @@ export default function AddTeacherPage() {
                                 {formErrors.password}
                               </p>
                             )}
+                          </motion.div>
+
+                          {/* Status Radio Buttons */}
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            className="space-y-3"
+                          >
+                            <Label className="text-sm font-semibold text-slate-700">
+                              Account Status *
+                            </Label>
+                            <div className="flex gap-6">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="status"
+                                  value="ACTIVE"
+                                  checked={formData.status === "ACTIVE"}
+                                  onChange={(e) =>
+                                    handleInputChange("status", e.target.value as 'ACTIVE' | 'INACTIVE')
+                                  }
+                                  className="w-4 h-4 text-orange-600 border-slate-300 focus:ring-orange-500"
+                                />
+                                <span className="text-sm font-medium text-slate-700">Active</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="status"
+                                  value="INACTIVE"
+                                  checked={formData.status === "INACTIVE"}
+                                  onChange={(e) =>
+                                    handleInputChange("status", e.target.value as 'ACTIVE' | 'INACTIVE')
+                                  }
+                                  className="w-4 h-4 text-orange-600 border-slate-300 focus:ring-orange-500"
+                                />
+                                <span className="text-sm font-medium text-slate-700">Inactive</span>
+                              </label>
+                            </div>
+                            <p className="text-xs text-slate-500">
+                              Set the initial account status for this teacher
+                            </p>
                           </motion.div>
                         </div>
                       </div>

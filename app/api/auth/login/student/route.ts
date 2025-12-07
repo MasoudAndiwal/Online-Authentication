@@ -17,17 +17,10 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    
-    console.log('📥 Student Login API - Request received:', {
-      username: body.username,
-      studentId: body.studentId,
-      hasPassword: !!body.password
-    });
 
     // Validate input
     const validationResult = studentLoginSchema.safeParse(body);
     if (!validationResult.success) {
-      console.log('❌ Validation failed:', validationResult.error.flatten().fieldErrors);
       return NextResponse.json(
         {
           success: false,
@@ -38,21 +31,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Validation passed');
-
     const { username, studentId, password } = validationResult.data;
 
     // Authenticate student (studentId is used as studentId for login)
-    console.log('🔐 Calling authenticateStudent...');
     const authResult = await authenticateStudent(username, studentId, password);
 
-    console.log('🔐 Authentication result:', {
-      success: authResult.success,
-      message: authResult.message
-    });
-
     if (!authResult.success) {
-      console.log('❌ Authentication failed');
       return NextResponse.json(
         {
           success: false,
@@ -61,8 +45,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    console.log('✅ Authentication successful');
 
     // Return success response
     return NextResponse.json(

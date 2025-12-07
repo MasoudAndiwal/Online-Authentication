@@ -80,7 +80,7 @@ export async function GET(
       firstName: teacher.first_name,
       lastName: teacher.last_name,
       fatherName: teacher.father_name,
-      grandfatherName: teacher.grandfather_name,
+      grandFatherName: teacher.grandfather_name,
       teacherId: teacher.teacher_id,
       dateOfBirth: teacher.date_of_birth,
       phone: teacher.phone,
@@ -142,6 +142,7 @@ export async function PUT(
       qualification: 'qualification',
       experience: 'experience',
       specialization: 'specialization',
+      status: 'status',
     };
 
     const updateData: Record<string, string | null> = {};
@@ -191,6 +192,7 @@ export async function PUT(
       phone: updatedTeacher.phone,
       secondaryPhone: updatedTeacher.secondary_phone,
       address: updatedTeacher.address,
+      dateOfBirth: updatedTeacher.date_of_birth,
       qualification: updatedTeacher.qualification,
       experience: updatedTeacher.experience,
       specialization: updatedTeacher.specialization,

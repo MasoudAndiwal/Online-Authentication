@@ -75,6 +75,7 @@ export const StudentCreateSchema = z.object({
         .min(6, 'Password must be 6-20 characters')
         .max(20, 'Password must be 6-20 characters')
         .regex(passwordPattern, 'Password must include uppercase, lowercase, and number'),
+    status: z.enum(['ACTIVE', 'INACTIVE']).optional().default('ACTIVE'),
 });
 
 // Teacher validation schema
@@ -141,6 +142,7 @@ export const TeacherCreateSchema = z.object({
         .min(6, 'Password must be 6-20 characters')
         .max(20, 'Password must be 6-20 characters')
         .regex(passwordPattern, 'Password must include uppercase, lowercase, and number'),
+    status: z.enum(['ACTIVE', 'INACTIVE']).optional().default('ACTIVE'),
 });
 
 // Export types for TypeScript

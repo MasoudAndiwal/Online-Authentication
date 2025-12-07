@@ -29,8 +29,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[Verify Password] Attempting to verify password for:', email || `User ID: ${userId}`);
-
     // Query the office_staff table to get the user's stored password
     let query = supabase
       .from('office_staff')
@@ -45,7 +43,6 @@ export async function POST(request: NextRequest) {
     const { data: users, error: queryError } = await query;
 
     if (queryError || !users || users.length === 0) {
-      console.log('[Verify Password] User not found:', queryError?.message);
       return NextResponse.json(
         { 
           success: false,
@@ -59,8 +56,6 @@ export async function POST(request: NextRequest) {
 
     const user = users[0];
 
-    console.log('[Verify Password] User found:', user.email);
-
     // Import bcrypt for password comparison
     const bcrypt = require('bcrypt');
     
@@ -68,7 +63,6 @@ export async function POST(request: NextRequest) {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     
     if (!isPasswordValid) {
-      console.log('[Verify Password] Password mismatch');
       return NextResponse.json(
         { 
           success: false,
@@ -78,8 +72,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    console.log('[Verify Password] Password verified successfully for:', user.email);
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -6,13 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   ModernDashboardLayout,
   PageContainer,
-  PageHeader,
   GridLayout,
 } from "@/components/layout/modern-dashboard-layout";
 import { handleLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
-import { fetchDashboardStats, fetchRecentActivity, exportDashboardData } from "@/lib/api/dashboard-api";
+import { fetchDashboardStats, fetchRecentActivity } from "@/lib/api/dashboard-api";
 import type { DashboardStats, ActivityItem } from "@/lib/database/dashboard-operations";
 import { toast } from "sonner";
 import {
@@ -21,27 +19,15 @@ import {
   ModernCardTitle,
   ModernCardContent,
   ModernMetricCard,
-  ModernAlertCard,
 } from "@/components/ui/modern-card";
 import { Modern3DIcons } from "@/components/ui/modern-3d-icons";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Users,
-  BookOpen,
   CheckCircle,
-  AlertTriangle,
   FileText,
-  TrendingUp,
   Calendar,
-  Settings,
-  Plus,
-  Download,
-  Clock,
-  BarChart3,
   Sparkles,
-  Zap,
-  Star,
   Activity,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -53,7 +39,7 @@ export default function OfficeDashboardPage() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [activities, setActivities] = React.useState<ActivityItem[]>([]);
   const [loadingStats, setLoadingStats] = React.useState(true);
-  const [exporting, setExporting] = React.useState(false);
+
   const [hasShownWelcome, setHasShownWelcome] = React.useState(false);
 
   // Fetch dashboard data on mount - must be before conditional return
@@ -144,22 +130,7 @@ export default function OfficeDashboardPage() {
     }
   };
 
-  const handleExportData = async () => {
-    try {
-      setExporting(true);
-      await exportDashboardData('json');
-      toast.success('Data exported successfully!', {
-        description: 'The export file has been downloaded.'
-      });
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error('Failed to export data', {
-        description: 'Please try again later.'
-      });
-    } finally {
-      setExporting(false);
-    }
-  };
+
 
   return (
     <ModernDashboardLayout
@@ -214,43 +185,7 @@ export default function OfficeDashboardPage() {
                 </motion.div>
               </div>
 
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-xl shadow-blue-500/25 rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-semibold transition-all duration-300 border-0"
-                  >
-                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-                    Quick Add User
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={handleExportData}
-                    disabled={exporting}
-                    className="w-full sm:w-auto border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 shadow-lg hover:shadow-xl rounded-xl sm:rounded-2xl px-6 sm:px-10 py-4 sm:py-5 text-base sm:text-lg font-semibold transition-all duration-300"
-                  >
-                    <Download className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-                    <span className="hidden xs:inline">{exporting ? 'Exporting...' : 'Export Data'}</span>
-                    <span className="xs:hidden">{exporting ? '...' : 'Export'}</span>
-                  </Button>
-                </motion.div>
-              </motion.div>
+
             </div>
           </div>
         </motion.div>
@@ -295,80 +230,6 @@ export default function OfficeDashboardPage() {
           />
         </GridLayout>
 
-        {/* Ultra Modern Alerts - NO BORDERS */}
-        <div className="space-y-8">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-            className="flex items-center gap-4"
-          >
-            <motion.div
-              className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl shadow-xl shadow-amber-500/25"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-            >
-              <AlertTriangle className="h-6 w-6 text-white" />
-            </motion.div>
-            <h2 className="text-3xl font-bold text-slate-900">
-              Critical Alerts
-            </h2>
-          </motion.div>
-
-          <div className="grid gap-6">
-            {[
-              {
-                title: "3 students approaching محروم threshold",
-                message:
-                  "Computer Science - Fall 2024 requires immediate attention for academic standing",
-                type: "error" as const,
-                action: "Review Students",
-              },
-              {
-                title: "5 medical certificates pending review",
-                message:
-                  "New submissions from the last 24 hours awaiting administrative approval",
-                type: "info" as const,
-                action: "Review Certificates",
-              },
-              {
-                title: "2 teachers haven't submitted attendance this week",
-                message:
-                  "Mathematics and Physics departments need follow-up for weekly reporting",
-                type: "warning" as const,
-                action: "Send Reminder",
-              },
-            ].map((alert, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 + index * 0.1 }}
-              >
-                <ModernAlertCard
-                  title={alert.title}
-                  message={alert.message}
-                  type={alert.type}
-                  className="border-0 shadow-xl backdrop-blur-xl"
-                  action={
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-2xl border-0 bg-white/90 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 font-semibold"
-                      >
-                        {alert.action}
-                      </Button>
-                    </motion.div>
-                  }
-                />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
         {/* Ultra Modern Activity Feed - NO BORDERS */}
         <ModernCard
           variant="glass"
@@ -384,70 +245,65 @@ export default function OfficeDashboardPage() {
           </ModernCardHeader>
           <ModernCardContent>
             <div className="space-y-6">
-              {[
-                {
-                  action: "New user created",
-                  details: "Ahmad Hassan (Student) - CS-2024-156",
-                  time: "5 minutes ago",
-                  type: "success",
-                  icon: <Users className="h-5 w-5" />,
-                },
-                {
-                  action: "Attendance marked",
-                  details: "Computer Science - Fall 2024 (28/30 present)",
-                  time: "15 minutes ago",
-                  type: "info",
-                  icon: <CheckCircle className="h-5 w-5" />,
-                },
-                {
-                  action: "Medical certificate approved",
-                  details: "Sara Khan - 3 days sick leave approved",
-                  time: "1 hour ago",
-                  type: "success",
-                  icon: <FileText className="h-5 w-5" />,
-                },
-                {
-                  action: "Schedule updated",
-                  details: "Mathematics - Spring 2024 timetable modified",
-                  time: "2 hours ago",
-                  type: "info",
-                  icon: <Calendar className="h-5 w-5" />,
-                },
-              ].map((activity, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 + index * 0.05 }}
-                  whileHover={{ scale: 1.02, x: 12 }}
-                  className="group flex items-center gap-6 p-6 rounded-3xl hover:bg-gradient-to-r hover:from-slate-50/60 hover:to-blue-50/40 transition-all duration-300 cursor-pointer border-0 shadow-sm hover:shadow-lg"
-                >
-                  <motion.div
-                    className={`p-4 rounded-3xl shadow-lg transition-all duration-300 group-hover:scale-110 ${
-                      activity.type === "success"
-                        ? "bg-emerald-100 text-emerald-600 group-hover:shadow-emerald-500/20"
-                        : "bg-blue-100 text-blue-600 group-hover:shadow-blue-500/20"
-                    }`}
-                    whileHover={{ rotate: 5 }}
-                  >
-                    {activity.icon}
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-lg font-bold text-slate-900 group-hover:text-slate-800 transition-colors">
-                      {activity.action}
-                    </p>
-                    <p className="text-base text-slate-600 group-hover:text-slate-700 transition-colors truncate">
-                      {activity.details}
-                    </p>
+              {loadingStats ? (
+                // Loading skeleton
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-6 p-6 rounded-3xl bg-slate-50/50 animate-pulse">
+                    <div className="w-14 h-14 bg-slate-200 rounded-3xl" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 w-32 bg-slate-200 rounded" />
+                      <div className="h-4 w-48 bg-slate-200 rounded" />
+                    </div>
+                    <div className="h-8 w-24 bg-slate-200 rounded-2xl" />
                   </div>
-                  <Badge
-                    variant="outline"
-                    className="text-sm bg-white/90 border-0 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all duration-300 rounded-2xl px-4 py-2 font-semibold"
+                ))
+              ) : activities.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No recent activity</p>
+                  <p className="text-sm">Activity will appear here as actions are performed</p>
+                </div>
+              ) : (
+                activities.map((activity, index) => (
+                  <motion.div
+                    key={activity.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                    className="group flex items-center gap-6 p-6 rounded-3xl hover:bg-gradient-to-r hover:from-slate-50/60 hover:to-blue-50/40 transition-all duration-300 cursor-pointer border-0 shadow-sm hover:shadow-lg"
                   >
-                    {activity.time}
-                  </Badge>
-                </motion.div>
-              ))}
+                    <div
+                      className={`p-4 rounded-3xl shadow-lg transition-all duration-300 group-hover:scale-110 ${
+                        activity.type === "user_created" || activity.type === "attendance_marked"
+                          ? "bg-emerald-100 text-emerald-600 group-hover:shadow-emerald-500/20"
+                          : activity.type === "schedule_updated"
+                          ? "bg-blue-100 text-blue-600 group-hover:shadow-blue-500/20"
+                          : "bg-purple-100 text-purple-600 group-hover:shadow-purple-500/20"
+                      }`}
+                    >
+                      {activity.type === "user_created" && <Users className="h-5 w-5" />}
+                      {activity.type === "attendance_marked" && <CheckCircle className="h-5 w-5" />}
+                      {activity.type === "schedule_updated" && <Calendar className="h-5 w-5" />}
+                      {activity.type === "certificate_approved" && <FileText className="h-5 w-5" />}
+                      {!["user_created", "attendance_marked", "schedule_updated", "certificate_approved"].includes(activity.type) && <Activity className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-lg font-bold text-slate-900 group-hover:text-slate-800 transition-colors">
+                        {activity.action}
+                      </p>
+                      <p className="text-base text-slate-600 group-hover:text-slate-700 transition-colors truncate">
+                        {activity.details}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="text-sm bg-white/90 border-0 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all duration-300 rounded-2xl px-4 py-2 font-semibold"
+                    >
+                      {activity.timeAgo}
+                    </Badge>
+                  </motion.div>
+                ))
+              )}
             </div>
           </ModernCardContent>
         </ModernCard>

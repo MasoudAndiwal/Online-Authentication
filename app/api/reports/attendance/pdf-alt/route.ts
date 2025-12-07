@@ -1,10 +1,8 @@
 // import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    console.log('PDF generation requested - Coming Soon feature')
-    
     // Return "Coming Soon" message instead of generating PDF
     return NextResponse.json(
       { 

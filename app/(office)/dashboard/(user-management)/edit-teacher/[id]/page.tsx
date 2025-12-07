@@ -65,6 +65,7 @@ const sampleTeacherData = {
   subjects: ["Programming", "Data Structures"],
   classes: ["Section A", "Morning Batch"],
   employmentType: "Full Time (Permanent)",
+  status: "ACTIVE" as const,
 };
 
 // Form state interface
@@ -85,6 +86,7 @@ interface FormData {
   subjects: string[];
   classes: string[];
   employmentType: string;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 // Form validation errors
@@ -105,6 +107,7 @@ interface FormErrors {
   subjects?: string;
   classes?: string;
   employmentType?: string;
+  status?: string;
 }
 
 interface EditTeacherPageProps {
@@ -158,6 +161,7 @@ export default function EditTeacherPage({ params }: EditTeacherPageProps) {
           subjects: Array.isArray(data.subjects) ? data.subjects : data.subjects ? data.subjects.split(',').map((s: string) => s.trim()) : [],
           classes: Array.isArray(data.classes) ? data.classes : data.classes ? data.classes.split(',').map((c: string) => c.trim()) : [],
           employmentType: 'Full Time (Permanent)',
+          status: (data.status === 'ACTIVE' || data.status === 'INACTIVE') ? data.status : 'ACTIVE',
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -207,6 +211,7 @@ export default function EditTeacherPage({ params }: EditTeacherPageProps) {
     subjects: sampleTeacherData.subjects,
     classes: sampleTeacherData.classes,
     employmentType: sampleTeacherData.employmentType,
+    status: sampleTeacherData.status,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -389,6 +394,7 @@ export default function EditTeacherPage({ params }: EditTeacherPageProps) {
         specialization: formData.specialization,
         subjects: formData.subjects.join(', '),
         classes: formData.classes.join(', '),
+        status: formData.status,
       };
 
       const response = await fetch(`/api/teachers/${teacherId}`, {
@@ -1542,6 +1548,46 @@ export default function EditTeacherPage({ params }: EditTeacherPageProps) {
                                   {formErrors.employmentType}
                                 </p>
                               )}
+                            </div>
+                          </div>
+
+                          {/* Status Radio Buttons */}
+                          <div className="mt-6">
+                            <div className="space-y-3">
+                              <Label className="text-sm font-semibold text-slate-700">
+                                Account Status *
+                              </Label>
+                              <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="status"
+                                    value="ACTIVE"
+                                    checked={formData.status === "ACTIVE"}
+                                    onChange={(e) =>
+                                      handleInputChange("status", e.target.value as 'ACTIVE' | 'INACTIVE')
+                                    }
+                                    className="w-4 h-4 text-orange-600 border-slate-300 focus:ring-orange-500"
+                                  />
+                                  <span className="text-sm font-medium text-slate-700">Active</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="status"
+                                    value="INACTIVE"
+                                    checked={formData.status === "INACTIVE"}
+                                    onChange={(e) =>
+                                      handleInputChange("status", e.target.value as 'ACTIVE' | 'INACTIVE')
+                                    }
+                                    className="w-4 h-4 text-orange-600 border-slate-300 focus:ring-orange-500"
+                                  />
+                                  <span className="text-sm font-medium text-slate-700">Inactive</span>
+                                </label>
+                              </div>
+                              <p className="text-xs text-slate-500">
+                                Set the account status for this teacher
+                              </p>
                             </div>
                           </div>
                         </div>

@@ -25,8 +25,7 @@ import {
   Moon, 
   Users,
   Filter,
-  BookOpen,
-  Loader2
+  BookOpen
 } from "lucide-react";
 
 type ClassItem = {
@@ -52,6 +51,8 @@ export default function AllClassesPage() {
   const [classes, setClasses] = React.useState<ClassItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
 
   const loadClasses = React.useCallback(async () => {
     try {
@@ -204,6 +205,17 @@ export default function AllClassesPage() {
     const matchesSession = sessionFilter === "ALL" || cls.session === sessionFilter;
     return matchesSearch && matchesSession;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredClasses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClasses = filteredClasses.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sessionFilter]);
 
   // Create display user
   const displayUser = user ? {
@@ -407,21 +419,92 @@ export default function AllClassesPage() {
             </CardContent>
           </Card>
         ) : filteredClasses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-            {filteredClasses.map((classData, index) => (
-              <div
-                key={classData.id}
-                className="animate-in slide-in-from-bottom-4 duration-500"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <ClassCard 
-                  classData={classData}
-                  onEdit={handleEditClass}
-                  onDelete={handleDeleteClass}
-                />
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+              {paginatedClasses.map((classData, index) => (
+                <div
+                  key={classData.id}
+                  className="animate-in slide-in-from-bottom-4 duration-500"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <ClassCard 
+                    classData={classData}
+                    onEdit={handleEditClass}
+                    onDelete={handleDeleteClass}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {filteredClasses.length > itemsPerPage && (
+              <div className="mt-8">
+                <Card className="rounded-2xl shadow-md border-0">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <p className="text-sm text-slate-600 text-center sm:text-left">
+                        Showing {startIndex + 1} to {Math.min(endIndex, filteredClasses.length)} of {filteredClasses.length} classes
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-all duration-200"
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                            // Show limited page numbers on mobile
+                            const showPage = totalPages <= 5 || 
+                              page === 1 || 
+                              page === totalPages || 
+                              Math.abs(page - currentPage) <= 1;
+                            
+                            if (!showPage) {
+                              // Show ellipsis
+                              if (page === 2 && currentPage > 3) {
+                                return <span key={page} className="px-1 text-slate-400">...</span>;
+                              }
+                              if (page === totalPages - 1 && currentPage < totalPages - 2) {
+                                return <span key={page} className="px-1 text-slate-400">...</span>;
+                              }
+                              return null;
+                            }
+                            
+                            return (
+                              <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-110 active:scale-95 ${
+                                  currentPage === page
+                                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                          className="border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-all duration-200"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <Card className="rounded-2xl shadow-md border-0">
             <CardContent className="p-12 text-center">

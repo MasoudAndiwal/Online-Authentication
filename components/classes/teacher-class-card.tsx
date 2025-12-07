@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, Clock, TrendingUp, CheckCircle, Eye, MoreVertical, Settings, Calendar
+import { BookOpen, Users, CheckCircle, Eye, MoreVertical, Settings, Calendar, TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -40,44 +40,8 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
   tabIndex = 0
 }, ref) => {
   // Responsive and touch support
-  const { isMobile, isTouch } = useResponsive();
+  const { isTouch } = useResponsive();
   const { lightTap } = useHapticFeedback();
-  
-  // Get next session info
-  const getNextSession = () => {
-    if (classData.nextSession) {
-      const now = new Date();
-      const nextSession = new Date(classData.nextSession);
-      const isToday = nextSession.toDateString() === now.toDateString();
-      const isTomorrow = nextSession.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
-      
-      let dayText = '';
-      if (isToday) dayText = 'Today';
-      else if (isTomorrow) dayText = 'Tomorrow';
-      else dayText = nextSession.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      
-      const timeText = nextSession.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
-      
-      return `${dayText} ${timeText}`;
-    }
-    return 'No upcoming session';
-  };
-
-  // Format attendance rate
-  const formatAttendanceRate = (rate: number) => {
-    return `${rate.toFixed(1)}%`;
-  };
-
-  // Get attendance rate color
-  const getAttendanceRateColor = (rate: number) => {
-    if (rate >= 95) return 'text-green-600';
-    if (rate >= 85) return 'text-orange-600';
-    return 'text-red-600';
-  };
 
   // Beautiful color schemes for different classes
   const colorSchemes = [
@@ -94,17 +58,13 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
   const colorScheme = colorSchemes[colorIndex];
 
   return (
-    <motion.div
+    <div
       ref={ref}
       className={cn("group", className)}
       tabIndex={tabIndex}
       role="article"
-      aria-label={`${classData.name} class card. ${classData.studentCount} students enrolled. Attendance rate: ${formatAttendanceRate(classData.attendanceRate)}. Next session: ${getNextSession()}`}
+      aria-label={`${classData.name} class card. ${classData.studentCount} students enrolled.`}
       aria-current={isFocused ? 'true' : undefined}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -226,9 +186,9 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
             </DropdownMenu>
           </div>
 
-          {/* Stats Grid */}
+          {/* Students Count */}
           <motion.div 
-            className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-5"
+            className="mb-4 sm:mb-5"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.3 }}
@@ -250,54 +210,6 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
               </div>
               <p className="text-2xl font-bold text-slate-900">{classData.studentCount}</p>
             </motion.div>
-            <motion.div 
-              className="cursor-pointer touch-manipulation bg-white/60 backdrop-blur-sm rounded-xl p-3 sm:p-4 transition-all duration-200 hover:bg-white/80 hover:shadow-md"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                if (isTouch) lightTap();
-                if (onViewReports) {
-                  onViewReports(classData.id);
-                }
-              }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-slate-700" />
-                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Attendance</span>
-              </div>
-              <p className={cn("text-2xl font-bold", getAttendanceRateColor(classData.attendanceRate))}>
-                {formatAttendanceRate(classData.attendanceRate)}
-              </p>
-            </motion.div>
-          </motion.div>
-
-          {/* Next Session */}
-          <motion.div 
-            className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 cursor-pointer touch-manipulation bg-white/40 backdrop-blur-sm rounded-xl p-3 transition-all duration-200 hover:bg-white/60 hover:shadow-md"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.3 }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => {
-              if (isTouch) lightTap();
-              if (onViewSchedule) {
-                onViewSchedule(classData.id);
-              }
-            }}
-          >
-            <div className={cn("p-1.5 sm:p-2 rounded-lg flex-shrink-0", colorScheme.accent)}>
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-700" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wide mb-0.5 sm:mb-1">Next Session</p>
-              <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{getNextSession()}</p>
-            </div>
-            {!isMobile && (
-              <div className="flex-shrink-0">
-                <Calendar className="h-4 w-4 text-slate-400" />
-              </div>
-            )}
           </motion.div>
 
           {/* Action Buttons */}
@@ -351,7 +263,7 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
           </motion.div>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 });
 

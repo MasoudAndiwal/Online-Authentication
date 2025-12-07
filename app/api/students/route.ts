@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       username: validatedData.username,
       studentIdRef: validatedData.studentIdRef,
       password: hashedPassword,
+      status: validatedData.status || 'ACTIVE',
     });
 
     // Return created student data excluding password field

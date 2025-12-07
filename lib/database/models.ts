@@ -1,6 +1,7 @@
 // Enum types matching Prisma schema
 export enum StudentStatus {
   ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
   SICK = 'SICK'
 }
 

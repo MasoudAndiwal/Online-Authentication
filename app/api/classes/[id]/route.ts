@@ -12,8 +12,6 @@ export async function GET(
   try {
     const classId = params.id;
 
-    console.log('[Class API] Fetching class:', classId);
-
     // Fetch class from database
     const { data: classData, error: classError } = await supabase
       .from('classes')
@@ -49,8 +47,6 @@ export async function GET(
       createdAt: classData.created_at,
       updatedAt: classData.updated_at,
     };
-
-    console.log('[Class API] Successfully fetched class');
 
     return NextResponse.json(transformedClass);
 

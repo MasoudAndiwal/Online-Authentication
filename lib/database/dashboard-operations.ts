@@ -41,6 +41,7 @@ export interface ActivityItem {
   action: string;
   details: string;
   timestamp: Date;
+  timeAgo: string;
   icon: string;
 }
 
@@ -291,6 +292,23 @@ export async function getWeeklyAttendanceTrends(weeks: number = 4): Promise<Week
 }
 
 /**
+ * Calculate time ago string from a date
+ */
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
+/**
  * Get recent system activity
  */
 export async function getRecentActivity(limit: number = 10): Promise<ActivityItem[]> {
@@ -306,12 +324,14 @@ export async function getRecentActivity(limit: number = 10): Promise<ActivityIte
 
     if (recentStudents) {
       recentStudents.forEach(student => {
+        const timestamp = new Date(student.created_at);
         activities.push({
           id: `student-${student.id}`,
           type: 'user_created',
-          action: 'New user created',
-          details: `${student.first_name} ${student.last_name} (Student) - ${student.student_id}`,
-          timestamp: new Date(student.created_at),
+          action: 'New student registered',
+          details: `${student.first_name} ${student.last_name} - ${student.student_id}`,
+          timestamp,
+          timeAgo: getTimeAgo(timestamp),
           icon: 'Users',
         });
       });
@@ -326,45 +346,117 @@ export async function getRecentActivity(limit: number = 10): Promise<ActivityIte
 
     if (recentTeachers) {
       recentTeachers.forEach(teacher => {
+        const timestamp = new Date(teacher.created_at);
         activities.push({
           id: `teacher-${teacher.id}`,
           type: 'user_created',
-          action: 'New user created',
-          details: `${teacher.first_name} ${teacher.last_name} (Teacher) - ${teacher.teacher_id}`,
-          timestamp: new Date(teacher.created_at),
+          action: 'New teacher registered',
+          details: `${teacher.first_name} ${teacher.last_name} - ${teacher.teacher_id}`,
+          timestamp,
+          timeAgo: getTimeAgo(timestamp),
           icon: 'Users',
         });
       });
     }
 
-    // Add mock activities for attendance and other actions
-    // TODO: Replace with actual tables when implemented
-    activities.push({
-      id: 'attendance-mock-1',
-      type: 'attendance_marked',
-      action: 'Attendance marked',
-      details: 'Computer Science - Fall 2024 (28/30 present)',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      icon: 'CheckCircle',
-    });
+    // Fetch recent attendance records from attendance_records_new
+    const { data: recentAttendance } = await supabase
+      .from('attendance_records_new')
+      .select(`
+        id,
+        date,
+        class_section,
+        created_at,
+        period_1_status,
+        period_2_status,
+        period_3_status,
+        period_4_status,
+        period_5_status,
+        period_6_status
+      `)
+      .order('created_at', { ascending: false })
+      .limit(20);
 
-    activities.push({
-      id: 'certificate-mock-1',
-      type: 'certificate_approved',
-      action: 'Medical certificate approved',
-      details: 'Sara Khan - 3 days sick leave approved',
-      timestamp: new Date(Date.now() - 60 * 60 * 1000),
-      icon: 'FileText',
-    });
+    if (recentAttendance && recentAttendance.length > 0) {
+      // Group attendance by class_section and date to show summary
+      const attendanceByClassDate = new Map<string, { 
+        class_section: string; 
+        date: string; 
+        created_at: string;
+        present: number; 
+        total: number;
+      }>();
 
-    activities.push({
-      id: 'schedule-mock-1',
-      type: 'schedule_updated',
-      action: 'Schedule updated',
-      details: 'Mathematics - Spring 2024 timetable modified',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      icon: 'Calendar',
-    });
+      recentAttendance.forEach(record => {
+        const key = `${record.class_section}-${record.date}`;
+        if (!attendanceByClassDate.has(key)) {
+          attendanceByClassDate.set(key, {
+            class_section: record.class_section,
+            date: record.date,
+            created_at: record.created_at,
+            present: 0,
+            total: 0,
+          });
+        }
+        
+        const entry = attendanceByClassDate.get(key)!;
+        // Count present statuses across all periods
+        const statuses = [
+          record.period_1_status,
+          record.period_2_status,
+          record.period_3_status,
+          record.period_4_status,
+          record.period_5_status,
+          record.period_6_status,
+        ].filter(s => s !== null);
+        
+        const presentCount = statuses.filter(s => s === 'present').length;
+        entry.present += presentCount;
+        entry.total += statuses.length;
+      });
+
+      // Convert to activities (limit to 3 most recent)
+      const sortedAttendance = Array.from(attendanceByClassDate.values())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3);
+
+      sortedAttendance.forEach((att, index) => {
+        const timestamp = new Date(att.created_at);
+        const rate = att.total > 0 ? Math.round((att.present / att.total) * 100) : 0;
+        activities.push({
+          id: `attendance-${att.class_section}-${att.date}-${index}`,
+          type: 'attendance_marked',
+          action: 'Attendance marked',
+          details: `${att.class_section} - ${rate}% attendance rate`,
+          timestamp,
+          timeAgo: getTimeAgo(timestamp),
+          icon: 'CheckCircle',
+        });
+      });
+    }
+
+    // Fetch recent class updates (if classes table has updated_at)
+    const { data: recentClasses } = await supabase
+      .from('classes')
+      .select('id, name, session, updated_at, created_at')
+      .order('updated_at', { ascending: false })
+      .limit(2);
+
+    if (recentClasses) {
+      recentClasses.forEach(cls => {
+        const timestamp = new Date(cls.updated_at || cls.created_at);
+        const isNew = new Date(cls.created_at).getTime() === new Date(cls.updated_at || cls.created_at).getTime();
+        activities.push({
+          id: `class-${cls.id}`,
+          type: 'schedule_updated',
+          action: isNew ? 'New class created' : 'Class updated',
+          details: `${cls.name} - ${cls.session}`,
+          timestamp,
+          timeAgo: getTimeAgo(timestamp),
+          icon: 'Calendar',
+        });
+      });
+    }
 
     // Sort by timestamp and limit
     return activities

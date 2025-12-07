@@ -8,11 +8,11 @@ import {
 } from "@/components/layout/modern-dashboard-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX, AlertCircle, Loader2 } from "lucide-react";
+import { GraduationCap, Plus, Search, Filter, Users, UserCheck, UserX, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { motion } from "framer-motion";
-import { TeacherCard } from "@/components/shared/teacher-card";
+import { TeacherCard, TeacherCardSkeleton } from "@/components/shared/teacher-card";
 import { ViewTeacherDialog } from "@/components/shared/view-teacher-dialog";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { toast } from "sonner";
@@ -50,6 +50,8 @@ export default function TeacherListPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [viewTeacherId, setViewTeacherId] = React.useState<string | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
 
   const handleNavigation = (href: string) => {
     try {
@@ -190,6 +192,16 @@ export default function TeacherListPage() {
   const activeTeachers = teachers.filter(teacher => teacher.status === "ACTIVE").length;
   const inactiveTeachers = teachers.filter(teacher => teacher.status === "INACTIVE").length;
 
+  // Pagination calculations
+  const totalPages = Math.ceil(teachers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, departmentFilter, subjectFilter, statusFilter]);
+
   // Transform teachers for display
   const displayTeachers = teachers.map(teacher => {
     // Handle departments - can be array or string
@@ -253,47 +265,53 @@ export default function TeacherListPage() {
           transition={{ duration: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
         >
-          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-orange-50 to-orange-100/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-600 mb-1">Total Teachers</p>
-                  <p className="text-3xl font-bold text-orange-700">{totalTeachers}</p>
-                </div>
-                <div className="p-3 bg-orange-600 rounded-xl">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
+          <motion.div 
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="rounded-2xl shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/80 p-6 border-0"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600 mb-1">Total Teachers</p>
+                <p className="text-3xl font-bold text-orange-700">{totalTeachers}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg shadow-orange-500/30">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </motion.div>
 
-          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-green-50 to-green-100/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 mb-1">Active Teachers</p>
-                  <p className="text-3xl font-bold text-green-700">{activeTeachers}</p>
-                </div>
-                <div className="p-3 bg-green-600 rounded-xl">
-                  <UserCheck className="h-6 w-6 text-white" />
-                </div>
+          <motion.div 
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="rounded-2xl shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100/80 p-6 border-0"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-emerald-600 mb-1">Active Teachers</p>
+                <p className="text-3xl font-bold text-emerald-700">{activeTeachers}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg shadow-emerald-500/30">
+                <UserCheck className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </motion.div>
 
-          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-red-50 to-red-100/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600 mb-1">Inactive Teachers</p>
-                  <p className="text-3xl font-bold text-red-700">{inactiveTeachers}</p>
-                </div>
-                <div className="p-3 bg-red-600 rounded-xl">
-                  <UserX className="h-6 w-6 text-white" />
-                </div>
+          <motion.div 
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="rounded-2xl shadow-lg bg-gradient-to-br from-rose-50 to-rose-100/80 p-6 border-0"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-rose-600 mb-1">Inactive Teachers</p>
+                <p className="text-3xl font-bold text-rose-700">{inactiveTeachers}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg shadow-rose-500/30">
+                <UserX className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
 
         {/* Search and Filter Section */}
@@ -303,8 +321,7 @@ export default function TeacherListPage() {
           transition={{ delay: 0.1, duration: 0.4 }}
           className="mb-6"
         >
-          <Card className="rounded-2xl shadow-lg border-slate-200/60">
-            <CardContent className="p-6">
+          <div className="rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm p-6 border-0">
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Search Bar */}
                 <div className="flex-1 relative">
@@ -381,7 +398,7 @@ export default function TeacherListPage() {
               </div>
               {/* Active Filters Display */}
               {(departmentFilter || subjectFilter || statusFilter || searchQuery) && (
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-200">
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
                   <span className="text-sm text-slate-600 font-medium">Active filters:</span>
                   {searchQuery && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
@@ -429,8 +446,7 @@ export default function TeacherListPage() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
         </motion.div>
 
         {/* Teachers List */}
@@ -439,9 +455,9 @@ export default function TeacherListPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          <Card className="rounded-2xl shadow-lg border-slate-200/60">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+          <div className="rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm border-0">
+            <div className="p-6 pb-4">
+              <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -449,14 +465,15 @@ export default function TeacherListPage() {
                   <GraduationCap className="h-6 w-6 text-orange-600" />
                 </motion.div>
                 Teachers ({displayTeachers.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+              </h2>
+            </div>
+            <div className="px-6 pb-6">
+              <div className="space-y-3">
                 {loading && (
-                  <div className="text-center py-12">
-                    <Loader2 className="h-12 w-12 text-orange-600 mx-auto mb-4 animate-spin" />
-                    <p className="text-slate-600">Loading teachers...</p>
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <TeacherCardSkeleton key={i} />
+                    ))}
                   </div>
                 )}
                 
@@ -471,7 +488,7 @@ export default function TeacherListPage() {
                   </div>
                 )}
 
-                {!loading && !error && displayTeachers.map((teacher, index) => (
+                {!loading && !error && displayTeachers.slice(startIndex, endIndex).map((teacher, index) => (
                   <TeacherCard
                     key={teacher.id}
                     teacher={teacher}
@@ -507,8 +524,107 @@ export default function TeacherListPage() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Pagination */}
+              {!loading && !error && displayTeachers.length > itemsPerPage && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-6 pt-6 border-t border-slate-100"
+                >
+                  {/* Mobile Pagination */}
+                  <div className="flex flex-col gap-4 sm:hidden">
+                    <p className="text-sm text-slate-600 text-center">
+                      Showing {startIndex + 1} to {Math.min(endIndex, displayTeachers.length)} of {displayTeachers.length} teachers
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200 px-4"
+                      >
+                        Previous
+                      </Button>
+                      <span className="px-3 py-1 text-sm font-medium text-slate-700">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200 px-4"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Desktop Pagination */}
+                  <div className="hidden sm:flex items-center justify-between">
+                    <p className="text-sm text-slate-600">
+                      Showing {startIndex + 1} to {Math.min(endIndex, displayTeachers.length)} of {displayTeachers.length} teachers
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200"
+                      >
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                          // Show limited pages on smaller screens
+                          const showPage = totalPages <= 5 || 
+                            page === 1 || 
+                            page === totalPages || 
+                            Math.abs(page - currentPage) <= 1;
+                          
+                          if (!showPage) {
+                            // Show ellipsis
+                            if (page === 2 && currentPage > 3) {
+                              return <span key={page} className="px-1 text-slate-400">...</span>;
+                            }
+                            if (page === totalPages - 1 && currentPage < totalPages - 2) {
+                              return <span key={page} className="px-1 text-slate-400">...</span>;
+                            }
+                            return null;
+                          }
+                          
+                          return (
+                            <motion.button
+                              key={page}
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                currentPage === page
+                                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                                  : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {page}
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
         </motion.div>
       </PageContainer>
 

@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/hooks/use-toast'
 
 interface NavigationItem {
   label: string
@@ -32,6 +33,7 @@ interface NavigationItem {
   active?: boolean
   badge?: string | number
   children?: NavigationItem[]
+  comingSoon?: boolean
 }
 
 interface UserProfile {
@@ -69,9 +71,9 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: '/user-management',
         icon: Users,
         children: [
-          { label: 'All Users', href: '/user-management/all-users', icon: Users },
-          { label: 'Add User', href: '/user-management/add-user', icon: Users },
-          { label: 'Roles & Permissions', href: '/user-management/roles', icon: Settings }
+          { label: 'All Users', href: '/user-management/all-users', icon: Users, comingSoon: true },
+          { label: 'Add User', href: '/user-management/add-user', icon: Users, comingSoon: true },
+          { label: 'Roles & Permissions', href: '/user-management/roles', icon: Settings, comingSoon: true }
         ]
       },
       {
@@ -81,7 +83,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         children: [
           { label: 'All Classes', href: '/dashboard/all-classes', icon: BookOpen },
           { label: 'Schedule Builder', href: '/dashboard/schedule', icon: Calendar },
-          { label: 'Class Management', href: '/classes/management', icon: Settings }
+          { label: 'Class Management', href: '/classes/management', icon: Settings, comingSoon: true }
         ]
       },
       {
@@ -89,9 +91,9 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: '/attendance',
         icon: ClipboardList,
         children: [
-          { label: 'Overview', href: '/attendance/overview', icon: BarChart3 },
+          { label: 'Overview', href: '/attendance/overview', icon: BarChart3, comingSoon: true },
           { label: 'Mark Attendance', href: '/dashboard/mark-attendance', icon: ClipboardList },
-          { label: 'Attendance History', href: '/attendance/history', icon: FileText }
+          { label: 'Attendance History', href: '/attendance/history', icon: FileText, comingSoon: true }
         ]
       },
       {
@@ -99,9 +101,9 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: '/reports',
         icon: BarChart3,
         children: [
-          { label: 'Weekly Reports', href: '/reports/weekly', icon: FileText },
-          { label: 'Student Status', href: '/reports/student-status', icon: Users },
-          { label: 'Export Data', href: '/reports/export', icon: BarChart3 }
+          { label: 'Weekly Reports', href: '/reports/weekly', icon: FileText, comingSoon: true },
+          { label: 'Student Status', href: '/reports/student-status', icon: Users, comingSoon: true },
+          { label: 'Export Data', href: '/reports/export', icon: BarChart3, comingSoon: true }
         ]
       },
       {
@@ -109,9 +111,9 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: '/settings',
         icon: Settings,
         children: [
-          { label: 'General Settings', href: '/settings/general', icon: Settings },
-          { label: 'Academic Calendar', href: '/settings/calendar', icon: Calendar },
-          { label: 'Attendance Rules', href: '/settings/attendance-rules', icon: ClipboardList }
+          { label: 'General Settings', href: '/settings/general', icon: Settings, comingSoon: true },
+          { label: 'Academic Calendar', href: '/settings/calendar', icon: Calendar, comingSoon: true },
+          { label: 'Attendance Rules', href: '/settings/attendance-rules', icon: ClipboardList, comingSoon: true }
         ]
       }
     ]
@@ -200,6 +202,7 @@ export function MobileNavigation({
   const [searchQuery, setSearchQuery] = React.useState('')
   const [expandedItems, setExpandedItems] = React.useState<string[]>([])
   const navigationItems = user ? getNavigationItems(user.role) : []
+  const { toast } = useToast()
 
   const toggleExpanded = (href: string) => {
     setExpandedItems(prev => 
@@ -217,7 +220,16 @@ export function MobileNavigation({
     return expandedItems.includes(href)
   }
 
-  const handleNavigation = (href: string) => {
+  const handleNavigation = (href: string, item?: NavigationItem) => {
+    // Check if this item is marked as coming soon
+    if (item?.comingSoon) {
+      toast({
+        title: "Coming Soon",
+        description: `${item.label} feature is under development and will be available soon.`,
+      })
+      return
+    }
+    
     if (onNavigate) {
       onNavigate(href)
     } else {
@@ -392,6 +404,11 @@ export function MobileNavigation({
                     <motion.button
                       whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        const profilePath = user.role === 'STUDENT' ? '/student/profile' : 
+                                          user.role === 'TEACHER' ? '/teacher/profile' : '/dashboard/profile';
+                        handleNavigation(profilePath);
+                      }}
                       className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/60 text-slate-700 hover:text-slate-900"
                     >
                       <User className="h-4 w-4" />
@@ -401,6 +418,11 @@ export function MobileNavigation({
                     <motion.button
                       whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        const settingsPath = user.role === 'STUDENT' ? '/student/settings' : 
+                                           user.role === 'TEACHER' ? '/teacher/settings' : '/settings';
+                        handleNavigation(settingsPath);
+                      }}
                       className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/60 text-slate-700 hover:text-slate-900"
                     >
                       <Settings className="h-4 w-4" />
@@ -437,7 +459,7 @@ interface MobileNavigationItemProps {
   isActive: boolean
   isExpanded: boolean
   onToggle: () => void
-  onNavigate: (href: string) => void
+  onNavigate: (href: string, item?: NavigationItem) => void
   level: number
 }
 
@@ -479,7 +501,7 @@ function MobileNavigationItem({
           if (hasChildren) {
             onToggle()
           } else {
-            onNavigate(item.href)
+            onNavigate(item.href, item)
           }
         }}
         className={cn(

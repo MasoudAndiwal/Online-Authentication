@@ -6,10 +6,9 @@ import {
   ModernDashboardLayout,
   PageContainer,
 } from "@/components/layout/modern-dashboard-layout";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   User,
   Search,
@@ -25,7 +24,6 @@ import {
   HeartPulse,
   Filter,
   AlertCircle,
-  Loader2,
 } from "lucide-react";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { ViewStudentDialog } from "@/components/shared/view-student-dialog";
@@ -48,6 +46,79 @@ interface Student {
   status: string;
 }
 
+// Skeleton loading component
+function StudentCardSkeleton() {
+  return (
+    <div className="p-5 rounded-xl bg-gradient-to-br from-slate-50 to-white shadow-sm border-0 animate-pulse">
+      <div className="hidden lg:flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-12 w-12 bg-slate-200 rounded-full" />
+            <div>
+              <div className="h-5 w-32 bg-slate-200 rounded mb-2" />
+              <div className="h-4 w-24 bg-slate-200 rounded" />
+            </div>
+            <div className="h-6 w-16 bg-slate-200 rounded-full" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-slate-200 rounded" />
+              <div>
+                <div className="h-3 w-14 bg-slate-200 rounded mb-1" />
+                <div className="h-4 w-24 bg-slate-200 rounded" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 bg-slate-200 rounded" />
+              <div>
+                <div className="h-3 w-14 bg-slate-200 rounded mb-1" />
+                <div className="h-4 w-20 bg-slate-200 rounded" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 mt-3">
+            <div className="h-4 w-4 bg-slate-200 rounded" />
+            <div className="h-4 w-28 bg-slate-200 rounded" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+          <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+          <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+        </div>
+      </div>
+      {/* Mobile skeleton */}
+      <div className="block lg:hidden">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-slate-200 rounded-full" />
+            <div>
+              <div className="h-5 w-28 bg-slate-200 rounded mb-2" />
+              <div className="h-4 w-20 bg-slate-200 rounded" />
+            </div>
+          </div>
+          <div className="h-6 w-14 bg-slate-200 rounded-full" />
+        </div>
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 bg-slate-200 rounded" />
+            <div className="h-4 w-24 bg-slate-200 rounded" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 bg-slate-200 rounded" />
+            <div className="h-4 w-20 bg-slate-200 rounded" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <div className="flex-1 h-11 bg-slate-200 rounded-xl" />
+          <div className="flex-1 h-11 bg-slate-200 rounded-xl" />
+          <div className="flex-1 h-11 bg-slate-200 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentListPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth({ requiredRole: 'OFFICE' });
@@ -61,6 +132,8 @@ export default function StudentListPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [viewStudentId, setViewStudentId] = React.useState<string | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
 
   const handleNavigation = (href: string) => {
     try {
@@ -137,6 +210,16 @@ export default function StudentListPage() {
   const totalStudents = students.length;
   const activeStudents = students.filter(student => student.status === "ACTIVE").length;
   const sickStudents = students.filter(student => student.status === "SICK").length;
+
+  // Pagination calculations
+  const totalPages = Math.ceil(students.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, programFilter, classFilter, statusFilter]);
 
   // Transform students for display
   const displayStudents = students.map(student => {
@@ -237,65 +320,58 @@ export default function StudentListPage() {
       <PageContainer>
         {/* Statistics Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-green-50 to-green-100/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 mb-1">
-                    Total Students
-                  </p>
-                  <p className="text-3xl font-bold text-green-700">
-                    {totalStudents}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-600 rounded-xl">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
+          <div className="rounded-2xl shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100/80 p-6 border-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-emerald-600 mb-1">
+                  Total Students
+                </p>
+                <p className="text-3xl font-bold text-emerald-700">
+                  {totalStudents}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg shadow-emerald-500/30">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
 
-          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-blue-50 to-blue-100/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-600 mb-1">
-                    Active Students
-                  </p>
-                  <p className="text-3xl font-bold text-blue-700">
-                    {activeStudents}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-600 rounded-xl">
-                  <UserCheck className="h-6 w-6 text-white" />
-                </div>
+          <div className="rounded-2xl shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/80 p-6 border-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 mb-1">
+                  Active Students
+                </p>
+                <p className="text-3xl font-bold text-blue-700">
+                  {activeStudents}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg shadow-blue-500/30">
+                <UserCheck className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
 
-          <Card className="rounded-2xl shadow-md border-slate-200/60 bg-gradient-to-br from-red-50 to-red-100/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600 mb-1">
-                    Sick Students
-                  </p>
-                  <p className="text-3xl font-bold text-red-700">
-                    {sickStudents}
-                  </p>
-                </div>
-                <div className="p-3 bg-red-600 rounded-xl">
-                  <HeartPulse className="h-6 w-6 text-white" />
-                </div>
+          <div className="rounded-2xl shadow-lg bg-gradient-to-br from-rose-50 to-rose-100/80 p-6 border-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-rose-600 mb-1">
+                  Sick Students
+                </p>
+                <p className="text-3xl font-bold text-rose-700">
+                  {sickStudents}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg shadow-rose-500/30">
+                <HeartPulse className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filter Section */}
         <div className="mb-6">
-          <Card className="rounded-2xl shadow-lg border-slate-200/60">
-            <CardContent className="p-6">
+          <div className="rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm p-6 border-0">
               <div className="flex flex-col lg:flex-row gap-4">
                 {/* Search Bar */}
                 <div className="flex-1 relative">
@@ -365,7 +441,7 @@ export default function StudentListPage() {
                 classFilter ||
                 statusFilter ||
                 searchQuery) && (
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-200">
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
                   <span className="text-sm text-slate-600 font-medium">
                     Active filters:
                   </span>
@@ -417,30 +493,29 @@ export default function StudentListPage() {
               )}
 
               {/* Add Student Button */}
-              <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="mt-4 pt-4 border-t border-slate-100">
                 <Button
                   onClick={() =>
                     handleNavigation("/dashboard/add-student")
                   }
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto focus:ring-2 focus:ring-green-100"
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-xl transition-all duration-300 w-full sm:w-auto border-0"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Student
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
         {/* Students List */}
         <div>
-          <Card className="rounded-2xl shadow-lg border-slate-200/60">
-            <CardContent className="p-6">
-              <div className="space-y-4">
+          <div className="rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm p-6 border-0">
+              <div className="space-y-3">
                 {loading && (
-                  <div className="text-center py-12">
-                    <Loader2 className="h-12 w-12 text-green-600 mx-auto mb-4 animate-spin" />
-                    <p className="text-slate-600">Loading students...</p>
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <StudentCardSkeleton key={i} />
+                    ))}
                   </div>
                 )}
                 
@@ -455,10 +530,10 @@ export default function StudentListPage() {
                   </div>
                 )}
 
-                {!loading && !error && displayStudents.map((student) => (
+                {!loading && !error && displayStudents.slice(startIndex, endIndex).map((student) => (
                   <div
                     key={student.id}
-                    className="p-6 border border-slate-200 rounded-xl hover:shadow-md transition-shadow duration-200 bg-white"
+                    className="p-5 rounded-xl bg-gradient-to-br from-slate-50 to-white shadow-sm hover:shadow-md transition-all duration-300 border-0"
                   >
                     {/* Mobile Layout */}
                     <div className="block md:hidden">
@@ -476,16 +551,15 @@ export default function StudentListPage() {
                             </p>
                           </div>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className={
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             student.status === "Active"
-                              ? "bg-green-100 text-green-800 border-green-200"
-                              : "bg-red-100 text-red-800 border-red-200"
-                          }
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-rose-100 text-rose-700"
+                          }`}
                         >
                           {student.status}
-                        </Badge>
+                        </span>
                       </div>
 
                       {/* Essential mobile info */}
@@ -505,32 +579,29 @@ export default function StudentListPage() {
                       {/* Mobile actions */}
                       <div className="flex gap-2">
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() => handleView(student.id)}
-                          className="flex-1 border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white min-h-[44px] transition-all duration-200 rounded-xl font-medium border-0"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() =>
                             handleNavigation(
                               `/dashboard/edit-student/${student.id}`
                             )
                           }
-                          className="flex-1 border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
+                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white min-h-[44px] transition-all duration-200 rounded-xl font-medium border-0"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() => handleDelete(student.id)}
-                          className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 min-h-[44px] transition-all duration-200 rounded-xl font-medium"
+                          className="flex-1 bg-rose-500 hover:bg-rose-600 text-white min-h-[44px] transition-all duration-200 rounded-xl font-medium border-0"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Delete
@@ -553,43 +624,39 @@ export default function StudentListPage() {
                               {student.studentId || student.id}
                             </p>
                           </div>
-                          <Badge
-                            variant="outline"
-                            className={
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
                               student.status === "Active"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : "bg-red-100 text-red-800 border-red-200"
-                            }
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}
                           >
                             {student.status}
-                          </Badge>
+                          </span>
                         </div>
                         <div className="flex gap-2">
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() => handleView(student.id)}
-                            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4"
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white transition-all duration-200 rounded-xl font-medium px-4 border-0"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() =>
                               handleNavigation(
                                 `/dashboard/edit-student/${student.id}`
                               )
                             }
-                            className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4"
+                            className="bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 rounded-xl font-medium px-4 border-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() => handleDelete(student.id)}
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 transition-all duration-200 rounded-xl font-medium px-4"
+                            className="bg-rose-500 hover:bg-rose-600 text-white transition-all duration-200 rounded-xl font-medium px-4 border-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -645,16 +712,15 @@ export default function StudentListPage() {
                                 {student.studentId || student.id}
                               </p>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                 student.status === "Active"
-                                  ? "bg-green-100 text-green-800 border-green-200"
-                                  : "bg-red-100 text-red-800 border-red-200"
-                              }
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-rose-100 text-rose-700"
+                              }`}
                             >
                               {student.status}
-                            </Badge>
+                            </span>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -690,34 +756,31 @@ export default function StudentListPage() {
                           </div>
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex gap-2">
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() => handleView(student.id)}
-                            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md border-0"
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View
                           </Button>
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() =>
                               handleNavigation(
                                 `/dashboard/edit-student/${student.id}`
                               )
                             }
-                            className="border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 focus:ring-2 focus:ring-green-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
+                            className="bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md border-0"
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </Button>
                           <Button
-                            variant="outline"
                             size="sm"
                             onClick={() => handleDelete(student.id)}
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-red-100 transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md"
+                            className="bg-rose-500 hover:bg-rose-600 text-white transition-all duration-200 rounded-xl font-medium px-4 py-2 shadow-sm hover:shadow-md border-0"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
@@ -751,8 +814,99 @@ export default function StudentListPage() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Pagination */}
+              {!loading && !error && displayStudents.length > itemsPerPage && (
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                  {/* Mobile Pagination */}
+                  <div className="flex flex-col gap-4 sm:hidden">
+                    <p className="text-sm text-slate-600 text-center">
+                      Showing {startIndex + 1} to {Math.min(endIndex, displayStudents.length)} of {displayStudents.length} students
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200 px-4"
+                      >
+                        Previous
+                      </Button>
+                      <span className="px-3 py-1 text-sm font-medium text-slate-700">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200 px-4"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Desktop Pagination */}
+                  <div className="hidden sm:flex items-center justify-between">
+                    <p className="text-sm text-slate-600">
+                      Showing {startIndex + 1} to {Math.min(endIndex, displayStudents.length)} of {displayStudents.length} students
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200"
+                      >
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                          // Show limited pages on smaller screens
+                          const showPage = totalPages <= 5 || 
+                            page === 1 || 
+                            page === totalPages || 
+                            Math.abs(page - currentPage) <= 1;
+                          
+                          if (!showPage) {
+                            // Show ellipsis
+                            if (page === 2 && currentPage > 3) {
+                              return <span key={page} className="px-1 text-slate-400">...</span>;
+                            }
+                            if (page === totalPages - 1 && currentPage < totalPages - 2) {
+                              return <span key={page} className="px-1 text-slate-400">...</span>;
+                            }
+                            return null;
+                          }
+                          
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-110 active:scale-95 ${
+                                currentPage === page
+                                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                                  : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 transition-all duration-200"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+          </div>
         </div>
       </PageContainer>
 
