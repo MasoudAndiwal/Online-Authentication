@@ -46,25 +46,24 @@ import {
   sanitizePhone,
 } from "@/lib/utils/validation";
 
-// Sample teacher data for editing
-const sampleTeacherData = {
-  id: "T-2024-001",
-  firstName: "Ahmad",
-  lastName: "Hassan",
-  fatherName: "Mohammad Hassan",
-  grandFatherName: "Ali Hassan",
-  teacherId: "8472",
+// Default form values (will be replaced by API data)
+const defaultFormData = {
+  firstName: "",
+  lastName: "",
+  fatherName: "",
+  grandFatherName: "",
+  teacherId: "",
   dateOfBirth: undefined,
-  phone: "0704382703",
-  secondaryPhone: "0773628728",
-  address: "123 Main Street, City, State",
-  departments: ["Computer Science"],
-  qualification: "Master's in Computer Science",
-  experience: "5",
-  specialization: "Software Engineering",
-  subjects: ["Programming", "Data Structures"],
-  classes: ["Section A", "Morning Batch"],
-  employmentType: "Full Time (Permanent)",
+  phone: "",
+  secondaryPhone: "",
+  address: "",
+  departments: [] as string[],
+  qualification: "",
+  experience: "",
+  specialization: "",
+  subjects: [] as string[],
+  classes: [] as string[],
+  employmentType: "",
   status: "ACTIVE" as const,
 };
 
@@ -195,23 +194,23 @@ export default function EditTeacherPage({ params }: EditTeacherPageProps) {
 
   const [currentPath] = React.useState("/dashboard/edit-teacher");
   const [formData, setFormData] = React.useState<FormData>({
-    firstName: sampleTeacherData.firstName,
-    lastName: sampleTeacherData.lastName,
-    fatherName: sampleTeacherData.fatherName,
-    grandFatherName: sampleTeacherData.grandFatherName,
-    teacherId: sampleTeacherData.teacherId,
-    dateOfBirth: sampleTeacherData.dateOfBirth,
-    phone: sampleTeacherData.phone,
-    secondaryPhone: sampleTeacherData.secondaryPhone,
-    address: sampleTeacherData.address,
-    departments: sampleTeacherData.departments,
-    qualification: sampleTeacherData.qualification,
-    experience: sampleTeacherData.experience,
-    specialization: sampleTeacherData.specialization,
-    subjects: sampleTeacherData.subjects,
-    classes: sampleTeacherData.classes,
-    employmentType: sampleTeacherData.employmentType,
-    status: sampleTeacherData.status,
+    firstName: defaultFormData.firstName,
+    lastName: defaultFormData.lastName,
+    fatherName: defaultFormData.fatherName,
+    grandFatherName: defaultFormData.grandFatherName,
+    teacherId: defaultFormData.teacherId,
+    dateOfBirth: defaultFormData.dateOfBirth,
+    phone: defaultFormData.phone,
+    secondaryPhone: defaultFormData.secondaryPhone,
+    address: defaultFormData.address,
+    departments: defaultFormData.departments,
+    qualification: defaultFormData.qualification,
+    experience: defaultFormData.experience,
+    specialization: defaultFormData.specialization,
+    subjects: defaultFormData.subjects,
+    classes: defaultFormData.classes,
+    employmentType: defaultFormData.employmentType,
+    status: defaultFormData.status,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);

@@ -37,23 +37,22 @@ import { handleLogout as performLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 
-// Sample student data for editing
-const sampleStudentData = {
-  id: "CS-2024-001",
-  firstName: "Ahmad",
-  lastName: "Hassan",
-  fatherName: "Mohammad Hassan",
-  grandFatherName: "Ali Hassan",
-  studentId: "8394",
+// Default form values (will be replaced by API data)
+const defaultFormData = {
+  firstName: "",
+  lastName: "",
+  fatherName: "",
+  grandFatherName: "",
+  studentId: "",
   dateOfBirth: undefined,
-  phone: "0704382703",
-  fatherPhone: "0704382776",
-  address: "123 Main Street, City, State",
-  programs: ["Computer Science"], // Default program
-  semester: "5",
-  enrollmentYear: "1400",
-  classSection: "CS-101-A - Morning", // Default class
-  timeSlot: "morning",
+  phone: "",
+  fatherPhone: "",
+  address: "",
+  programs: [] as string[],
+  semester: "",
+  enrollmentYear: "",
+  classSection: "",
+  timeSlot: "",
   status: "ACTIVE" as const,
 };
 
@@ -104,21 +103,21 @@ export default function EditStudentPage() {
   // State declarations - MUST come before useEffect hooks
   const [currentPath] = React.useState("/dashboard/edit-student");
   const [formData, setFormData] = React.useState<FormData>({
-    firstName: sampleStudentData.firstName,
-    lastName: sampleStudentData.lastName,
-    fatherName: sampleStudentData.fatherName,
-    grandFatherName: sampleStudentData.grandFatherName,
-    studentId: sampleStudentData.studentId,
-    dateOfBirth: sampleStudentData.dateOfBirth,
-    phone: sampleStudentData.phone,
-    fatherPhone: sampleStudentData.fatherPhone,
-    address: sampleStudentData.address,
-    programs: sampleStudentData.programs,
-    semester: sampleStudentData.semester,
-    enrollmentYear: sampleStudentData.enrollmentYear,
-    classSection: sampleStudentData.classSection,
-    timeSlot: sampleStudentData.timeSlot,
-    status: sampleStudentData.status,
+    firstName: defaultFormData.firstName,
+    lastName: defaultFormData.lastName,
+    fatherName: defaultFormData.fatherName,
+    grandFatherName: defaultFormData.grandFatherName,
+    studentId: defaultFormData.studentId,
+    dateOfBirth: defaultFormData.dateOfBirth,
+    phone: defaultFormData.phone,
+    fatherPhone: defaultFormData.fatherPhone,
+    address: defaultFormData.address,
+    programs: defaultFormData.programs,
+    semester: defaultFormData.semester,
+    enrollmentYear: defaultFormData.enrollmentYear,
+    classSection: defaultFormData.classSection,
+    timeSlot: defaultFormData.timeSlot,
+    status: defaultFormData.status,
   });
   const [formErrors, setFormErrors] = React.useState<FormErrors>({});
   const [currentStep, setCurrentStep] = React.useState(1);
