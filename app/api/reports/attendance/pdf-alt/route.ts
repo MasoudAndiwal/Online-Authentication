@@ -423,9 +423,7 @@ export async function POST(_request: NextRequest) {
     // ===== END OF COMMENTED CODE =====
     */
 
-  } catch (error) {
-    console.error('Error in PDF route:', error)
-    
+  } catch {
     return NextResponse.json(
       { 
         message: 'PDF Report Generation - Coming Soon!',
