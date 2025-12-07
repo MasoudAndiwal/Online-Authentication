@@ -33,14 +33,16 @@ export async function getServerSession(request?: NextRequest): Promise<ServerUse
     } else {
       // Get from Next.js cookies (for App Router)
       const cookieStore = cookies();
-      sessionData = cookieStore.get('user_session')?.value || null;
+      sessionData = (await cookieStore).get('user_session')?.value || null;
     }
 
     if (!sessionData) {
       return null;
     }
 
-    const session = JSON.parse(sessionData) as ServerUserSession;
+    // Decode URL-encoded cookie value before parsing
+    const decodedSessionData = decodeURIComponent(sessionData);
+    const session = JSON.parse(decodedSessionData) as ServerUserSession;
     
     // Basic validation
     if (!session.id || !session.role) {

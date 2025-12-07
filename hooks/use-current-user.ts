@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
 
-interface UserProfile {
+export interface UserProfile {
   id: string
   name: string
   email: string

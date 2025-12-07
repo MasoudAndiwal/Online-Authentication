@@ -17,8 +17,9 @@ import { useWeeklyAttendance } from "@/hooks/use-weekly-attendance";
 import { useSyncService, useAutoSync } from "@/hooks/use-sync-service";
 import { StudentErrorBoundary, StudentSectionErrorBoundary } from "@/components/student/error-boundary";
 import { ErrorDisplay } from "@/components/student/error-display";
-import { OfflineStatus, OfflineModeOverlay } from "@/components/ui/offline-indicator";
+import { OfflineStatus } from "@/components/ui/offline-indicator";
 import { useOfflineMode } from "@/hooks/use-offline-mode";
+import { useToast } from "@/hooks/use-toast";
 
 // Lazy load heavy components for better initial load performance
 const ProgressTracker = lazy(() => import("@/components/student/progress-tracker").then(mod => ({ default: mod.ProgressTracker })));
@@ -38,6 +39,7 @@ export default function StudentDashboardPage() {
   // Week offset: 0 = current week, -1 = last week, 1 = next week
   const [currentWeek, setCurrentWeek] = React.useState(0);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const { toast } = useToast();
   const [notifications, setNotifications] = React.useState<Notification[]>([
     {
       id: "1",
@@ -123,13 +125,14 @@ export default function StudentDashboardPage() {
   };
 
   const handleViewAttendance = () => {
-    // TODO: Navigate to attendance view in future tasks
-    console.log("View attendance clicked");
+    router.push("/student/student-dashboard/attendance-history");
   };
 
   const handleContactTeacher = () => {
-    // TODO: Open messaging interface in future tasks
-    console.log("Contact teacher clicked");
+    toast({
+      title: "Coming Soon",
+      description: "Messages feature is under development and will be available soon.",
+    });
   };
 
   const handleWeekChange = (week: number) => {
@@ -196,14 +199,14 @@ export default function StudentDashboardPage() {
                   />
                 ) : metricsLoading ? (
                   <DashboardMetricsSkeleton />
-                ) : metrics ? (
+                ) : (
                   <DashboardMetrics
-                    totalClasses={metrics.totalClasses}
-                    attendanceRate={metrics.attendanceRate}
-                    presentDays={metrics.presentDays}
-                    absentDays={metrics.absentDays}
+                    totalClasses={metrics?.totalClasses ?? 0}
+                    attendanceRate={metrics?.attendanceRate ?? 0}
+                    presentDays={metrics?.presentDays ?? 0}
+                    absentDays={metrics?.absentDays ?? 0}
                   />
-                ) : null}
+                )}
               </StudentSectionErrorBoundary>
 
               {/* Weekly Attendance Calendar with Error Handling */}

@@ -3,16 +3,9 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TrendingUp, Calendar } from 'lucide-react'
-
-interface TrendDataPoint {
-  label: string
-  value: number
-  present: number
-  absent: number
-  sick: number
-  leave: number
-}
+import { Calendar } from 'lucide-react'
+import { useAttendanceTrends, type TrendDataPoint } from '@/hooks/use-attendance-trends'
+import { useCurrentUser } from '@/hooks/use-current-user'
 
 interface TrendAnalysisChartsProps {
   weeklyData?: TrendDataPoint[]
@@ -24,15 +17,27 @@ interface TrendAnalysisChartsProps {
  * Displays interactive charts showing attendance patterns over time
  * Features weekly and monthly breakdowns with hover tooltips
  * Responsive and touch-friendly design
+ * Now fetches real data from database
  */
 export function TrendAnalysisCharts({
-  weeklyData = generateMockWeeklyData(),
-  monthlyData = generateMockMonthlyData()
+  weeklyData: propWeeklyData,
+  monthlyData: propMonthlyData
 }: TrendAnalysisChartsProps) {
   const [activeView, setActiveView] = React.useState<'weekly' | 'monthly'>('weekly')
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null)
-
+  
+  const { user } = useCurrentUser()
+  
+  // Fetch real data from database
+  const { data: fetchedWeeklyData, isLoading: weeklyLoading } = useAttendanceTrends(user?.id, 'weekly')
+  const { data: fetchedMonthlyData, isLoading: monthlyLoading } = useAttendanceTrends(user?.id, 'monthly')
+  
+  // Use fetched data or fall back to props (for testing) or empty array
+  const weeklyData = fetchedWeeklyData || propWeeklyData || []
+  const monthlyData = fetchedMonthlyData || propMonthlyData || []
+  
   const currentData = activeView === 'weekly' ? weeklyData : monthlyData
+  const isLoading = activeView === 'weekly' ? weeklyLoading : monthlyLoading
 
   return (
     <motion.div
@@ -76,11 +81,21 @@ export function TrendAnalysisCharts({
         <CardContent className="p-4 sm:p-5 lg:p-6">
           {/* Chart */}
           <div className="relative">
-            <AttendanceChart
-              data={currentData}
-              hoveredIndex={hoveredIndex}
-              onHover={setHoveredIndex}
-            />
+            {isLoading ? (
+              <div className="h-[200px] flex items-center justify-center">
+                <div className="animate-pulse text-slate-400">Loading trends...</div>
+              </div>
+            ) : currentData.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center">
+                <div className="text-slate-400">No attendance data available</div>
+              </div>
+            ) : (
+              <AttendanceChart
+                data={currentData}
+                hoveredIndex={hoveredIndex}
+                onHover={setHoveredIndex}
+              />
+            )}
           </div>
 
           {/* Legend */}
@@ -249,23 +264,4 @@ function LegendItem({ color, label }: LegendItemProps) {
   )
 }
 
-// Mock data generators (to be replaced with real API data)
-function generateMockWeeklyData(): TrendDataPoint[] {
-  return [
-    { label: 'Week 1', value: 95, present: 19, absent: 1, sick: 0, leave: 0 },
-    { label: 'Week 2', value: 90, present: 18, absent: 2, sick: 0, leave: 0 },
-    { label: 'Week 3', value: 85, present: 17, absent: 2, sick: 1, leave: 0 },
-    { label: 'Week 4', value: 92, present: 18, absent: 1, sick: 1, leave: 0 },
-    { label: 'Week 5', value: 88, present: 17, absent: 2, sick: 1, leave: 0 },
-    { label: 'Week 6', value: 94, present: 19, absent: 1, sick: 0, leave: 0 },
-  ]
-}
 
-function generateMockMonthlyData(): TrendDataPoint[] {
-  return [
-    { label: 'Sep', value: 92, present: 74, absent: 5, sick: 2, leave: 1 },
-    { label: 'Oct', value: 88, present: 70, absent: 8, sick: 3, leave: 1 },
-    { label: 'Nov', value: 90, present: 72, absent: 6, sick: 2, leave: 2 },
-    { label: 'Dec', value: 85, present: 68, absent: 10, sick: 2, leave: 2 },
-  ]
-}

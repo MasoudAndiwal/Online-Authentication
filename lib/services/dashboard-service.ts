@@ -363,6 +363,7 @@ export class DashboardService {
   /**
    * Calculate class statistics on-the-fly (fallback when materialized view unavailable)
    * Uses attendance_records_new table with period columns
+   * OPTIMIZED: Uses a single query with aggregation instead of N+1 queries
    */
   private async calculateClassStatistics(classId: string): Promise<ClassStatistics | null> {
     // Get all students in the class
@@ -377,32 +378,41 @@ export class DashboardService {
 
     const studentIds = students.map(s => s.id);
 
-    // Get attendance rates for all students using attendance_records_new
-    const attendanceRates: number[] = [];
+    // OPTIMIZED: Fetch all attendance records for all students in one query
+    const { data: allRecords } = await supabase
+      .from('attendance_records_new')
+      .select('student_id, period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
+      .in('student_id', studentIds);
 
-    for (const studentId of studentIds) {
-      const { data: records } = await supabase
-        .from('attendance_records_new')
-        .select('period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
-        .eq('student_id', studentId);
+    // Calculate rates for all students from the single query result
+    const studentRatesMap = new Map<string, { total: number; present: number }>();
+    
+    // Initialize all students with 0
+    studentIds.forEach(sid => studentRatesMap.set(sid, { total: 0, present: 0 }));
 
-      if (records && records.length > 0) {
-        // Flatten period statuses
-        let total = 0;
-        let present = 0;
-        records.forEach(record => {
-          for (let p = 1; p <= 6; p++) {
-            const status = record[`period_${p}_status` as keyof typeof record] as string;
-            if (status && status !== 'NOT_MARKED') {
-              total++;
-              if (status === 'PRESENT') present++;
-            }
+    // Process all records
+    (allRecords || []).forEach(record => {
+      const sid = record.student_id;
+      const stats = studentRatesMap.get(sid);
+      if (stats) {
+        for (let p = 1; p <= 6; p++) {
+          const status = record[`period_${p}_status` as keyof typeof record] as string;
+          if (status && status !== 'NOT_MARKED') {
+            stats.total++;
+            if (status === 'PRESENT') stats.present++;
           }
-        });
-        const rate = total > 0 ? (present / total) * 100 : 0;
+        }
+      }
+    });
+
+    // Convert to rates array
+    const attendanceRates: number[] = [];
+    studentRatesMap.forEach((stats) => {
+      if (stats.total > 0) {
+        const rate = (stats.present / stats.total) * 100;
         attendanceRates.push(rate);
       }
-    }
+    });
 
     if (attendanceRates.length === 0) {
       return null;
@@ -454,6 +464,7 @@ export class DashboardService {
   /**
    * Calculate student ranking within class
    * Uses attendance_records_new table with period columns
+   * OPTIMIZED: Uses a single query with aggregation instead of N+1 queries
    */
   private async calculateStudentRanking(studentId: string, classId: string): Promise<StudentRanking> {
     // Get all students in the class
@@ -469,34 +480,50 @@ export class DashboardService {
     const studentIds = students.map(s => s.id);
     const totalStudents = studentIds.length;
 
-    // Get attendance rates for all students using attendance_records_new
-    const studentRates: Array<{ studentId: string; rate: number }> = [];
-
-    for (const sid of studentIds) {
-      const { data: records } = await supabase
-        .from('attendance_records_new')
-        .select('period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
-        .eq('student_id', sid);
-
-      if (records && records.length > 0) {
-        // Flatten period statuses
-        let total = 0;
-        let present = 0;
-        records.forEach(record => {
-          for (let p = 1; p <= 6; p++) {
-            const status = record[`period_${p}_status` as keyof typeof record] as string;
-            if (status && status !== 'NOT_MARKED') {
-              total++;
-              if (status === 'PRESENT') present++;
-            }
-          }
-        });
-        const rate = total > 0 ? (present / total) * 100 : 0;
-        studentRates.push({ studentId: sid, rate });
-      } else {
-        studentRates.push({ studentId: sid, rate: 0 });
-      }
+    // If no students or only one student, return default ranking
+    if (totalStudents <= 1) {
+      return {
+        studentId,
+        rank: 1,
+        totalStudents,
+        percentile: 100,
+        attendanceRate: 0,
+      };
     }
+
+    // OPTIMIZED: Fetch all attendance records for all students in one query
+    const { data: allRecords } = await supabase
+      .from('attendance_records_new')
+      .select('student_id, period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
+      .in('student_id', studentIds);
+
+    // Calculate rates for all students from the single query result
+    const studentRatesMap = new Map<string, { total: number; present: number }>();
+    
+    // Initialize all students with 0
+    studentIds.forEach(sid => studentRatesMap.set(sid, { total: 0, present: 0 }));
+
+    // Process all records
+    (allRecords || []).forEach(record => {
+      const sid = record.student_id;
+      const stats = studentRatesMap.get(sid);
+      if (stats) {
+        for (let p = 1; p <= 6; p++) {
+          const status = record[`period_${p}_status` as keyof typeof record] as string;
+          if (status && status !== 'NOT_MARKED') {
+            stats.total++;
+            if (status === 'PRESENT') stats.present++;
+          }
+        }
+      }
+    });
+
+    // Convert to rates array
+    const studentRates: Array<{ studentId: string; rate: number }> = [];
+    studentRatesMap.forEach((stats, sid) => {
+      const rate = stats.total > 0 ? (stats.present / stats.total) * 100 : 0;
+      studentRates.push({ studentId: sid, rate });
+    });
 
     // Sort by rate descending
     studentRates.sort((a, b) => b.rate - a.rate);

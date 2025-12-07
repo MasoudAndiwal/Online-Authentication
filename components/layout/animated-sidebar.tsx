@@ -8,8 +8,9 @@ import {Home,Users,Calendar,BarChart3,Settings,BookOpen,ClipboardList,FileText,U
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuTrigger,
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator,DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavigationItem {
   label: string;
@@ -18,6 +19,7 @@ interface NavigationItem {
   active?: boolean;
   badge?: string | number;
   children?: NavigationItem[];
+  comingSoon?: boolean; // Mark feature as coming soon
 }
 
 interface UserProfile {
@@ -231,7 +233,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       label: "Messages",
       href: "/student/student-dashboard/messages",
       icon: MessageSquare,
-      badge: 0, // Will be updated dynamically with unread count
+      comingSoon: true, // Feature not yet implemented
     },
     {
       label: "Help & Support",
@@ -267,6 +269,7 @@ export function AnimatedSidebar({
   className,
 }: AnimatedSidebarProps) {
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
+  const { toast } = useToast();
   const navigationItems = user ? getNavigationItems(user.role) : [];
 
   // Add global styles for dropdown positioning
@@ -328,7 +331,16 @@ export function AnimatedSidebar({
     );
   };
 
-  const handleNavigation = (href: string) => {
+  const handleNavigation = (href: string, item?: NavigationItem) => {
+    // Check if this item is marked as coming soon
+    if (item?.comingSoon) {
+      toast({
+        title: "Coming Soon",
+        description: `${item.label} feature is under development and will be available soon.`,
+      });
+      return;
+    }
+    
     if (onNavigate) {
       onNavigate(href);
     } else {
@@ -379,7 +391,7 @@ export function AnimatedSidebar({
               isActive={isActive(item.href, item)}
               isExpanded={isExpanded(item.href)}
               onToggle={() => toggleExpanded(item.href)}
-              onNavigate={handleNavigation}
+              onNavigate={(href) => handleNavigation(href, item)}
               level={0}
               currentPath={currentPath}
               role={user?.role}
@@ -389,7 +401,7 @@ export function AnimatedSidebar({
       </nav>
 
       {/* Clean Modern User Info Section */}
-      {user && <UserProfileDropdown user={user} onLogout={onLogout} />}
+      {user && <UserProfileDropdown user={user} onLogout={onLogout} onNavigate={handleNavigation} />}
     </div>
   );
 }
@@ -399,7 +411,7 @@ interface NavigationItemProps {
   isActive: boolean;
   isExpanded: boolean;
   onToggle: () => void;
-  onNavigate: (href: string) => void;
+  onNavigate: (href: string, item?: NavigationItem) => void;
   level: number;
   currentPath?: string;
 }
@@ -460,7 +472,7 @@ function NavigationItem({
           if (hasChildren) {
             onToggle();
           } else {
-            onNavigate(item.href);
+            onNavigate(item.href, item);
           }
         }}
         className={cn(
@@ -519,7 +531,7 @@ function NavigationItem({
                   isActive={child.href === currentPath}
                   isExpanded={isChildExpanded(child.href)}
                   onToggle={() => toggleChildExpanded(child.href)}
-                  onNavigate={onNavigate}
+                  onNavigate={(href) => onNavigate(href, child)}
                   level={level + 1}
                   currentPath={currentPath}
                   role={role}
@@ -537,9 +549,10 @@ function NavigationItem({
 interface UserProfileDropdownProps {
   user: UserProfile;
   onLogout?: () => void;
+  onNavigate?: (href: string) => void;
 }
 
-function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
+function UserProfileDropdown({ user, onLogout, onNavigate }: UserProfileDropdownProps) {
   const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
@@ -553,8 +566,20 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Get role-specific colors
+  // Get role-specific colors and profile path
   const roleColor = roleColors[user.role];
+  const profilePath = user.role === 'STUDENT' ? '/student/profile' : 
+                      user.role === 'TEACHER' ? '/teacher/profile' : '/dashboard/profile';
+  const settingsPath = user.role === 'STUDENT' ? '/student/settings' : 
+                       user.role === 'TEACHER' ? '/teacher/settings' : '/settings';
+
+  const handleNavigation = (href: string) => {
+    if (onNavigate) {
+      onNavigate(href);
+    } else {
+      window.location.href = href;
+    }
+  };
 
   return (
     <motion.div
@@ -618,12 +643,18 @@ function UserProfileDropdown({ user, onLogout }: UserProfileDropdownProps) {
           avoidCollisions={true}
           collisionPadding={16}
         >
-          <DropdownMenuItem className="p-3 cursor-pointer hover:bg-slate-50">
+          <DropdownMenuItem 
+            className="p-3 cursor-pointer hover:bg-slate-50"
+            onClick={() => handleNavigation(profilePath)}
+          >
             <User className="h-4 w-4 mr-3 text-slate-600" />
             <span className="text-sm font-medium text-slate-900">Profile</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem className="p-3 cursor-pointer hover:bg-slate-50">
+          <DropdownMenuItem 
+            className="p-3 cursor-pointer hover:bg-slate-50"
+            onClick={() => handleNavigation(settingsPath)}
+          >
             <Settings className="h-4 w-4 mr-3 text-slate-600" />
             <span className="text-sm font-medium text-slate-900">Settings</span>
           </DropdownMenuItem>

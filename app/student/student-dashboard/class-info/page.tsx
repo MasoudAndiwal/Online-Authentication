@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/student/notification-bell";
 import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
 import { ClassInformationSection } from "@/components/student/class-information-section";
 import { AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Class Information Page
@@ -23,6 +24,7 @@ export default function ClassInfoPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const { toast } = useToast();
   const [notifications, setNotifications] = React.useState<Notification[]>([
     {
       id: "1",
@@ -155,9 +157,10 @@ export default function ClassInfoPage() {
   };
 
   const handleContactTeacher = (teacherId: string) => {
-    // TODO: Navigate to messaging interface with teacher pre-selected
-    router.push("/student/student-dashboard/messages");
-    console.log(`Contact teacher clicked - Teacher ID: ${teacherId} - navigating to messages`);
+    toast({
+      title: "Coming Soon",
+      description: "Messages feature is under development and will be available soon.",
+    });
   };
 
   if (userLoading) {

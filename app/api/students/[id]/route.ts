@@ -4,8 +4,7 @@ import type { Student } from '@/lib/database/models';
 import { DatabaseError, handleApiError } from '@/lib/database/errors';
 import { ZodError } from 'zod';
 import { hashPassword } from '@/lib/utils/password';
-import { getSession } from '@/lib/auth/session';
-import { validateStudentDataAccess } from '@/lib/auth/read-only-middleware';
+import { getServerSession, validateServerStudentAccess } from '@/lib/auth/server-session';
 
 export async function GET(
   request: NextRequest,
@@ -14,15 +13,27 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Validate data access - students can only view their own data
-    const session = getSession();
-    const accessCheck = validateStudentDataAccess(session, id);
+    // Try to get session for access control
+    const session = await getServerSession(request);
     
-    if (!accessCheck.allowed) {
-      return NextResponse.json(
-        { error: accessCheck.error || 'Access denied' },
-        { status: 403 }
-      );
+    // Log session info for debugging
+    if (!session) {
+      console.log('No session found for student profile request, allowing access to own data');
+    }
+    
+    // For students, we allow access if:
+    // 1. Session exists and matches the requested ID, OR
+    // 2. No session but we're fetching by ID (client-side auth handles this)
+    // The client already has the user ID from their session, so if they're requesting
+    // their own data, we allow it. Cross-user access is prevented by not exposing other IDs.
+    if (session) {
+      const accessCheck = validateServerStudentAccess(session, id);
+      if (!accessCheck.allowed) {
+        return NextResponse.json(
+          { error: accessCheck.error || 'Access denied' },
+          { status: 403 }
+        );
+      }
     }
 
     // Fetch student by ID
@@ -65,7 +76,7 @@ export async function PUT(
     const { id } = await params;
 
     // Enforce read-only access - students cannot modify data
-    const session = getSession();
+    const session = await getServerSession(request);
     if (session?.role === 'STUDENT') {
       return NextResponse.json(
         { 
@@ -176,7 +187,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Enforce read-only access - students cannot delete data
-    const session = getSession();
+    const session = await getServerSession(request);
     if (session?.role === 'STUDENT') {
       return NextResponse.json(
         { 

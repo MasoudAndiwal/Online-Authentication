@@ -10,6 +10,7 @@ import { handleLogout } from '@/lib/auth/logout'
 import { NotificationBell } from '@/components/student/notification-bell'
 import { type FAQ } from '@/components/student/faq-accordion'
 import { Card, CardContent } from '@/components/ui/card'
+import { useToast } from '@/hooks/use-toast'
 
 // Lazy load heavy components for better performance
 const FAQAccordion = lazy(() => import('@/components/student/faq-accordion').then(mod => ({ default: mod.FAQAccordion })))
@@ -254,6 +255,7 @@ export default function HelpSupportPage() {
   const { user, loading: userLoading } = useCurrentUser()
   const [unreadNotifications] = useState(0)
   const [faqFeedback, setFaqFeedback] = useState<Record<string, boolean>>({})
+  const { toast } = useToast()
 
   const handleFaqFeedback = (faqId: string, helpful: boolean) => {
     setFaqFeedback((prev) => ({ ...prev, [faqId]: helpful }))
@@ -261,7 +263,10 @@ export default function HelpSupportPage() {
   }
 
   const handleSendMessage = () => {
-    router.push('/student/student-dashboard/messages')
+    toast({
+      title: "Coming Soon",
+      description: "Messages feature is under development and will be available soon.",
+    })
   }
 
   const handleNavigation = (href: string) => {
