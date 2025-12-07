@@ -91,41 +91,49 @@ export function TrendAnalysisCharts({
             <LegendItem color="blue" label="Leave" />
           </div>
 
-          {/* Tooltip */}
-          {hoveredIndex !== null && currentData[hoveredIndex] && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-4 bg-slate-50 rounded-xl border-0 shadow-sm"
-            >
-              <div className="text-sm sm:text-base font-semibold text-slate-800 mb-2">
-                {currentData[hoveredIndex].label}
+          {/* Tooltip - Fixed height container to prevent layout shift */}
+          <div className="mt-4 min-h-[140px]">
+            {hoveredIndex !== null && currentData[hoveredIndex] ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="p-4 bg-slate-50 rounded-xl border-0 shadow-sm"
+              >
+                <div className="text-sm sm:text-base font-semibold text-slate-800 mb-2">
+                  {currentData[hoveredIndex].label}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                    <span className="text-slate-600">Present: {currentData[hoveredIndex].present}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span className="text-slate-600">Absent: {currentData[hoveredIndex].absent}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <span className="text-slate-600">Sick: {currentData[hoveredIndex].sick}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                    <span className="text-slate-600">Leave: {currentData[hoveredIndex].leave}</span>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-slate-300">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Attendance Rate: {currentData[hoveredIndex].value.toFixed(1)}%
+                  </span>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="p-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 text-center">
+                <span className="text-sm text-slate-400">Hover or tap a bar to see details</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                  <span className="text-slate-600">Present: {currentData[hoveredIndex].present}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <span className="text-slate-600">Absent: {currentData[hoveredIndex].absent}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <span className="text-slate-600">Sick: {currentData[hoveredIndex].sick}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="text-slate-600">Leave: {currentData[hoveredIndex].leave}</span>
-                </div>
-              </div>
-              <div className="mt-2 pt-2 border-t border-slate-300">
-                <span className="text-sm font-semibold text-slate-700">
-                  Attendance Rate: {currentData[hoveredIndex].value.toFixed(1)}%
-                </span>
-              </div>
-            </motion.div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
     </motion.div>
@@ -140,76 +148,80 @@ interface AttendanceChartProps {
 
 function AttendanceChart({ data, hoveredIndex, onHover }: AttendanceChartProps) {
   const chartHeight = 200
-  const chartWidth = 100 // percentage
   const maxValue = 100 // percentage
 
   return (
     <div className="w-full overflow-x-auto">
       <div className="min-w-[500px] sm:min-w-0">
-        {/* Y-axis labels */}
-        <div className="flex items-end justify-between mb-2 px-2">
-          {[100, 75, 50, 25, 0].map((value) => (
-            <div key={value} className="text-xs text-slate-500">
-              {value}%
-            </div>
-          ))}
-        </div>
-
-        {/* Chart area */}
-        <div className="relative" style={{ height: chartHeight }}>
-          {/* Grid lines */}
-          <div className="absolute inset-0 flex flex-col justify-between">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div key={i} className="border-t border-slate-200" />
+        {/* Chart container with Y-axis */}
+        <div className="flex">
+          {/* Y-axis labels - positioned vertically on the left */}
+          <div className="flex flex-col justify-between pr-2 sm:pr-3" style={{ height: chartHeight }}>
+            {[100, 75, 50, 25, 0].map((value) => (
+              <div key={value} className="text-xs text-slate-500 text-right min-w-[32px]">
+                {value}%
+              </div>
             ))}
           </div>
 
-          {/* Bars */}
-          <div className="absolute inset-0 flex items-end justify-around gap-1 sm:gap-2 px-2">
-            {data.map((point, index) => {
-              const barHeight = (point.value / maxValue) * chartHeight
-              const isHovered = hoveredIndex === index
+          {/* Chart area */}
+          <div className="flex-1">
+            <div className="relative" style={{ height: chartHeight }}>
+              {/* Grid lines */}
+              <div className="absolute inset-0 flex flex-col justify-between">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="border-t border-slate-200" />
+                ))}
+              </div>
 
-              return (
-                <motion.div
-                  key={index}
-                  className="flex-1 max-w-[60px] cursor-pointer touch-manipulation"
-                  onMouseEnter={() => onHover(index)}
-                  onMouseLeave={() => onHover(null)}
-                  onClick={() => onHover(isHovered ? null : index)}
-                  initial={{ height: 0 }}
-                  animate={{ height: barHeight }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <motion.div
-                    className={`w-full h-full rounded-t-lg transition-all ${
-                      isHovered
-                        ? 'bg-gradient-to-t from-emerald-600 to-emerald-500 shadow-lg scale-105'
-                        : 'bg-gradient-to-t from-emerald-500 to-emerald-400'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  />
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
+              {/* Bars */}
+              <div className="absolute inset-0 flex items-end justify-around gap-1 sm:gap-2 px-2">
+                {data.map((point, index) => {
+                  const barHeight = (point.value / maxValue) * chartHeight
+                  const isHovered = hoveredIndex === index
 
-        {/* X-axis labels */}
-        <div className="flex items-center justify-around gap-1 sm:gap-2 mt-2 px-2">
-          {data.map((point, index) => (
-            <div
-              key={index}
-              className={`flex-1 max-w-[60px] text-center text-xs ${
-                hoveredIndex === index
-                  ? 'text-emerald-600 font-semibold'
-                  : 'text-slate-600'
-              }`}
-            >
-              {point.label}
+                  return (
+                    <motion.div
+                      key={index}
+                      className="flex-1 max-w-[60px] cursor-pointer touch-manipulation"
+                      onMouseEnter={() => onHover(index)}
+                      onMouseLeave={() => onHover(null)}
+                      onClick={() => onHover(isHovered ? null : index)}
+                      initial={{ height: 0 }}
+                      animate={{ height: barHeight }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <motion.div
+                        className={`w-full h-full rounded-t-lg transition-all ${
+                          isHovered
+                            ? 'bg-gradient-to-t from-emerald-600 to-emerald-500 shadow-lg scale-105'
+                            : 'bg-gradient-to-t from-emerald-500 to-emerald-400'
+                        }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      />
+                    </motion.div>
+                  )
+                })}
+              </div>
             </div>
-          ))}
+
+            {/* X-axis labels */}
+            <div className="flex items-center justify-around gap-1 sm:gap-2 mt-2 px-2">
+              {data.map((point, index) => (
+                <div
+                  key={index}
+                  className={`flex-1 max-w-[60px] text-center text-xs ${
+                    hoveredIndex === index
+                      ? 'text-emerald-600 font-semibold'
+                      : 'text-slate-600'
+                  }`}
+                >
+                  {point.label}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -109,7 +109,7 @@ export function WeeklyAttendanceCalendar({
   return (
     <Card
       className={cn(
-        "rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0",
+        "rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 overflow-visible",
         className
       )}
     >
@@ -145,12 +145,12 @@ export function WeeklyAttendanceCalendar({
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 sm:p-5 lg:p-6 pt-0">
+      <CardContent className="p-4 sm:p-5 lg:p-6 pt-0 overflow-visible">
         {/* Mobile: Horizontal scroll */}
-        <div className="md:hidden overflow-x-auto -mx-4 px-4">
+        <div className="md:hidden overflow-x-auto overflow-y-visible -mx-4 px-4 pb-4 scrollbar-hide">
           <div 
             className={cn(
-              "flex gap-3 min-w-max pb-2 transition-transform duration-300 ease-in-out",
+              "flex gap-3 min-w-max transition-transform duration-300 ease-in-out",
               slideDirection === 'left' && "translate-x-[-20px] opacity-80",
               slideDirection === 'right' && "translate-x-[20px] opacity-80"
             )}
