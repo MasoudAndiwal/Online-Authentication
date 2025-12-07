@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Student Weekly Attendance API Endpoint
  * 
@@ -122,6 +123,7 @@ export const GET = withStudentDashboardMiddleware(
 
 /**
  * Fetch weekly attendance data from database
+ * Uses attendance_records_new table with period columns
  */
 async function fetchWeeklyAttendanceFromDB(
   studentId: string, 
@@ -132,30 +134,39 @@ async function fetchWeeklyAttendanceFromDB(
     // Calculate week start and end dates
     const { startDate, endDate } = calculateWeekDates(weekOffset, year);
     
-    // Fetch attendance records from database
+    // attendance_records_new uses the UUID (students.id) directly as student_id
+    // So we use studentId directly without lookup
+    
+    // Fetch attendance records from attendance_records_new table
     const { data: attendanceRecords, error } = await supabase
-      .from('attendance_records')
+      .from('attendance_records_new')
       .select(`
         date,
-        period,
-        status,
+        period_1_status,
+        period_2_status,
+        period_3_status,
+        period_4_status,
+        period_5_status,
+        period_6_status,
+        period_1_subject,
+        period_2_subject,
+        period_3_subject,
+        period_4_subject,
+        period_5_subject,
+        period_6_subject,
+        period_1_teacher,
+        period_2_teacher,
+        period_3_teacher,
+        period_4_teacher,
+        period_5_teacher,
+        period_6_teacher,
         marked_by,
-        marked_at,
-        schedule_entries (
-          subject,
-          start_time,
-          end_time,
-          teachers (
-            first_name,
-            last_name
-          )
-        )
+        marked_at
       `)
       .eq('student_id', studentId)
       .gte('date', startDate)
       .lte('date', endDate)
-      .order('date', { ascending: true })
-      .order('period', { ascending: true });
+      .order('date', { ascending: true });
 
     if (error) {
       console.error('Database error fetching attendance:', error);
@@ -163,51 +174,62 @@ async function fetchWeeklyAttendanceFromDB(
       return generateMockWeeklyData(weekOffset, year);
     }
 
-    // Group records by date
-    const recordsByDate = new Map<string, any[]>();
+    // Create a map of date to attendance record
+    const recordsByDate = new Map<string, any>();
     attendanceRecords?.forEach(record => {
-      const dateKey = record.date;
-      if (!recordsByDate.has(dateKey)) {
-        recordsByDate.set(dateKey, []);
-      }
-      recordsByDate.get(dateKey)!.push(record);
+      recordsByDate.set(record.date, record);
     });
 
     // Generate days array
     const days: DayAttendance[] = [];
     const dayNames = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+    const periodTimes = [
+      '08:00 - 09:00',
+      '09:00 - 10:00', 
+      '10:00 - 11:00',
+      '11:00 - 12:00',
+      '13:00 - 14:00',
+      '14:00 - 15:00'
+    ];
     
     for (let i = 0; i < 6; i++) { // 6 days (Saturday to Thursday)
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
       
       const dateString = date.toISOString().split('T')[0];
-      const dayRecords = recordsByDate.get(dateString) || [];
+      const record = recordsByDate.get(dateString);
+      
+      // Build sessions from period columns
+      const sessions: any[] = [];
+      if (record) {
+        for (let p = 1; p <= 6; p++) {
+          const status = record[`period_${p}_status`];
+          const subject = record[`period_${p}_subject`];
+          const teacher = record[`period_${p}_teacher`];
+          
+          if (status && status !== 'NOT_MARKED') {
+            sessions.push({
+              period: p,
+              courseName: subject || `Period ${p}`,
+              status: status.toLowerCase() as AttendanceStatus,
+              time: periodTimes[p - 1],
+              markedBy: teacher || record.marked_by || 'Unknown',
+              markedAt: record.marked_at
+            });
+          }
+        }
+      }
       
       // Determine overall day status
       let dayStatus: AttendanceStatus | 'future' = 'future';
-      if (dayRecords.length > 0) {
-        const statuses = dayRecords.map(r => r.status);
+      if (sessions.length > 0) {
+        const statuses = sessions.map(s => s.status);
         if (statuses.includes('absent')) dayStatus = 'absent';
         else if (statuses.includes('sick')) dayStatus = 'sick';
         else if (statuses.includes('leave')) dayStatus = 'leave';
         else if (statuses.every(s => s === 'present')) dayStatus = 'present';
         else dayStatus = 'present'; // Mixed, default to present
       }
-
-      // Format sessions
-      const sessions = dayRecords.map(record => ({
-        period: record.period,
-        courseName: record.schedule_entries?.subject || 'Unknown Subject',
-        status: record.status as AttendanceStatus,
-        time: record.schedule_entries ? 
-          `${record.schedule_entries.start_time} - ${record.schedule_entries.end_time}` : 
-          'Unknown Time',
-        markedBy: record.schedule_entries?.teachers ? 
-          `${record.schedule_entries.teachers.first_name} ${record.schedule_entries.teachers.last_name}` : 
-          record.marked_by || 'Unknown',
-        markedAt: record.marked_at
-      }));
 
       days.push({
         date: dateString,
@@ -240,7 +262,7 @@ function calculateWeekDates(weekOffset: number, year: number): { startDate: stri
   const currentYear = today.getFullYear();
   
   // If requesting different year, start from January 1st of that year
-  let referenceDate = year === currentYear ? today : new Date(year, 0, 1);
+  const referenceDate = year === currentYear ? today : new Date(year, 0, 1);
   
   // Find the Saturday of the current/reference week
   const currentDay = referenceDate.getDay(); // 0 = Sunday, 6 = Saturday

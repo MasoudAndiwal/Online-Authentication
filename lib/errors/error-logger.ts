@@ -381,7 +381,7 @@ export function createErrorContextFromRequest(
     statusCode,
     requestBody: req.method !== 'GET' ? req.body : undefined,
     queryParams: req.query,
-    headers: this.sanitizeHeaders(req.headers)
+    headers: sanitizeHeaders(req.headers)
   };
 }
 
@@ -444,7 +444,7 @@ export function withErrorLogging<T extends any[], R>(
 /**
  * Performance monitoring decorator
  */
-export function withPerformanceLogging<T extends any[], R>(
+export function withPerformanceLogging<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   operationName: string,
   warnThreshold: number = 1000

@@ -130,7 +130,7 @@ export function WeeklyAttendanceCalendar({
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <span className="text-sm sm:text-base font-medium text-slate-600 min-w-[80px] sm:min-w-[100px] text-center">
-              Week {currentWeek}
+              {currentWeek === 0 ? "This Week" : currentWeek > 0 ? `+${currentWeek} Week${currentWeek > 1 ? 's' : ''}` : `${currentWeek} Week${currentWeek < -1 ? 's' : ''}`}
             </span>
             <Button
               variant="outline"

@@ -49,10 +49,11 @@ export async function authenticateRequest(
       };
     }
 
-    // Parse session data
+    // Parse session data (decode URL encoding if present)
     let user: AuthenticatedUser;
     try {
-      user = JSON.parse(sessionData) as AuthenticatedUser;
+      const decodedSessionData = decodeURIComponent(sessionData);
+      user = JSON.parse(decodedSessionData) as AuthenticatedUser;
     } catch {
       return {
         user: null,

@@ -136,12 +136,17 @@ export class DashboardService {
   /**
    * Calculate student metrics from database
    * Private method used when cache misses
+   * Uses attendance_records_new table with period columns
+   * Note: attendance_records_new.student_id stores the UUID (students.id), not the varchar student_id
    */
   private async calculateStudentMetrics(studentId: string): Promise<StudentDashboardMetrics> {
-    // Fetch student's attendance records
+    // attendance_records_new uses the UUID (students.id) directly as student_id
+    // So we use studentId directly without lookup
+
+    // Fetch student's attendance records from attendance_records_new
     const { data: attendanceRecords, error } = await supabase
-      .from('attendance_records')
-      .select('status, date')
+      .from('attendance_records_new')
+      .select('date, period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
       .eq('student_id', studentId)
       .order('date', { ascending: false });
 
@@ -149,8 +154,18 @@ export class DashboardService {
       throw new Error(`Failed to fetch attendance records: ${error.message}`);
     }
 
-    const records = attendanceRecords || [];
-    const totalClasses = records.filter(r => r.status !== 'NOT_MARKED').length;
+    // Flatten period statuses into individual records
+    const records: Array<{ status: string; date: string }> = [];
+    (attendanceRecords || []).forEach(record => {
+      for (let p = 1; p <= 6; p++) {
+        const status = record[`period_${p}_status` as keyof typeof record] as string;
+        if (status && status !== 'NOT_MARKED') {
+          records.push({ status, date: record.date });
+        }
+      }
+    });
+
+    const totalClasses = records.length;
     const presentDays = records.filter(r => r.status === 'PRESENT').length;
     const absentDays = records.filter(r => r.status === 'ABSENT').length;
     const sickDays = records.filter(r => r.status === 'SICK').length;
@@ -347,6 +362,7 @@ export class DashboardService {
 
   /**
    * Calculate class statistics on-the-fly (fallback when materialized view unavailable)
+   * Uses attendance_records_new table with period columns
    */
   private async calculateClassStatistics(classId: string): Promise<ClassStatistics | null> {
     // Get all students in the class
@@ -361,18 +377,28 @@ export class DashboardService {
 
     const studentIds = students.map(s => s.id);
 
-    // Get attendance rates for all students
+    // Get attendance rates for all students using attendance_records_new
     const attendanceRates: number[] = [];
 
     for (const studentId of studentIds) {
       const { data: records } = await supabase
-        .from('attendance_records')
-        .select('status')
+        .from('attendance_records_new')
+        .select('period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
         .eq('student_id', studentId);
 
       if (records && records.length > 0) {
-        const total = records.filter(r => r.status !== 'NOT_MARKED').length;
-        const present = records.filter(r => r.status === 'PRESENT').length;
+        // Flatten period statuses
+        let total = 0;
+        let present = 0;
+        records.forEach(record => {
+          for (let p = 1; p <= 6; p++) {
+            const status = record[`period_${p}_status` as keyof typeof record] as string;
+            if (status && status !== 'NOT_MARKED') {
+              total++;
+              if (status === 'PRESENT') present++;
+            }
+          }
+        });
         const rate = total > 0 ? (present / total) * 100 : 0;
         attendanceRates.push(rate);
       }
@@ -427,6 +453,7 @@ export class DashboardService {
 
   /**
    * Calculate student ranking within class
+   * Uses attendance_records_new table with period columns
    */
   private async calculateStudentRanking(studentId: string, classId: string): Promise<StudentRanking> {
     // Get all students in the class
@@ -442,18 +469,28 @@ export class DashboardService {
     const studentIds = students.map(s => s.id);
     const totalStudents = studentIds.length;
 
-    // Get attendance rates for all students
+    // Get attendance rates for all students using attendance_records_new
     const studentRates: Array<{ studentId: string; rate: number }> = [];
 
     for (const sid of studentIds) {
       const { data: records } = await supabase
-        .from('attendance_records')
-        .select('status')
+        .from('attendance_records_new')
+        .select('period_1_status, period_2_status, period_3_status, period_4_status, period_5_status, period_6_status')
         .eq('student_id', sid);
 
       if (records && records.length > 0) {
-        const total = records.filter(r => r.status !== 'NOT_MARKED').length;
-        const present = records.filter(r => r.status === 'PRESENT').length;
+        // Flatten period statuses
+        let total = 0;
+        let present = 0;
+        records.forEach(record => {
+          for (let p = 1; p <= 6; p++) {
+            const status = record[`period_${p}_status` as keyof typeof record] as string;
+            if (status && status !== 'NOT_MARKED') {
+              total++;
+              if (status === 'PRESENT') present++;
+            }
+          }
+        });
         const rate = total > 0 ? (present / total) * 100 : 0;
         studentRates.push({ studentId: sid, rate });
       } else {

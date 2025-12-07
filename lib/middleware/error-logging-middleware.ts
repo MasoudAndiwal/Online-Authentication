@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Error Logging Middleware for API Routes
  * 
@@ -18,7 +19,6 @@ import {
   type ErrorLogEntry 
 } from '../errors/error-logger';
 import { 
-  BaseError, 
   getErrorCode, 
   getErrorStatusCode,
   isClientError,
@@ -339,8 +339,24 @@ export function withErrorLogging<T extends any[], R>(
         ]
       );
 
-      // Re-throw the error to be handled by the application's error handling
-      throw error;
+      // Return proper JSON error response instead of re-throwing
+      const errorResponse = {
+        error: error.name || 'Error',
+        message: error.message || 'An unexpected error occurred',
+        code: getErrorCode(error),
+        statusCode,
+        timestamp: new Date().toISOString(),
+        requestId: (req as any).requestId || `err_${Date.now()}`,
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      };
+
+      return NextResponse.json(errorResponse, {
+        status: statusCode,
+        headers: {
+          'X-Request-ID': (req as any).requestId || `err_${Date.now()}`,
+          'X-Error-Code': getErrorCode(error)
+        }
+      });
     }
   };
 }

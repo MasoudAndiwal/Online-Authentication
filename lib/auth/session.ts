@@ -18,6 +18,23 @@ const SESSION_KEY = 'user_session';
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 /**
+ * Set a cookie with the session data
+ */
+function setSessionCookie(session: UserSession): void {
+  const sessionData = JSON.stringify(session);
+  // Set cookie with 30 minute expiry, path=/, SameSite=Lax for security
+  const expires = new Date(Date.now() + INACTIVITY_TIMEOUT).toUTCString();
+  document.cookie = `${SESSION_KEY}=${encodeURIComponent(sessionData)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+/**
+ * Clear the session cookie
+ */
+function clearSessionCookie(): void {
+  document.cookie = `${SESSION_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+}
+
+/**
  * Save user session after successful login
  */
 export function saveSession(userData: Omit<UserSession, 'loginTime' | 'lastActivity'>): void {
@@ -29,6 +46,8 @@ export function saveSession(userData: Omit<UserSession, 'loginTime' | 'lastActiv
   };
   
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  // Also set as cookie for API authentication
+  setSessionCookie(session);
 }
 
 /**
@@ -41,6 +60,8 @@ export function updateActivity(): void {
       const session = JSON.parse(sessionData) as UserSession;
       session.lastActivity = Date.now();
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      // Also update the cookie
+      setSessionCookie(session);
     }
   } catch (error) {
     console.error('Error updating activity:', error);
@@ -89,6 +110,8 @@ export function getSession(): UserSession | null {
 export function clearSession(): void {
   localStorage.removeItem(SESSION_KEY);
   sessionStorage.clear();
+  // Also clear the cookie
+  clearSessionCookie();
 }
 
 /**

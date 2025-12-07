@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Sync Service for Offline Data Management
  * Handles background synchronization and conflict resolution
@@ -442,19 +443,10 @@ export class StudentDataSyncService {
       throw new Error('Student ID not set')
     }
 
-    // Calculate date range
-    const today = new Date()
-    const currentDay = today.getDay()
-    const diff = currentDay === 6 ? 0 : currentDay === 0 ? -1 : currentDay + 1
-    const weekStart = new Date(today)
-    weekStart.setDate(today.getDate() - diff + (weekOffset * 7))
-    
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekStart.getDate() + 4)
-
+    // API expects week offset (0 for current week, negative for past weeks, positive for future)
     return this.syncQueue.addOperation({
       type: 'fetch',
-      resource: `/api/students/attendance/weekly?studentId=${this.studentId}&startDate=${weekStart.toISOString()}&endDate=${weekEnd.toISOString()}`,
+      resource: `/api/students/attendance/weekly?studentId=${this.studentId}&week=${weekOffset}`,
       priority,
       maxRetries: 3,
       data: {

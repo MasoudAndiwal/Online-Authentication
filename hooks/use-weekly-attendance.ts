@@ -18,12 +18,12 @@ interface WeeklyAttendanceResponse {
 /**
  * Hook to fetch weekly attendance data for a student
  * @param studentId - The ID of the student
- * @param weekNumber - The week number to fetch (1-based)
+ * @param weekOffset - Week offset relative to current week (0 = current, -1 = last week, 1 = next week)
  * @returns Query result with weekly attendance data, loading state, and error
  */
-export function useWeeklyAttendance(studentId: string | undefined, weekNumber: number) {
+export function useWeeklyAttendance(studentId: string | undefined, weekOffset: number) {
   return useQuery<WeeklyAttendanceData, Error>({
-    queryKey: ['weekly-attendance', studentId, weekNumber],
+    queryKey: ['weekly-attendance', studentId, weekOffset],
     queryFn: async () => {
       if (!studentId) {
         throw new Error('Student ID is required')
@@ -33,7 +33,7 @@ export function useWeeklyAttendance(studentId: string | undefined, weekNumber: n
       const sessionData = localStorage.getItem('user_session');
       
       const response = await fetch(
-        `/api/students/attendance/weekly?studentId=${studentId}&week=${weekNumber}`,
+        `/api/students/attendance/weekly?studentId=${studentId}&week=${weekOffset}`,
         {
           headers: {
             'Content-Type': 'application/json',

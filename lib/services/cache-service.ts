@@ -1,16 +1,26 @@
 import Redis from 'ioredis';
 import { getRedisClient } from '../config/redis';
 
+// In-memory fallback cache when Redis is not available
+const memoryCache = new Map<string, { value: string; expiry: number }>();
+
 /**
  * CacheService
  * Centralized caching layer for all dashboard data with intelligent invalidation
  * Implements typed methods for cache operations with TTL management
+ * Falls back to in-memory cache when Redis is not available
  */
 export class CacheService {
-  private redis: Redis;
+  private redis: Redis | null = null;
+  private useMemoryFallback: boolean = false;
 
   constructor(redisClient?: Redis) {
-    this.redis = redisClient || getRedisClient();
+    try {
+      this.redis = redisClient || getRedisClient();
+    } catch {
+      console.warn('Redis not available, using in-memory cache fallback');
+      this.useMemoryFallback = true;
+    }
   }
 
   /**
@@ -20,6 +30,16 @@ export class CacheService {
    */
   async get<T>(key: string): Promise<T | null> {
     try {
+      // Use memory fallback if Redis is not available
+      if (this.useMemoryFallback || !this.redis) {
+        const cached = memoryCache.get(key);
+        if (cached && cached.expiry > Date.now()) {
+          return JSON.parse(cached.value) as T;
+        }
+        memoryCache.delete(key);
+        return null;
+      }
+
       const value = await this.redis.get(key);
       
       if (!value) {
@@ -30,6 +50,12 @@ export class CacheService {
       return JSON.parse(value) as T;
     } catch (error) {
       console.error(`Cache get error for key ${key}:`, error);
+      // Fall back to memory cache on Redis error
+      this.useMemoryFallback = true;
+      const cached = memoryCache.get(key);
+      if (cached && cached.expiry > Date.now()) {
+        return JSON.parse(cached.value) as T;
+      }
       return null;
     }
   }
@@ -43,10 +69,20 @@ export class CacheService {
   async set<T>(key: string, value: T, ttl: number): Promise<void> {
     try {
       const serialized = JSON.stringify(value);
+      
+      // Use memory fallback if Redis is not available
+      if (this.useMemoryFallback || !this.redis) {
+        memoryCache.set(key, { value: serialized, expiry: Date.now() + (ttl * 1000) });
+        return;
+      }
+
       await this.redis.setex(key, ttl, serialized);
     } catch (error) {
       console.error(`Cache set error for key ${key}:`, error);
-      throw error;
+      // Fall back to memory cache on Redis error
+      this.useMemoryFallback = true;
+      const serialized = JSON.stringify(value);
+      memoryCache.set(key, { value: serialized, expiry: Date.now() + (ttl * 1000) });
     }
   }
 
@@ -57,9 +93,16 @@ export class CacheService {
    */
   async delete(key: string): Promise<number> {
     try {
+      // Use memory fallback if Redis is not available
+      if (this.useMemoryFallback || !this.redis) {
+        const existed = memoryCache.has(key);
+        memoryCache.delete(key);
+        return existed ? 1 : 0;
+      }
       return await this.redis.del(key);
     } catch (error) {
       console.error(`Cache delete error for key ${key}:`, error);
+      memoryCache.delete(key);
       return 0;
     }
   }
@@ -72,6 +115,19 @@ export class CacheService {
    */
   async deletePattern(pattern: string): Promise<number> {
     try {
+      // Use memory fallback if Redis is not available
+      if (this.useMemoryFallback || !this.redis) {
+        const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+        let deletedCount = 0;
+        for (const key of memoryCache.keys()) {
+          if (regex.test(key)) {
+            memoryCache.delete(key);
+            deletedCount++;
+          }
+        }
+        return deletedCount;
+      }
+
       let cursor = '0';
       let deletedCount = 0;
       
@@ -108,6 +164,11 @@ export class CacheService {
    */
   async exists(key: string): Promise<boolean> {
     try {
+      // Use memory fallback if Redis is not available
+      if (this.useMemoryFallback || !this.redis) {
+        const cached = memoryCache.get(key);
+        return cached !== undefined && cached.expiry > Date.now();
+      }
       const result = await this.redis.exists(key);
       return result === 1;
     } catch (error) {
@@ -123,6 +184,13 @@ export class CacheService {
    */
   async ttl(key: string): Promise<number> {
     try {
+      // Use memory fallback if Redis is not available
+      if (this.useMemoryFallback || !this.redis) {
+        const cached = memoryCache.get(key);
+        if (!cached) return -2;
+        const remaining = Math.floor((cached.expiry - Date.now()) / 1000);
+        return remaining > 0 ? remaining : -2;
+      }
       return await this.redis.ttl(key);
     } catch (error) {
       console.error(`Cache ttl error for key ${key}:`, error);
@@ -138,6 +206,9 @@ export class CacheService {
    */
   async increment(key: string, amount: number = 1): Promise<number> {
     try {
+      if (this.useMemoryFallback || !this.redis) {
+        throw new Error('Increment not supported in memory fallback mode');
+      }
       return await this.redis.incrby(key, amount);
     } catch (error) {
       console.error(`Cache increment error for key ${key}:`, error);
@@ -153,6 +224,9 @@ export class CacheService {
    */
   async decrement(key: string, amount: number = 1): Promise<number> {
     try {
+      if (this.useMemoryFallback || !this.redis) {
+        throw new Error('Decrement not supported in memory fallback mode');
+      }
       return await this.redis.decrby(key, amount);
     } catch (error) {
       console.error(`Cache decrement error for key ${key}:`, error);
@@ -169,6 +243,16 @@ export class CacheService {
     try {
       if (keys.length === 0) {
         return [];
+      }
+      
+      if (this.useMemoryFallback || !this.redis) {
+        return keys.map(key => {
+          const cached = memoryCache.get(key);
+          if (cached && cached.expiry > Date.now()) {
+            try { return JSON.parse(cached.value) as T; } catch { return null; }
+          }
+          return null;
+        });
       }
       
       const values = await this.redis.mget(...keys);
@@ -201,6 +285,14 @@ export class CacheService {
         return;
       }
       
+      if (this.useMemoryFallback || !this.redis) {
+        for (const [key, value] of entries) {
+          const serialized = JSON.stringify(value);
+          memoryCache.set(key, { value: serialized, expiry: Date.now() + (ttl * 1000) });
+        }
+        return;
+      }
+      
       // Use pipeline for batch operations
       const pipeline = this.redis.pipeline();
       
@@ -225,6 +317,10 @@ export class CacheService {
   async setWithExpiry<T>(key: string, value: T, expiryTimestamp: number): Promise<void> {
     try {
       const serialized = JSON.stringify(value);
+      if (this.useMemoryFallback || !this.redis) {
+        memoryCache.set(key, { value: serialized, expiry: expiryTimestamp * 1000 });
+        return;
+      }
       await this.redis.set(key, serialized, 'EXAT', expiryTimestamp);
     } catch (error) {
       console.error(`Cache setWithExpiry error for key ${key}:`, error);
@@ -240,6 +336,14 @@ export class CacheService {
    */
   async refreshTTL(key: string, ttl: number): Promise<boolean> {
     try {
+      if (this.useMemoryFallback || !this.redis) {
+        const cached = memoryCache.get(key);
+        if (cached) {
+          cached.expiry = Date.now() + (ttl * 1000);
+          return true;
+        }
+        return false;
+      }
       const result = await this.redis.expire(key, ttl);
       return result === 1;
     } catch (error) {
@@ -255,6 +359,17 @@ export class CacheService {
    */
   async keys(pattern: string): Promise<string[]> {
     try {
+      if (this.useMemoryFallback || !this.redis) {
+        const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+        const allKeys: string[] = [];
+        for (const key of memoryCache.keys()) {
+          if (regex.test(key)) {
+            allKeys.push(key);
+          }
+        }
+        return allKeys;
+      }
+
       let cursor = '0';
       const allKeys: string[] = [];
       
@@ -284,6 +399,10 @@ export class CacheService {
    */
   async clear(): Promise<boolean> {
     try {
+      if (this.useMemoryFallback || !this.redis) {
+        memoryCache.clear();
+        return true;
+      }
       await this.redis.flushdb();
       return true;
     } catch (error) {
@@ -302,7 +421,13 @@ export class CacheService {
     hitRate?: number;
   }> {
     try {
-      const info = await this.redis.info('stats');
+      if (this.useMemoryFallback || !this.redis) {
+        return {
+          usedMemory: 'in-memory',
+          totalKeys: memoryCache.size,
+        };
+      }
+
       const memory = await this.redis.info('memory');
       
       // Parse used memory
@@ -331,6 +456,9 @@ export class CacheService {
    */
   async ping(): Promise<boolean> {
     try {
+      if (this.useMemoryFallback || !this.redis) {
+        return true; // Memory fallback is always "connected"
+      }
       const result = await this.redis.ping();
       return result === 'PONG';
     } catch (error) {

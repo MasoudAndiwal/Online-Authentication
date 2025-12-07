@@ -35,7 +35,8 @@ const TrendAnalysisCharts = lazy(() => import("@/components/student/trend-analys
 export default function StudentDashboardPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
-  const [currentWeek, setCurrentWeek] = React.useState(1);
+  // Week offset: 0 = current week, -1 = last week, 1 = next week
+  const [currentWeek, setCurrentWeek] = React.useState(0);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<Notification[]>([
     {
