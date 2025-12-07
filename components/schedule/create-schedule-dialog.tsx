@@ -45,19 +45,19 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 py-6">
+        <Button className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 py-6 rounded-xl">
           <Plus className="h-4 w-4 mr-2" />
           Create Schedule
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] border-purple-200">
+      <DialogContent className="sm:max-w-[500px] border-0 shadow-2xl rounded-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader className="pb-2">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg">
-                <Sparkles className="h-5 w-5 text-purple-600" />
+              <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl">
+                <Sparkles className="h-5 w-5 text-orange-600" />
               </div>
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Create New Class Schedule</DialogTitle>
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">Create New Class Schedule</DialogTitle>
             </div>
           </DialogHeader>
 
@@ -69,7 +69,7 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
                 placeholder="e.g., database semister 4"
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
-                className="h-11 border-slate-300 focus:border-purple-400 focus:ring-purple-400"
+                className="h-11 border-0 bg-slate-100 focus:bg-white focus:ring-2 focus:ring-orange-500/20 rounded-xl"
                 required
               />
             </div>
@@ -79,7 +79,7 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
               <CustomSelect
                 value={session}
                 onValueChange={(value) => setSession(value as TimeSession)}
-                className="h-11 border-slate-300 focus:border-purple-400"
+                className="h-11 border-0 bg-slate-100 focus:ring-2 focus:ring-orange-500/20 rounded-xl"
               >
                 <option value="MORNING">
                    Morning (08:30 AM - 12:30 AM)
@@ -95,15 +95,14 @@ export function CreateScheduleDialog({ onCreateSchedule }: CreateScheduleDialogP
           <DialogFooter className="gap-2">
             <Button
               type="button"
-              variant="outline"
               onClick={() => setOpen(false)}
-              className="border-slate-300 hover:bg-slate-50"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-md"
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md rounded-xl"
               disabled={!className.trim()}
             >
               <Plus className="h-4 w-4 mr-1.5" />

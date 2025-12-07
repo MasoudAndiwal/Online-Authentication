@@ -15,10 +15,11 @@ import {
   Phone,
   Shield,
   Calendar,
-  Save,
-  Camera,
   Building2,
   Clock,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { handleLogout as performLogout } from "@/lib/auth/logout";
@@ -32,6 +33,15 @@ export default function ProfilePage() {
   const [currentPath] = React.useState("/dashboard/profile");
   const [isEditing, setIsEditing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
+  const [showNewPassword, setShowNewPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [passwordData, setPasswordData] = React.useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   // Form state
   const [formData, setFormData] = React.useState({
@@ -84,6 +94,62 @@ export default function ProfilePage() {
       toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async () => {
+    // Validate passwords
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.error("Please fill in all password fields");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+          role: user?.role,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success("Password changed successfully");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        toast.error(data.message || "Failed to change password");
+      }
+    } catch {
+      toast.error("Failed to change password. Please try again.");
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -141,13 +207,6 @@ export default function ProfilePage() {
                 {user?.firstName?.[0]}
                 {user?.lastName?.[0]}
               </motion.div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg text-blue-600 hover:bg-blue-50 transition-colors"
-              >
-                <Camera className="h-4 w-4" />
-              </motion.button>
             </div>
 
             {/* User Info */}
@@ -291,20 +350,121 @@ export default function ProfilePage() {
                     disabled={isSaving}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    {isSaving ? (
-                      <>
-                        <span className="animate-spin mr-2">⏳</span>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Changes
-                      </>
-                    )}
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                 </motion.div>
               )}
+            </div>
+
+            {/* Change Password Section */}
+            <div className="rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm p-8 mt-8">
+              <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                <Lock className="h-5 w-5 text-amber-600" />
+                Change Password
+              </h2>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="currentPassword"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Current Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="currentPassword"
+                      name="currentPassword"
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter current password"
+                      className="h-12 rounded-xl bg-slate-50 focus:bg-white transition-colors pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showCurrentPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="newPassword"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      name="newPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter new password (min 6 characters)"
+                      className="h-12 rounded-xl bg-slate-50 focus:bg-white transition-colors pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Confirm New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Confirm new password"
+                      className="h-12 rounded-xl bg-slate-50 focus:bg-white transition-colors pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  {isChangingPassword ? "Changing Password..." : "Change Password"}
+                </Button>
+              </div>
             </div>
           </motion.div>
 

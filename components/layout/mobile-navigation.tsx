@@ -68,18 +68,22 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       ...baseItems,
       {
         label: 'User Management',
-        href: '/user-management',
+        href: '/dashboard/teachers',
         icon: Users,
+        comingSoon: false,
         children: [
-          { label: 'All Users', href: '/user-management/all-users', icon: Users, comingSoon: true },
-          { label: 'Add User', href: '/user-management/add-user', icon: Users, comingSoon: true },
-          { label: 'Roles & Permissions', href: '/user-management/roles', icon: Settings, comingSoon: true }
+          { label: 'Teacher List', href: '/dashboard/teachers', icon: Users },
+          { label: 'Student List', href: '/dashboard/students', icon: User },
+          { label: 'Add Teacher', href: '/dashboard/add-teacher', icon: Users },
+          { label: 'Add Student', href: '/dashboard/add-student', icon: User },
+          { label: 'Roles & Permissions', href: '/dashboard/roles', icon: Settings, comingSoon: true }
         ]
       },
       {
         label: 'Classes & Schedule',
         href: '/classes',
         icon: Calendar,
+        comingSoon: true,
         children: [
           { label: 'All Classes', href: '/dashboard/all-classes', icon: BookOpen },
           { label: 'Schedule Builder', href: '/dashboard/schedule', icon: Calendar },
@@ -90,6 +94,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         label: 'Attendance',
         href: '/attendance',
         icon: ClipboardList,
+        comingSoon: true,
         children: [
           { label: 'Overview', href: '/attendance/overview', icon: BarChart3, comingSoon: true },
           { label: 'Mark Attendance', href: '/dashboard/mark-attendance', icon: ClipboardList },
@@ -100,6 +105,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         label: 'Reports & Analytics',
         href: '/reports',
         icon: BarChart3,
+        comingSoon: true,
         children: [
           { label: 'Weekly Reports', href: '/reports/weekly', icon: FileText, comingSoon: true },
           { label: 'Student Status', href: '/reports/student-status', icon: Users, comingSoon: true },
@@ -110,6 +116,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         label: 'System Settings',
         href: '/settings',
         icon: Settings,
+        comingSoon: true,
         children: [
           { label: 'General Settings', href: '/settings/general', icon: Settings, comingSoon: true },
           { label: 'Academic Calendar', href: '/settings/calendar', icon: Calendar, comingSoon: true },
@@ -419,9 +426,11 @@ export function MobileNavigation({
                       whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
-                        const settingsPath = user.role === 'STUDENT' ? '/student/settings' : 
-                                           user.role === 'TEACHER' ? '/teacher/settings' : '/settings';
-                        handleNavigation(settingsPath);
+                        // Settings is coming soon for all roles
+                        toast({
+                          title: "Coming Soon",
+                          description: "Settings feature is under development and will be available soon.",
+                        });
                       }}
                       className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/60 text-slate-700 hover:text-slate-900"
                     >
@@ -552,7 +561,7 @@ function MobileNavigationItem({
           >
             {item.children?.map((child, index) => (
               <motion.div
-                key={child.href}
+                key={child.href + index}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05, duration: 0.2 }}
@@ -562,7 +571,7 @@ function MobileNavigationItem({
                   isActive={child.href === window.location.pathname}
                   isExpanded={false}
                   onToggle={() => {}}
-                  onNavigate={onNavigate}
+                  onNavigate={(href, navItem) => onNavigate(href, navItem || child)}
                   level={level + 1}
                   role={role}
                 />

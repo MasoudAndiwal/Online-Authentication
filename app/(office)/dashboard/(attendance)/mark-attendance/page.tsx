@@ -48,6 +48,8 @@ export default function MarkAttendancePage() {
   const [classes, setClasses] = React.useState<ClassItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
 
   // Fetch classes on mount
   const loadClasses = React.useCallback(async () => {
@@ -107,6 +109,17 @@ export default function MarkAttendancePage() {
       return matchesSearch && matchesSession && matchesStudentFilter;
     });
   }, [classes, searchQuery, sessionFilter, studentFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredClasses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClasses = filteredClasses.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sessionFilter, studentFilter]);
 
   // Calculate statistics
   const totalClasses = classes.length;
@@ -380,62 +393,138 @@ export default function MarkAttendancePage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {filteredClasses.map((classItem, index) => (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {paginatedClasses.map((classItem, index) => (
+                  <motion.div
+                    key={classItem.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <Card
+                      onClick={() => handleClassClick(classItem.id)}
+                      className="rounded-2xl shadow-lg border-0 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                              <GraduationCap className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-slate-900">
+                                {classItem.name}
+                              </h3>
+                              <p className="text-sm text-slate-600">
+                                {classItem.major} • Semester {classItem.semester}
+                              </p>
+                            </div>
+                          </div>
+                          <div
+                            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${classItem.session === "MORNING"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-indigo-100 text-indigo-700"
+                              }`}
+                          >
+                            {classItem.session === "MORNING" ? (
+                              <Sun className="h-3 w-3" />
+                            ) : (
+                              <Moon className="h-3 w-3" />
+                            )}
+                            {classItem.session}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <Users className="h-4 w-4" />
+                            <span>{classItem.studentCount} Students</span>
+                          </div>
+                          <span className="text-orange-600 font-medium group-hover:text-orange-700">
+                            Mark Attendance →
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {filteredClasses.length > itemsPerPage && (
                 <motion.div
-                  key={classItem.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className="mt-6 md:mt-8"
                 >
-                  <Card
-                    onClick={() => handleClassClick(classItem.id)}
-                    className="rounded-2xl shadow-lg border-0 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
-                            <GraduationCap className="h-6 w-6 text-white" />
+                  <Card className="rounded-2xl shadow-md border-0">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-slate-600 text-center sm:text-left">
+                          Showing {startIndex + 1} to {Math.min(endIndex, filteredClasses.length)} of {filteredClasses.length} classes
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-all duration-200"
+                          >
+                            Previous
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                              // Show limited page numbers on mobile
+                              const showPage = totalPages <= 5 || 
+                                page === 1 || 
+                                page === totalPages || 
+                                Math.abs(page - currentPage) <= 1;
+                              
+                              if (!showPage) {
+                                // Show ellipsis
+                                if (page === 2 && currentPage > 3) {
+                                  return <span key={page} className="px-1 text-slate-400">...</span>;
+                                }
+                                if (page === totalPages - 1 && currentPage < totalPages - 2) {
+                                  return <span key={page} className="px-1 text-slate-400">...</span>;
+                                }
+                                return null;
+                              }
+                              
+                              return (
+                                <button
+                                  key={page}
+                                  onClick={() => setCurrentPage(page)}
+                                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-110 active:scale-95 ${
+                                    currentPage === page
+                                      ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30'
+                                      : 'text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            })}
                           </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-slate-900">
-                              {classItem.name}
-                            </h3>
-                            <p className="text-sm text-slate-600">
-                              {classItem.major} • Semester {classItem.semester}
-                            </p>
-                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-all duration-200"
+                          >
+                            Next
+                          </Button>
                         </div>
-                        <div
-                          className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${classItem.session === "MORNING"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-indigo-100 text-indigo-700"
-                            }`}
-                        >
-                          {classItem.session === "MORNING" ? (
-                            <Sun className="h-3 w-3" />
-                          ) : (
-                            <Moon className="h-3 w-3" />
-                          )}
-                          {classItem.session}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Users className="h-4 w-4" />
-                          <span>{classItem.studentCount} Students</span>
-                        </div>
-                        <span className="text-orange-600 font-medium group-hover:text-orange-700">
-                          Mark Attendance →
-                        </span>
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </PageContainer>
       </motion.div>

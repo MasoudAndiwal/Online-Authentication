@@ -370,7 +370,7 @@ export default function SchedulePage() {
 
         {/* Search and Filter Bar */}
         {!loading && (
-        <Card className="rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 mb-4 sm:mb-6">
+        <Card className="rounded-xl sm:rounded-2xl shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-4 sm:mb-6">
           <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
@@ -379,7 +379,7 @@ export default function SchedulePage() {
                   placeholder="Search classes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 sm:pl-10 h-10 sm:h-11 text-sm sm:text-base border border-slate-900 bg-slate-50 focus:border-orange-500 focus:ring-orange-500"
+                  className="pl-9 sm:pl-10 h-10 sm:h-11 text-sm sm:text-base border-0 bg-slate-100 focus:bg-white focus:ring-2 focus:ring-orange-500/20 shadow-sm rounded-xl"
                 />
               </div>
 
@@ -409,11 +409,14 @@ export default function SchedulePage() {
           <div className="lg:col-span-1">
             <Card className="rounded-xl sm:rounded-2xl shadow-sm border-0">
               <CardContent className="p-3 sm:p-4">
-                <h3 className="font-semibold text-sm sm:text-base text-slate-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-sm sm:text-base text-slate-900 mb-3 flex items-center gap-2 sticky top-0 bg-white pb-2">
                   <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Classes
+                  <span className="text-xs text-slate-500 font-normal ml-auto">
+                    {filteredClasses.length} total
+                  </span>
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-[300px] lg:max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-hide">
                   {filteredClasses.length > 0 ? (
                     filteredClasses.map((cls) => (
                       <ClassListItem

@@ -44,11 +44,11 @@ export function EditClassDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] border-orange-200">
+      <DialogContent className="sm:max-w-[500px] border-0 shadow-2xl rounded-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader className="pb-2">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl">
                 <Edit className="h-5 w-5 text-orange-600" />
               </div>
               <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
@@ -70,7 +70,7 @@ export function EditClassDialog({
                 placeholder="e.g., Class A, Class B, Class C..."
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
-                className="h-11 border-slate-300 focus:border-orange-400 focus:ring-orange-400"
+                className="h-11 border-0 bg-slate-100 focus:bg-white focus:ring-2 focus:ring-orange-500/20 rounded-xl"
                 required
                 autoFocus
               />
@@ -83,15 +83,14 @@ export function EditClassDialog({
           <DialogFooter className="gap-2">
             <Button
               type="button"
-              variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-slate-300 hover:bg-slate-50"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md"
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md rounded-xl"
               disabled={!className.trim() || className.trim() === currentClassName}
             >
               <Save className="h-4 w-4 mr-1.5" />

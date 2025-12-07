@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { saveSession, getRedirectPath, clearRedirectPath } from "@/lib/auth/session";
@@ -32,6 +32,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import CountUp from "@/components/CountUp";
 
 // Role types
 type Role = "office" | "teacher" | "student";
@@ -93,6 +94,53 @@ const roleConfig = {
     icon: BookOpen,
   },
 };
+
+// LoginStats component to fetch and display stats from database
+function LoginStats() {
+  const [stats, setStats] = useState({ students: 0, classes: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/stats/login");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setStats(data.data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-2 gap-4 text-center">
+      <div className="p-4 bg-white/60 rounded-xl backdrop-blur-sm">
+        <div className="text-2xl font-bold text-blue-600">
+          {isLoading ? "..." : (
+            <CountUp to={stats.students} duration={2} separator="," />
+          )}
+        </div>
+        <div className="text-sm text-slate-600">Students</div>
+      </div>
+      <div className="p-4 bg-white/60 rounded-xl backdrop-blur-sm">
+        <div className="text-2xl font-bold text-emerald-600">
+          {isLoading ? "..." : (
+            <CountUp to={stats.classes} duration={2} />
+          )}
+        </div>
+        <div className="text-sm text-slate-600">Classes</div>
+      </div>
+    </div>
+  );
+}
 
 export default function OfficeLoginPage() {
   const [selectedRole, setSelectedRole] = useState<Role>("office");
@@ -280,7 +328,7 @@ export default function OfficeLoginPage() {
           >
             <div className="relative">
               {/* Role Selection Card */}
-              <div className="bg-gradient-to-br from-blue-100 to-emerald-100 rounded-3xl p-12 shadow-2xl border border-white/50 backdrop-blur-sm">
+              <div className="bg-gradient-to-br from-blue-100 to-emerald-100 rounded-3xl p-12 shadow-2xl backdrop-blur-sm">
                 <div className="text-center space-y-8">
                   <div>
                     <h2 className="text-3xl font-bold text-slate-900 mb-4">
@@ -388,26 +436,7 @@ export default function OfficeLoginPage() {
                   </motion.div>
 
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-4 bg-white/60 rounded-xl backdrop-blur-sm">
-                      <div className="text-2xl font-bold text-blue-600">
-                        1,247
-                      </div>
-                      <div className="text-sm text-slate-600">Students</div>
-                    </div>
-                    <div className="p-4 bg-white/60 rounded-xl backdrop-blur-sm">
-                      <div className="text-2xl font-bold text-emerald-600">
-                        45
-                      </div>
-                      <div className="text-sm text-slate-600">Classes</div>
-                    </div>
-                    <div className="p-4 bg-white/60 rounded-xl backdrop-blur-sm">
-                      <div className="text-2xl font-bold text-purple-600">
-                        94.2%
-                      </div>
-                      <div className="text-sm text-slate-600">Attendance</div>
-                    </div>
-                  </div>
+                  <LoginStats />
                 </div>
               </div>
             </div>

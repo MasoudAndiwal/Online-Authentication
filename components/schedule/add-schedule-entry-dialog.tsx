@@ -401,7 +401,7 @@ export function AddScheduleEntryDialog({
               {/* Period List */}
               <div className="space-y-2">
                 {selectedPeriods.length === 0 && (
-                  <div className="text-center py-6 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
+                  <div className="text-center py-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-sm">
                     <Clock className="h-8 w-8 text-slate-400 mx-auto mb-2" />
                     <p className="text-sm text-slate-600">Click &quot;Add Period&quot; to select teaching times</p>
                   </div>
@@ -458,7 +458,7 @@ export function AddScheduleEntryDialog({
                 return (
                   <div className="space-y-2">
                     {usedPeriodsForDay.length > 0 && (
-                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <div className="bg-blue-50 p-3 rounded-lg shadow-sm">
                         <p className="text-xs text-blue-700">
                           ℹ️ {usedPeriodsForDay.length} {usedPeriodsForDay.length === 1 ? 'period is' : 'periods are'} already assigned to other entries on {dayOfWeek}.
                         </p>
@@ -466,10 +466,10 @@ export function AddScheduleEntryDialog({
                     )}
                     
                     {totalHoursOnDay > 0 && (
-                      <div className={`p-3 rounded-lg border ${
-                        remainingHours === 0 ? 'bg-red-50 border-red-200' : 
-                        remainingHours <= 2 ? 'bg-yellow-50 border-yellow-200' : 
-                        'bg-green-50 border-green-200'
+                      <div className={`p-3 rounded-lg shadow-sm ${
+                        remainingHours === 0 ? 'bg-red-50' : 
+                        remainingHours <= 2 ? 'bg-yellow-50' : 
+                        'bg-green-50'
                       }`}>
                         <div className="flex items-center justify-between text-xs">
                           <span className={
@@ -501,7 +501,7 @@ export function AddScheduleEntryDialog({
 
             {/* Calculated Time Range Display */}
             {calculatedTimeRange && (
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-200">
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl shadow-sm">
                 <div className="flex items-center gap-2 text-sm mb-2">
                   <Clock className="h-4 w-4 text-orange-600" />
                   <span className="font-semibold text-orange-900">Selected Periods:</span>
@@ -518,18 +518,18 @@ export function AddScheduleEntryDialog({
             )}
           </div>
 
-          <DialogFooter className="gap-2 px-6 py-4 border-t bg-white flex-shrink-0">
+          <DialogFooter className="gap-2 px-6 py-4 bg-slate-50 flex-shrink-0 rounded-b-2xl">
             <Button
               type="button"
-              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={loading}
+              className="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl shadow-md"
               disabled={loading || !selectedTeacherId || !subject || selectedPeriods.length === 0 || !calculatedTimeRange}
             >
               <Save className="h-4 w-4 mr-1.5" />

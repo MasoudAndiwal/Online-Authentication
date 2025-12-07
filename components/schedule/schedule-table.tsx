@@ -35,20 +35,20 @@ interface ScheduleTableProps {
   onDeleteClass?: () => void;
 }
 
-// Modern subject colors with gradients
+// Modern subject colors with gradients - no borders, using shadows instead
 const SUBJECT_COLORS: Record<string, string> = {
-  "Mathematics": "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300 text-blue-900 shadow-sm hover:shadow-md",
-  "Physics": "bg-gradient-to-br from-purple-50 to-pink-50 border-purple-300 text-purple-900 shadow-sm hover:shadow-md",
-  "Chemistry": "bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 text-green-900 shadow-sm hover:shadow-md",
-  "Biology": "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-300 text-emerald-900 shadow-sm hover:shadow-md",
-  "English": "bg-gradient-to-br from-pink-50 to-rose-50 border-pink-300 text-pink-900 shadow-sm hover:shadow-md",
-  "Computer Science": "bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-300 text-cyan-900 shadow-sm hover:shadow-md",
-  "History": "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300 text-amber-900 shadow-sm hover:shadow-md",
-  "Dari": "bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-300 text-orange-900 shadow-sm hover:shadow-md",
+  "Mathematics": "bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-900 shadow-md hover:shadow-lg ring-1 ring-blue-100",
+  "Physics": "bg-gradient-to-br from-purple-50 to-pink-50 text-purple-900 shadow-md hover:shadow-lg ring-1 ring-purple-100",
+  "Chemistry": "bg-gradient-to-br from-green-50 to-emerald-50 text-green-900 shadow-md hover:shadow-lg ring-1 ring-green-100",
+  "Biology": "bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-900 shadow-md hover:shadow-lg ring-1 ring-emerald-100",
+  "English": "bg-gradient-to-br from-pink-50 to-rose-50 text-pink-900 shadow-md hover:shadow-lg ring-1 ring-pink-100",
+  "Computer Science": "bg-gradient-to-br from-cyan-50 to-blue-50 text-cyan-900 shadow-md hover:shadow-lg ring-1 ring-cyan-100",
+  "History": "bg-gradient-to-br from-amber-50 to-orange-50 text-amber-900 shadow-md hover:shadow-lg ring-1 ring-amber-100",
+  "Dari": "bg-gradient-to-br from-orange-50 to-yellow-50 text-orange-900 shadow-md hover:shadow-lg ring-1 ring-orange-100",
 };
 
 const getSubjectColor = (subject: string): string => {
-  return SUBJECT_COLORS[subject] || "bg-gradient-to-br from-slate-50 to-gray-50 border-slate-300 text-slate-900 shadow-sm hover:shadow-md";
+  return SUBJECT_COLORS[subject] || "bg-gradient-to-br from-slate-50 to-gray-50 text-slate-900 shadow-md hover:shadow-lg ring-1 ring-slate-100";
 };
 
 export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditClass, onDeleteClass }: ScheduleTableProps) {
@@ -91,11 +91,11 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
             <span className="truncate">{classData.name} Schedule</span>
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={cn(
-              "text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1",
+            <Badge className={cn(
+              "text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 border-0",
               classData.session === "MORNING" 
-                ? "bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border-amber-300 shadow-sm"
-                : "bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border-indigo-300 shadow-sm"
+                ? "bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 shadow-sm"
+                : "bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 shadow-sm"
             )}>
               {classData.session}
             </Badge>
@@ -128,7 +128,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
       </CardHeader>
       <CardContent className="p-6">
         {classData.schedule.length === 0 ? (
-          <div className="text-center py-16 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 rounded-xl border-2 border-dashed border-orange-200">
+          <div className="text-center py-16 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 rounded-2xl shadow-lg">
             <div className="p-4 bg-gradient-to-br from-orange-100 to-amber-100 w-fit mx-auto rounded-2xl mb-5 shadow-md">
               <Calendar className="h-16 w-16 text-orange-600" />
             </div>
@@ -141,7 +141,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
             <Button
               onClick={() => onAddEntry ? onAddEntry() : null}
               size="default"
-              className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg hover:shadow-xl px-6 py-2 h-11 rounded-xl transition-all duration-200"
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg hover:shadow-xl px-6 py-2 h-11 rounded-xl transition-all duration-200"
             >
               <Plus className="h-5 w-5 mr-2" />
               Add Schedule Entry
@@ -180,7 +180,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                     <div
                       key={entry.id}
                       className={cn(
-                        "p-3 sm:p-4 md:p-5 rounded-xl border-2 transition-all duration-200 hover:scale-[1.01]",
+                        "p-3 sm:p-4 md:p-5 rounded-xl transition-all duration-200 hover:scale-[1.01]",
                         getSubjectColor(entry.subject)
                       )}
                     >
@@ -204,7 +204,7 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                                 {formatTime12Hour(entry.startTime)} - {formatTime12Hour(entry.endTime)}
                               </span>
                             </div>
-                            <Badge variant="outline" className="bg-white/70 font-semibold shadow-sm text-xs flex-shrink-0">
+                            <Badge className="bg-white/80 font-semibold shadow-sm text-xs flex-shrink-0 border-0">
                               {entry.hours}h
                             </Badge>
                           </div>
@@ -239,8 +239,8 @@ export function ScheduleTable({ classData, onEdit, onDelete, onAddEntry, onEditC
                   ))}
                   </div>
                 ) : (
-                  <div className="ml-5 p-8 rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-gray-50 text-center shadow-sm">
-                    <p className="text-sm text-slate-600 font-medium">No classes scheduled for this day</p>
+                  <div className="ml-2 sm:ml-5 p-6 sm:p-8 rounded-xl bg-gradient-to-br from-slate-50 to-gray-100 text-center shadow-sm">
+                    <p className="text-sm text-slate-500 font-medium">No classes scheduled for this day</p>
                   </div>
                 )}
               </div>

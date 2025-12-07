@@ -244,66 +244,68 @@ export default function OfficeDashboardPage() {
             </ModernCardTitle>
           </ModernCardHeader>
           <ModernCardContent>
-            <div className="space-y-6">
-              {loadingStats ? (
-                // Loading skeleton
-                Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="flex items-center gap-6 p-6 rounded-3xl bg-slate-50/50 animate-pulse">
-                    <div className="w-14 h-14 bg-slate-200 rounded-3xl" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-5 w-32 bg-slate-200 rounded" />
-                      <div className="h-4 w-48 bg-slate-200 rounded" />
+            <div className="max-h-[500px] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="space-y-6 pr-2">
+                {loadingStats ? (
+                  // Loading skeleton
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-6 p-6 rounded-3xl bg-slate-50/50 animate-pulse">
+                      <div className="w-14 h-14 bg-slate-200 rounded-3xl" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-5 w-32 bg-slate-200 rounded" />
+                        <div className="h-4 w-48 bg-slate-200 rounded" />
+                      </div>
+                      <div className="h-8 w-24 bg-slate-200 rounded-2xl" />
                     </div>
-                    <div className="h-8 w-24 bg-slate-200 rounded-2xl" />
+                  ))
+                ) : activities.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">No recent activity</p>
+                    <p className="text-sm">Activity will appear here as actions are performed</p>
                   </div>
-                ))
-              ) : activities.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No recent activity</p>
-                  <p className="text-sm">Activity will appear here as actions are performed</p>
-                </div>
-              ) : (
-                activities.map((activity, index) => (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="group flex items-center gap-6 p-6 rounded-3xl hover:bg-gradient-to-r hover:from-slate-50/60 hover:to-blue-50/40 transition-all duration-300 cursor-pointer border-0 shadow-sm hover:shadow-lg"
-                  >
-                    <div
-                      className={`p-4 rounded-3xl shadow-lg transition-all duration-300 group-hover:scale-110 ${
-                        activity.type === "user_created" || activity.type === "attendance_marked"
-                          ? "bg-emerald-100 text-emerald-600 group-hover:shadow-emerald-500/20"
-                          : activity.type === "schedule_updated"
-                          ? "bg-blue-100 text-blue-600 group-hover:shadow-blue-500/20"
-                          : "bg-purple-100 text-purple-600 group-hover:shadow-purple-500/20"
-                      }`}
+                ) : (
+                  activities.map((activity, index) => (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 + index * 0.05 }}
+                      className="group flex items-center gap-6 p-6 rounded-3xl hover:bg-gradient-to-r hover:from-slate-50/60 hover:to-blue-50/40 transition-all duration-300 cursor-pointer border-0 shadow-sm hover:shadow-lg"
                     >
-                      {activity.type === "user_created" && <Users className="h-5 w-5" />}
-                      {activity.type === "attendance_marked" && <CheckCircle className="h-5 w-5" />}
-                      {activity.type === "schedule_updated" && <Calendar className="h-5 w-5" />}
-                      {activity.type === "certificate_approved" && <FileText className="h-5 w-5" />}
-                      {!["user_created", "attendance_marked", "schedule_updated", "certificate_approved"].includes(activity.type) && <Activity className="h-5 w-5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-lg font-bold text-slate-900 group-hover:text-slate-800 transition-colors">
-                        {activity.action}
-                      </p>
-                      <p className="text-base text-slate-600 group-hover:text-slate-700 transition-colors truncate">
-                        {activity.details}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="text-sm bg-white/90 border-0 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all duration-300 rounded-2xl px-4 py-2 font-semibold"
-                    >
-                      {activity.timeAgo}
-                    </Badge>
-                  </motion.div>
-                ))
-              )}
+                      <div
+                        className={`p-4 rounded-3xl shadow-lg transition-all duration-300 group-hover:scale-110 ${
+                          activity.type === "user_created" || activity.type === "attendance_marked"
+                            ? "bg-emerald-100 text-emerald-600 group-hover:shadow-emerald-500/20"
+                            : activity.type === "schedule_updated"
+                            ? "bg-blue-100 text-blue-600 group-hover:shadow-blue-500/20"
+                            : "bg-purple-100 text-purple-600 group-hover:shadow-purple-500/20"
+                        }`}
+                      >
+                        {activity.type === "user_created" && <Users className="h-5 w-5" />}
+                        {activity.type === "attendance_marked" && <CheckCircle className="h-5 w-5" />}
+                        {activity.type === "schedule_updated" && <Calendar className="h-5 w-5" />}
+                        {activity.type === "certificate_approved" && <FileText className="h-5 w-5" />}
+                        {!["user_created", "attendance_marked", "schedule_updated", "certificate_approved"].includes(activity.type) && <Activity className="h-5 w-5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-lg font-bold text-slate-900 group-hover:text-slate-800 transition-colors">
+                          {activity.action}
+                        </p>
+                        <p className="text-base text-slate-600 group-hover:text-slate-700 transition-colors truncate">
+                          {activity.details}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="text-sm bg-white/90 border-0 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all duration-300 rounded-2xl px-4 py-2 font-semibold"
+                      >
+                        {activity.timeAgo}
+                      </Badge>
+                    </motion.div>
+                  ))
+                )}
+              </div>
             </div>
           </ModernCardContent>
         </ModernCard>

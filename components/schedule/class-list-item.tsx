@@ -13,8 +13,8 @@ interface ClassListItemProps {
 export function ClassListItem({ classData, isSelected, onClick }: ClassListItemProps) {
   const SessionIcon = classData.session === "MORNING" ? Sun : Moon;
   const sessionColor = classData.session === "MORNING" 
-    ? "bg-amber-50 text-amber-700 border-amber-200" 
-    : "bg-indigo-50 text-indigo-700 border-indigo-200";
+    ? "bg-amber-100 text-amber-700" 
+    : "bg-indigo-100 text-indigo-700";
 
   return (
     <Button
@@ -41,7 +41,7 @@ export function ClassListItem({ classData, isSelected, onClick }: ClassListItemP
         <div className="flex-1 text-left min-w-0">
           <div className="font-bold text-slate-900 text-sm sm:text-base truncate">{classData.name}</div>
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-1.5 flex-wrap">
-            <Badge variant="outline" className={cn("text-xs font-semibold shadow-sm", sessionColor)}>
+            <Badge className={cn("text-xs font-semibold shadow-sm border-0", sessionColor)}>
               <SessionIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
               <span className="hidden xs:inline">{classData.session}</span>
               <span className="xs:hidden">{classData.session.substring(0, 3)}</span>

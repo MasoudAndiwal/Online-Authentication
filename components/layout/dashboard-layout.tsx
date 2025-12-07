@@ -71,7 +71,7 @@ export function DashboardLayout({
               duration: 0.3
             }}
             className={cn(
-              'fixed left-0 top-0 z-50 h-full w-64 bg-white/80 backdrop-blur-md border-r border-white/20 shadow-xl',
+              'fixed left-0 top-0 z-50 h-full w-64 bg-white/80 backdrop-blur-md border-r-0 shadow-xl',
               !isMobile && 'lg:fixed lg:z-50'
             )}
           >
@@ -91,7 +91,7 @@ export function DashboardLayout({
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm"
+            className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b-0 shadow-sm"
           >
             {React.cloneElement(header as React.ReactElement<DashboardHeaderProps>, {
               onMenuClick: () => setSidebarOpen(true),

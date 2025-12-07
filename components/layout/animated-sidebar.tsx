@@ -8,9 +8,9 @@ import {Home,Users,Calendar,BarChart3,Settings,BookOpen,ClipboardList,FileText,U
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator,DropdownMenuTrigger,
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface NavigationItem {
   label: string;
@@ -99,7 +99,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       },
       {
         label: "Classes & Schedule",
-        href: "/classes",
+        href: "/dashboard/all-classes",
         icon: Calendar,
         children: [
           {
@@ -122,7 +122,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       },
       {
         label: "Attendance",
-        href: "/attendance",
+        href: "/dashboard/mark-attendance",
         icon: ClipboardList,
         children: [
           { label: "Overview", href: "/attendance/overview", icon: BarChart3, comingSoon: true },
@@ -143,6 +143,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         label: "Reports & Analytics",
         href: "/reports",
         icon: TrendingUp,
+        comingSoon: true,
         children: [
           { label: "Weekly Reports", href: "/reports/weekly", icon: FileText, comingSoon: true },
           {
@@ -158,6 +159,7 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         label: "System Settings",
         href: "/settings",
         icon: Settings,
+        comingSoon: true,
         children: [
           {
             label: "General Settings",
@@ -276,7 +278,6 @@ export function AnimatedSidebar({
   className,
 }: AnimatedSidebarProps) {
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
-  const { toast } = useToast();
   const navigationItems = user ? getNavigationItems(user.role) : [];
 
   // Add global styles for dropdown positioning
@@ -341,8 +342,7 @@ export function AnimatedSidebar({
   const handleNavigation = (href: string, item?: NavigationItem) => {
     // Check if this item is marked as coming soon
     if (item?.comingSoon) {
-      toast({
-        title: "Coming Soon",
+      toast.info("Coming Soon", {
         description: `${item.label} feature is under development and will be available soon.`,
       });
       return;
@@ -367,7 +367,7 @@ export function AnimatedSidebar({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="p-6 border-b border-white/20"
+        className="p-6 border-b-0"
       >
         <div className="flex items-center space-x-3">
           <motion.div
@@ -398,7 +398,7 @@ export function AnimatedSidebar({
               isActive={isActive(item.href, item)}
               isExpanded={isExpanded(item.href)}
               onToggle={() => toggleExpanded(item.href)}
-              onNavigate={(href) => handleNavigation(href, item)}
+              onNavigate={(href, navItem) => handleNavigation(href, navItem || item)}
               level={0}
               currentPath={currentPath}
               role={user?.role}
@@ -479,6 +479,7 @@ function NavigationItem({
           if (hasChildren) {
             onToggle();
           } else {
+            // Pass the current item for comingSoon check
             onNavigate(item.href, item);
           }
         }}
@@ -493,7 +494,7 @@ function NavigationItem({
         <Icon className={cn("h-5 w-5 flex-shrink-0", level > 0 && "h-4 w-4")} />
         <span className="flex-1 text-left">{item.label}</span>
 
-        {item.badge !== undefined && item.badge > 0 && (
+        {item.badge !== undefined && Number(item.badge) > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -528,7 +529,7 @@ function NavigationItem({
           >
             {item.children?.map((child, index) => (
               <motion.div
-                key={child.href}
+                key={child.href + index}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05, duration: 0.2 }}
@@ -538,7 +539,7 @@ function NavigationItem({
                   isActive={child.href === currentPath}
                   isExpanded={isChildExpanded(child.href)}
                   onToggle={() => toggleChildExpanded(child.href)}
-                  onNavigate={(href) => onNavigate(href, child)}
+                  onNavigate={(href, navItem) => onNavigate(href, navItem || child)}
                   level={level + 1}
                   currentPath={currentPath}
                   role={role}
@@ -593,7 +594,7 @@ function UserProfileDropdown({ user, onLogout, onNavigate }: UserProfileDropdown
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.3 }}
-      className="p-3 relative border-b border-slate-200"
+      className="p-3 relative border-b-0"
       style={{ zIndex: 9999 }}
     >
       <DropdownMenu>
@@ -643,7 +644,7 @@ function UserProfileDropdown({ user, onLogout, onNavigate }: UserProfileDropdown
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
-          className="w-48 rounded-lg shadow-xl border bg-white"
+          className="w-48 rounded-xl shadow-xl border-0 bg-white"
           side="top"
           align="center"
           sideOffset={8}
@@ -651,7 +652,7 @@ function UserProfileDropdown({ user, onLogout, onNavigate }: UserProfileDropdown
           collisionPadding={16}
         >
           <DropdownMenuItem 
-            className="p-3 cursor-pointer hover:bg-slate-50"
+            className="p-3 cursor-pointer hover:bg-slate-50 rounded-lg mx-1"
             onClick={() => handleNavigation(profilePath)}
           >
             <User className="h-4 w-4 mr-3 text-slate-600" />
@@ -659,18 +660,23 @@ function UserProfileDropdown({ user, onLogout, onNavigate }: UserProfileDropdown
           </DropdownMenuItem>
 
           <DropdownMenuItem 
-            className="p-3 cursor-pointer hover:bg-slate-50"
-            onClick={() => handleNavigation(settingsPath)}
+            className="p-3 cursor-pointer hover:bg-slate-50 rounded-lg mx-1"
+            onClick={() => {
+              // Settings is coming soon - show toast instead of navigating
+              toast.info("Coming Soon", {
+                description: "Settings feature is under development and will be available soon.",
+              });
+            }}
           >
             <Settings className="h-4 w-4 mr-3 text-slate-600" />
             <span className="text-sm font-medium text-slate-900">Settings</span>
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+          <div className="my-1" />
 
           {onLogout && (
             <DropdownMenuItem
-              className="p-3 cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-700 focus:bg-red-50"
+              className="p-3 cursor-pointer text-red-600 hover:bg-red-50 focus:text-red-700 focus:bg-red-50 rounded-lg mx-1"
               onClick={onLogout}
             >
               <LogOut className="h-4 w-4 mr-3" />
