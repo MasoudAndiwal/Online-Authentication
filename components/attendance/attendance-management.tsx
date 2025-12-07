@@ -13,7 +13,6 @@ import {
   CheckCircle,
   Users,
   Clock,
-  TrendingUp,
   Wifi,
   WifiOff,
   CheckCircle2,
@@ -33,7 +32,6 @@ import type {
 } from "@/types/attendance";
 import { periodAssignmentService, type TeacherPeriodAssignment } from "@/lib/services/period-assignment-service";
 import { useAuth } from "@/hooks/use-auth";
-import { date } from "zod";
 
 interface AttendanceManagementProps {
   classId: string;
@@ -62,7 +60,6 @@ export function AttendanceManagement({
   // State management
   const [students, setStudents] = React.useState<StudentWithAttendance[]>([]);
   const [selectedStudents, setSelectedStudents] = React.useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -87,7 +84,6 @@ export function AttendanceManagement({
     try {
       // Fetch students for the class with proper format (uppercase session)
       const classSectionKey = `${classData?.name} - ${classData?.session || 'MORNING'}`;
-      console.log('Attendance Management - Fetching students with classSection:', classSectionKey);
       const studentsResponse = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`);
       if (!studentsResponse.ok) {
         throw new Error('Failed to fetch students');
@@ -174,11 +170,9 @@ export function AttendanceManagement({
       );
       
       setTeacherPeriods(periods || []);
-      console.log('Loaded teacher periods:', periods);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load period assignments';
       setPeriodAssignmentError(errorMessage);
-      console.error('Failed to load period assignments:', err);
       
       // Set empty periods as fallback
       setTeacherPeriods([]);
@@ -314,7 +308,6 @@ export function AttendanceManagement({
           label: "View Summary",
           onClick: () => {
             // Could show a summary modal
-            console.log("View summary clicked");
           },
         },
       });
@@ -336,7 +329,7 @@ export function AttendanceManagement({
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, connectionStatus, students, classId, date, classData?.name]);
+  }, [hasUnsavedChanges, connectionStatus, enablePeriodFiltering, teacherPeriods, students, classId, date, currentTeacherId, classData?.major]);
 
   // Separate effect for handling connection restoration auto-save
   React.useEffect(() => {
@@ -970,173 +963,175 @@ export function AttendanceManagement({
         </motion.div>
       </motion.div>
 
-      {/* Statistics Cards - Mobile Responsive with Enhanced Animations */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
-          whileHover={{ scale: 1.02, y: -2 }}
-        >
-          <Card className="bg-gradient-to-br from-orange-50 via-orange-25 to-orange-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div 
-                  className="p-1.5 sm:p-2 bg-orange-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-orange-200 transition-colors duration-300"
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <motion.p 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900"
-                    key={statistics.total}
-                    initial={{ scale: 1.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      {/* Statistics Cards - Only show when teacher has periods assigned */}
+      {(!enablePeriodFiltering || teacherPeriods.length > 0 || periodAssignmentLoading) && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+          >
+            <Card className="bg-gradient-to-br from-orange-50 via-orange-25 to-orange-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div 
+                    className="p-1.5 sm:p-2 bg-orange-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-orange-200 transition-colors duration-300"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    {statistics.total}
-                  </motion.p>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">Total Students</p>
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <motion.p 
+                      className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900"
+                      key={statistics.total}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      {statistics.total}
+                    </motion.p>
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">Total Students</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-          whileHover={{ scale: 1.02, y: -2 }}
-        >
-          <Card className="bg-gradient-to-br from-green-50 via-green-25 to-green-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div 
-                  className="p-1.5 sm:p-2 bg-green-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-green-200 transition-colors duration-300"
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <motion.p 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700"
-                    key={statistics.present}
-                    initial={{ scale: 1.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+          >
+            <Card className="bg-gradient-to-br from-green-50 via-green-25 to-green-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div 
+                    className="p-1.5 sm:p-2 bg-green-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-green-200 transition-colors duration-300"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    {statistics.present}
-                  </motion.p>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">Present</p>
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <motion.p 
+                      className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700"
+                      key={statistics.present}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      {statistics.present}
+                    </motion.p>
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">Present</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
-          whileHover={{ scale: 1.02, y: -2 }}
-        >
-          <Card className="bg-gradient-to-br from-red-50 via-red-25 to-red-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div 
-                  className="p-1.5 sm:p-2 bg-red-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-red-200 transition-colors duration-300"
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <motion.p 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-red-700"
-                    key={statistics.absent}
-                    initial={{ scale: 1.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+          >
+            <Card className="bg-gradient-to-br from-red-50 via-red-25 to-red-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div 
+                    className="p-1.5 sm:p-2 bg-red-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-red-200 transition-colors duration-300"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    {statistics.absent}
-                  </motion.p>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">Absent</p>
+                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <motion.p 
+                      className="text-lg sm:text-xl lg:text-2xl font-bold text-red-700"
+                      key={statistics.absent}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      {statistics.absent}
+                    </motion.p>
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">Absent</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
-          whileHover={{ scale: 1.02, y: -2 }}
-        >
-          <Card className="bg-gradient-to-br from-amber-50 via-amber-25 to-amber-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div 
-                  className="p-1.5 sm:p-2 bg-amber-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-amber-200 transition-colors duration-300"
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <motion.p 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-700"
-                    key={statistics.sick || 0}
-                    initial={{ scale: 1.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+          >
+            <Card className="bg-gradient-to-br from-amber-50 via-amber-25 to-amber-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div 
+                    className="p-1.5 sm:p-2 bg-amber-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-amber-200 transition-colors duration-300"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    {statistics.sick || 0}
-                  </motion.p>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">Sick</p>
+                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <motion.p 
+                      className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-700"
+                      key={statistics.sick || 0}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      {statistics.sick || 0}
+                    </motion.p>
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">Sick</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
-          whileHover={{ scale: 1.02, y: -2 }}
-        >
-          <Card className="bg-gradient-to-br from-slate-50 via-slate-25 to-slate-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <motion.div 
-                  className="p-1.5 sm:p-2 bg-slate-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-slate-200 transition-colors duration-300"
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
-                </motion.div>
-                <div className="min-w-0 flex-1">
-                  <motion.p 
-                    className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-700"
-                    key={statistics.notMarked}
-                    initial={{ scale: 1.2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+          >
+            <Card className="bg-gradient-to-br from-slate-50 via-slate-25 to-slate-100/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden group border-0" style={{ border: 'none' }}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <motion.div 
+                    className="p-1.5 sm:p-2 bg-slate-100 rounded-lg sm:rounded-xl flex-shrink-0 group-hover:bg-slate-200 transition-colors duration-300"
+                    whileHover={{ rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    {statistics.notMarked}
-                  </motion.p>
-                  <p className="text-xs sm:text-sm text-slate-600 truncate">Not Marked</p>
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
+                  </motion.div>
+                  <div className="min-w-0 flex-1">
+                    <motion.p 
+                      className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-700"
+                      key={statistics.notMarked}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      {statistics.notMarked}
+                    </motion.p>
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">Not Marked</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      )}
 
       {/* Unsaved Changes Warning - Mobile Responsive with Enhanced Animation */}
       <AnimatePresence>
@@ -1324,56 +1319,58 @@ export function AttendanceManagement({
         )}
       </AnimatePresence>
 
-      {/* Tab Navigation - Mobile Responsive with Enhanced Animation */}
-      <motion.div 
-        className="flex items-center gap-1 bg-white/80 backdrop-blur-xl rounded-xl p-1 shadow-lg hover:shadow-xl overflow-x-auto transition-all duration-300"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, type: "spring", stiffness: 300, damping: 20 }}
-      >
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      {/* Tab Navigation - Only show when teacher has periods assigned */}
+      {(!enablePeriodFiltering || teacherPeriods.length > 0 || periodAssignmentLoading) && (
+        <motion.div 
+          className="flex items-center gap-1 bg-white/80 backdrop-blur-xl rounded-xl p-1 shadow-lg hover:shadow-xl overflow-x-auto transition-all duration-300"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, type: "spring", stiffness: 300, damping: 20 }}
         >
-          <Button
-            variant={activeTab === "attendance" ? "default" : "ghost"}
-            onClick={() => setActiveTab("attendance")}
-            size="sm"
-            className={cn(
-              "rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation flex-shrink-0",
-              activeTab === "attendance"
-                ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
-                : "hover:bg-orange-50 text-slate-700 hover:shadow-md"
-            )}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <Users className="h-4 w-4 sm:mr-2" />
-            <span className="hidden xs:inline ml-2">Attendance Grid</span>
-            <span className="xs:hidden ml-2">Grid</span>
-          </Button>
-        </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          <Button
-            variant={activeTab === "risks" ? "default" : "ghost"}
-            onClick={() => setActiveTab("risks")}
-            size="sm"
-            className={cn(
-              "rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation flex-shrink-0",
-              activeTab === "risks"
-                ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
-                : "hover:bg-orange-50 text-slate-700 hover:shadow-md"
-            )}
+            <Button
+              variant={activeTab === "attendance" ? "default" : "ghost"}
+              onClick={() => setActiveTab("attendance")}
+              size="sm"
+              className={cn(
+                "rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation flex-shrink-0",
+                activeTab === "attendance"
+                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
+                  : "hover:bg-orange-50 text-slate-700 hover:shadow-md"
+              )}
+            >
+              <Users className="h-4 w-4 sm:mr-2" />
+              <span className="hidden xs:inline ml-2">Attendance Grid</span>
+              <span className="xs:hidden ml-2">Grid</span>
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <AlertTriangle className="h-4 w-4 sm:mr-2" />
-            <span className="hidden xs:inline ml-2">Risk Indicators</span>
-            <span className="xs:hidden ml-2">Risks</span>
-          </Button>
+            <Button
+              variant={activeTab === "risks" ? "default" : "ghost"}
+              onClick={() => setActiveTab("risks")}
+              size="sm"
+              className={cn(
+                "rounded-xl transition-all duration-300 min-h-[44px] touch-manipulation flex-shrink-0",
+                activeTab === "risks"
+                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
+                  : "hover:bg-orange-50 text-slate-700 hover:shadow-md"
+              )}
+            >
+              <AlertTriangle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden xs:inline ml-2">Risk Indicators</span>
+              <span className="xs:hidden ml-2">Risks</span>
+            </Button>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
 
       {/* Main Content */}
       {activeTab === "attendance" ? (

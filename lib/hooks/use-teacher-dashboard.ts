@@ -10,18 +10,39 @@ export const teacherDashboardKeys = {
   class: (id: string) => [...teacherDashboardKeys.classes(), id] as const,
 };
 
-// Mock API functions - will be replaced with actual API calls
-const mockApi = {
+// API functions for teacher dashboard
+const teacherApi = {
   fetchMetrics: async (): Promise<TeacherDashboardMetrics> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      totalStudents: 247,
-      totalClasses: 8,
-      weeklyAttendanceRate: 94.2,
-      studentsAtRisk: 12,
-    };
+    // Get teacher ID from session
+    let teacherId = '';
+    if (typeof window !== 'undefined') {
+      const sessionData = localStorage.getItem('user_session');
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        teacherId = session.id || '';
+      }
+    }
+
+    if (!teacherId) {
+      return {
+        totalStudents: 0,
+        totalClasses: 0,
+        weeklyAttendanceRate: 0,
+        studentsAtRisk: 0,
+      };
+    }
+
+    const response = await fetch(`/api/teachers/metrics?teacherId=${teacherId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch teacher metrics');
+    }
+    return response.json();
   },
 
+};
+
+// Classes API
+const classesApi = {
   fetchClasses: async (): Promise<Class[]> => {
     try {
       // Get teacher ID from session (if available)
@@ -59,7 +80,10 @@ const mockApi = {
       throw error;
     }
   },
+};
 
+// Notifications API (still mock for now)
+const notificationsApi = {
   fetchNotifications: async (): Promise<Notification[]> => {
     await new Promise(resolve => setTimeout(resolve, 600));
     return [
@@ -92,7 +116,7 @@ export function useTeacherDashboardMetrics() {
 
   const query = useQuery({
     queryKey: teacherDashboardKeys.metrics(),
-    queryFn: mockApi.fetchMetrics,
+    queryFn: teacherApi.fetchMetrics,
   });
 
   // Use useEffect to sync query data with store
@@ -118,7 +142,7 @@ export function useTeacherClasses() {
 
   const query = useQuery({
     queryKey: teacherDashboardKeys.classes(),
-    queryFn: mockApi.fetchClasses,
+    queryFn: classesApi.fetchClasses,
   });
 
   // Use useEffect to sync query data with store
@@ -144,7 +168,7 @@ export function useTeacherNotifications() {
 
   const query = useQuery({
     queryKey: teacherDashboardKeys.notifications(),
-    queryFn: mockApi.fetchNotifications,
+    queryFn: notificationsApi.fetchNotifications,
   });
 
   // Use useEffect to sync query data with store

@@ -138,7 +138,6 @@ export function AttendanceHistoryView({
   const handleExport = () => {
     if (isTouch) lightTap();
     // Export functionality would go here
-    console.log("Exporting attendance history...");
   };
 
   const getStatusColor = (status: string) => {

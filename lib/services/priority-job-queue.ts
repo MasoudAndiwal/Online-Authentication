@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Priority Job Queue Service
  * 
@@ -107,8 +108,18 @@ export class PriorityJobQueue {
 
   constructor(config?: Partial<QueueConfig>) {
     this.config = { ...DEFAULT_QUEUE_CONFIG, ...config };
-    this.redis = getRedisClient();
+    // Lazy Redis initialization - will be set on first use
+    this.redis = null as unknown as Redis;
     this.stats = this.initializeStats();
+  }
+
+  /**
+   * Ensure Redis client is initialized
+   */
+  private ensureRedis(): void {
+    if (!this.redis) {
+      this.redis = getRedisClient();
+    }
   }
 
   /**
@@ -139,6 +150,9 @@ export class PriorityJobQueue {
 
     try {
       console.log('Initializing priority job queue...');
+      
+      // Initialize Redis connection
+      this.ensureRedis();
       
       // Load existing stats
       await this.loadStats();
@@ -746,8 +760,23 @@ export function registerJobProcessor(jobType: string, processor: JobProcessor): 
  * Get queue statistics
  */
 export async function getQueueStats(): Promise<QueueStats> {
-  const queue = getPriorityJobQueue();
-  return queue.getStats();
+  try {
+    const queue = getPriorityJobQueue();
+    return queue.getStats();
+  } catch {
+    // Return empty stats if Redis is not available
+    return {
+      totalJobs: 0,
+      urgentJobs: 0,
+      normalJobs: 0,
+      lowJobs: 0,
+      processingJobs: 0,
+      completedJobs: 0,
+      failedJobs: 0,
+      averageProcessingTime: 0,
+      throughput: 0
+    };
+  }
 }
 
 // Auto-initialize when imported (server-side only)

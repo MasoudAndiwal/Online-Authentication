@@ -53,8 +53,8 @@ export default function TeacherClassesPage() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   // Class action handlers

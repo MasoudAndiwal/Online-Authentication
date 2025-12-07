@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findTeacherById, updateTeacher, deleteTeacher } from '@/lib/database/operations';
-import type { Teacher } from '@/lib/database/models';
-import { DatabaseError, handleApiError } from '@/lib/database/errors';
-import { ZodError } from 'zod';
-import { hashPassword } from '@/lib/utils/password';
+import { createClient } from '@supabase/supabase-js';
+import { getServerSession } from '@/lib/auth/server-session';
 
+// Create Supabase client
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+  });
+}
+
+/**
+ * GET /api/teachers/[id]
+ * Fetch teacher profile by ID
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,30 +27,79 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Fetch teacher by ID
-    const teacher = await findTeacherById(id);
+    // Get session for access control
+    const session = await getServerSession(request);
+    
+    // Teachers can only access their own profile
+    if (session?.role === 'TEACHER' && session.id !== id) {
+      return NextResponse.json(
+        { error: 'Access denied. You can only view your own profile.' },
+        { status: 403 }
+      );
+    }
 
-    if (!teacher) {
+    const supabase = getSupabase();
+
+    // Fetch teacher by ID
+    const { data: teacher, error } = await supabase
+      .from('teachers')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        father_name,
+        grandfather_name,
+        teacher_id,
+        date_of_birth,
+        phone,
+        secondary_phone,
+        address,
+        departments,
+        qualification,
+        experience,
+        specialization,
+        subjects,
+        classes,
+        username,
+        status,
+        created_at
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !teacher) {
       return NextResponse.json(
         { error: 'Teacher not found' },
         { status: 404 }
       );
     }
 
-    // Remove password field and keep strong typing
-    const { password: _p, ...teacherWithoutPassword } = teacher as Teacher;
-    void _p;
+    // Transform snake_case to camelCase for frontend
+    const transformedTeacher = {
+      id: teacher.id,
+      firstName: teacher.first_name,
+      lastName: teacher.last_name,
+      fatherName: teacher.father_name,
+      grandfatherName: teacher.grandfather_name,
+      teacherId: teacher.teacher_id,
+      dateOfBirth: teacher.date_of_birth,
+      phone: teacher.phone,
+      secondaryPhone: teacher.secondary_phone,
+      address: teacher.address,
+      departments: teacher.departments || [],
+      qualification: teacher.qualification,
+      experience: teacher.experience,
+      specialization: teacher.specialization,
+      subjects: teacher.subjects || [],
+      classes: teacher.classes || [],
+      username: teacher.username,
+      status: teacher.status,
+      createdAt: teacher.created_at,
+    };
 
-    return NextResponse.json(teacherWithoutPassword, { status: 200 });
+    return NextResponse.json(transformedTeacher, { status: 200 });
 
   } catch (error) {
-    // Handle database errors
-    if (error instanceof DatabaseError) {
-      const { response, status } = handleApiError(error);
-      return NextResponse.json(response, { status });
-    }
-
-    // Handle server errors (500)
     console.error('Error fetching teacher:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred while fetching the teacher' },
@@ -44,171 +108,83 @@ export async function GET(
   }
 }
 
+/**
+ * PUT /api/teachers/[id]
+ * Update teacher profile (professional information only)
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log('=== PUT /api/teachers/[id] called ===');
   try {
     const { id } = await params;
-    console.log('Teacher ID:', id);
     const body = await request.json();
-    console.log('Request body:', JSON.stringify(body, null, 2));
 
-    // Check if teacher exists
-    const existingTeacher = await findTeacherById(id);
-    if (!existingTeacher) {
+    // Get session for access control
+    const session = await getServerSession(request);
+    
+    // Teachers can only update their own profile
+    if (session?.role === 'TEACHER' && session.id !== id) {
       return NextResponse.json(
-        { error: 'Teacher not found' },
-        { status: 404 }
+        { error: 'Access denied. You can only update your own profile.' },
+        { status: 403 }
       );
     }
 
-    // Prepare update data
-    const updateData: Record<string, unknown> = {};
+    const supabase = getSupabase();
 
-    // Only include fields that are provided in the request
-    if (body.firstName !== undefined) updateData.firstName = body.firstName;
-    if (body.lastName !== undefined) updateData.lastName = body.lastName;
-    if (body.fatherName !== undefined) updateData.fatherName = body.fatherName;
-    if (body.grandFatherName !== undefined) updateData.grandFatherName = body.grandFatherName;
-    if (body.teacherId !== undefined) updateData.teacherId = body.teacherId;
-    if (body.dateOfBirth !== undefined) {
-      updateData.dateOfBirth = body.dateOfBirth ? new Date(body.dateOfBirth) : null;
-    }
-    if (body.phone !== undefined) updateData.phone = body.phone;
-    if (body.secondaryPhone !== undefined) updateData.secondaryPhone = body.secondaryPhone;
-    if (body.address !== undefined) updateData.address = body.address;
+    // Only allow updating professional information fields
+    const allowedFields = ['qualification', 'experience', 'specialization'];
+    const updateData: Record<string, string> = {};
     
-    // Convert comma-separated strings to arrays if needed
-    if (body.departments !== undefined) {
-      updateData.departments = Array.isArray(body.departments) 
-        ? body.departments 
-        : body.departments.split(',').map((d: string) => d.trim()).filter((d: string) => d.length > 0);
-    }
-    
-    if (body.qualification !== undefined) updateData.qualification = body.qualification;
-    if (body.experience !== undefined) updateData.experience = body.experience;
-    if (body.specialization !== undefined) updateData.specialization = body.specialization;
-    
-    // Convert comma-separated strings to arrays if needed
-    if (body.subjects !== undefined) {
-      updateData.subjects = Array.isArray(body.subjects) 
-        ? body.subjects 
-        : body.subjects.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-    }
-    
-    if (body.classes !== undefined) {
-      updateData.classes = Array.isArray(body.classes) 
-        ? body.classes 
-        : body.classes.split(',').map((c: string) => c.trim()).filter((c: string) => c.length > 0);
-    }
-    
-    if (body.username !== undefined) updateData.username = body.username;
-    if (body.status !== undefined) updateData.status = body.status;
-
-    // Hash password if provided
-    if (body.password !== undefined && body.password) {
-      updateData.password = await hashPassword(body.password);
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        updateData[field] = body[field];
+      }
     }
 
-    // Update teacher
-    console.log('Updating teacher with data:', JSON.stringify(updateData, null, 2));
-    const updatedTeacher = await updateTeacher(id, updateData);
-
-    // Remove password field and keep strong typing
-    const { password: _p2, ...teacherWithoutPassword } = updatedTeacher as Teacher;
-    void _p2;
-
-    return NextResponse.json(teacherWithoutPassword, { status: 200 });
-
-  } catch (error) {
-    // Handle validation errors (400)
-    if (error instanceof ZodError) {
-      console.error('Zod Validation Error:', JSON.stringify(error.issues, null, 2));
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: error.issues.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        },
+        { error: 'No valid fields to update' },
         { status: 400 }
       );
     }
 
-    // Handle database errors
-    if (error instanceof DatabaseError) {
-      console.error('Database Error:', {
-        code: error.code,
-        message: error.message,
-        meta: error.meta,
-      });
-      const { response, status } = handleApiError(error);
-      return NextResponse.json(response, { status });
-    }
+    // Update teacher
+    const { data: updatedTeacher, error } = await supabase
+      .from('teachers')
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
-    // Handle server errors (500)
-    console.error('Error updating teacher:', error);
-    console.error('Error details:', {
-      name: (error as Error)?.name,
-      message: (error as Error)?.message,
-      stack: (error as Error)?.stack,
-    });
-    return NextResponse.json(
-      {
-        error: 'An unexpected error occurred while updating the teacher',
-        details: (error as Error)?.message || 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  // PATCH is the same as PUT for partial updates
-  return PUT(request, { params });
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-
-    // Check if teacher exists
-    const existingTeacher = await findTeacherById(id);
-    if (!existingTeacher) {
+    if (error) {
+      console.error('Error updating teacher:', error);
       return NextResponse.json(
-        { error: 'Teacher not found' },
-        { status: 404 }
+        { error: 'Failed to update profile' },
+        { status: 500 }
       );
     }
 
-    // Delete teacher
-    await deleteTeacher(id);
+    // Transform response
+    const transformedTeacher = {
+      id: updatedTeacher.id,
+      firstName: updatedTeacher.first_name,
+      lastName: updatedTeacher.last_name,
+      qualification: updatedTeacher.qualification,
+      experience: updatedTeacher.experience,
+      specialization: updatedTeacher.specialization,
+    };
 
-    return NextResponse.json(
-      { message: 'Teacher deleted successfully' },
-      { status: 200 }
-    );
+    return NextResponse.json(transformedTeacher, { status: 200 });
 
   } catch (error) {
-    // Handle database errors
-    if (error instanceof DatabaseError) {
-      const { response, status } = handleApiError(error);
-      return NextResponse.json(response, { status });
-    }
-
-    // Handle server errors (500)
-    console.error('Error deleting teacher:', error);
+    console.error('Error updating teacher:', error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred while deleting the teacher' },
+      { error: 'An unexpected error occurred while updating the teacher' },
       { status: 500 }
     );
   }

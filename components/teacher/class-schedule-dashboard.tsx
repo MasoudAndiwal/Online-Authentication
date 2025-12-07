@@ -134,13 +134,10 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
         setIsLoading(true);
         setError(null);
         
-        console.log('[Schedule Dashboard] Fetching data for class:', classId);
-        
         // Fetch class data
         const classResponse = await fetch(`/api/classes/${classId}`);
         if (classResponse.ok) {
           const classResult = await classResponse.json();
-          console.log('[Schedule Dashboard] Received class data:', classResult);
           setClassData({
             name: classResult.name,
             session: classResult.session,
@@ -156,8 +153,6 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
         }
 
         const result = await response.json();
-        console.log('[Schedule Dashboard] Received schedule data:', result);
-        console.log('[Schedule Dashboard] Raw entries:', result.data);
 
         if (result.success && result.data) {
           // Map database entries to component format
@@ -183,8 +178,6 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
 
             const dayOfWeek = dayMap[entry.dayOfWeek.toLowerCase()] ?? 0;
             const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
-            
-            console.log(`[Mapping] ${entry.subject}: "${entry.dayOfWeek}" -> ${dayOfWeek} (${dayName})`);
 
             // Calculate duration in minutes
             const [startHour, startMin] = entry.startTime.split(':').map(Number);
@@ -228,21 +221,11 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
             };
           });
 
-          console.log('[Schedule Dashboard] Mapped', mappedEntries.length, 'schedule entries');
-          console.log('[Schedule Dashboard] Summary by day:');
-          const byDay = mappedEntries.reduce((acc, e) => {
-            if (!acc[e.dayName]) acc[e.dayName] = [];
-            acc[e.dayName].push(`${e.subject} at ${e.startTime}`);
-            return acc;
-          }, {} as Record<string, string[]>);
-          console.table(byDay);
           setScheduleEntries(mappedEntries);
         } else {
-          console.log('[Schedule Dashboard] No schedule data found');
           setScheduleEntries([]);
         }
       } catch (err) {
-        console.error('[Schedule Dashboard] Error fetching schedule:', err);
         setError(err instanceof Error ? err.message : 'Failed to load schedule');
         setScheduleEntries([]);
       } finally {
@@ -465,14 +448,6 @@ export function ClassScheduleDashboard({ classId, className }: ClassScheduleDash
                 const dayEntries = filteredEntries.filter(entry => entry.dayOfWeek === dayIndex)
                 // Match time by comparing first 5 characters (HH:MM) to handle both "08:00" and "08:00:00" formats
                 const timeEntry = dayEntries.find(entry => entry.startTime.substring(0, 5) === time)
-                
-                // Debug logging for first time slot only
-                if (time === '08:00' && dayEntries.length > 0) {
-                  console.log(`[Grid] Day ${day} (${dayIndex}):`, dayEntries.map(e => ({
-                    subject: e.subject,
-                    startTime: e.startTime
-                  })));
-                }
                 
                 return (
                   <div key={`${day}-${time}`} className="p-1 border-b border-slate-100 min-h-[60px] relative">

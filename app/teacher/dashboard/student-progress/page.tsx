@@ -83,8 +83,8 @@ function StudentProgressContent() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   // Class action handler - navigate to class detail page

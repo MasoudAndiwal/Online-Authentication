@@ -139,7 +139,6 @@ export function AttendanceGrid({
             updatedPeriodAttendance[student.id][period] = student.status;
           });
           hasUpdates = true;
-          console.log('✅ Initializing all periods for', student.id, '- Status:', student.status);
           return;
         }
         
@@ -149,7 +148,6 @@ export function AttendanceGrid({
         
         // For individual period clicks (recent update), skip sync
         if (timeSinceUpdate < 300) {
-          console.log('⏭️ Skipping sync for', student.id, '- recent internal update');
           return;
         }
         
@@ -182,7 +180,6 @@ export function AttendanceGrid({
             });
             
             hasUpdates = true;
-            console.log('✅ Syncing bulk action to ALL periods for', student.id, '- Status:', student.status, '- Periods:', assignedPeriods);
           }
         }
       }
@@ -190,7 +187,6 @@ export function AttendanceGrid({
     
     // Update period attendance if there are changes from bulk actions
     if (hasUpdates) {
-      console.log('✅ Syncing changes to period attendance:', updatedPeriodAttendance);
       setStudentPeriodAttendance(prev => ({
         ...prev,
         ...updatedPeriodAttendance
@@ -221,9 +217,6 @@ export function AttendanceGrid({
 
   // Handle status change
   const handleStatusChange = (studentId: string, status: AttendanceStatus, periodNumber?: number) => {
-    console.log('handleStatusChange called:', { studentId, status, periodNumber });
-    console.log('Current studentPeriodAttendance before update:', studentPeriodAttendance[studentId]);
-    
     // Mark this as a recent internal update to prevent sync from overriding it
     lastUpdateRef.current[studentId] = Date.now();
     
@@ -250,7 +243,6 @@ export function AttendanceGrid({
             [periodNumber]: status // Only update this specific period
           }
         };
-        console.log('✅ Updated period attendance for period', periodNumber, ':', updated[studentId]);
         return updated;
       });
 
@@ -280,7 +272,6 @@ export function AttendanceGrid({
           ...prev,
           [studentId]: periodAttendance
         };
-        console.log('Updated global attendance for all periods:', updated[studentId]);
         return updated;
       });
 
@@ -518,7 +509,6 @@ export function AttendanceGrid({
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('Sick button clicked:', { studentId: student.id, currentStatus: getCurrentStatus(student.id) });
                                 handleStatusChange(student.id, 'SICK');
                               }}
                               className={cn(
@@ -571,12 +561,6 @@ export function AttendanceGrid({
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      console.log('Present button clicked:', { 
-                                        studentId: student.id, 
-                                        periodNumber, 
-                                        currentStatus: periodStatus,
-                                        allPeriodData: studentPeriodAttendance[student.id]
-                                      });
                                       handleStatusChange(student.id, 'PRESENT', periodNumber);
                                     }}
                                     className={cn(
@@ -596,12 +580,6 @@ export function AttendanceGrid({
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      console.log('Absent button clicked:', { 
-                                        studentId: student.id, 
-                                        periodNumber, 
-                                        currentStatus: periodStatus,
-                                        allPeriodData: studentPeriodAttendance[student.id]
-                                      });
                                       handleStatusChange(student.id, 'ABSENT', periodNumber);
                                     }}
                                     className={cn(

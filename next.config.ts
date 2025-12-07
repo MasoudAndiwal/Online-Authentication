@@ -16,8 +16,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@/components/ui', '@/components/student'],
   },
-  // Enable SWC minification for better performance
-  swcMinify: true,
 };
 
 

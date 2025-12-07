@@ -187,23 +187,19 @@ export function StudentProgressSection({ classId, className }: StudentProgressSe
     }
   }, [studentData, riskData])
 
-  const handleViewDetails = (studentId: string) => {
-    console.log('View details for student:', studentId)
+  const handleViewDetails = (_studentId: string) => {
     // In real implementation, this would navigate to detailed student view
   }
 
-  const handleContactStudent = (studentId: string) => {
-    console.log('Contact student:', studentId)
+  const handleContactStudent = (_studentId: string) => {
     // In real implementation, this would open contact modal or initiate communication
   }
 
-  const handleMarkRecommendationComplete = (studentId: string, recommendationId: string) => {
-    console.log('Mark recommendation complete:', { studentId, recommendationId })
+  const handleMarkRecommendationComplete = (_studentId: string, _recommendationId: string) => {
     // In real implementation, this would update the recommendation status
   }
 
-  const handleCreateAlert = (studentId: string, alertType: string) => {
-    console.log('Create alert:', { studentId, alertType })
+  const handleCreateAlert = (_studentId: string, _alertType: string) => {
     // In real implementation, this would create a system alert
   }
 

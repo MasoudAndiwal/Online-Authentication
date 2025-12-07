@@ -50,8 +50,8 @@ function AttendanceHistoryContent() {
             setSelectedClassId(data[0].id);
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch classes:', error);
+      } catch {
+        // Failed to fetch classes
       } finally {
         setLoadingClasses(false);
       }
@@ -118,8 +118,8 @@ function AttendanceHistoryContent() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   return (

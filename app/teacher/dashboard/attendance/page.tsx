@@ -69,7 +69,7 @@ function AttendanceContent() {
         currentPath="/teacher/dashboard/attendance"
         onNavigate={(href) => window.location.href = href}
         onLogout={async () => await handleLogout()}
-        onSearch={(query) => console.log("Search:", query)}
+        onSearch={() => {}}
       >
         <PageContainer>
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -106,7 +106,7 @@ function AttendanceContent() {
         currentPath="/teacher/dashboard/attendance"
         onNavigate={(href) => window.location.href = href}
         onLogout={async () => await handleLogout()}
-        onSearch={(query) => console.log("Search:", query)}
+        onSearch={() => {}}
       >
         <PageContainer>
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -134,7 +134,7 @@ function AttendanceContent() {
         currentPath="/teacher/dashboard/attendance"
         onNavigate={(href) => window.location.href = href}
         onLogout={async () => await handleLogout()}
-        onSearch={(query) => console.log("Search:", query)}
+        onSearch={() => {}}
       >
         <PageContainer>
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -181,8 +181,8 @@ function AttendanceContent() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   return (

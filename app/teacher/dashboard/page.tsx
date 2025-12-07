@@ -12,7 +12,7 @@ import {ModernCard,ModernCardHeader,ModernCardTitle,ModernCardContent,
 import { EnhancedMetricCard } from "@/components/ui/enhanced-metric-card";
 import { Modern3DIcons } from "@/components/ui/modern-3d-icons";
 import { Button } from "@/components/ui/button";
-import {Users,BookOpen,CheckCircle,Plus,BarChart3,Sparkles,
+import {BookOpen,CheckCircle,BarChart3,Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTeacherDashboardMetrics, useTeacherClasses, useTeacherNotifications } from "@/lib/hooks/use-teacher-dashboard";
@@ -23,7 +23,7 @@ import { NotificationCenter, NotificationTrigger, NotificationSettings } from "@
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { useResponsive } from "@/lib/hooks/use-responsive";
 import { useHapticFeedback, useTouchGestures } from "@/lib/hooks/use-touch-gestures";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+
 import { toast } from "sonner";
 
 export default function TeacherDashboardPage() {
@@ -37,8 +37,7 @@ export default function TeacherDashboardPage() {
   const { isMobile, isTouch } = useResponsive();
   const { lightTap, success: successHaptic } = useHapticFeedback();
   
-  // Mobile quick actions bottom sheet
-  const [showQuickActions, setShowQuickActions] = React.useState(false);
+
   
   // Notification settings state
   const [showNotificationSettings, setShowNotificationSettings] = React.useState(false);
@@ -83,9 +82,7 @@ export default function TeacherDashboardPage() {
   const loadingMetrics = metricsQuery.isLoading || classesQuery.isLoading || notificationsQuery.isLoading;
   const classesError = metricsQuery.error || classesQuery.error || notificationsQuery.error;
   
-  console.log('Dashboard - classes from query:', classes);
-  console.log('Dashboard - classes length:', classes?.length);
-  console.log('Dashboard - isLoading:', loadingMetrics);
+
 
   // Show welcome toast and handle errors
   React.useEffect(() => {
@@ -144,8 +141,8 @@ export default function TeacherDashboardPage() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   // Get appropriate greeting based on time of day
@@ -161,10 +158,6 @@ export default function TeacherDashboardPage() {
     if (!user) return 'Welcome back! ';
     const firstName = user.firstName || 'there';
     return `Welcome back, ${firstName}! `;
-  };
-
-  const handleStudentProgress = () => {
-    toast.info('Student Progress feature coming soon!');
   };
 
   // Class action handlers with proper navigation
@@ -232,7 +225,6 @@ export default function TeacherDashboardPage() {
         links={[
           { href: '#main-content', label: 'Skip to main content' },
           { href: '#metrics', label: 'Skip to metrics' },
-          { href: '#quick-actions', label: 'Skip to quick actions' },
           { href: '#my-classes', label: 'Skip to my classes' },
         ]}
       />
@@ -292,8 +284,7 @@ export default function TeacherDashboardPage() {
             notifyOnAbsenceCount: true,
             absenceCountThreshold: 3
           }}
-          onSave={(preferences) => {
-            console.log('Saving notification preferences:', preferences);
+          onSave={(_preferences) => {
             setShowNotificationSettings(false);
             announce('Notification settings saved');
           }}
@@ -449,200 +440,6 @@ export default function TeacherDashboardPage() {
           />
         </div>
         </div>
-
-        {/* Enhanced Floating Quick Actions Panel - Desktop / Bottom Sheet - Mobile */}
-        {!isMobile ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, type: 'spring', stiffness: 300, damping: 25 }}
-            className="relative mb-6 sm:mb-8 lg:mb-12"
-            id="quick-actions"
-            role="region"
-            aria-label="Quick actions"
-          >
-            {/* Floating container with enhanced glass morphism */}
-            <div className="bg-gradient-to-br from-blue-50 to-purple-100/50 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl sm:shadow-2xl shadow-blue-500/10 border-0 relative overflow-hidden">
-              {/* Subtle background pattern */}
-              <div className="absolute inset-0 opacity-5">
-                <div className="absolute top-4 right-8 w-24 h-24 bg-blue-400/20 rounded-full blur-xl" />
-                <div className="absolute bottom-4 left-8 w-20 h-20 bg-purple-500/20 rounded-full blur-lg" />
-              </div>
-
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <motion.div
-                    className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-xl shadow-blue-500/25"
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  >
-                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                  </motion.div>
-                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">
-                    Quick Actions
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                  <motion.div
-                    whileHover={{ 
-                      scale: 1.02, 
-                      y: -2,
-                      transition: { type: 'spring', stiffness: 400, damping: 25 }
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group"
-                  >
-                    <Button
-                      onClick={() => {
-                        handleMarkAttendance();
-                        announce('Opening attendance marking interface');
-                      }}
-                      className="w-full min-h-[60px] sm:min-h-[80px] bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-blue-500/20 touch-manipulation"
-                      aria-label="Quick action: Mark attendance for your classes"
-                    >
-                      {/* Button shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
-                      <div className="relative z-10 flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" aria-hidden="true" />
-                        Mark Attendance
-                      </div>
-                    </Button>
-                  </motion.div>
-                  
-                  <motion.div
-                    whileHover={{ 
-                      scale: 1.02, 
-                      y: -2,
-                      transition: { type: 'spring', stiffness: 400, damping: 25 }
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group"
-                  >
-                    <Button
-                      onClick={() => {
-                        handleViewReports();
-                        announce('Opening reports and analytics');
-                      }}
-                      className="w-full min-h-[60px] sm:min-h-[80px] bg-purple-50 text-purple-700 hover:bg-purple-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-purple-500/20 touch-manipulation"
-                      aria-label="Quick action: View attendance reports and analytics"
-                    >
-                      {/* Button shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
-                      <div className="relative z-10 flex items-center justify-center">
-                        <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" aria-hidden="true" />
-                        View Reports
-                      </div>
-                    </Button>
-                  </motion.div>
-                  
-                  <motion.div
-                    whileHover={{ 
-                      scale: 1.02, 
-                      y: -2,
-                      transition: { type: 'spring', stiffness: 400, damping: 25 }
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className="group"
-                  >
-                    <Button
-                      onClick={() => {
-                        handleStudentProgress();
-                        announce('Opening student progress tracking');
-                      }}
-                      className="w-full min-h-[60px] sm:min-h-[80px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm border-0 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all duration-300 relative overflow-hidden group-hover:shadow-lg group-hover:shadow-emerald-500/20 touch-manipulation"
-                      aria-label="Quick action: View student progress and analytics"
-                    >
-                      {/* Button shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-700" />
-                      <div className="relative z-10 flex items-center justify-center">
-                        <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" aria-hidden="true" />
-                        Student Progress
-                      </div>
-                    </Button>
-                  </motion.div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <>
-            {/* Mobile: Floating Action Button to open Bottom Sheet */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8, type: 'spring', stiffness: 300, damping: 25 }}
-              className="fixed bottom-6 right-6 z-40"
-            >
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  setShowQuickActions(true);
-                  lightTap();
-                  announce('Opening quick actions menu');
-                }}
-                className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl shadow-blue-500/50 flex items-center justify-center text-white touch-manipulation"
-                aria-label="Open quick actions menu"
-              >
-                <Plus className="h-6 w-6" />
-              </motion.button>
-            </motion.div>
-
-            {/* Mobile: Bottom Sheet for Quick Actions */}
-            <BottomSheet
-              isOpen={showQuickActions}
-              onClose={() => setShowQuickActions(false)}
-              title="Quick Actions"
-              description="Choose an action to perform"
-              snapPoints={[60, 90]}
-              defaultSnapPoint={0}
-            >
-              <div className="space-y-3 pb-6">
-                <Button
-                  onClick={() => {
-                    handleMarkAttendance();
-                    setShowQuickActions(false);
-                    announce('Opening attendance marking interface');
-                    successHaptic();
-                  }}
-                  className="w-full min-h-[56px] bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
-                  aria-label="Mark attendance for your classes"
-                >
-                  <CheckCircle className="h-5 w-5 mr-3" aria-hidden="true" />
-                  Mark Attendance
-                </Button>
-                
-                <Button
-                  onClick={() => {
-                    handleViewReports();
-                    setShowQuickActions(false);
-                    announce('Opening reports and analytics');
-                    lightTap();
-                  }}
-                  className="w-full min-h-[56px] bg-purple-50 text-purple-700 hover:bg-purple-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
-                  aria-label="View attendance reports and analytics"
-                >
-                  <BarChart3 className="h-5 w-5 mr-3" aria-hidden="true" />
-                  View Reports
-                </Button>
-                
-                <Button
-                  onClick={() => {
-                    handleStudentProgress();
-                    setShowQuickActions(false);
-                    announce('Opening student progress tracking');
-                    lightTap();
-                  }}
-                  className="w-full min-h-[56px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm border-0 rounded-xl text-base font-semibold transition-all duration-300 touch-manipulation"
-                  aria-label="View student progress and analytics"
-                >
-                  <Users className="h-5 w-5 mr-3" aria-hidden="true" />
-                  Student Progress
-                </Button>
-              </div>
-            </BottomSheet>
-          </>
-        )}
 
         {/* My Classes Section - Mobile Optimized */}
         <div id="my-classes" role="region" aria-label="My classes section">

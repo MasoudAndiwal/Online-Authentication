@@ -150,27 +150,22 @@ export function ClassManageDashboard({ classId, className }: ClassManageDashboar
   }
 
   const handleDeleteClass = async () => {
-    console.log('Deleting class:', classId)
     // Implement delete functionality
   }
 
   const handleArchiveClass = async () => {
-    console.log('Archiving class:', classId)
     // Implement archive functionality
   }
 
   const handleDuplicateClass = async () => {
-    console.log('Duplicating class:', classId)
     // Implement duplicate functionality
   }
 
   const handleExportData = () => {
-    console.log('Exporting class data:', classId)
     // Implement export functionality
   }
 
   const handleImportData = () => {
-    console.log('Importing class data:', classId)
     // Implement import functionality
   }
 

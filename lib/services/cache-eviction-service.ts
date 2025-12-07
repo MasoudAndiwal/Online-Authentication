@@ -78,7 +78,17 @@ export class CacheEvictionService {
 
   constructor(config?: Partial<CacheEvictionConfig>) {
     this.config = { ...DEFAULT_EVICTION_CONFIG, ...config };
-    this.redis = getRedisClient();
+    // Lazy Redis initialization
+    this.redis = null as unknown as Redis;
+  }
+
+  /**
+   * Ensure Redis client is initialized
+   */
+  private ensureRedis(): void {
+    if (!this.redis) {
+      this.redis = getRedisClient();
+    }
   }
 
   /**
@@ -92,6 +102,9 @@ export class CacheEvictionService {
 
     try {
       console.log('Initializing cache eviction service...');
+      
+      // Initialize Redis connection
+      this.ensureRedis();
       
       // Configure Redis memory settings
       await this.configureRedisMemorySettings();
@@ -513,8 +526,22 @@ export async function initializeCacheEviction(config?: Partial<CacheEvictionConf
  * Get cache memory statistics
  */
 export async function getCacheMemoryStats(): Promise<CacheMemoryStats> {
-  const service = getCacheEvictionService();
-  return service.getMemoryStats();
+  try {
+    const service = getCacheEvictionService();
+    return service.getMemoryStats();
+  } catch {
+    // Return default stats if Redis is not available
+    return {
+      usedMemoryMB: 0,
+      maxMemoryMB: 0,
+      memoryUsagePercent: 0,
+      isMemoryPressure: false,
+      hitRate: 0,
+      missRate: 0,
+      totalKeys: 0,
+      evictedKeys: 0
+    };
+  }
 }
 
 /**

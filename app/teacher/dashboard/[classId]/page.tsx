@@ -66,11 +66,9 @@ export default function TeacherClassDetailsPage() {
         if (response.ok) {
           const data = await response.json();
           setClassData(data);
-        } else {
-          console.error('Failed to fetch class data');
         }
-      } catch (error) {
-        console.error('Error fetching class data:', error);
+      } catch {
+        // Error fetching class data
       } finally {
         setClassLoading(false);
       }
@@ -102,8 +100,8 @@ export default function TeacherClassDetailsPage() {
     await handleLogout();
   };
 
-  const handleSearch = (query: string) => {
-    console.log("Search:", query);
+  const handleSearch = (_query: string) => {
+    // Search functionality
   };
 
   const handleBackToDashboard = () => {

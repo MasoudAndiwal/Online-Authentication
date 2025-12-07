@@ -67,8 +67,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         if (!classResponse.ok) throw new Error('Failed to fetch class data')
         const classInfo = await classResponse.json()
         
-        console.log('Class data:', classInfo)
-        
         // Store class data
         setClassData({
           name: classInfo.name,
@@ -78,14 +76,10 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         // Construct class section key with uppercase session (matches database)
         const classSectionKey = `${classInfo.name} - ${classInfo.session || 'MORNING'}`
         
-        console.log('Fetching students with classSection:', classSectionKey)
-        
         // Fetch students for this class
         const studentsResponse = await fetch(`/api/students?classSection=${encodeURIComponent(classSectionKey)}`)
         if (!studentsResponse.ok) throw new Error('Failed to fetch students')
         const studentsData = await studentsResponse.json()
-        
-        console.log('Fetched students:', studentsData)
         
         // Transform students to match ClassStudent interface
         const transformedStudents: ClassStudent[] = studentsData.map((student: {
@@ -135,7 +129,6 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
         setStudents(transformedStudents)
         setError(null)
       } catch (err) {
-        console.error('Error fetching data:', err)
         setError(err instanceof Error ? err.message : 'Failed to fetch students')
       } finally {
         setIsLoading(false)
@@ -218,8 +211,7 @@ export function ClassStudentsDashboard({ classId, className }: ClassStudentsDash
   }
 
   const handleExportStudents = () => {
-    // Mock export functionality
-    console.log('Exporting students for class:', classId)
+    // Export functionality - to be implemented
   }
 
 

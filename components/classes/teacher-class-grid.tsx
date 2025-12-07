@@ -37,15 +37,6 @@ export function TeacherClassGrid({
 }: TeacherClassGridProps) {
   const { announce } = useScreenReaderAnnouncements();
   
-  // Debug logging
-  React.useEffect(() => {
-    console.log('TeacherClassGrid received classes:', classes);
-    console.log('Classes is array?', Array.isArray(classes));
-    console.log('Classes length:', classes?.length);
-    console.log('isLoading:', isLoading);
-    console.log('error:', error);
-  }, [classes, isLoading, error]);
-  
   // Determine grid columns based on screen size
   const [columns, setColumns] = React.useState(4);
   
