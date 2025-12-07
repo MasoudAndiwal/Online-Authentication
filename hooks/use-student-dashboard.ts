@@ -154,14 +154,15 @@ export function useStudentDashboardMetrics(studentId: string | undefined) {
           throw error
         }
 
-        const result: StudentDashboardResponse = await response.json()
+        const result = await response.json()
         
-        // Validate response data
-        if (!result.data) {
+        // Validate response data - API returns { data: { metrics: {...} } }
+        if (!result.data || !result.data.metrics) {
           throw new Error('Invalid response format')
         }
         
-        return result.data
+        // Return the metrics object directly
+        return result.data.metrics as StudentDashboardMetrics
       } catch (error: any) {
         // Network error
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
@@ -222,18 +223,9 @@ export function useStudentAttendance(
       }
 
       try {
-        // Calculate date range for the week
-        const today = new Date()
-        const currentDay = today.getDay()
-        const diff = currentDay === 6 ? 0 : currentDay === 0 ? -1 : currentDay + 1 // Saturday = 0
-        const weekStart = new Date(today)
-        weekStart.setDate(today.getDate() - diff + (weekOffset * 7))
-        
-        const weekEnd = new Date(weekStart)
-        weekEnd.setDate(weekStart.getDate() + 4) // Saturday to Thursday (5 days)
-
+        // API handles week offset calculation (0 = current week, -1 = last week, 1 = next week)
         const response = await fetch(
-          `/api/students/attendance/weekly?studentId=${studentId}&startDate=${weekStart.toISOString()}&endDate=${weekEnd.toISOString()}`,
+          `/api/students/attendance/weekly?studentId=${studentId}&week=${weekOffset}`,
           {
             headers: {
               'Content-Type': 'application/json',

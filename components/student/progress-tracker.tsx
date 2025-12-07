@@ -40,8 +40,11 @@ export function ProgressTracker({
   const sickPercentage = totalHours > 0 ? (sickHours / totalHours) * 100 : 0
   const leavePercentage = totalHours > 0 ? (leaveHours / totalHours) * 100 : 0
 
-  // Circular progress calculation
-  const radius = 70
+  // Circular progress calculation - using viewBox-based coordinates
+  const size = 200 // viewBox size
+  const strokeWidth = 12
+  const radius = (size - strokeWidth) / 2 // 94
+  const center = size / 2 // 100
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (attendanceRate / 100) * circumference
 
@@ -63,24 +66,27 @@ export function ProgressTracker({
           <div className="flex flex-col items-center justify-center">
             <div className="relative w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64">
               {/* Background Circle */}
-              <svg className="w-full h-full transform -rotate-90">
+              <svg 
+                className="w-full h-full transform -rotate-90"
+                viewBox={`0 0 ${size} ${size}`}
+              >
                 <circle
-                  cx="50%"
-                  cy="50%"
+                  cx={center}
+                  cy={center}
                   r={radius}
                   stroke="currentColor"
-                  strokeWidth="12"
+                  strokeWidth={strokeWidth}
                   fill="none"
                   className="text-slate-200"
                 />
                 {/* Progress Circle */}
                 {isClient && (
                   <motion.circle
-                    cx="50%"
-                    cy="50%"
+                    cx={center}
+                    cy={center}
                     r={radius}
                     stroke="url(#emeraldGradient)"
-                    strokeWidth="12"
+                    strokeWidth={strokeWidth}
                     fill="none"
                     strokeLinecap="round"
                     strokeDasharray={circumference}
@@ -103,9 +109,9 @@ export function ProgressTracker({
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.5 }}
-                  className="text-center"
+                  className="text-center px-4"
                 >
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-br from-emerald-600 to-emerald-700 bg-clip-text text-transparent whitespace-nowrap">
                     {attendanceRate.toFixed(1)}%
                   </div>
                   <div className="text-xs sm:text-sm text-slate-600 mt-1">

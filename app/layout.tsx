@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/lib/providers/query-provider";
@@ -21,7 +21,12 @@ export const metadata: Metadata = {
   description: "Modern digital attendance tracking system for universities",
   keywords: ["attendance", "university", "education", "tracking", "digital"],
   authors: [{ name: "University Attendance System" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

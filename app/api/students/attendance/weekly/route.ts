@@ -122,6 +122,26 @@ export const GET = withStudentDashboardMiddleware(
 );
 
 /**
+ * Fetch multiple teacher names by IDs (batch query for efficiency)
+ */
+async function getTeacherNames(teacherIds: string[]): Promise<Map<string, string>> {
+  const uniqueIds = [...new Set(teacherIds.filter(id => id))];
+  if (uniqueIds.length === 0) return new Map();
+  
+  const { data: teachers } = await supabase
+    .from('teachers')
+    .select('id, first_name, last_name')
+    .in('id', uniqueIds);
+  
+  const nameMap = new Map<string, string>();
+  teachers?.forEach(teacher => {
+    nameMap.set(teacher.id, `${teacher.first_name} ${teacher.last_name}`.trim());
+  });
+  
+  return nameMap;
+}
+
+/**
  * Fetch weekly attendance data from database
  * Uses attendance_records_new table with period columns
  */
@@ -174,6 +194,19 @@ async function fetchWeeklyAttendanceFromDB(
       return generateMockWeeklyData(weekOffset, year);
     }
 
+    // Collect all teacher IDs for batch lookup
+    const teacherIds: string[] = [];
+    attendanceRecords?.forEach(record => {
+      for (let p = 1; p <= 6; p++) {
+        const teacherId = record[`period_${p}_teacher` as keyof typeof record] as string;
+        if (teacherId) teacherIds.push(teacherId);
+      }
+      if (record.marked_by) teacherIds.push(record.marked_by);
+    });
+    
+    // Batch fetch teacher names
+    const teacherNames = await getTeacherNames(teacherIds);
+
     // Create a map of date to attendance record
     const recordsByDate = new Map<string, any>();
     attendanceRecords?.forEach(record => {
@@ -205,15 +238,22 @@ async function fetchWeeklyAttendanceFromDB(
         for (let p = 1; p <= 6; p++) {
           const status = record[`period_${p}_status`];
           const subject = record[`period_${p}_subject`];
-          const teacher = record[`period_${p}_teacher`];
+          const teacherId = record[`period_${p}_teacher`];
           
           if (status && status !== 'NOT_MARKED') {
+            // Get teacher name from the batch lookup, fallback to marked_by
+            const teacherName = teacherId 
+              ? teacherNames.get(teacherId) || 'Unknown'
+              : record.marked_by 
+                ? teacherNames.get(record.marked_by) || 'Unknown'
+                : 'Unknown';
+            
             sessions.push({
               period: p,
               courseName: subject || `Period ${p}`,
               status: status.toLowerCase() as AttendanceStatus,
               time: periodTimes[p - 1],
-              markedBy: teacher || record.marked_by || 'Unknown',
+              markedBy: teacherName,
               markedAt: record.marked_at
             });
           }
