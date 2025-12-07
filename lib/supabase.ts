@@ -10,22 +10,18 @@ function getSupabaseClient(): SupabaseClient {
     return _supabaseClient
   }
 
-  // Try to use optimized pooled client first
-  try {
-    _supabaseClient = getOptimizedSupabaseClient()
-    return _supabaseClient
-  } catch (error) {
-    console.warn('Failed to get optimized client, falling back to basic client:', error)
-  }
-
-  // Fallback to basic client configuration
+  // Use basic client configuration (skip complex pooling for now)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Environment variables check:');
+    console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
+    console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'SET' : 'MISSING');
     throw new Error('Missing Supabase environment variables. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env file.')
   }
 
+  console.log('🔧 Creating basic Supabase client (pooling disabled)');
   _supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: false, // Disable session persistence for server-side usage

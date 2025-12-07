@@ -8,7 +8,8 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import type { UploadedFile, UploadResponse } from '@/types/types';
-import { getAuditLoggerService } from './audit-logger-service';
+// Audit logging removed
+
 
 // File validation constants
 // Requirements: 13.3 - File upload security
@@ -166,22 +167,15 @@ export async function uploadMedicalCertificate(
   ipAddress?: string,
   userAgent?: string
 ): Promise<UploadResponse> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
+
   
   try {
     // Validate file size (max 10MB)
     if (file.size > MAX_FILE_SIZE) {
       // Log failed upload attempt
-      await auditLogger.logFileUpload(
-        studentId,
-        file.name,
-        file.size,
-        file.type,
-        ipAddress,
-        userAgent,
-        false,
-        `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`
-      );
+      // Audit logging removed
+
       
       return {
         success: false,
@@ -192,16 +186,8 @@ export async function uploadMedicalCertificate(
     // Validate minimum file size (prevent empty files)
     if (file.size < 100) {
       // Log failed upload attempt
-      await auditLogger.logFileUpload(
-        studentId,
-        file.name,
-        file.size,
-        file.type,
-        ipAddress,
-        userAgent,
-        false,
-        'File is too small or empty'
-      );
+      // Audit logging removed
+
       
       return {
         success: false,
@@ -212,16 +198,8 @@ export async function uploadMedicalCertificate(
     // Validate file extension
     if (!validateFileExtension(file.name)) {
       // Log failed upload attempt
-      await auditLogger.logFileUpload(
-        studentId,
-        file.name,
-        file.size,
-        file.type,
-        ipAddress,
-        userAgent,
-        false,
-        'Invalid file extension'
-      );
+      // Audit logging removed
+
       
       return {
         success: false,
@@ -232,16 +210,8 @@ export async function uploadMedicalCertificate(
     // Validate MIME type
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       // Log failed upload attempt
-      await auditLogger.logFileUpload(
-        studentId,
-        file.name,
-        file.size,
-        file.type,
-        ipAddress,
-        userAgent,
-        false,
-        'Invalid MIME type'
-      );
+      // Audit logging removed
+
       
       return {
         success: false,
@@ -256,16 +226,8 @@ export async function uploadMedicalCertificate(
     // Validate file type using magic numbers (prevents file type spoofing)
     if (!validateFileType(buffer, file.type)) {
       // Log failed upload attempt
-      await auditLogger.logFileUpload(
-        studentId,
-        file.name,
-        file.size,
-        file.type,
-        ipAddress,
-        userAgent,
-        false,
-        'File type validation failed - magic number mismatch'
-      );
+      // Audit logging removed
+
       
       return {
         success: false,
@@ -290,16 +252,8 @@ export async function uploadMedicalCertificate(
 
     if (!uploadedFile) {
       // Log failed upload
-      await auditLogger.logFileUpload(
-        studentId,
-        file.name,
-        file.size,
-        file.type,
-        ipAddress,
-        userAgent,
-        false,
-        'Failed to save file metadata'
-      );
+      // Audit logging removed
+
       
       return {
         success: false,
@@ -308,15 +262,8 @@ export async function uploadMedicalCertificate(
     }
 
     // Log successful upload
-    await auditLogger.logFileUpload(
-      studentId,
-      file.name,
-      file.size,
-      file.type,
-      ipAddress,
-      userAgent,
-      true
-    );
+    // Audit logging removed
+
 
     return {
       success: true,
@@ -326,16 +273,8 @@ export async function uploadMedicalCertificate(
     console.error('Error uploading file:', error);
     
     // Log failed upload
-    await auditLogger.logFileUpload(
-      studentId,
-      file.name,
-      file.size,
-      file.type,
-      ipAddress,
-      userAgent,
-      false,
-      error instanceof Error ? error.message : 'Failed to upload file'
-    );
+    // Audit logging removed
+
     
     return {
       success: false,

@@ -11,12 +11,12 @@ import { NextResponse } from 'next/server';
 import { withStudentDashboardMiddleware, EnhancedRequest } from '@/lib/middleware/api-middleware-stack';
 import { ValidationError } from '@/lib/errors/custom-errors';
 import { getCacheService } from '@/lib/services/cache-service';
-import { getAuditLoggerService } from '@/lib/services/audit-logger-service';
+// Audit logging removed
 import { supabase } from '@/lib/supabase';
 import type { DayAttendance, AttendanceStatus } from '@/types/types';
 
 const cacheService = getCacheService();
-const auditLogger = getAuditLoggerService();
+// Audit logging removed
 
 // Cache TTL for weekly attendance data (5 minutes)
 const WEEKLY_ATTENDANCE_TTL = 300;
@@ -82,25 +82,8 @@ export const GET = withStudentDashboardMiddleware(
       const responseTime = performance.now() - startTime;
 
       // Log attendance access for audit trail
-      await auditLogger.log({
-        userId: req.user?.id || 'unknown',
-        action: 'attendance_access',
-        resource: 'weekly_attendance',
-        resourceId: targetStudentId,
-        metadata: {
-          weekOffset,
-          year,
-          responseTime: Math.round(responseTime),
-          cached: fromCache,
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: true
-      });
+      // Audit logging removed
+
 
       const response = {
         success: true,
@@ -128,25 +111,8 @@ export const GET = withStudentDashboardMiddleware(
 
     } catch (error) {
       // Log failed attendance access
-      await auditLogger.log({
-        userId: req.user?.id || 'unknown',
-        action: 'attendance_access',
-        resource: 'weekly_attendance',
-        resourceId: targetStudentId,
-        metadata: {
-          weekOffset,
-          year,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      });
+      // Audit logging removed
+
 
       throw error;
     }

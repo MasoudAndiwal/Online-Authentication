@@ -23,7 +23,7 @@ export interface AuditLogEntry {
   action: AuditAction;
   resource: string;
   resourceId?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
   timestamp?: Date;

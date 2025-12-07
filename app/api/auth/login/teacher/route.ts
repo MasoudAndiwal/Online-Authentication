@@ -10,12 +10,16 @@ const teacherLoginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔥 Teacher login API called');
+    
     // Parse request body
     const body = await request.json();
+    console.log('📦 Request body:', body);
 
     // Validate input
     const validationResult = teacherLoginSchema.safeParse(body);
     if (!validationResult.success) {
+      console.log('❌ Validation failed:', validationResult.error.flatten().fieldErrors);
       return NextResponse.json(
         {
           success: false,
@@ -26,12 +30,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('✅ Validation passed');
     const { username, password } = validationResult.data;
 
     // Authenticate teacher
+    console.log('🔐 Calling authenticateTeacher...');
     const authResult = await authenticateTeacher(username, password);
+    console.log('🔐 Auth result:', { success: authResult.success, message: authResult.message });
 
     if (!authResult.success) {
+      console.log('❌ Authentication failed');
       return NextResponse.json(
         {
           success: false,
@@ -41,6 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('✅ Authentication successful');
     // Return success response
     return NextResponse.json(
       {
@@ -51,7 +60,8 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Teacher login API error:', error);
+    console.error('❌ Teacher login API error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       {
         success: false,

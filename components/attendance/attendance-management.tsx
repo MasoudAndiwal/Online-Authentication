@@ -557,7 +557,7 @@ export function AttendanceManagement({
       setConnectionStatus('saving');
       
       // Show immediate feedback for bulk operation start
-      toast.info(`🚀 Starting bulk update for ${studentIds.length} students...`, {
+      toast.info(` Starting bulk update for ${studentIds.length} students...`, {
         duration: 2000,
         id: 'bulk-start',
       });
@@ -632,13 +632,13 @@ export function AttendanceManagement({
       setHasUnsavedChanges(false);
       
       // Comprehensive success feedback with performance metrics
-      toast.success(`✅ Bulk update completed successfully!`, {
+      toast.success(` Bulk update completed successfully!`, {
         description: `${result.saved || studentIds.length} students updated in ${processingTime}ms`,
         duration: 4000,
         action: {
           label: "View Details",
           onClick: () => {
-            toast.info(`📊 Operation Summary`, {
+            toast.info(` Operation Summary`, {
               description: `Status: ${status} | Students: ${studentIds.length} | Time: ${processingTime}ms`,
               duration: 5000,
             });
@@ -652,7 +652,7 @@ export function AttendanceManagement({
       ).length;
       
       if (updatedCount !== studentIds.length) {
-        toast.warning("⚠️ Partial update detected", {
+        toast.warning(" Partial update detected", {
           description: `${updatedCount}/${studentIds.length} students updated. Please verify.`,
           duration: 6000,
         });
@@ -689,7 +689,7 @@ export function AttendanceManagement({
           onClick: () => {
             // Implement smart retry with smaller batches if needed
             if (studentIds.length > 10) {
-              toast.info("🔄 Trying smaller batches...", {
+              toast.info(" Trying smaller batches...", {
                 description: "Breaking down into smaller groups for better reliability",
                 duration: 3000,
               });
@@ -703,12 +703,12 @@ export function AttendanceManagement({
       // Show recovery suggestions based on error type
       setTimeout(() => {
         if (errorType === 'connection') {
-          toast.info("💡 Connection tip", {
+          toast.info(" Connection tip", {
             description: "Check your internet connection and try again",
             duration: 5000,
           });
         } else if (errorType === 'timeout') {
-          toast.info("💡 Performance tip", {
+          toast.info(" Performance tip", {
             description: "Try selecting fewer students for faster processing",
             duration: 5000,
           });

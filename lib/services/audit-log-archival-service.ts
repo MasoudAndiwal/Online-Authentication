@@ -9,7 +9,8 @@
  */
 
 import cron from 'node-cron';
-import { getAuditLoggerService } from './audit-logger-service';
+// Audit logging removed
+
 
 class AuditLogArchivalService {
   private cronJob: cron.ScheduledTask | null = null;
@@ -54,7 +55,8 @@ class AuditLogArchivalService {
    * Archives logs older than 90 days
    */
   async performArchival(): Promise<void> {
-    const auditLogger = getAuditLoggerService();
+    // Audit logging removed
+
     
     try {
       console.log('[AuditLogArchival] Starting audit log archival...');
@@ -96,7 +98,8 @@ class AuditLogArchivalService {
    */
   async triggerArchival(): Promise<{ success: boolean; archivedCount: number; error?: string }> {
     try {
-      const auditLogger = getAuditLoggerService();
+      // Audit logging removed
+
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - 90);
       
@@ -130,7 +133,8 @@ class AuditLogArchivalService {
     threshold: number;
   }> {
     try {
-      const auditLogger = getAuditLoggerService();
+      // Audit logging removed
+
       const { shouldArchive, totalRecords } = await auditLogger.checkThreshold();
       
       return {

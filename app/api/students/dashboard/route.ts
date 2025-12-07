@@ -12,11 +12,11 @@ import { withStudentDashboardMiddleware, EnhancedRequest } from '@/lib/middlewar
 import { ValidationError, NotFoundError } from '@/lib/errors/custom-errors';
 import { getDashboardService } from '@/lib/services/dashboard-service';
 import { getCacheService } from '@/lib/services/cache-service';
-import { getAuditLoggerService } from '@/lib/services/audit-logger-service';
+// Audit logging removed
 
 const dashboardService = getDashboardService();
 const cacheService = getCacheService();
-const auditLogger = getAuditLoggerService();
+// Audit logging removed
 
 /**
  * GET /api/students/dashboard
@@ -82,26 +82,7 @@ export const GET = withStudentDashboardMiddleware(
 
       const responseTime = performance.now() - startTime;
 
-      // Log dashboard access for audit trail
-      await auditLogger.log({
-        userId: req.user?.id || 'unknown',
-        action: 'dashboard_access',
-        resource: 'student_dashboard',
-        resourceId: targetStudentId,
-        metadata: {
-          includeClassStats,
-          forceRefresh,
-          responseTime: Math.round(responseTime),
-          cached: !cacheInfo.isStale,
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: true
-      });
+      // Audit logging removed
 
       // Prepare response with cache metadata
       const response = {
@@ -140,23 +121,8 @@ export const GET = withStudentDashboardMiddleware(
 
     } catch (error) {
       // Log failed dashboard access
-      await auditLogger.log({
-        userId: req.user?.id || 'unknown',
-        action: 'dashboard_access',
-        resource: 'student_dashboard',
-        resourceId: targetStudentId,
-        metadata: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      });
+      // Audit logging removed
+
 
       throw error;
     }
@@ -192,22 +158,8 @@ export const POST = withStudentDashboardMiddleware(
       const responseTime = performance.now() - startTime;
 
       // Log cache refresh action
-      await auditLogger.log({
-        userId: studentId,
-        action: 'cache_refresh',
-        resource: 'student_dashboard',
-        resourceId: studentId,
-        metadata: {
-          responseTime: Math.round(responseTime),
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: true
-      });
+      // Audit logging removed
+
 
       const response = {
         success: true,
@@ -236,23 +188,8 @@ export const POST = withStudentDashboardMiddleware(
 
     } catch (error) {
       // Log failed cache refresh
-      await auditLogger.log({
-        userId: studentId,
-        action: 'cache_refresh',
-        resource: 'student_dashboard',
-        resourceId: studentId,
-        metadata: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      });
+      // Audit logging removed
+
 
       throw error;
     }

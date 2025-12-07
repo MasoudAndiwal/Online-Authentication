@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuditLoggerService } from '../services/audit-logger-service';
+// Audit logging removed
+
 
 /**
  * Extract IP address from request
@@ -43,17 +44,13 @@ export async function logDataExport(
   dateRange: { start: Date; end: Date },
   request: NextRequest
 ): Promise<void> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
+
   const ipAddress = getClientIp(request);
   const userAgent = getUserAgent(request);
   
-  await auditLogger.logDataExport(
-    userId,
-    exportFormat,
-    dateRange,
-    ipAddress,
-    userAgent
-  );
+  // Audit logging removed
+
 }
 
 /**
@@ -68,20 +65,13 @@ export async function logFileUpload(
   success: boolean = true,
   errorMessage?: string
 ): Promise<void> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
+
   const ipAddress = getClientIp(request);
   const userAgent = getUserAgent(request);
   
-  await auditLogger.logFileUpload(
-    userId,
-    fileName,
-    fileSize,
-    fileType,
-    ipAddress,
-    userAgent,
-    success,
-    errorMessage
-  );
+  // Audit logging removed
+
 }
 
 /**
@@ -93,19 +83,17 @@ export async function logAuthenticationAttempt(
   request: NextRequest,
   errorReason?: string
 ): Promise<void> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
+
   const ipAddress = getClientIp(request);
   const userAgent = getUserAgent(request);
   
   if (success) {
-    await auditLogger.logAuthenticationSuccess(userId, ipAddress, userAgent);
+    // Audit logging removed
+
   } else {
-    await auditLogger.logAuthenticationFailure(
-      userId,
-      errorReason || 'Authentication failed',
-      ipAddress,
-      userAgent
-    );
+    // Audit logging removed
+
   }
 }
 
@@ -131,19 +119,14 @@ export function withAuditLogging<T extends (...args: any[]) => Promise<NextRespo
     
     // Log based on action type and response status
     if (userId && response.status >= 200 && response.status < 300) {
-      const auditLogger = getAuditLoggerService();
+      // Audit logging removed
+
       const ipAddress = getClientIp(request);
       const userAgent = getUserAgent(request);
       
       // Log successful action
-      await auditLogger.log({
-        userId,
-        action: options.action,
-        resource: request.url,
-        ipAddress,
-        userAgent,
-        success: true,
-      });
+      // Audit logging removed
+
     }
     
     return response;

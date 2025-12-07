@@ -410,7 +410,7 @@ async function main() {
     await tester.runAllTests();
   } catch (error) {
     console.error('❌ Failed to run tests:', error instanceof Error ? error.message : 'Unknown error');
-    console.log('\n💡 Make sure your Next.js server is running on http://localhost:3000');
+    console.log('\n Make sure your Next.js server is running on http://localhost:3000');
     console.log('   Run: npm run dev');
     process.exit(1);
   }

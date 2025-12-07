@@ -214,7 +214,7 @@ export function BulkActionsPanel({
       setRetryCount(0);
       
       // Show comprehensive success notification
-      toast.success(`✅ Bulk update completed successfully!`, {
+      toast.success(` Bulk update completed successfully!`, {
         description: `${selectedStudents.length} students marked as ${pendingAction.label.toLowerCase().replace('mark all ', '')}`,
         duration: 4000,
         action: {
@@ -230,7 +230,7 @@ export function BulkActionsPanel({
       
       // Real-time visual confirmation with staggered auto-clear
       setTimeout(() => {
-        toast.info("🎉 Changes saved automatically", {
+        toast.info(" Changes saved automatically", {
           description: "All attendance records have been synchronized",
           duration: 2000,
         });
@@ -252,7 +252,7 @@ export function BulkActionsPanel({
       const errorMessage = error instanceof Error ? error.message : "Network error occurred";
       
       // Enhanced error handling with detailed feedback
-      toast.error("❌ Bulk update failed", {
+      toast.error(" Bulk update failed", {
         description: `${errorMessage} (Attempt ${retryCount + 1}/3)`,
         duration: 6000,
         action: {
@@ -264,7 +264,7 @@ export function BulkActionsPanel({
       // Show recovery suggestions for persistent errors
       if (retryCount >= 1) {
         setTimeout(() => {
-          toast.warning("💡 Troubleshooting tip", {
+          toast.warning(" Troubleshooting tip", {
             description: "Try selecting fewer students or check your internet connection",
             duration: 5000,
           });
@@ -281,7 +281,7 @@ export function BulkActionsPanel({
   // Enhanced retry mechanism with exponential backoff and smart recovery
   const handleRetryAction = async () => {
     if (!pendingAction || retryCount >= 3) {
-      toast.error("⚠️ Maximum retry attempts reached", {
+      toast.error(" Maximum retry attempts reached", {
         description: "Please refresh the page or try individual updates",
         duration: 8000,
         action: {
@@ -295,7 +295,7 @@ export function BulkActionsPanel({
     // Exponential backoff delay
     const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s delays
     
-    toast.info(`🔄 Retrying in ${delay / 1000} seconds...`, {
+    toast.info(`Retrying in ${delay / 1000} seconds...`, {
       description: `Attempt ${retryCount + 2}/3`,
       duration: delay,
     });

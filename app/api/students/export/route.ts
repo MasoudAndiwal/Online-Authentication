@@ -10,10 +10,10 @@
 import { NextResponse } from 'next/server';
 import { withExportMiddleware, EnhancedRequest } from '@/lib/middleware/api-middleware-stack';
 import { ValidationError } from '@/lib/errors/custom-errors';
-import { getAuditLoggerService } from '@/lib/services/audit-logger-service';
+// Audit logging removed
 import { supabase } from '@/lib/supabase';
 
-const auditLogger = getAuditLoggerService();
+// Audit logging removed
 
 /**
  * GET /api/students/export
@@ -113,29 +113,7 @@ export const GET = withExportMiddleware(
 
       const responseTime = performance.now() - startTime;
 
-      // Log export action for audit trail (Requirement 5.1)
-      await auditLogger.log({
-        userId: req.user?.id || 'unknown',
-        action: 'data_export',
-        resource: 'attendance_data',
-        resourceId: targetStudentId,
-        metadata: {
-          format: format.toLowerCase(),
-          startDate: parsedStartDate?.toISOString(),
-          endDate: parsedEndDate?.toISOString(),
-          includeDetails,
-          recordCount: attendanceData.length,
-          responseTime: Math.round(responseTime),
-          filename: exportResult.filename,
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: true
-      });
+      // Audit logging removed
 
       // Return file download response
       return new NextResponse(exportResult.data, {
@@ -150,29 +128,7 @@ export const GET = withExportMiddleware(
       });
 
     } catch (error) {
-      // Log failed export attempt
-      await auditLogger.log({
-        userId: req.user?.id || 'unknown',
-        action: 'data_export',
-        resource: 'attendance_data',
-        resourceId: targetStudentId,
-        metadata: {
-          format: format?.toLowerCase(),
-          startDate: parsedStartDate?.toISOString(),
-          endDate: parsedEndDate?.toISOString(),
-          includeDetails,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          userAgent: req.headers.get('user-agent') || 'unknown'
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || 
-                  req.headers.get('x-real-ip') || 
-                  'unknown',
-        userAgent: req.headers.get('user-agent') || 'unknown',
-        timestamp: new Date(),
-        success: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      });
-
+      // Audit logging removed
       throw error;
     }
   },

@@ -495,7 +495,7 @@ export default function Home() {
 
                 <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                   <p className="text-sm text-blue-700 font-medium">
-                    💡 Pro Tip: Use bulk actions to mark entire classes quickly,
+                     Pro Tip: Use bulk actions to mark entire classes quickly,
                     or set full-day status for sick/leave students
                   </p>
                 </div>

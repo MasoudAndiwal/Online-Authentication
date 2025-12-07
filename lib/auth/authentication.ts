@@ -2,7 +2,7 @@ import { comparePassword } from '@/lib/utils/password';
 import { findStudentByUsername, findTeacherByUsername } from '@/lib/database/operations';
 import { supabase } from '@/lib/supabase';
 import { Student, Teacher } from '@/lib/database/models';
-import { getAuditLoggerService } from '@/lib/services/audit-logger-service';
+// Audit logging removed
 
 // Authentication response type
 export interface AuthResponse {
@@ -30,7 +30,7 @@ export async function authenticateOffice(
   password: string,
   context?: AuthContext
 ): Promise<AuthResponse> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
   
   try {
     // Query office_staff table for matching username
@@ -42,14 +42,6 @@ export async function authenticateOffice(
       .single();
 
     if (error || !officeUser) {
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        username,
-        'Invalid credentials - user not found or inactive',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Invalid credentials. Please check your username and password.',
@@ -60,26 +52,11 @@ export async function authenticateOffice(
     const isPasswordValid = await comparePassword(password, officeUser.password);
 
     if (!isPasswordValid) {
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        officeUser.id,
-        'Invalid credentials - incorrect password',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Invalid credentials. Please check your username and password.',
       };
     }
-
-    // Log successful authentication
-    await auditLogger.logAuthenticationSuccess(
-      officeUser.id,
-      context?.ipAddress,
-      context?.userAgent
-    );
 
     return {
       success: true,
@@ -96,14 +73,6 @@ export async function authenticateOffice(
   } catch (error) {
     console.error('Office authentication error:', error);
     
-    // Log authentication error
-    await auditLogger.logAuthenticationFailure(
-      username,
-      `Authentication error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      context?.ipAddress,
-      context?.userAgent
-    );
-    
     return {
       success: false,
       message: 'An error occurred during authentication. Please try again.',
@@ -117,21 +86,13 @@ export async function authenticateTeacher(
   password: string,
   context?: AuthContext
 ): Promise<AuthResponse> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
   
   try {
     // Find teacher by username
     const teacher: Teacher | null = await findTeacherByUsername(username);
 
     if (!teacher) {
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        username,
-        'Invalid credentials - teacher not found',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Invalid credentials. Please check your username and password.',
@@ -140,14 +101,6 @@ export async function authenticateTeacher(
 
     // Check if teacher is active
     if (teacher.status !== 'ACTIVE') {
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        teacher.id,
-        'Account inactive',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Your account is inactive. Please contact administration.',
@@ -158,26 +111,11 @@ export async function authenticateTeacher(
     const isPasswordValid = await comparePassword(password, teacher.password);
 
     if (!isPasswordValid) {
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        teacher.id,
-        'Invalid credentials - incorrect password',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Invalid credentials. Please check your username and password.',
       };
     }
-
-    // Log successful authentication
-    await auditLogger.logAuthenticationSuccess(
-      teacher.id,
-      context?.ipAddress,
-      context?.userAgent
-    );
 
     return {
       success: true,
@@ -193,14 +131,6 @@ export async function authenticateTeacher(
   } catch (error) {
     console.error('Teacher authentication error:', error);
     
-    // Log authentication error
-    await auditLogger.logAuthenticationFailure(
-      username,
-      `Authentication error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      context?.ipAddress,
-      context?.userAgent
-    );
-    
     return {
       success: false,
       message: 'An error occurred during authentication. Please try again.',
@@ -215,7 +145,7 @@ export async function authenticateStudent(
   password: string,
   context?: AuthContext
 ): Promise<AuthResponse> {
-  const auditLogger = getAuditLoggerService();
+  // Audit logging removed
   
   try {
     console.log('🔐 Student Authentication Attempt:', {
@@ -229,14 +159,6 @@ export async function authenticateStudent(
 
     if (!student) {
       console.log('❌ Student not found with username:', username);
-      
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        username,
-        'Invalid credentials - student not found',
-        context?.ipAddress,
-        context?.userAgent
-      );
       
       return {
         success: false,
@@ -265,14 +187,6 @@ export async function authenticateStudent(
     if (!studentIdMatches) {
       console.log('❌ Student ID does not match');
       
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        student.id,
-        'Invalid credentials - student ID mismatch',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Invalid credentials. Please check your username, student ID, and password.',
@@ -282,14 +196,6 @@ export async function authenticateStudent(
     // Check if student is active
     if (student.status !== 'ACTIVE') {
       console.log('❌ Student account is not active:', student.status);
-      
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        student.id,
-        'Account inactive',
-        context?.ipAddress,
-        context?.userAgent
-      );
       
       return {
         success: false,
@@ -306,14 +212,6 @@ export async function authenticateStudent(
     if (!isPasswordValid) {
       console.log('❌ Password is invalid');
       
-      // Log authentication failure
-      await auditLogger.logAuthenticationFailure(
-        student.id,
-        'Invalid credentials - incorrect password',
-        context?.ipAddress,
-        context?.userAgent
-      );
-      
       return {
         success: false,
         message: 'Invalid credentials. Please check your username, student ID, and password.',
@@ -321,13 +219,6 @@ export async function authenticateStudent(
     }
 
     console.log('✅ Authentication successful for student:', student.username);
-
-    // Log successful authentication
-    await auditLogger.logAuthenticationSuccess(
-      student.id,
-      context?.ipAddress,
-      context?.userAgent
-    );
 
     return {
       success: true,
@@ -342,14 +233,6 @@ export async function authenticateStudent(
     };
   } catch (error) {
     console.error('❌ Student authentication error:', error);
-    
-    // Log authentication error
-    await auditLogger.logAuthenticationFailure(
-      username,
-      `Authentication error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      context?.ipAddress,
-      context?.userAgent
-    );
     
     return {
       success: false,

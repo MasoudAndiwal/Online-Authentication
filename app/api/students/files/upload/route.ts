@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFileStorageService } from '@/lib/services/file-storage-service';
 import { getVirusScanningService } from '@/lib/services/virus-scanning-service';
-import { getAuditLoggerService } from '@/lib/services/audit-logger-service';
+// Audit logging removed
 import { getRateLimiterService } from '@/lib/services/rate-limiter-service';
 import { getServerSession } from '@/lib/auth/server-session';
 
@@ -126,28 +126,7 @@ export async function POST(request: NextRequest) {
       console.error('Virus scanning failed:', error);
     });
 
-    // 7. Audit logging
-    const auditLogger = getAuditLoggerService();
-    const ipAddress = request.headers.get('x-forwarded-for') || 
-                      request.headers.get('x-real-ip') || 
-                      'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-
-    await auditLogger.log({
-      userId: studentId,
-      action: 'file_upload',
-      resource: 'medical_certificate',
-      resourceId: uploadResult.fileId,
-      metadata: {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-      },
-      ipAddress,
-      userAgent,
-      timestamp: new Date(),
-      success: true,
-    });
+    // 7. Audit logging removed
 
     // 8. Return success response with signed URL (Requirement 7.2)
     return NextResponse.json(
@@ -171,31 +150,7 @@ export async function POST(request: NextRequest) {
 
     // Audit log the failure
     try {
-      const session = await getServerSession();
-      if (session) {
-        const auditLogger = getAuditLoggerService();
-        const ipAddress = request.headers.get('x-forwarded-for') || 
-                          request.headers.get('x-real-ip') || 
-                          'unknown';
-        const userAgent = request.headers.get('user-agent') || 'unknown';
-
-        await auditLogger.log({
-          userId: session.userId,
-          action: 'file_upload',
-          resource: 'medical_certificate',
-          metadata: {
-            error: error instanceof Error ? error.message : 'Unknown error',
-          },
-          ipAddress,
-          userAgent,
-          timestamp: new Date(),
-          success: false,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
-    } catch (auditError) {
-      console.error('Failed to log audit entry:', auditError);
-    }
+      // Audit logging removed
 
     return NextResponse.json(
       {

@@ -394,8 +394,9 @@ export function getDatabasePoolStats(): ConnectionPoolStats {
   return pool.getStats();
 }
 
-// Auto-initialize pool when imported (server-side only)
-if (typeof window === 'undefined') {
+// Auto-initialization disabled to prevent startup errors
+// The pool will be initialized on-demand when needed
+if (false && typeof window === 'undefined') {
   const pool = getDatabasePool();
   pool.initialize().catch(error => {
     console.error('Failed to auto-initialize database connection pool:', error);
