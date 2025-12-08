@@ -460,7 +460,7 @@ export function AddScheduleEntryDialog({
                     {usedPeriodsForDay.length > 0 && (
                       <div className="bg-blue-50 p-3 rounded-lg shadow-sm">
                         <p className="text-xs text-blue-700">
-                          ℹ️ {usedPeriodsForDay.length} {usedPeriodsForDay.length === 1 ? 'period is' : 'periods are'} already assigned to other entries on {dayOfWeek}.
+                           {usedPeriodsForDay.length} {usedPeriodsForDay.length === 1 ? 'period is' : 'periods are'} already assigned to other entries on {dayOfWeek}.
                         </p>
                       </div>
                     )}
@@ -477,7 +477,7 @@ export function AddScheduleEntryDialog({
                             remainingHours <= 2 ? 'text-yellow-700 font-semibold' : 
                             'text-green-700 font-semibold'
                           }>
-                            📊 Day Usage: {totalHoursOnDay}/6 hours used
+                             Day Usage: {totalHoursOnDay}/6 hours used
                           </span>
                           <span className={
                             remainingHours === 0 ? 'text-red-600' : 
@@ -489,7 +489,7 @@ export function AddScheduleEntryDialog({
                         </div>
                         {calculatedTimeRange && newTotalHours > 6 && (
                           <p className="text-xs text-red-700 mt-1 font-semibold">
-                            ⚠️ Adding {calculatedTimeRange.hours} hours would exceed the 6-hour limit!
+                             Adding {calculatedTimeRange.hours} hours would exceed the 6-hour limit!
                           </p>
                         )}
                       </div>

@@ -228,13 +228,15 @@ export function ParallaxContainer({
 export function GlassCard({ 
   children, 
   className = '',
-  blur = 'md'
+  blur = 'md',
+  disableHover = false
 }: {
   children: React.ReactNode
   className?: string
   blur?: 'sm' | 'md' | 'lg' | 'xl'
+  disableHover?: boolean
 }) {
-  const blurClasses = {
+  const blurClasses: Record<string, string> = {
     sm: 'backdrop-blur-sm',
     md: 'backdrop-blur-md',
     lg: 'backdrop-blur-lg',
@@ -248,7 +250,7 @@ export function GlassCard({
         bg-white/10 ${blurClasses[blur]}
         shadow-xl ${className}
       `}
-      whileHover={{
+      whileHover={disableHover ? undefined : {
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         borderColor: 'rgba(255, 255, 255, 0.3)'
       }}
