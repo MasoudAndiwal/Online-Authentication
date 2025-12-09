@@ -31,186 +31,237 @@ interface EmailResponse {
 }
 
 /**
- * Generate password reset email HTML template
+ * Generate password reset email HTML template - Modern Design
  */
 export function generateResetEmailHTML(resetCode: string, firstName: string): string {
+  // Split code into individual digits for better display
+  const codeDigits = resetCode.split('');
+  const digitBoxes = codeDigits.map(digit => `
+    <td style="padding: 0 4px;">
+      <div style="width: 48px; height: 60px; background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border-radius: 10px; line-height: 60px; text-align: center; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+        <span style="color: #ffffff; font-size: 28px; font-weight: 700; font-family: 'SF Mono', 'Courier New', monospace;">${digit}</span>
+      </div>
+    </td>
+  `).join('');
+  
   return `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Reset Code</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 40px 20px;
-      text-align: center;
-      color: white;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-    }
-    .content {
-      padding: 40px 30px;
-    }
-    .greeting {
-      font-size: 18px;
-      color: #333;
-      margin-bottom: 20px;
-    }
-    .message {
-      color: #666;
-      margin-bottom: 30px;
-      line-height: 1.8;
-    }
-    .code-container {
-      background: #f8f9fa;
-      border: 2px dashed #667eea;
-      border-radius: 8px;
-      padding: 25px;
-      text-align: center;
-      margin: 30px 0;
-    }
-    .code-label {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .code {
-      font-size: 36px;
-      font-weight: bold;
-      color: #667eea;
-      letter-spacing: 8px;
-      font-family: 'Courier New', monospace;
-    }
-    .expiry {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #e74c3c;
-      font-weight: 500;
-    }
-    .warning {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 15px;
-      margin: 25px 0;
-      border-radius: 4px;
-    }
-    .warning-text {
-      color: #856404;
-      margin: 0;
-      font-size: 14px;
-    }
-    .footer {
-      background: #f8f9fa;
-      padding: 25px;
-      text-align: center;
-      color: #666;
-      font-size: 13px;
-    }
-    .footer p {
-      margin: 5px 0;
-    }
-    .support-link {
-      color: #667eea;
-      text-decoration: none;
-    }
-  </style>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Password Reset Code - University AttendanceHub</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🔐 Password Reset</h1>
-    </div>
-    <div class="content">
-      <div class="greeting">Hello ${firstName},</div>
-      <div class="message">
-        We received a request to reset your password for your University Attendance System account. 
-        Use the verification code below to complete the password reset process.
-      </div>
-      
-      <div class="code-container">
-        <div class="code-label">Your Reset Code</div>
-        <div class="code">${resetCode}</div>
-        <div class="expiry">⏰ This code expires in 15 minutes</div>
-      </div>
-      
-      <div class="warning">
-        <p class="warning-text">
-          <strong>⚠️ Security Notice:</strong> If you didn't request a password reset, 
-          please ignore this email and ensure your account is secure.
-        </p>
-      </div>
-      
-      <div class="message">
-        For security reasons, this code can only be used once and will expire after 15 minutes.
-      </div>
-    </div>
-    <div class="footer">
-      <p><strong>University Attendance System</strong></p>
-      <p>Office Staff Portal</p>
-      <p>Need help? Contact <a href="mailto:support@university.edu" class="support-link">support@university.edu</a></p>
-      <p style="margin-top: 15px; color: #999;">© 2025 All rights reserved</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  
+  <!-- Wrapper Table -->
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f0f4f8;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header with Logo -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%); padding: 40px 30px; text-align: center;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <!-- Logo Icon -->
+                    <div style="width: 70px; height: 70px; background-color: rgba(255, 255, 255, 0.2); border-radius: 16px; display: inline-block; line-height: 70px; margin-bottom: 16px;">
+                      <span style="font-size: 36px;">&#127891;</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">
+                      University AttendanceHub
+                    </h1>
+                    <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.85); font-size: 14px; font-weight: 500;">
+                      Secure Password Reset
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 45px 40px 35px 40px;">
+              
+              <!-- Greeting -->
+              <h2 style="margin: 0 0 20px 0; color: #1e293b; font-size: 22px; font-weight: 600;">
+                Hello ${firstName}! &#128075;
+              </h2>
+              
+              <!-- Message -->
+              <p style="margin: 0 0 30px 0; color: #64748b; font-size: 16px; line-height: 1.7;">
+                We received a request to reset your password. Use the verification code below to complete the process. This code is valid for <strong style="color: #1e293b;">15 minutes</strong>.
+              </p>
+              
+              <!-- Code Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 16px; padding: 30px 20px; text-align: center;">
+                    
+                    <!-- Code Label -->
+                    <p style="margin: 0 0 16px 0; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">
+                      Your Verification Code
+                    </p>
+                    
+                    <!-- Code Digits -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                      <tr>
+                        ${digitBoxes}
+                      </tr>
+                    </table>
+                    
+                    <!-- Timer -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin-top: 20px;">
+                      <tr>
+                        <td style="background-color: #fef3c7; border-radius: 20px; padding: 8px 16px;">
+                          <span style="color: #b45309; font-size: 13px; font-weight: 600;">
+                            &#9201; Expires in 15 minutes
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Instructions -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 30px;">
+                <tr>
+                  <td style="background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 0 8px 8px 0; padding: 16px 20px;">
+                    <p style="margin: 0; color: #166534; font-size: 14px; line-height: 1.6;">
+                      <strong>&#128161; Quick Tip:</strong> Enter this code on the password reset page to create your new password.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Security Warning -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 20px;">
+                <tr>
+                  <td style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 16px 20px;">
+                    <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+                      <strong>&#128274; Security Notice:</strong> If you didn't request this code, please ignore this email. Your account remains secure.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent);"></div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px 40px 40px; text-align: center;">
+              
+              <!-- Help Section -->
+              <p style="margin: 0 0 20px 0; color: #64748b; font-size: 14px;">
+                Need help? We're here for you.
+              </p>
+              
+              <!-- Support Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <td style="background-color: #f1f5f9; border-radius: 8px; padding: 12px 24px;">
+                    <a href="mailto:support@university.edu" style="color: #2563eb; font-size: 14px; font-weight: 600; text-decoration: none;">
+                      &#128231; Contact Support
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Copyright -->
+              <p style="margin: 25px 0 0 0; color: #94a3b8; font-size: 12px;">
+                &copy; 2025 University AttendanceHub. All rights reserved.
+              </p>
+              <p style="margin: 8px 0 0 0; color: #cbd5e1; font-size: 11px;">
+                This is an automated message. Please do not reply directly to this email.
+              </p>
+              
+            </td>
+          </tr>
+          
+        </table>
+        
+      </td>
+    </tr>
+  </table>
+  
 </body>
 </html>
   `;
 }
+
 
 /**
  * Generate plain text version of reset email
  */
 export function generateResetEmailText(resetCode: string, firstName: string): string {
   return `
-Hello ${firstName},
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   UNIVERSITY ATTENDANCEHUB
+   Secure Password Reset
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-We received a request to reset your password for your University Attendance System account.
+Hello ${firstName}!
 
-Your password reset code is: ${resetCode}
+We received a request to reset your password for your University AttendanceHub account.
 
-This code expires in 15 minutes and can only be used once.
+┌─────────────────────────────────────┐
+│                                     │
+│   YOUR VERIFICATION CODE:           │
+│                                     │
+│         ${resetCode}                     │
+│                                     │
+│   ⏱ Expires in 15 minutes          │
+│                                     │
+└─────────────────────────────────────┘
 
-If you didn't request a password reset, please ignore this email and ensure your account is secure.
+💡 WHAT TO DO NEXT:
+Enter this code on the password reset page to create your new password.
 
----
-University Attendance System
-Office Staff Portal
-Need help? Contact support@university.edu
-© 2025 All rights reserved
+🔒 SECURITY NOTICE:
+If you didn't request this code, please ignore this email. Your account remains secure.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Need help? Contact us at support@university.edu
+
+© 2025 University AttendanceHub. All rights reserved.
+This is an automated message. Please do not reply directly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   `.trim();
 }
 
 /**
  * Send email using configured email service
- * 
- * This is a placeholder implementation. You need to choose one of the options:
- * - Resend (recommended)
- * - SendGrid
- * - Supabase Edge Functions
- * 
- * See EMAIL_SETUP.md for detailed instructions
  */
 export async function sendEmail(params: SendEmailParams): Promise<EmailResponse> {
   try {
@@ -257,7 +308,7 @@ async function sendEmailWithNodemailer(
 
     // Send email
     await transporter.sendMail({
-      from: `"University Attendance System" <${emailUser}>`,
+      from: `"University AttendanceHub" <${emailUser}>`,
       to: params.to,
       subject: params.subject,
       text: params.text,
@@ -291,7 +342,7 @@ export async function sendPasswordResetEmail(
 
   return sendEmail({
     to: email,
-    subject: 'Password Reset Code - University Attendance System',
+    subject: '🔐 Password Reset Code - University AttendanceHub',
     html,
     text,
   });

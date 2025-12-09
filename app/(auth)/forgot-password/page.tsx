@@ -71,11 +71,12 @@ export default function ForgotPasswordPage() {
   const [resetCode, setResetCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [countdown, setCountdown] = useState(900); // 15 minutes
+  const [countdown, setCountdown] = useState(900); // 15 minutes for code expiry
+  const [resendCooldown, setResendCooldown] = useState(0); // 30 seconds cooldown for resend
   const [codeError, setCodeError] = useState(false); // For red border animation
   const router = useRouter();
 
-  // Countdown timer
+  // Countdown timer for code expiry
   useEffect(() => {
     if (currentStep === "code" && countdown > 0) {
       const timer = setInterval(() => {
@@ -84,6 +85,16 @@ export default function ForgotPasswordPage() {
       return () => clearInterval(timer);
     }
   }, [currentStep, countdown]);
+
+  // Resend cooldown timer (30 seconds)
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [resendCooldown]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -130,6 +141,7 @@ export default function ForgotPasswordPage() {
 
       setUserEmail(data.email);
       setCountdown(900);
+      setResendCooldown(30); // Start 30 second cooldown after initial send
       setCurrentStep("code");
     } catch (error) {
       setErrorMessage("Unable to connect to server. Please try again.");
@@ -221,7 +233,11 @@ export default function ForgotPasswordPage() {
 
       if (result.success) {
         setCountdown(900);
+        setResendCooldown(30); // Start 30 second cooldown after resend
         codeForm.reset();
+        setErrorMessage(""); // Clear any previous errors
+      } else {
+        setErrorMessage(result.message || "Failed to resend code");
       }
     } catch (error) {
       setErrorMessage("Failed to resend code");
@@ -591,11 +607,11 @@ export default function ForgotPasswordPage() {
                             type="button"
                             variant="ghost"
                             onClick={handleResendCode}
-                            disabled={isLoading || countdown > 0}
+                            disabled={isLoading || resendCooldown > 0}
                             className="text-sm"
                           >
-                            <RotateCw className="h-4 w-4 mr-2" />
-                            Resend Code
+                            <RotateCw className={cn("h-4 w-4 mr-2", resendCooldown > 0 && "animate-spin")} />
+                            {resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : "Resend Code"}
                           </Button>
                         </div>
                       </form>
