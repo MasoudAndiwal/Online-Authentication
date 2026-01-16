@@ -242,7 +242,6 @@ const getNavigationItems = (role: string): NavigationItem[] => {
       label: "Messages",
       href: "/student/student-dashboard/messages",
       icon: MessageSquare,
-      comingSoon: true, // Feature not yet implemented
     },
     {
       label: "Help & Support",

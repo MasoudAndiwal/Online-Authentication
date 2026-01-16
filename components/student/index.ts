@@ -28,6 +28,7 @@ export { ConversationList } from './conversation-list'
 export { MessageThread } from './message-thread'
 export { ComposeMessage } from './compose-message'
 export { SystemMessagesPanel } from './system-messages-panel'
+export { NewConversationDialog } from './new-conversation-dialog'
 export type { SystemMessage, SystemMessageCategory, Severity } from './system-messages-panel'
 
 // Class Information Components

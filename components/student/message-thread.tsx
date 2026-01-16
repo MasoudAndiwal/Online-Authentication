@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Image as ImageIcon, Check, CheckCheck } from "lucide-react";
+import { Download, FileText, Image as ImageIcon, FileSpreadsheet, Presentation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Check3D, DoubleCheck3D, Teacher3D, SystemAlert3D } from "@/components/ui/message-3d-icons";
 
 interface Message {
   id: string;
@@ -41,16 +43,20 @@ interface MessageThreadProps {
   onDownloadAttachment: (attachment: Attachment) => void;
 }
 
+const messageVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { type: "spring" as const, stiffness: 300, damping: 25 }
+  }
+};
+
 /**
  * MessageThread Component
  * 
- * Chat-style interface with message bubbles:
- * - Student messages: Right-aligned with green background
- * - Teacher/Office messages: Left-aligned with gray background
- * - Timestamps and read receipts
- * - Attachment previews with download buttons
- * 
- * Requirements: 13.4, 13.5, 13.7
+ * Beautiful chat interface with animations and visual distinction for message types
  */
 export function MessageThread({
   messages,
@@ -61,7 +67,6 @@ export function MessageThread({
 }: MessageThreadProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -97,43 +102,43 @@ export function MessageThread({
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith("image/")) {
-      return <ImageIcon className="h-5 w-5" />;
-    }
+    if (fileType.startsWith("image/")) return <ImageIcon className="h-5 w-5" />;
+    if (fileType.includes("pdf")) return <FileText className="h-5 w-5" />;
+    if (fileType.includes("excel") || fileType.includes("spreadsheet")) return <FileSpreadsheet className="h-5 w-5" />;
+    if (fileType.includes("powerpoint") || fileType.includes("presentation")) return <Presentation className="h-5 w-5" />;
     return <FileText className="h-5 w-5" />;
   };
 
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      attendance_inquiry: "Attendance Inquiry",
-      documentation: "Documentation",
-      general: "General",
-      urgent: "Urgent",
-      system_alert: "System Alert",
-      system_info: "System Info",
+  const getCategoryConfig = (category: string) => {
+    const configs: Record<string, { label: string; color: string; bgColor: string }> = {
+      attendance_inquiry: { label: "Attendance", color: "text-blue-700", bgColor: "bg-blue-100" },
+      documentation: { label: "Documentation", color: "text-purple-700", bgColor: "bg-purple-100" },
+      general: { label: "General", color: "text-slate-700", bgColor: "bg-slate-100" },
+      urgent: { label: "Urgent", color: "text-red-700", bgColor: "bg-red-100" },
+      system_alert: { label: "System Alert", color: "text-orange-700", bgColor: "bg-orange-100" },
+      system_info: { label: "System Info", color: "text-cyan-700", bgColor: "bg-cyan-100" },
     };
-    return labels[category] || category;
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      attendance_inquiry: "bg-blue-100 text-blue-700",
-      documentation: "bg-purple-100 text-purple-700",
-      general: "bg-slate-100 text-slate-700",
-      urgent: "bg-red-100 text-red-700",
-      system_alert: "bg-orange-100 text-orange-700",
-      system_info: "bg-cyan-100 text-cyan-700",
-    };
-    return colors[category] || "bg-slate-100 text-slate-700";
+    return configs[category] || configs.general;
   };
 
   if (messages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="mb-4"
+          >
+            <Teacher3D size="xl" className="mx-auto opacity-30" />
+          </motion.div>
           <p className="text-slate-400 text-sm">No messages yet</p>
-          <p className="text-slate-400 text-xs mt-1">Start the conversation below</p>
-        </div>
+          <p className="text-slate-300 text-xs mt-1">Start the conversation below</p>
+        </motion.div>
       </div>
     );
   }
@@ -141,152 +146,200 @@ export function MessageThread({
   return (
     <div className="h-full flex flex-col">
       {/* Thread Header */}
-      <div className="p-4 border-b border-slate-200 bg-white/50">
+      <div className="p-4 bg-gradient-to-r from-emerald-50/80 to-white/50">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+          <Avatar className="h-11 w-11 ring-2 ring-emerald-200 ring-offset-2">
             <AvatarImage src={recipientAvatar} />
-            <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm font-semibold">
+            <AvatarFallback className="bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 text-sm font-bold">
               {getInitials(recipientName)}
             </AvatarFallback>
           </Avatar>
           <div>
             <h3 className="font-semibold text-slate-800">{recipientName}</h3>
-            <p className="text-xs text-slate-500">Active now</p>
+            <div className="flex items-center gap-1.5">
+              <motion.div 
+                className="h-2 w-2 rounded-full bg-emerald-500"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <p className="text-xs text-emerald-600 font-medium">Active now</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message, index) => {
-          const isCurrentUser = message.senderId === currentUserId;
-          const showAvatar = !isCurrentUser;
-          const prevMessage = index > 0 ? messages[index - 1] : null;
-          const showTimestamp = !prevMessage || 
-            new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() > 5 * 60 * 1000;
+      <div className="flex-1 overflow-y-auto p-4 pt-6 pb-6 space-y-4 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
+        <AnimatePresence>
+          {messages.map((message, index) => {
+            const isCurrentUser = message.senderId === currentUserId;
+            const isSystemMessage = message.senderRole === "system" || message.messageType === "system";
+            const showAvatar = !isCurrentUser && !isSystemMessage;
+            const prevMessage = index > 0 ? messages[index - 1] : null;
+            const showTimestamp = !prevMessage || 
+              new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() > 5 * 60 * 1000;
+            const categoryConfig = getCategoryConfig(message.category);
 
-          return (
-            <div key={message.id}>
-              {/* Timestamp Divider */}
-              {showTimestamp && (
-                <div className="flex items-center justify-center my-4">
-                  <span className="text-xs text-slate-400 bg-slate-50 px-3 py-1 rounded-full">
-                    {formatTimestamp(message.timestamp)}
-                  </span>
-                </div>
-              )}
-
-              {/* Message Bubble */}
-              <div className={cn(
-                "flex gap-2",
-                isCurrentUser ? "justify-end" : "justify-start"
-              )}>
-                {/* Avatar (for received messages) */}
-                {showAvatar && (
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={message.senderAvatar} />
-                    <AvatarFallback className="bg-slate-200 text-slate-600 text-xs">
-                      {getInitials(message.senderName)}
-                    </AvatarFallback>
-                  </Avatar>
+            return (
+              <motion.div 
+                key={message.id}
+                variants={messageVariants}
+                initial="hidden"
+                animate="visible"
+                layout
+              >
+                {/* Timestamp Divider */}
+                {showTimestamp && (
+                  <motion.div 
+                    className="flex items-center justify-center my-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <span className="text-xs text-slate-400 bg-gradient-to-r from-slate-100 to-slate-50 px-4 py-1.5 rounded-full shadow-sm">
+                      {formatTimestamp(message.timestamp)}
+                    </span>
+                  </motion.div>
                 )}
 
-                {/* Message Content */}
-                <div className={cn(
-                  "max-w-[70%] sm:max-w-md",
-                  isCurrentUser && "order-first"
-                )}>
-                  {/* Category Badge */}
-                  {message.category !== "general" && (
-                    <div className={cn(
-                      "text-xs px-2 py-0.5 rounded-full inline-block mb-1",
-                      getCategoryColor(message.category)
-                    )}>
-                      {getCategoryLabel(message.category)}
-                    </div>
-                  )}
-
-                  {/* Message Bubble */}
-                  <div className={cn(
-                    "rounded-2xl px-4 py-2.5 shadow-sm",
-                    isCurrentUser
-                      ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-br-sm"
-                      : "bg-slate-100 text-slate-800 rounded-bl-sm"
-                  )}>
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
-
-                    {/* Attachments */}
-                    {message.attachments.length > 0 && (
-                      <div className="mt-2 space-y-2">
-                        {message.attachments.map((attachment) => (
-                          <div
-                            key={attachment.id}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded-lg",
-                              isCurrentUser
-                                ? "bg-emerald-600/50"
-                                : "bg-white"
-                            )}
-                          >
-                            <div className={cn(
-                              "flex-shrink-0",
-                              isCurrentUser ? "text-white" : "text-slate-600"
-                            )}>
-                              {getFileIcon(attachment.fileType)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={cn(
-                                "text-xs font-medium truncate",
-                                isCurrentUser ? "text-white" : "text-slate-700"
-                              )}>
-                                {attachment.filename}
-                              </p>
-                              <p className={cn(
-                                "text-xs",
-                                isCurrentUser ? "text-emerald-100" : "text-slate-500"
-                              )}>
-                                {formatFileSize(attachment.fileSize)}
-                              </p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => onDownloadAttachment(attachment)}
-                              className={cn(
-                                "h-8 w-8 p-0 flex-shrink-0",
-                                isCurrentUser
-                                  ? "text-white hover:bg-emerald-700"
-                                  : "text-slate-600 hover:bg-slate-100"
-                              )}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
+                {/* System Message - Special styling */}
+                {isSystemMessage ? (
+                  <motion.div
+                    className="flex justify-center my-3"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="flex items-start gap-3 max-w-md p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 shadow-md">
+                      <SystemAlert3D size="md" animated={false} />
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">{message.content}</p>
+                        <span className="text-xs text-amber-600 mt-1 block">System Message</span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Read Receipt (for sent messages) */}
-                  {isCurrentUser && (
-                    <div className="flex items-center justify-end gap-1 mt-1 px-1">
-                      {message.isRead ? (
-                        <CheckCheck className="h-3 w-3 text-emerald-600" />
-                      ) : (
-                        <Check className="h-3 w-3 text-slate-400" />
-                      )}
-                      <span className="text-xs text-slate-400">
-                        {message.isRead ? "Read" : "Sent"}
-                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                  </motion.div>
+                ) : (
+                  /* User Message */
+                  <div className={cn(
+                    "flex gap-2",
+                    isCurrentUser ? "justify-end" : "justify-start"
+                  )}>
+                    {/* Avatar */}
+                    {showAvatar && (
+                      <Avatar className="h-8 w-8 shrink-0 ring-2 ring-slate-100">
+                        <AvatarImage src={message.senderAvatar} />
+                        <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 text-xs font-bold">
+                          {getInitials(message.senderName)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+
+                    {/* Message Content */}
+                    <div className={cn(
+                      "max-w-[75%] sm:max-w-md",
+                      isCurrentUser && "order-first"
+                    )}>
+                      {/* Category Badge */}
+                      {message.category !== "general" && (
+                        <motion.div 
+                          className={cn(
+                            "text-xs px-2.5 py-1 rounded-full inline-block mb-1.5 font-medium shadow-sm",
+                            categoryConfig.bgColor,
+                            categoryConfig.color
+                          )}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                        >
+                          {categoryConfig.label}
+                        </motion.div>
+                      )}
+
+                      {/* Message Bubble */}
+                      <motion.div 
+                        className={cn(
+                          "rounded-2xl px-4 py-3 shadow-md",
+                          isCurrentUser
+                            ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-br-md"
+                            : "bg-gradient-to-br from-white to-slate-50 text-slate-800 rounded-bl-md"
+                        )}
+                        whileHover={{ scale: 1.01 }}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                          {message.content}
+                        </p>
+
+                        {/* Attachments */}
+                        {message.attachments.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {message.attachments.map((attachment) => (
+                              <motion.div
+                                key={attachment.id}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 rounded-xl",
+                                  isCurrentUser
+                                    ? "bg-white/20"
+                                    : "bg-slate-100"
+                                )}
+                                whileHover={{ scale: 1.02 }}
+                              >
+                                <div className={cn(
+                                  "shrink-0 p-2 rounded-lg",
+                                  isCurrentUser ? "bg-white/20" : "bg-white shadow-sm"
+                                )}>
+                                  <div className={isCurrentUser ? "text-white" : "text-slate-600"}>
+                                    {getFileIcon(attachment.fileType)}
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={cn(
+                                    "text-xs font-medium truncate",
+                                    isCurrentUser ? "text-white" : "text-slate-700"
+                                  )}>
+                                    {attachment.filename}
+                                  </p>
+                                  <p className={cn(
+                                    "text-xs",
+                                    isCurrentUser ? "text-white/70" : "text-slate-500"
+                                  )}>
+                                    {formatFileSize(attachment.fileSize)}
+                                  </p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => onDownloadAttachment(attachment)}
+                                  className={cn(
+                                    "h-9 w-9 p-0 shrink-0 rounded-xl",
+                                    isCurrentUser
+                                      ? "text-white hover:bg-white/20"
+                                      : "text-slate-600 hover:bg-slate-200"
+                                  )}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </motion.div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+
+                      {/* Read Receipt */}
+                      {isCurrentUser && (
+                        <div className="flex items-center justify-end gap-1.5 mt-1.5 px-1">
+                          {message.isRead ? (
+                            <DoubleCheck3D size="sm" animated={false} />
+                          ) : (
+                            <Check3D size="sm" animated={false} className="opacity-50" />
+                          )}
+                          <span className="text-xs text-slate-400">
+                            {message.isRead ? "Read" : "Sent"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
         <div ref={messagesEndRef} />
       </div>
     </div>

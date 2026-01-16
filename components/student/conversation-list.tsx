@@ -1,16 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, User, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { Teacher3D, Inbox3D } from "@/components/ui/message-3d-icons";
 
 interface Conversation {
   id: string;
   recipientType: "teacher" | "office";
+  recipientId?: string;
   recipientName: string;
   recipientAvatar?: string;
   lastMessage: string;
@@ -22,28 +26,35 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeConversationId?: string;
   onConversationSelect: (id: string) => void;
+  onNewConversation?: () => void;
 }
+
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0 }
+};
 
 /**
  * ConversationList Component
  * 
- * Displays all conversations with teachers and office administrators.
- * Features:
- * - Recipient avatar, name, and last message preview
- * - Timestamp and unread badge with green background
- * - Active conversation highlighted with green gradient
- * - Search/filter functionality
- * 
- * Requirements: 13.1, 13.2
+ * Beautiful conversation list with micro-animations and 3D icons
  */
 export function ConversationList({
   conversations,
   activeConversationId,
   onConversationSelect,
+  onNewConversation,
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter conversations based on search query
   const filteredConversations = conversations.filter((conv) =>
     conv.recipientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
@@ -69,8 +80,46 @@ export function ConversationList({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-800 mb-3">Messages</h2>
+      <div className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Inbox3D size="lg" />
+            <h2 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              Messages
+            </h2>
+            {conversations.filter(c => c.unreadCount > 0).length > 0 && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500 }}
+              >
+                <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30">
+                  {conversations.reduce((acc, c) => acc + c.unreadCount, 0)} new
+                </Badge>
+              </motion.div>
+            )}
+          </div>
+          
+          {/* New Conversation Button */}
+          {onNewConversation && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={onNewConversation}
+                size="sm"
+                className={cn(
+                  "h-10 px-4 rounded-xl",
+                  "bg-gradient-to-r from-emerald-500 to-emerald-600",
+                  "hover:from-emerald-600 hover:to-emerald-700",
+                  "text-white shadow-lg shadow-emerald-500/30",
+                  "transition-all duration-300"
+                )}
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                New
+              </Button>
+            </motion.div>
+          )}
+        </div>
         
         {/* Search Bar */}
         <div className="relative">
@@ -81,140 +130,179 @@ export function ConversationList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={cn(
-              "pl-10 pr-4 py-2 w-full",
-              "bg-slate-50 border-slate-200",
-              "focus:bg-white focus:border-emerald-300 focus:ring-emerald-200",
-              "transition-all duration-200"
+              "pl-10 pr-4 py-3 w-full rounded-xl",
+              "bg-gradient-to-r from-slate-50 to-white",
+              "focus:from-emerald-50 focus:to-white",
+              "focus:ring-2 focus:ring-emerald-200",
+              "shadow-sm transition-all duration-300"
             )}
           />
         </div>
       </div>
 
       {/* Conversation List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
         {filteredConversations.length === 0 ? (
-          <div className="p-8 text-center">
+          <motion.div 
+            className="p-8 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <motion.div
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="mb-4"
+            >
+              <Inbox3D size="xl" className="mx-auto opacity-30" />
+            </motion.div>
             <p className="text-slate-400 text-sm">
               {searchQuery ? "No conversations found" : "No messages yet"}
             </p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filteredConversations.map((conversation) => {
-              const isActive = conversation.id === activeConversationId;
-              
-              return (
-                <button
-                  key={conversation.id}
-                  onClick={() => onConversationSelect(conversation.id)}
-                  className={cn(
-                    "w-full p-4 text-left transition-all duration-200",
-                    "hover:bg-slate-50 active:bg-slate-100",
-                    "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-inset",
-                    isActive && [
-                      "bg-gradient-to-r from-emerald-50 to-emerald-100/50",
-                      "border-l-4 border-emerald-500",
-                      "hover:from-emerald-100 hover:to-emerald-100/70"
-                    ]
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <div className="relative flex-shrink-0">
-                      <Avatar className={cn(
-                        "h-12 w-12",
-                        isActive && "ring-2 ring-emerald-500 ring-offset-2"
-                      )}>
-                        <AvatarImage src={conversation.recipientAvatar} />
-                        <AvatarFallback className={cn(
-                          "text-sm font-semibold",
-                          conversation.recipientType === "teacher" 
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-purple-100 text-purple-700"
+          <motion.div 
+            className="space-y-2"
+            variants={listVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <AnimatePresence>
+              {filteredConversations.map((conversation) => {
+                const isActive = conversation.id === activeConversationId;
+                
+                return (
+                  <motion.button
+                    key={conversation.id}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onConversationSelect(conversation.id)}
+                    className={cn(
+                      "w-full p-4 text-left rounded-2xl transition-all duration-300",
+                      "focus:outline-none focus:ring-2 focus:ring-emerald-400",
+                      isActive 
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/30"
+                        : "bg-gradient-to-r from-white to-slate-50 hover:from-emerald-50 hover:to-white shadow-sm hover:shadow-md"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className="relative shrink-0">
+                        <Avatar className={cn(
+                          "h-12 w-12 ring-2 ring-offset-2 transition-all",
+                          isActive 
+                            ? "ring-white/50" 
+                            : conversation.recipientType === "teacher"
+                              ? "ring-blue-200"
+                              : "ring-purple-200"
                         )}>
-                          {getInitials(conversation.recipientName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      {/* Recipient Type Icon */}
-                      <div className={cn(
-                        "absolute -bottom-1 -right-1",
-                        "h-5 w-5 rounded-full flex items-center justify-center",
-                        "border-2 border-white shadow-sm",
-                        conversation.recipientType === "teacher"
-                          ? "bg-blue-500"
-                          : "bg-purple-500"
-                      )}>
-                        {conversation.recipientType === "teacher" ? (
-                          <User className="h-3 w-3 text-white" />
-                        ) : (
-                          <Building2 className="h-3 w-3 text-white" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className={cn(
-                          "font-semibold text-sm truncate",
-                          isActive ? "text-emerald-900" : "text-slate-800"
-                        )}>
-                          {conversation.recipientName}
-                        </h3>
-                        
-                        {/* Timestamp */}
-                        <span className={cn(
-                          "text-xs flex-shrink-0",
-                          isActive ? "text-emerald-600" : "text-slate-500"
-                        )}>
-                          {formatTimestamp(conversation.lastMessageAt)}
-                        </span>
-                      </div>
-
-                      {/* Last Message Preview */}
-                      <div className="flex items-center justify-between gap-2">
-                        <p className={cn(
-                          "text-sm truncate",
-                          conversation.unreadCount > 0
-                            ? "font-medium text-slate-700"
-                            : "text-slate-500"
-                        )}>
-                          {conversation.lastMessage}
-                        </p>
-
-                        {/* Unread Badge */}
-                        {conversation.unreadCount > 0 && (
-                          <Badge className={cn(
-                            "bg-emerald-500 text-white",
-                            "hover:bg-emerald-600",
-                            "min-w-[20px] h-5 px-1.5",
-                            "text-xs font-semibold",
-                            "flex items-center justify-center",
-                            "rounded-full"
+                          <AvatarImage src={conversation.recipientAvatar} />
+                          <AvatarFallback className={cn(
+                            "text-sm font-bold",
+                            isActive
+                              ? "bg-white/20 text-white"
+                              : conversation.recipientType === "teacher" 
+                                ? "bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700"
+                                : "bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700"
                           )}>
-                            {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
-                          </Badge>
-                        )}
+                            {getInitials(conversation.recipientName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        {/* Type Icon */}
+                        <motion.div 
+                          className={cn(
+                            "absolute -bottom-1 -right-1",
+                            "h-5 w-5 rounded-full flex items-center justify-center",
+                            "shadow-md",
+                            isActive
+                              ? "bg-white"
+                              : conversation.recipientType === "teacher"
+                                ? "bg-gradient-to-br from-blue-400 to-blue-500"
+                                : "bg-gradient-to-br from-purple-400 to-purple-500"
+                          )}
+                          whileHover={{ scale: 1.2 }}
+                        >
+                          {conversation.recipientType === "teacher" ? (
+                            <Teacher3D size="sm" className={isActive ? "text-emerald-600" : "text-white"} animated={false} />
+                          ) : (
+                            <Inbox3D size="sm" className={isActive ? "text-emerald-600" : "text-white"} animated={false} />
+                          )}
+                        </motion.div>
                       </div>
 
-                      {/* Recipient Type Label */}
-                      <div className="mt-1">
-                        <span className={cn(
-                          "text-xs px-2 py-0.5 rounded-full",
-                          conversation.recipientType === "teacher"
-                            ? "bg-blue-50 text-blue-600"
-                            : "bg-purple-50 text-purple-600"
-                        )}>
-                          {conversation.recipientType === "teacher" ? "Teacher" : "Office"}
-                        </span>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className={cn(
+                            "font-semibold text-sm truncate",
+                            isActive ? "text-white" : "text-slate-800"
+                          )}>
+                            {conversation.recipientName}
+                          </h3>
+                          
+                          <span className={cn(
+                            "text-xs shrink-0",
+                            isActive ? "text-white/80" : "text-slate-500"
+                          )}>
+                            {formatTimestamp(conversation.lastMessageAt)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={cn(
+                            "text-sm truncate",
+                            isActive 
+                              ? "text-white/90"
+                              : conversation.unreadCount > 0
+                                ? "font-medium text-slate-700"
+                                : "text-slate-500"
+                          )}>
+                            {conversation.lastMessage}
+                          </p>
+
+                          {/* Unread Badge */}
+                          {conversation.unreadCount > 0 && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", stiffness: 500 }}
+                            >
+                              <Badge className={cn(
+                                "min-w-[22px] h-[22px] px-1.5",
+                                "text-xs font-bold",
+                                "flex items-center justify-center",
+                                "rounded-full shadow-md",
+                                isActive
+                                  ? "bg-white text-emerald-600"
+                                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                              )}>
+                                {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
+                              </Badge>
+                            </motion.div>
+                          )}
+                        </div>
+
+                        {/* Type Label */}
+                        <div className="mt-2">
+                          <span className={cn(
+                            "text-xs px-2.5 py-1 rounded-full font-medium",
+                            isActive
+                              ? "bg-white/20 text-white"
+                              : conversation.recipientType === "teacher"
+                                ? "bg-blue-100 text-blue-600"
+                                : "bg-purple-100 text-purple-600"
+                          )}>
+                            {conversation.recipientType === "teacher" ? "Teacher" : "Office"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  </motion.button>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </div>

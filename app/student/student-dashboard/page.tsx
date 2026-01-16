@@ -14,6 +14,7 @@ import { DashboardMetricsSkeleton } from "@/components/student/dashboard-metrics
 import { useStudentDashboard } from "@/hooks/use-student-dashboard";
 import { WeeklyAttendanceCalendar } from "@/components/student/weekly-attendance-calendar";
 import { useWeeklyAttendance } from "@/hooks/use-weekly-attendance";
+import { useSystemMessages, useMarkSystemMessageRead, useDismissSystemMessage } from "@/hooks/use-student-messages";
 import { useSyncService, useAutoSync } from "@/hooks/use-sync-service";
 import { StudentErrorBoundary, StudentSectionErrorBoundary } from "@/components/student/error-boundary";
 import { ErrorDisplay } from "@/components/student/error-display";
@@ -40,24 +41,21 @@ export default function StudentDashboardPage() {
   const [currentWeek, setCurrentWeek] = React.useState(0);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
   const { toast } = useToast();
-  const [notifications, setNotifications] = React.useState<Notification[]>([
-    {
-      id: "1",
-      type: "info",
-      title: "Welcome to Your Dashboard",
-      message: "Check your attendance metrics and stay on track with your academic goals.",
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-    },
-    {
-      id: "2",
-      type: "success",
-      title: "Great Attendance!",
-      message: "You've maintained excellent attendance this week. Keep it up!",
-      timestamp: new Date(Date.now() - 7200000),
-      read: false,
-    },
-  ]);
+  
+  // Fetch system messages for notifications
+  const { data: systemMessages = [] } = useSystemMessages(true);
+  const markSystemReadMutation = useMarkSystemMessageRead();
+  const dismissSystemMutation = useDismissSystemMessage();
+  
+  // Convert system messages to notification format
+  const notifications: Notification[] = systemMessages.map(msg => ({
+    id: msg.id,
+    type: msg.severity === 'warning' ? 'warning' : msg.severity === 'error' ? 'warning' : msg.severity === 'success' ? 'success' : 'info',
+    title: msg.title,
+    message: msg.content,
+    timestamp: new Date(msg.createdAt),
+    read: msg.isRead,
+  }));
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -110,17 +108,21 @@ export default function StudentDashboardPage() {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    markSystemReadMutation.mutate(id);
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    // Mark all unread messages as read
+    notifications.filter(n => !n.read).forEach(n => {
+      markSystemReadMutation.mutate(n.id);
+    });
   };
 
   const handleClearAll = () => {
-    setNotifications([]);
+    // Dismiss all messages
+    notifications.forEach(n => {
+      dismissSystemMutation.mutate(n.id);
+    });
     setIsNotificationPanelOpen(false);
   };
 
@@ -129,10 +131,7 @@ export default function StudentDashboardPage() {
   };
 
   const handleContactTeacher = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Messages feature is under development and will be available soon.",
-    });
+    router.push("/student/student-dashboard/messages");
   };
 
   const handleWeekChange = (week: number) => {
@@ -321,6 +320,19 @@ export default function StudentDashboardPage() {
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
+        onReply={(notification) => {
+          // Navigate to messages with the sender info
+          if (notification.senderId && notification.senderType) {
+            router.push(`/student/student-dashboard/messages?recipientId=${notification.senderId}&recipientType=${notification.senderType}`);
+          } else {
+            router.push("/student/student-dashboard/messages");
+          }
+          setIsNotificationPanelOpen(false);
+        }}
+        onViewAllMessages={() => {
+          router.push("/student/student-dashboard/messages");
+          setIsNotificationPanelOpen(false);
+        }}
       />
     </StudentGuard>
   );

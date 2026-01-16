@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { handleLogout } from "@/lib/auth/logout";
 import { NotificationBell } from "@/components/student/notification-bell";
 import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
+import { useSystemMessages, useMarkSystemMessageRead, useDismissSystemMessage } from "@/hooks/use-student-messages";
 import type { AttendanceRecord } from "@/types/types";
 import { Loader2 } from "lucide-react";
 
@@ -24,16 +25,21 @@ export default function AttendanceHistoryPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
-  const [notifications, setNotifications] = React.useState<Notification[]>([
-    {
-      id: "1",
-      type: "info",
-      title: "Attendance Record Updated",
-      message: "Your attendance for today's class has been marked.",
-      timestamp: new Date(Date.now() - 1800000),
-      read: false,
-    },
-  ]);
+  
+  // Fetch system messages for notifications
+  const { data: systemMessages = [] } = useSystemMessages(true);
+  const markSystemReadMutation = useMarkSystemMessageRead();
+  const dismissSystemMutation = useDismissSystemMessage();
+  
+  // Convert system messages to notification format
+  const notifications: Notification[] = systemMessages.map(msg => ({
+    id: msg.id,
+    type: msg.severity === 'warning' ? 'warning' : msg.severity === 'error' ? 'warning' : msg.severity === 'success' ? 'success' : 'info',
+    title: msg.title,
+    message: msg.content,
+    timestamp: new Date(msg.createdAt),
+    read: msg.isRead,
+  }));
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -54,17 +60,19 @@ export default function AttendanceHistoryPage() {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    markSystemReadMutation.mutate(id);
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    notifications.filter(n => !n.read).forEach(n => {
+      markSystemReadMutation.mutate(n.id);
+    });
   };
 
   const handleClearAll = () => {
-    setNotifications([]);
+    notifications.forEach(n => {
+      dismissSystemMutation.mutate(n.id);
+    });
     setIsNotificationPanelOpen(false);
   };
 
@@ -113,6 +121,24 @@ export default function AttendanceHistoryPage() {
           </Suspense>
         </PageContainer>
       </ModernDashboardLayout>
+
+      {/* Notification Panel */}
+      <NotificationPanel
+        isOpen={isNotificationPanelOpen}
+        onClose={() => setIsNotificationPanelOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+        onClearAll={handleClearAll}
+        onReply={(notification) => {
+          router.push("/student/student-dashboard/messages");
+          setIsNotificationPanelOpen(false);
+        }}
+        onViewAllMessages={() => {
+          router.push("/student/student-dashboard/messages");
+          setIsNotificationPanelOpen(false);
+        }}
+      />
     </StudentGuard>
   );
 }

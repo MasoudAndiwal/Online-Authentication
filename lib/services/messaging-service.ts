@@ -456,12 +456,15 @@ export class MessagingService {
     const filename = `${timestamp}_${sanitizedName}`
     const storagePath = `messages/${messageId}/${filename}`
 
+    console.log('Uploading attachment:', { messageId, filename, storagePath, fileSize: file.size, fileType: file.type })
+
     const { error: uploadError } = await supabase.storage
       .from('message-attachments')
       .upload(storagePath, file)
 
     if (uploadError) {
-      throw new Error('Failed to upload file')
+      console.error('Storage upload error:', uploadError)
+      throw new Error(`Failed to upload file: ${uploadError.message}`)
     }
 
     const { data: urlData } = supabase.storage
@@ -690,16 +693,20 @@ export class MessagingService {
   // Helper Methods
   async getUserInfo(userId: string, userType: UserType): Promise<User> {
     let tableName: string
+    let nameFields: string
 
     switch (userType) {
       case 'student':
         tableName = 'students'
+        nameFields = 'id, first_name, last_name'
         break
       case 'teacher':
         tableName = 'teachers'
+        nameFields = 'id, first_name, last_name'
         break
       case 'office':
         tableName = 'users'
+        nameFields = 'id, name'
         break
       default:
         throw new Error('Invalid user type')
@@ -707,7 +714,7 @@ export class MessagingService {
 
     const { data, error } = await supabase
       .from(tableName)
-      .select('id, name')
+      .select(nameFields)
       .eq('id', userId)
       .single()
 
@@ -715,12 +722,23 @@ export class MessagingService {
       throw new Error('User not found')
     }
 
-    const userData = data as { id: string; name: string }
+    // Cast data to a generic record type
+    const userData = data as unknown as Record<string, unknown>
+
+    // Handle different name formats
+    let userName = 'Unknown'
+    if ('name' in userData && userData.name) {
+      userName = userData.name as string
+    } else if ('first_name' in userData || 'last_name' in userData) {
+      const firstName = (userData.first_name as string) || ''
+      const lastName = (userData.last_name as string) || ''
+      userName = `${firstName} ${lastName}`.trim() || 'Unknown'
+    }
 
     return {
-      id: userData.id,
+      id: userData.id as string,
       type: userType,
-      name: userData.name || 'Unknown',
+      name: userName,
     }
   }
 
@@ -728,28 +746,88 @@ export class MessagingService {
     const recipients: User[] = []
 
     if (userType === 'student') {
-      // Students can only message their teachers
-      const { data: studentData } = await supabase
+      // Students can only message teachers who teach their class
+      // First, get the student's class_section (e.g., "AI-401-A - AFTERNOON")
+      const { data: studentData, error: studentError } = await supabase
         .from('students')
-        .select('class_id')
+        .select('class_section')
         .eq('id', userId)
         .single()
 
-      if (studentData?.class_id) {
-        const { data: classData } = await supabase
-          .from('classes')
-          .select('teacher_id, teachers(id, name)')
-          .eq('id', studentData.class_id)
-          .single()
+      if (studentError) {
+        console.error('Error fetching student data:', studentError)
+        return recipients
+      }
 
-        if (classData?.teacher_id) {
-          const teacher = classData.teachers as unknown as { id: string; name: string }
-          if (teacher) {
-            recipients.push({
-              id: teacher.id,
-              type: 'teacher',
-              name: teacher.name,
-            })
+      if (studentData?.class_section) {
+        // Parse class_section to extract class name and session
+        // Format: "AI-401-A - AFTERNOON" -> name: "AI-401-A", session: "AFTERNOON"
+        const classSection = studentData.class_section as string
+        const parts = classSection.split(' - ')
+        const className = parts[0]?.trim()
+        const classSession = parts[1]?.trim()
+
+        if (!className) {
+          console.error('Could not parse class name from class_section:', classSection)
+          return recipients
+        }
+
+        // Find the class in classes table by name and session
+        let classQuery = supabase
+          .from('classes')
+          .select('id')
+          .eq('name', className)
+
+        if (classSession) {
+          classQuery = classQuery.eq('session', classSession)
+        }
+
+        const { data: classData, error: classError } = await classQuery.single()
+
+        if (classError || !classData) {
+          console.error('Error finding class:', classError, 'className:', className, 'session:', classSession)
+          return recipients
+        }
+
+        // Get all teachers from schedule_entries for this class_id
+        const { data: scheduleData, error: scheduleError } = await supabase
+          .from('schedule_entries')
+          .select('teacher_id, teacher_name')
+          .eq('class_id', classData.id)
+
+        if (scheduleError) {
+          console.error('Error fetching schedule data:', scheduleError)
+          return recipients
+        }
+
+        // Use a Set to avoid duplicate teachers
+        const teacherIds = new Set<string>()
+        
+        for (const entry of scheduleData || []) {
+          if (entry.teacher_id && !teacherIds.has(entry.teacher_id)) {
+            teacherIds.add(entry.teacher_id)
+            
+            // Get teacher details from teachers table
+            const { data: teacherData } = await supabase
+              .from('teachers')
+              .select('id, first_name, last_name')
+              .eq('id', entry.teacher_id)
+              .single()
+
+            if (teacherData) {
+              recipients.push({
+                id: teacherData.id,
+                type: 'teacher',
+                name: `${teacherData.first_name || ''} ${teacherData.last_name || ''}`.trim() || entry.teacher_name || 'Unknown Teacher',
+              })
+            } else if (entry.teacher_name) {
+              // Fallback to teacher_name from schedule_entries if teacher not found in teachers table
+              recipients.push({
+                id: entry.teacher_id,
+                type: 'teacher',
+                name: entry.teacher_name,
+              })
+            }
           }
         }
       }
@@ -757,53 +835,53 @@ export class MessagingService {
       // Teachers can message their students and office
       const { data: students } = await supabase
         .from('students')
-        .select('id, name')
+        .select('id, first_name, last_name')
         .limit(100)
 
       students?.forEach(student => {
         recipients.push({
           id: student.id,
           type: 'student',
-          name: student.name,
+          name: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Unknown Student',
         })
       })
 
       const { data: officeUsers } = await supabase
         .from('users')
         .select('id, name')
-        .eq('role', 'office')
+        .eq('role', 'OFFICE')
 
       officeUsers?.forEach(user => {
         recipients.push({
           id: user.id,
           type: 'office',
-          name: user.name,
+          name: user.name || 'Office',
         })
       })
     } else if (userType === 'office') {
       // Office can message everyone
       const { data: students } = await supabase
         .from('students')
-        .select('id, name')
+        .select('id, first_name, last_name')
         .limit(100)
 
       students?.forEach(student => {
         recipients.push({
           id: student.id,
           type: 'student',
-          name: student.name,
+          name: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Unknown Student',
         })
       })
 
       const { data: teachers } = await supabase
         .from('teachers')
-        .select('id, name')
+        .select('id, first_name, last_name')
 
       teachers?.forEach(teacher => {
         recipients.push({
           id: teacher.id,
           type: 'teacher',
-          name: teacher.name,
+          name: `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || 'Unknown Teacher',
         })
       })
     }

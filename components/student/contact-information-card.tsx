@@ -49,20 +49,6 @@ export function ContactInformationCard({
 }: ContactInformationCardProps) {
   const defaultQuickLinks: QuickLink[] = [
     {
-      id: 'send-message',
-      label: 'Send Message to Office',
-      icon: 'message',
-      action: () => onSendMessage?.(),
-      variant: 'default',
-    },
-    {
-      id: 'submit-docs',
-      label: 'Submit Documentation',
-      icon: 'document',
-      action: () => onSendMessage?.(),
-      variant: 'default',
-    },
-    {
       id: 'view-faqs',
       label: 'View FAQs',
       icon: 'help',

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bell, CheckCircle, AlertCircle, Info, Calendar, MessageSquare } from "lucide-react";
+import { X, Bell, CheckCircle, AlertCircle, Info, Calendar, MessageSquare, Send, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,10 @@ export interface Notification {
   message: string;
   timestamp: Date;
   read: boolean;
+  senderId?: string;
+  senderName?: string;
+  senderType?: "teacher" | "office";
+  actionUrl?: string;
 }
 
 interface NotificationPanelProps {
@@ -23,6 +27,8 @@ interface NotificationPanelProps {
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onClearAll: () => void;
+  onReply?: (notification: Notification) => void;
+  onViewAllMessages?: () => void;
 }
 
 /**
@@ -37,8 +43,11 @@ export function NotificationPanel({
   onMarkAsRead,
   onMarkAllAsRead,
   onClearAll,
+  onReply,
+  onViewAllMessages,
 }: NotificationPanelProps) {
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const messageNotifications = notifications.filter((n) => n.type === "message");
 
   const getIcon = (type: Notification["type"]) => {
     switch (type) {
@@ -130,24 +139,37 @@ export function NotificationPanel({
 
             {/* Actions */}
             {notifications.length > 0 && (
-              <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-slate-200 bg-slate-50">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onMarkAllAsRead}
-                  disabled={unreadCount === 0}
-                  className="text-xs border-0 shadow-sm bg-white hover:bg-emerald-50 hover:text-emerald-700"
-                >
-                  Mark all read
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onClearAll}
-                  className="text-xs border-0 shadow-sm bg-white hover:bg-red-50 hover:text-red-700"
-                >
-                  Clear all
-                </Button>
+              <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onMarkAllAsRead}
+                    disabled={unreadCount === 0}
+                    className="text-xs border-0 shadow-sm bg-white hover:bg-emerald-50 hover:text-emerald-700"
+                  >
+                    Mark all read
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onClearAll}
+                    className="text-xs border-0 shadow-sm bg-white hover:bg-red-50 hover:text-red-700"
+                  >
+                    Clear all
+                  </Button>
+                </div>
+                {onViewAllMessages && messageNotifications.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onViewAllMessages}
+                    className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                  >
+                    View Messages
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                )}
               </div>
             )}
 
@@ -172,13 +194,15 @@ export function NotificationPanel({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: 100 }}
                       className={cn(
-                        "p-3 sm:p-4 rounded-xl border-0 shadow-sm transition-all duration-300 cursor-pointer",
+                        "p-3 sm:p-4 rounded-xl border-0 shadow-sm transition-all duration-300",
                         getTypeColor(notification.type),
                         !notification.read && "ring-2 ring-emerald-500/20"
                       )}
-                      onClick={() => onMarkAsRead(notification.id)}
                     >
-                      <div className="flex items-start gap-3">
+                      <div 
+                        className="flex items-start gap-3 cursor-pointer"
+                        onClick={() => onMarkAsRead(notification.id)}
+                      >
                         <div className="flex-shrink-0 mt-0.5">{getIcon(notification.type)}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
@@ -192,9 +216,33 @@ export function NotificationPanel({
                           <p className="text-xs text-slate-600 line-clamp-2 mb-2">
                             {notification.message}
                           </p>
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <Calendar className="h-3 w-3" />
-                            <span>{formatTimestamp(notification.timestamp)}</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <Calendar className="h-3 w-3" />
+                              <span>{formatTimestamp(notification.timestamp)}</span>
+                            </div>
+                            
+                            {/* Reply button for message notifications */}
+                            {notification.type === "message" && onReply && (
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onReply(notification);
+                                  }}
+                                  className={cn(
+                                    "h-7 px-3 text-xs rounded-lg",
+                                    "bg-gradient-to-r from-blue-500 to-blue-600",
+                                    "hover:from-blue-600 hover:to-blue-700",
+                                    "text-white shadow-md"
+                                  )}
+                                >
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Reply
+                                </Button>
+                              </motion.div>
+                            )}
                           </div>
                         </div>
                       </div>

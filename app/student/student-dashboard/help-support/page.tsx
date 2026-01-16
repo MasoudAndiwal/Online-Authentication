@@ -8,9 +8,10 @@ import { ModernDashboardLayout, PageContainer } from '@/components/layout/modern
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { handleLogout } from '@/lib/auth/logout'
 import { NotificationBell } from '@/components/student/notification-bell'
+import { NotificationPanel, type Notification } from '@/components/student/notification-panel'
 import { type FAQ } from '@/components/student/faq-accordion'
 import { Card, CardContent } from '@/components/ui/card'
-import { useToast } from '@/hooks/use-toast'
+import { useSystemMessages, useMarkSystemMessageRead, useDismissSystemMessage } from '@/hooks/use-student-messages'
 
 // Lazy load heavy components for better performance
 const FAQAccordion = lazy(() => import('@/components/student/faq-accordion').then(mod => ({ default: mod.FAQAccordion })))
@@ -253,19 +254,32 @@ Your overall attendance rate is calculated based on Present vs. Total sessions. 
 export default function HelpSupportPage() {
   const router = useRouter()
   const { user, loading: userLoading } = useCurrentUser()
-  const [unreadNotifications] = useState(0)
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false)
   const [faqFeedback, setFaqFeedback] = useState<Record<string, boolean>>({})
-  const { toast } = useToast()
+  
+  // Fetch system messages for notifications
+  const { data: systemMessages = [] } = useSystemMessages(true)
+  const markSystemReadMutation = useMarkSystemMessageRead()
+  const dismissSystemMutation = useDismissSystemMessage()
+  
+  // Convert system messages to notification format
+  const notifications: Notification[] = systemMessages.map(msg => ({
+    id: msg.id,
+    type: msg.severity === 'warning' ? 'warning' : msg.severity === 'error' ? 'warning' : msg.severity === 'success' ? 'success' : 'info',
+    title: msg.title,
+    message: msg.content,
+    timestamp: new Date(msg.createdAt),
+    read: msg.isRead,
+  }))
+  
+  const unreadCount = notifications.filter(n => !n.read).length
 
   const handleFaqFeedback = (faqId: string, helpful: boolean) => {
     setFaqFeedback((prev) => ({ ...prev, [faqId]: helpful }))
   }
 
   const handleSendMessage = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Messages feature is under development and will be available soon.",
-    })
+    router.push("/student/student-dashboard/messages");
   }
 
   const handleNavigation = (href: string) => {
@@ -278,7 +292,24 @@ export default function HelpSupportPage() {
   }
 
   const handleNotificationClick = () => {
-    // Notification bell clicked
+    setIsNotificationPanelOpen(!isNotificationPanelOpen)
+  }
+
+  const handleMarkAsRead = (id: string) => {
+    markSystemReadMutation.mutate(id)
+  }
+
+  const handleMarkAllAsRead = () => {
+    notifications.filter(n => !n.read).forEach(n => {
+      markSystemReadMutation.mutate(n.id)
+    })
+  }
+
+  const handleClearAll = () => {
+    notifications.forEach(n => {
+      dismissSystemMutation.mutate(n.id)
+    })
+    setIsNotificationPanelOpen(false)
   }
 
   if (userLoading) {
@@ -303,8 +334,9 @@ export default function HelpSupportPage() {
         hideSearch={true}
         notificationTrigger={
           <NotificationBell
-            unreadCount={unreadNotifications}
+            unreadCount={unreadCount}
             onClick={handleNotificationClick}
+            isActive={isNotificationPanelOpen}
           />
         }
       >
@@ -437,6 +469,24 @@ export default function HelpSupportPage() {
           </div>
         </PageContainer>
       </ModernDashboardLayout>
+
+      {/* Notification Panel */}
+      <NotificationPanel
+        isOpen={isNotificationPanelOpen}
+        onClose={() => setIsNotificationPanelOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+        onClearAll={handleClearAll}
+        onReply={(notification) => {
+          router.push("/student/student-dashboard/messages")
+          setIsNotificationPanelOpen(false)
+        }}
+        onViewAllMessages={() => {
+          router.push("/student/student-dashboard/messages")
+          setIsNotificationPanelOpen(false)
+        }}
+      />
     </StudentGuard>
   )
 }

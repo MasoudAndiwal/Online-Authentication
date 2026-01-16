@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -12,8 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Paperclip, 
-  Send, 
   X, 
   FileText, 
   Image as ImageIcon,
@@ -26,6 +25,7 @@ import {
   Presentation
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Send3D, Attachment3D } from "@/components/ui/message-3d-icons";
 
 interface ComposeMessageProps {
   recipientName?: string;
@@ -33,6 +33,7 @@ interface ComposeMessageProps {
   onCancel?: () => void;
   isLoading?: boolean;
   userType?: "student" | "teacher" | "office";
+  compact?: boolean; // Hide recipient info and category for existing conversations
 }
 
 interface MessageData {
@@ -46,7 +47,6 @@ interface AttachmentPreview {
   preview?: string;
 }
 
-// Student allowed file types
 const STUDENT_ALLOWED_TYPES = [
   "text/plain",
   "image/jpeg",
@@ -61,16 +61,14 @@ const STUDENT_ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ];
 
-const STUDENT_MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-const TEACHER_OFFICE_MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const STUDENT_MAX_FILE_SIZE = 20 * 1024 * 1024;
+const TEACHER_OFFICE_MAX_FILE_SIZE = 100 * 1024 * 1024;
 const MAX_MESSAGE_LENGTH = 2000;
 
 /**
  * ComposeMessage Component
  * 
- * Interface for composing and sending messages with role-based file restrictions:
- * - Students: text, images (jpg, png), pdf, word, excel, powerpoint (max 20MB)
- * - Teachers/Office: any file type (max 100MB)
+ * Beautiful message composer with animations and role-based file restrictions
  */
 export function ComposeMessage({
   recipientName,
@@ -78,6 +76,7 @@ export function ComposeMessage({
   onCancel,
   isLoading = false,
   userType = "student",
+  compact = false,
 }: ComposeMessageProps) {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("general");
@@ -89,19 +88,17 @@ export function ComposeMessage({
   const maxFileSize = userType === "student" ? STUDENT_MAX_FILE_SIZE : TEACHER_OFFICE_MAX_FILE_SIZE;
 
   const validateFile = (file: File): { valid: boolean; error?: string } => {
-    // Check file type for students
     if (userType === "student" && !STUDENT_ALLOWED_TYPES.includes(file.type)) {
       return {
         valid: false,
-        error: `نوع فایل "${file.name}" مجاز نیست. شاگردان فقط می‌توانند فایل‌های متنی، تصویر، PDF، Word، Excel و PowerPoint ارسال کنند.`
+        error: `File type not allowed. Students can only send text, images, PDF, Word, Excel, and PowerPoint files.`
       };
     }
 
-    // Check file size
     if (file.size > maxFileSize) {
       return {
         valid: false,
-        error: `حجم فایل "${file.name}" بیش از حد مجاز است. حداکثر ${maxFileSize / 1024 / 1024}MB`
+        error: `File "${file.name}" exceeds the ${maxFileSize / 1024 / 1024}MB limit`
       };
     }
 
@@ -116,11 +113,10 @@ export function ComposeMessage({
     for (const file of Array.from(files)) {
       const validation = validateFile(file);
       if (!validation.valid) {
-        setError(validation.error || "خطا در بارگذاری فایل");
+        setError(validation.error || "Error uploading file");
         return;
       }
 
-      // Create preview for images
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -164,12 +160,12 @@ export function ComposeMessage({
 
   const handleSend = () => {
     if (!content.trim()) {
-      setError("لطفاً پیام خود را وارد کنید");
+      setError("Please enter a message");
       return;
     }
 
     if (content.length > MAX_MESSAGE_LENGTH) {
-      setError(`پیام بیش از حد طولانی است. حداکثر ${MAX_MESSAGE_LENGTH} کاراکتر`);
+      setError(`Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters`);
       return;
     }
 
@@ -179,7 +175,6 @@ export function ComposeMessage({
       attachments: attachments.map((a) => a.file),
     });
 
-    // Reset form
     setContent("");
     setCategory("general");
     setAttachments([]);
@@ -193,175 +188,249 @@ export function ComposeMessage({
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith("image/")) return <ImageIcon className="h-6 w-6 text-blue-600" />;
-    if (fileType.includes("pdf")) return <FileText className="h-6 w-6 text-red-600" />;
-    if (fileType.includes("word") || fileType.includes("document")) return <FileText className="h-6 w-6 text-blue-700" />;
-    if (fileType.includes("excel") || fileType.includes("spreadsheet")) return <FileSpreadsheet className="h-6 w-6 text-green-600" />;
-    if (fileType.includes("powerpoint") || fileType.includes("presentation")) return <Presentation className="h-6 w-6 text-orange-600" />;
-    return <FileText className="h-6 w-6 text-slate-600" />;
+    if (fileType.startsWith("image/")) return <ImageIcon className="h-5 w-5 text-blue-500" />;
+    if (fileType.includes("pdf")) return <FileText className="h-5 w-5 text-red-500" />;
+    if (fileType.includes("word") || fileType.includes("document")) return <FileText className="h-5 w-5 text-blue-600" />;
+    if (fileType.includes("excel") || fileType.includes("spreadsheet")) return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
+    if (fileType.includes("powerpoint") || fileType.includes("presentation")) return <Presentation className="h-5 w-5 text-orange-500" />;
+    return <FileText className="h-5 w-5 text-slate-500" />;
   };
 
   const remainingChars = MAX_MESSAGE_LENGTH - content.length;
   const isNearLimit = remainingChars < 100;
 
-  // Get accepted file types for input
   const acceptedTypes = userType === "student" 
     ? ".txt,.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
     : "*";
 
   return (
-    <div className="p-4 border-t-0 bg-white/50 shadow-sm">
-      <div className="space-y-3">
-        {/* Recipient Info */}
-        {recipientName && (
-          <div className="text-sm text-slate-600">
-            به: <span className="font-semibold text-slate-800">{recipientName}</span>
+    <motion.div 
+      className={cn(
+        "p-4 bg-gradient-to-t from-white to-slate-50/50",
+        compact && "border-t border-slate-100"
+      )}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div className={cn("space-y-4", compact && "space-y-3")}>
+        {/* Recipient Info - hide in compact mode */}
+        {recipientName && !compact && (
+          <motion.div 
+            className="text-sm text-slate-600 flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <span className="text-slate-400">To:</span>
+            <span className="font-semibold text-slate-800 bg-emerald-50 px-2 py-0.5 rounded-lg">
+              {recipientName}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Category Selector - hide in compact mode */}
+        {!compact && (
+          <div className="space-y-2">
+            <Label htmlFor="category" className="text-sm font-medium text-slate-700">
+              Category
+            </Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger 
+                id="category"
+                className="w-full bg-white rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-200 transition-all"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="general" className="rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-slate-500" />
+                    <span>General</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="attendance_inquiry" className="rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-blue-500" />
+                    <span>Attendance Inquiry</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="documentation" className="rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FileUp className="h-4 w-4 text-purple-500" />
+                    <span>Documentation</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="urgent" className="rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <AlertOctagon className="h-4 w-4 text-red-500" />
+                    <span>Urgent</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
 
-        {/* Category Selector */}
-        <div className="space-y-1.5">
-          <Label htmlFor="category" className="text-sm font-medium text-slate-700">
-            دسته‌بندی پیام
-          </Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger 
-              id="category"
-              className="w-full bg-white border-0 shadow-sm focus:ring-2 focus:ring-emerald-200"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="general">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4" />
-                  <span>سوال عمومی</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="attendance_inquiry">
-                <div className="flex items-center gap-2">
-                  <Search className="h-4 w-4" />
-                  <span>استعلام حاضری</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="documentation">
-                <div className="flex items-center gap-2">
-                  <FileUp className="h-4 w-4" />
-                  <span>ارسال مدارک</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="urgent">
-                <div className="flex items-center gap-2">
-                  <AlertOctagon className="h-4 w-4" />
-                  <span>موضوع فوری</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Message Text Area */}
-        <div className="space-y-1.5">
-          <Label htmlFor="message" className="text-sm font-medium text-slate-700">
-            متن پیام
-          </Label>
+        <div className={cn("space-y-2", compact && "space-y-1")}>
+          {!compact && (
+            <Label htmlFor="message" className="text-sm font-medium text-slate-700">
+              Message
+            </Label>
+          )}
           <Textarea
             id="message"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="پیام خود را اینجا بنویسید..."
+            placeholder="Type your message here..."
             className={cn(
-              "min-h-[120px] resize-none",
-              "bg-white border-0 shadow-sm",
+              "resize-none rounded-xl",
+              "bg-white shadow-sm",
               "focus:ring-2 focus:ring-emerald-200",
-              "transition-all duration-200"
+              "transition-all duration-300",
+              compact ? "min-h-[60px]" : "min-h-[100px]"
             )}
             disabled={isLoading}
-            dir="rtl"
           />
           
           {/* Character Count */}
           <div className="flex justify-between items-center text-xs">
             <span className="text-slate-500">
-              {attachments.length > 0 && `${attachments.length} فایل پیوست شده`}
+              {attachments.length > 0 && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center gap-1"
+                >
+                  <Attachment3D size="sm" animated={false} />
+                  {attachments.length} file(s) attached
+                </motion.span>
+              )}
             </span>
             <span className={cn(
-              "font-medium",
-              isNearLimit ? "text-orange-600" : "text-slate-500"
+              "font-medium transition-colors",
+              isNearLimit ? "text-orange-500" : "text-slate-400"
             )}>
-              {remainingChars} کاراکتر باقی‌مانده
+              {remainingChars} characters remaining
             </span>
           </div>
         </div>
 
         {/* Error Message */}
-        {error && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border-0 shadow-sm" dir="rtl">
-            <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              className="flex items-start gap-2 p-3 rounded-xl bg-red-50 shadow-sm"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Attachment Previews */}
-        {attachments.length > 0 && (
-          <div className="space-y-2">
-            {attachments.map((attachment, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border-0 shadow-sm"
-              >
-                {/* File Icon/Preview */}
-                <div className="flex-shrink-0">
-                  {attachment.preview ? (
-                    <img
-                      src={attachment.preview}
-                      alt={attachment.file.name}
-                      className="h-12 w-12 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 bg-slate-200 rounded flex items-center justify-center">
-                      {getFileIcon(attachment.file.type)}
-                    </div>
-                  )}
-                </div>
-
-                {/* File Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">
-                    {attachment.file.name}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {formatFileSize(attachment.file.size)}
-                  </p>
-                </div>
-
-                {/* Remove Button */}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => removeAttachment(index)}
-                  className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50"
-                  disabled={isLoading}
+        <AnimatePresence>
+          {attachments.length > 0 && (
+            <motion.div 
+              className="space-y-2"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              {attachments.map((attachment, index) => (
+                <motion.div
+                  key={index}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white shadow-sm"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  whileHover={{ scale: 1.01 }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
+                  <div className="shrink-0">
+                    {attachment.preview ? (
+                      <img
+                        src={attachment.preview}
+                        alt={attachment.file.name}
+                        className="h-12 w-12 object-cover rounded-lg shadow-sm"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg flex items-center justify-center">
+                        {getFileIcon(attachment.file.type)}
+                      </div>
+                    )}
+                  </div>
 
-        {/* File Upload Area */}
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={cn(
-            "border-0 rounded-lg p-4 text-center transition-all duration-200 shadow-sm",
-            isDragging
-              ? "bg-emerald-100 shadow-md"
-              : "bg-slate-50 hover:bg-emerald-50/50"
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800 truncate">
+                      {attachment.file.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {formatFileSize(attachment.file.size)}
+                    </p>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeAttachment(index)}
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                    disabled={isLoading}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              ))}
+            </motion.div>
           )}
-        >
+        </AnimatePresence>
+
+        {/* File Upload Area - simplified in compact mode */}
+        {!compact ? (
+          <motion.div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "rounded-xl p-4 text-center transition-all duration-300 cursor-pointer",
+              isDragging
+                ? "bg-gradient-to-br from-emerald-100 to-emerald-50 shadow-md scale-[1.02]"
+                : "bg-gradient-to-br from-slate-50 to-white hover:from-emerald-50 hover:to-white shadow-sm"
+            )}
+            whileHover={{ scale: 1.01 }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={acceptedTypes}
+              onChange={(e) => handleFileSelect(e.target.files)}
+              className="hidden"
+              disabled={isLoading}
+            />
+            
+            <div className="flex flex-col items-center gap-2">
+              <motion.div
+                animate={{ y: isDragging ? -5 : 0 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <Attachment3D size="lg" />
+              </motion.div>
+              <div>
+                <span className="text-emerald-600 font-semibold">Click to upload</span>
+                <span className="text-sm text-slate-500"> or drag and drop</span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {userType === "student" 
+                  ? `Text, images, PDF, Word, Excel, PowerPoint (max ${STUDENT_MAX_FILE_SIZE / 1024 / 1024}MB)`
+                  : `All file types (max ${TEACHER_OFFICE_MAX_FILE_SIZE / 1024 / 1024}MB)`
+                }
+              </p>
+            </div>
+          </motion.div>
+        ) : (
           <input
             ref={fileInputRef}
             type="file"
@@ -371,62 +440,59 @@ export function ComposeMessage({
             className="hidden"
             disabled={isLoading}
           />
-          
-          <div className="flex flex-col items-center gap-2">
-            <Paperclip className="h-6 w-6 text-slate-400" />
-            <div>
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-emerald-600 hover:text-emerald-700 p-0 h-auto font-semibold"
-                disabled={isLoading}
-              >
-                کلیک کنید
-              </Button>
-              <span className="text-sm text-slate-500"> یا فایل را بکشید و رها کنید</span>
-            </div>
-            <p className="text-xs text-slate-400">
-              {userType === "student" 
-                ? `متن، تصویر، PDF، Word، Excel، PowerPoint (حداکثر ${STUDENT_MAX_FILE_SIZE / 1024 / 1024}MB)`
-                : `همه انواع فایل (حداکثر ${TEACHER_OFFICE_MAX_FILE_SIZE / 1024 / 1024}MB)`
-              }
-            </p>
-          </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          <Button
-            onClick={handleSend}
-            disabled={!content.trim() || isLoading}
-            className={cn(
-              "flex-1 min-h-[44px]",
-              "bg-gradient-to-r from-emerald-600 to-emerald-700",
-              "hover:from-emerald-700 hover:to-emerald-800",
-              "text-white font-semibold",
-              "shadow-lg shadow-emerald-500/25",
-              "border-0",
-              "transition-all duration-200",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
-            )}
-          >
-            <Send className="h-4 w-4 mr-2" />
-            {isLoading ? "در حال ارسال..." : "ارسال پیام"}
-          </Button>
+        <div className={cn("flex gap-3", compact ? "pt-1" : "pt-2")}>
+          {compact && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="h-11 w-11 p-0 rounded-xl bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-600 [&_svg]:size-5"
+              >
+                <Attachment3D size="md" animated={false} />
+              </Button>
+            </motion.div>
+          )}
+          <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              onClick={handleSend}
+              disabled={!content.trim() || isLoading}
+              className={cn(
+                "w-full rounded-xl",
+                "flex items-center justify-center gap-2",
+                "bg-gradient-to-r from-emerald-500 to-emerald-600",
+                "hover:from-emerald-600 hover:to-emerald-700",
+                "text-white font-semibold",
+                "shadow-lg shadow-emerald-500/30",
+                "transition-all duration-300",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none",
+                compact ? "min-h-[44px]" : "min-h-[48px]",
+                "[&_svg]:size-5"
+              )}
+            >
+              <Send3D size="md" animated={false} />
+              <span>{isLoading ? "Sending..." : "Send"}</span>
+            </Button>
+          </motion.div>
 
           {onCancel && (
-            <Button
-              onClick={onCancel}
-              variant="outline"
-              disabled={isLoading}
-              className="min-h-[44px] border-0 bg-slate-100 hover:bg-slate-200 shadow-sm"
-            >
-              انصراف
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={onCancel}
+                variant="outline"
+                disabled={isLoading}
+                className="min-h-[48px] px-6 rounded-xl bg-slate-100 hover:bg-slate-200 shadow-sm"
+              >
+                Cancel
+              </Button>
+            </motion.div>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

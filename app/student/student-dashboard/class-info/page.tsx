@@ -10,7 +10,7 @@ import { NotificationBell } from "@/components/student/notification-bell";
 import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
 import { ClassInformationSection } from "@/components/student/class-information-section";
 import { AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useSystemMessages, useMarkSystemMessageRead, useDismissSystemMessage } from "@/hooks/use-student-messages";
 
 /**
  * Class Information Page
@@ -24,33 +24,21 @@ export default function ClassInfoPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
-  const { toast } = useToast();
-  const [notifications, setNotifications] = React.useState<Notification[]>([
-    {
-      id: "1",
-      type: "info",
-      title: "Class Schedule Updated",
-      message: "Your Computer Science 101 schedule has been updated for next week.",
-      timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-      read: false,
-    },
-    {
-      id: "2",
-      type: "warning",
-      title: "Attendance Warning",
-      message: "Your attendance rate is below 85%. Please maintain regular attendance.",
-      timestamp: new Date(Date.now() - 7200000), // 2 hours ago
-      read: false,
-    },
-    {
-      id: "3",
-      type: "message",
-      title: "New Message from Dr. Ahmad Hassan",
-      message: "Please check the updated assignment deadline for this week.",
-      timestamp: new Date(Date.now() - 86400000), // 1 day ago
-      read: true,
-    },
-  ]);
+  
+  // Fetch system messages for notifications
+  const { data: systemMessages = [] } = useSystemMessages(true);
+  const markSystemReadMutation = useMarkSystemMessageRead();
+  const dismissSystemMutation = useDismissSystemMessage();
+  
+  // Convert system messages to notification format
+  const notifications: Notification[] = systemMessages.map(msg => ({
+    id: msg.id,
+    type: msg.severity === 'warning' ? 'warning' : msg.severity === 'error' ? 'warning' : msg.severity === 'success' ? 'success' : 'info',
+    title: msg.title,
+    message: msg.content,
+    timestamp: new Date(msg.createdAt),
+    read: msg.isRead,
+  }));
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -142,25 +130,24 @@ export default function ClassInfoPage() {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    markSystemReadMutation.mutate(id);
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    notifications.filter(n => !n.read).forEach(n => {
+      markSystemReadMutation.mutate(n.id);
+    });
   };
 
   const handleClearAll = () => {
-    setNotifications([]);
+    notifications.forEach(n => {
+      dismissSystemMutation.mutate(n.id);
+    });
     setIsNotificationPanelOpen(false);
   };
 
   const handleContactTeacher = (teacherId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: "Messages feature is under development and will be available soon.",
-    });
+    router.push(`/student/student-dashboard/messages?teacherId=${teacherId}`);
   };
 
   if (userLoading) {
@@ -252,6 +239,14 @@ export default function ClassInfoPage() {
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
+        onReply={(notification) => {
+          router.push("/student/student-dashboard/messages");
+          setIsNotificationPanelOpen(false);
+        }}
+        onViewAllMessages={() => {
+          router.push("/student/student-dashboard/messages");
+          setIsNotificationPanelOpen(false);
+        }}
       />
     </StudentGuard>
   );
