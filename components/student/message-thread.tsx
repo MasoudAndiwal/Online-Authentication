@@ -9,23 +9,28 @@ import { format } from "date-fns";
 
 interface Message {
   id: string;
+  conversationId?: string;
   senderId: string;
   senderName: string;
-  senderRole: "student" | "teacher" | "office";
+  senderRole: "student" | "teacher" | "office" | "system";
   senderAvatar?: string;
   content: string;
-  category: "attendance_inquiry" | "documentation" | "general" | "urgent";
+  messageType?: "user" | "system";
+  category: "attendance_inquiry" | "documentation" | "general" | "urgent" | "system_alert" | "system_info";
   attachments: Attachment[];
   timestamp: Date;
   isRead: boolean;
+  metadata?: Record<string, unknown>;
 }
 
 interface Attachment {
   id: string;
   filename: string;
+  originalFilename?: string;
   fileType: string;
   fileSize: number;
   url: string;
+  thumbnailUrl?: string;
 }
 
 interface MessageThreadProps {
@@ -99,23 +104,27 @@ export function MessageThread({
   };
 
   const getCategoryLabel = (category: string) => {
-    const labels = {
+    const labels: Record<string, string> = {
       attendance_inquiry: "Attendance Inquiry",
       documentation: "Documentation",
       general: "General",
       urgent: "Urgent",
+      system_alert: "System Alert",
+      system_info: "System Info",
     };
-    return labels[category as keyof typeof labels] || category;
+    return labels[category] || category;
   };
 
   const getCategoryColor = (category: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       attendance_inquiry: "bg-blue-100 text-blue-700",
       documentation: "bg-purple-100 text-purple-700",
       general: "bg-slate-100 text-slate-700",
       urgent: "bg-red-100 text-red-700",
+      system_alert: "bg-orange-100 text-orange-700",
+      system_info: "bg-cyan-100 text-cyan-700",
     };
-    return colors[category as keyof typeof colors] || "bg-slate-100 text-slate-700";
+    return colors[category] || "bg-slate-100 text-slate-700";
   };
 
   if (messages.length === 0) {

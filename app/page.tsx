@@ -136,19 +136,19 @@ const StatCard3D = ({
       className="relative group"
       style={{ transformStyle: "preserve-3d" }}
     >
-      <div className="p-6 bg-white/80 backdrop-blur-2xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-500">
-        <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 bg-white/80 backdrop-blur-2xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-500">
+        <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 text-center sm:text-left">
           <div
-            className={["h-14 w-14", gradient, "rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300"].join(" ")}
+            className={["h-12 w-12 sm:h-14 sm:w-14 shrink-0", gradient, "rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300"].join(" ")}
           >
-            <Icon className="h-7 w-7 text-white" />
+            <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <div className="text-3xl font-bold text-slate-900 flex items-baseline">
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900 flex items-baseline justify-center sm:justify-start">
               <CountUp to={value} duration={2.5} />
-              <span className="text-2xl ml-0.5">{suffix}</span>
+              <span className="text-xl sm:text-2xl ml-0.5">{suffix}</span>
             </div>
-            <p className="text-sm text-slate-600 font-medium">{label}</p>
+            <p className="text-xs sm:text-sm text-slate-600 font-medium">{label}</p>
           </div>
         </div>
         <motion.div
@@ -354,8 +354,8 @@ export default function Home() {
           animate={{ y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-            scrolled
-              ? "bg-white/70 backdrop-blur-2xl shadow-lg shadow-slate-200/50"
+            scrolled || mobileMenuOpen
+              ? "bg-white/95 backdrop-blur-2xl shadow-lg shadow-slate-200/50"
               : "bg-transparent"
           }`}
         >
@@ -550,30 +550,6 @@ export default function Home() {
             </motion.div>
 
           </div>
-
-          {/* Scroll Indicator - positioned at bottom of hero */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2"
-          >
-            <motion.a
-              href="#stats"
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="flex flex-col items-center cursor-pointer group"
-            >
-              <span className="text-xs mb-2 font-medium text-slate-400 group-hover:text-blue-500 transition-colors">Scroll</span>
-              <div className="w-5 h-8 rounded-full border-2 border-slate-300 group-hover:border-blue-400 flex justify-center pt-1.5 transition-colors">
-                <motion.div
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-1 h-1.5 bg-blue-500 rounded-full"
-                />
-              </div>
-            </motion.a>
-          </motion.div>
         </motion.section>
 
 
@@ -729,11 +705,11 @@ export default function Home() {
               {/* Left: Attendance Demo */}
               <ScrollFloat direction="left" distance={60}>
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                    <UserCheck className="h-6 w-6 mr-3 text-blue-600" />
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                    <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-blue-600" />
                     Smart Attendance Marking
                   </h3>
-                  <p className="text-slate-600 mb-8 leading-relaxed">
+                  <p className="text-slate-600 mb-8 leading-relaxed text-sm sm:text-base">
                     Our color-coded system makes attendance tracking intuitive and efficient.
                     Teachers can mark attendance with a single click.
                   </p>
@@ -750,29 +726,29 @@ export default function Home() {
                         viewport={{ once: true }}
                         transition={{ delay: index * 0.1 }}
                         whileHover={{ scale: 1.02 }}
-                        className="flex items-center justify-between p-5 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg gap-4"
                       >
                         <div className="flex items-center space-x-4">
-                          <div className={`h-12 w-12 ${student.color} rounded-full flex items-center justify-center text-white font-semibold shadow-lg`}>
+                          <div className={`h-10 w-10 sm:h-12 sm:w-12 ${student.color} rounded-full flex items-center justify-center text-white font-semibold shadow-lg text-sm sm:text-base`}>
                             {student.initials}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900">{student.name}</p>
-                            <p className="text-sm text-slate-500">Student ID: {student.id}</p>
+                            <p className="font-semibold text-slate-900 text-sm sm:text-base">{student.name}</p>
+                            <p className="text-xs sm:text-sm text-slate-500">ID: {student.id}</p>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-2 w-full sm:w-auto">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium shadow-lg transition-colors"
+                            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium shadow-lg transition-colors text-sm"
                           >
                             Present
                           </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg transition-colors"
+                            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg transition-colors text-sm"
                           >
                             Absent
                           </motion.button>
@@ -799,20 +775,20 @@ export default function Home() {
               {/* Right: Analytics Demo */}
               <ScrollFloat direction="right" distance={60}>
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                    <LineChart className="h-6 w-6 mr-3 text-emerald-600" />
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                    <LineChart className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-emerald-600" />
                     Real-time Analytics
                   </h3>
-                  <div className="p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg">
-                    <div className="flex items-center justify-between mb-6">
+                  <div className="p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
                       <div>
-                        <h4 className="text-lg font-semibold text-slate-900 flex items-center">
-                          <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                        <h4 className="text-base sm:text-lg font-semibold text-slate-900 flex items-center">
+                          <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                           Class Attendance Overview
                         </h4>
-                        <p className="text-slate-500 text-sm">Computer Science - Fall 2024</p>
+                        <p className="text-slate-500 text-xs sm:text-sm">Computer Science - Fall 2024</p>
                       </div>
-                      <Badge className="bg-emerald-100 text-emerald-700 text-lg px-3 py-1">
+                      <Badge className="bg-emerald-100 text-emerald-700 text-base sm:text-lg px-3 py-1">
                         89.2%
                       </Badge>
                     </div>
@@ -831,7 +807,7 @@ export default function Home() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       {[
                         { label: "Present", value: 187, color: "bg-emerald-100 text-emerald-700" },
                         { label: "Absent", value: 23, color: "bg-red-100 text-red-700" },
@@ -844,12 +820,12 @@ export default function Home() {
                           whileInView={{ opacity: 1, scale: 1 }}
                           viewport={{ once: true }}
                           transition={{ delay: 0.3 + index * 0.1 }}
-                          className={`text-center p-4 rounded-xl ${stat.color}`}
+                          className={`text-center p-3 sm:p-4 rounded-xl ${stat.color}`}
                         >
-                          <p className="text-3xl font-bold">
+                          <p className="text-2xl sm:text-3xl font-bold">
                             <CountUp to={stat.value} duration={1.5} />
                           </p>
-                          <p className="text-sm font-medium opacity-80">{stat.label}</p>
+                          <p className="text-xs sm:text-sm font-medium opacity-80">{stat.label}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -1003,30 +979,30 @@ export default function Home() {
         </section>
 
         {/* Footer */}
-        <footer className="bg-linear-to-br from-slate-50 via-white to-blue-50/30 py-16 px-4 relative overflow-hidden">
+        <footer className="bg-linear-to-br from-slate-50 via-white to-blue-50/30 py-12 sm:py-16 px-4 relative overflow-hidden">
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12">
               {/* Brand Section */}
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   className="flex items-center space-x-3 mb-6"
                 >
-                  <div className="h-12 w-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <GraduationCap className="h-7 w-7 text-white" />
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <GraduationCap className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
                   </div>
-                  <div>
-                    <span className="text-2xl font-bold text-slate-900">University</span>
-                    <span className="text-2xl font-bold text-blue-600 ml-1">AttendanceHub</span>
+                  <div className="flex flex-col">
+                    <span className="text-xl sm:text-2xl font-bold text-slate-900">University</span>
+                    <span className="text-xl sm:text-2xl font-bold text-blue-600">AttendanceHub</span>
                   </div>
                 </motion.div>
-                <p className="text-slate-600 text-lg leading-relaxed max-w-md mb-6">
+                <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-md mb-6">
                   Modern attendance management system designed for universities.
                   Streamline your academic processes with intelligent automation.
                 </p>
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   {[
                     { icon: Shield, label: "Secure" },
                     { icon: Clock, label: "Real-time" },
@@ -1034,7 +1010,7 @@ export default function Home() {
                   ].map((item) => (
                     <Badge
                       key={item.label}
-                      className="bg-slate-100 text-slate-700"
+                      className="bg-slate-100 text-slate-700 text-xs sm:text-sm"
                     >
                       <item.icon className="w-3 h-3 mr-1" />
                       {item.label}

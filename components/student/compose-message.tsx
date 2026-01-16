@@ -21,7 +21,9 @@ import {
   MessageCircle,
   Search,
   FileUp,
-  AlertOctagon 
+  AlertOctagon,
+  FileSpreadsheet,
+  Presentation
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +32,7 @@ interface ComposeMessageProps {
   onSend: (message: MessageData) => void;
   onCancel?: () => void;
   isLoading?: boolean;
+  userType?: "student" | "teacher" | "office";
 }
 
 interface MessageData {
@@ -43,32 +46,38 @@ interface AttachmentPreview {
   preview?: string;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_FILE_TYPES = [
-  "application/pdf",
+// Student allowed file types
+const STUDENT_ALLOWED_TYPES = [
+  "text/plain",
   "image/jpeg",
   "image/jpg",
   "image/png",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ];
+
+const STUDENT_MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const TEACHER_OFFICE_MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const MAX_MESSAGE_LENGTH = 2000;
 
 /**
  * ComposeMessage Component
  * 
- * Interface for composing and sending messages:
- * - Text area with placeholder and character count
- * - Message category selector
- * - File attachment with drag-and-drop support
- * - Send button with green gradient
- * - Attachment preview with remove option
- * 
- * Requirements: 13.3, 13.6
+ * Interface for composing and sending messages with role-based file restrictions:
+ * - Students: text, images (jpg, png), pdf, word, excel, powerpoint (max 20MB)
+ * - Teachers/Office: any file type (max 100MB)
  */
 export function ComposeMessage({
   recipientName,
   onSend,
   onCancel,
   isLoading = false,
+  userType = "student",
 }: ComposeMessageProps) {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("general");
@@ -77,24 +86,37 @@ export function ComposeMessage({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const maxFileSize = userType === "student" ? STUDENT_MAX_FILE_SIZE : TEACHER_OFFICE_MAX_FILE_SIZE;
+
+  const validateFile = (file: File): { valid: boolean; error?: string } => {
+    // Check file type for students
+    if (userType === "student" && !STUDENT_ALLOWED_TYPES.includes(file.type)) {
+      return {
+        valid: false,
+        error: `نوع فایل "${file.name}" مجاز نیست. شاگردان فقط می‌توانند فایل‌های متنی، تصویر، PDF، Word، Excel و PowerPoint ارسال کنند.`
+      };
+    }
+
+    // Check file size
+    if (file.size > maxFileSize) {
+      return {
+        valid: false,
+        error: `حجم فایل "${file.name}" بیش از حد مجاز است. حداکثر ${maxFileSize / 1024 / 1024}MB`
+      };
+    }
+
+    return { valid: true };
+  };
+
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
 
     const newAttachments: AttachmentPreview[] = [];
-    let hasError = false;
-
-    Array.from(files).forEach((file) => {
-      // Validate file type
-      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        setError(`File type not allowed: ${file.name}. Only PDF, JPG, and PNG files are accepted.`);
-        hasError = true;
-        return;
-      }
-
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
-        setError(`File too large: ${file.name}. Maximum size is 10MB.`);
-        hasError = true;
+    
+    for (const file of Array.from(files)) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        setError(validation.error || "خطا در بارگذاری فایل");
         return;
       }
 
@@ -102,22 +124,21 @@ export function ComposeMessage({
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          newAttachments.push({
+          setAttachments((prev) => [...prev, {
             file,
             preview: e.target?.result as string,
-          });
-          setAttachments((prev) => [...prev, ...newAttachments]);
+          }]);
         };
         reader.readAsDataURL(file);
       } else {
         newAttachments.push({ file });
       }
-    });
-
-    if (!hasError && newAttachments.length > 0) {
-      setAttachments((prev) => [...prev, ...newAttachments]);
-      setError(null);
     }
+
+    if (newAttachments.length > 0) {
+      setAttachments((prev) => [...prev, ...newAttachments]);
+    }
+    setError(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -143,12 +164,12 @@ export function ComposeMessage({
 
   const handleSend = () => {
     if (!content.trim()) {
-      setError("Please enter a message");
+      setError("لطفاً پیام خود را وارد کنید");
       return;
     }
 
     if (content.length > MAX_MESSAGE_LENGTH) {
-      setError(`Message is too long. Maximum ${MAX_MESSAGE_LENGTH} characters.`);
+      setError(`پیام بیش از حد طولانی است. حداکثر ${MAX_MESSAGE_LENGTH} کاراکتر`);
       return;
     }
 
@@ -171,8 +192,22 @@ export function ComposeMessage({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith("image/")) return <ImageIcon className="h-6 w-6 text-blue-600" />;
+    if (fileType.includes("pdf")) return <FileText className="h-6 w-6 text-red-600" />;
+    if (fileType.includes("word") || fileType.includes("document")) return <FileText className="h-6 w-6 text-blue-700" />;
+    if (fileType.includes("excel") || fileType.includes("spreadsheet")) return <FileSpreadsheet className="h-6 w-6 text-green-600" />;
+    if (fileType.includes("powerpoint") || fileType.includes("presentation")) return <Presentation className="h-6 w-6 text-orange-600" />;
+    return <FileText className="h-6 w-6 text-slate-600" />;
+  };
+
   const remainingChars = MAX_MESSAGE_LENGTH - content.length;
   const isNearLimit = remainingChars < 100;
+
+  // Get accepted file types for input
+  const acceptedTypes = userType === "student" 
+    ? ".txt,.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+    : "*";
 
   return (
     <div className="p-4 border-t-0 bg-white/50 shadow-sm">
@@ -180,14 +215,14 @@ export function ComposeMessage({
         {/* Recipient Info */}
         {recipientName && (
           <div className="text-sm text-slate-600">
-            To: <span className="font-semibold text-slate-800">{recipientName}</span>
+            به: <span className="font-semibold text-slate-800">{recipientName}</span>
           </div>
         )}
 
         {/* Category Selector */}
         <div className="space-y-1.5">
           <Label htmlFor="category" className="text-sm font-medium text-slate-700">
-            Message Category
+            دسته‌بندی پیام
           </Label>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger 
@@ -200,25 +235,25 @@ export function ComposeMessage({
               <SelectItem value="general">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4" />
-                  <span>General Question</span>
+                  <span>سوال عمومی</span>
                 </div>
               </SelectItem>
               <SelectItem value="attendance_inquiry">
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4" />
-                  <span>Attendance Inquiry</span>
+                  <span>استعلام حاضری</span>
                 </div>
               </SelectItem>
               <SelectItem value="documentation">
                 <div className="flex items-center gap-2">
                   <FileUp className="h-4 w-4" />
-                  <span>Documentation Submission</span>
+                  <span>ارسال مدارک</span>
                 </div>
               </SelectItem>
               <SelectItem value="urgent">
                 <div className="flex items-center gap-2">
                   <AlertOctagon className="h-4 w-4" />
-                  <span>Urgent Matter</span>
+                  <span>موضوع فوری</span>
                 </div>
               </SelectItem>
             </SelectContent>
@@ -228,13 +263,13 @@ export function ComposeMessage({
         {/* Message Text Area */}
         <div className="space-y-1.5">
           <Label htmlFor="message" className="text-sm font-medium text-slate-700">
-            Message
+            متن پیام
           </Label>
           <Textarea
             id="message"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Type your message here..."
+            placeholder="پیام خود را اینجا بنویسید..."
             className={cn(
               "min-h-[120px] resize-none",
               "bg-white border-0 shadow-sm",
@@ -242,25 +277,26 @@ export function ComposeMessage({
               "transition-all duration-200"
             )}
             disabled={isLoading}
+            dir="rtl"
           />
           
           {/* Character Count */}
           <div className="flex justify-between items-center text-xs">
             <span className="text-slate-500">
-              {attachments.length > 0 && `${attachments.length} file(s) attached`}
+              {attachments.length > 0 && `${attachments.length} فایل پیوست شده`}
             </span>
             <span className={cn(
               "font-medium",
               isNearLimit ? "text-orange-600" : "text-slate-500"
             )}>
-              {remainingChars} characters remaining
+              {remainingChars} کاراکتر باقی‌مانده
             </span>
           </div>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border-0 shadow-sm">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border-0 shadow-sm" dir="rtl">
             <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
@@ -284,7 +320,7 @@ export function ComposeMessage({
                     />
                   ) : (
                     <div className="h-12 w-12 bg-slate-200 rounded flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-slate-600" />
+                      {getFileIcon(attachment.file.type)}
                     </div>
                   )}
                 </div>
@@ -330,7 +366,7 @@ export function ComposeMessage({
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept={acceptedTypes}
             onChange={(e) => handleFileSelect(e.target.files)}
             className="hidden"
             disabled={isLoading}
@@ -346,12 +382,15 @@ export function ComposeMessage({
                 className="text-emerald-600 hover:text-emerald-700 p-0 h-auto font-semibold"
                 disabled={isLoading}
               >
-                Click to upload
+                کلیک کنید
               </Button>
-              <span className="text-sm text-slate-500"> or drag and drop</span>
+              <span className="text-sm text-slate-500"> یا فایل را بکشید و رها کنید</span>
             </div>
             <p className="text-xs text-slate-400">
-              PDF, JPG, PNG (max 10MB)
+              {userType === "student" 
+                ? `متن، تصویر، PDF، Word، Excel، PowerPoint (حداکثر ${STUDENT_MAX_FILE_SIZE / 1024 / 1024}MB)`
+                : `همه انواع فایل (حداکثر ${TEACHER_OFFICE_MAX_FILE_SIZE / 1024 / 1024}MB)`
+              }
             </p>
           </div>
         </div>
@@ -373,7 +412,7 @@ export function ComposeMessage({
             )}
           >
             <Send className="h-4 w-4 mr-2" />
-            {isLoading ? "Sending..." : "Send Message"}
+            {isLoading ? "در حال ارسال..." : "ارسال پیام"}
           </Button>
 
           {onCancel && (
@@ -383,7 +422,7 @@ export function ComposeMessage({
               disabled={isLoading}
               className="min-h-[44px] border-0 bg-slate-100 hover:bg-slate-200 shadow-sm"
             >
-              Cancel
+              انصراف
             </Button>
           )}
         </div>

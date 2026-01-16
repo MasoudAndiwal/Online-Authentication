@@ -22,23 +22,28 @@ interface Conversation {
 
 interface Message {
   id: string;
+  conversationId?: string;
   senderId: string;
   senderName: string;
-  senderRole: "student" | "teacher" | "office";
+  senderRole: "student" | "teacher" | "office" | "system";
   senderAvatar?: string;
   content: string;
-  category: "attendance_inquiry" | "documentation" | "general" | "urgent";
+  messageType?: "user" | "system";
+  category: "attendance_inquiry" | "documentation" | "general" | "urgent" | "system_alert" | "system_info";
   attachments: Attachment[];
   timestamp: Date;
   isRead: boolean;
+  metadata?: Record<string, unknown>;
 }
 
 interface Attachment {
   id: string;
   filename: string;
+  originalFilename?: string;
   fileType: string;
   fileSize: number;
   url: string;
+  thumbnailUrl?: string;
 }
 
 interface MessageData {
