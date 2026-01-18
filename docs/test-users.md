@@ -54,3 +54,42 @@ Select **Student** role on the login page. Students need both username and stude
 ---
 
 *Last updated: January 15, 2026*
+
+
+---
+
+## Broadcast Test Students
+
+These students were added specifically for testing broadcast messaging:
+
+### CS-301-A - MORNING Class (4 students)
+
+| Username | Student ID | Name | Password |
+|----------|------------|------|----------|
+| `sarah.johnson` | `20001` | Sarah Johnson | `password123` |
+| `david.smith` | `20002` | David Smith | `password123` |
+| `emma.brown` | `20003` | Emma Brown | `password123` |
+
+### IS-401-A - AFTERNOON Class (3 students)
+
+| Username | Student ID | Name | Password |
+|----------|------------|------|----------|
+| `lisa.wilson` | `30001` | Lisa Wilson | `password123` |
+| `tom.davis` | `30002` | Tom Davis | `password123` |
+| `anna.miller` | `30003` | Anna Miller | `password123` |
+
+### MATH-101-A - MORNING Class (3 students)
+
+| Username | Student ID | Name | Password |
+|----------|------------|------|----------|
+| `mike.taylor` | `10101` | Mike Taylor | `password123` |
+| `kate.anderson` | `10102` | Kate Anderson | `password123` |
+| `jack.thomas` | `10103` | Jack Thomas | `password123` |
+
+### ME-101-A - MORNING Class (3 students)
+
+| Username | Student ID | Name | Password |
+|----------|------------|------|----------|
+| `nina.jackson` | `10201` | Nina Jackson | `password123` |
+| `ryan.white` | `10202` | Ryan White | `password123` |
+| `sophia.harris` | `10203` | Sophia Harris | `password123` |
