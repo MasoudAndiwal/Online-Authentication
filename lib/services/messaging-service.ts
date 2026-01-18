@@ -535,9 +535,19 @@ export class MessagingService {
   }
 
   // Broadcast message to all students in a class (teacher/office only)
-  async broadcastToClass(sender: User, classId: string, content: string, category: MessageCategory = 'general'): Promise<BroadcastResult> {
+  async broadcastToClass(sender: User, classId: string, content: string, category: MessageCategory = 'general', attachments?: File[]): Promise<BroadcastResult> {
     if (sender.type === 'student') {
       throw new Error('Students cannot send broadcast messages')
+    }
+
+    // Validate attachments if provided
+    if (attachments && attachments.length > 0) {
+      for (const file of attachments) {
+        const validation = isFileAllowed(sender.type, file)
+        if (!validation.allowed) {
+          throw new Error(validation.reason || 'File type not allowed')
+        }
+      }
     }
 
     const { data, error } = await supabase.rpc('send_broadcast_to_class', {
@@ -554,14 +564,48 @@ export class MessagingService {
       throw new Error('Failed to send broadcast message')
     }
 
+    const broadcastId = data
+
+    // Upload attachments if provided
+    if (attachments && attachments.length > 0 && broadcastId) {
+      // Get all message IDs created by this broadcast
+      const { data: broadcastData } = await supabase
+        .from('broadcast_messages')
+        .select('id')
+        .eq('id', broadcastId)
+        .single()
+
+      if (broadcastData) {
+        // Get all messages created by this broadcast
+        const { data: messages } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('broadcast_id', broadcastId)
+
+        // Upload attachments for each message
+        if (messages && messages.length > 0) {
+          for (const message of messages) {
+            for (const file of attachments) {
+              try {
+                await this.uploadAttachment(message.id, file, sender)
+              } catch (err) {
+                console.error(`Failed to upload attachment for message ${message.id}:`, err)
+                // Continue with other attachments even if one fails
+              }
+            }
+          }
+        }
+      }
+    }
+
     const { data: stats } = await supabase
       .from('broadcast_messages')
       .select('total_recipients, delivered_count')
-      .eq('id', data)
+      .eq('id', broadcastId)
       .single()
 
     return {
-      broadcastId: data,
+      broadcastId: broadcastId,
       totalRecipients: stats?.total_recipients || 0,
       deliveredCount: stats?.delivered_count || 0,
     }
@@ -705,8 +749,8 @@ export class MessagingService {
         nameFields = 'id, first_name, last_name'
         break
       case 'office':
-        tableName = 'users'
-        nameFields = 'id, name'
+        tableName = 'office_staff'
+        nameFields = 'id, first_name, last_name'
         break
       default:
         throw new Error('Invalid user type')
@@ -833,10 +877,14 @@ export class MessagingService {
       }
     } else if (userType === 'teacher') {
       // Teachers can message their students and office
-      const { data: students } = await supabase
+      const { data: students, error: studentsError } = await supabase
         .from('students')
         .select('id, first_name, last_name')
         .limit(100)
+
+      if (studentsError) {
+        console.error('Error fetching students for teacher:', studentsError)
+      }
 
       students?.forEach(student => {
         recipients.push({
@@ -846,16 +894,21 @@ export class MessagingService {
         })
       })
 
-      const { data: officeUsers } = await supabase
-        .from('users')
-        .select('id, name')
-        .eq('role', 'OFFICE')
+      // Fetch office users from the 'office_staff' table
+      const { data: officeUsers, error: officeError } = await supabase
+        .from('office_staff')
+        .select('id, first_name, last_name, role')
+        .eq('is_active', true)
+
+      if (officeError) {
+        console.error('Error fetching office users for teacher:', officeError)
+      }
 
       officeUsers?.forEach(user => {
         recipients.push({
           id: user.id,
           type: 'office',
-          name: user.name || 'Office',
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Office Staff',
         })
       })
     } else if (userType === 'office') {

@@ -11,7 +11,9 @@ import {
   CheckCircle2,
   Clock,
   Trash2,
-  Settings
+  Settings,
+  MessageSquare,
+  Send
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -28,7 +30,13 @@ import {
 // Types
 // ============================================================================
 
-export type NotificationType = 'student_risk' | 'system_update' | 'schedule_change'
+export type NotificationType = 
+  | 'student_risk' 
+  | 'system_update' 
+  | 'schedule_change'
+  | 'new_message'
+  | 'broadcast_success'
+  | 'broadcast_partial'
 
 export interface Notification {
   id: string
@@ -83,6 +91,24 @@ const notificationConfig: Record<NotificationType, {
     color: 'text-orange-700',
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-200'
+  },
+  new_message: {
+    icon: <MessageSquare className="h-5 w-5" />,
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200'
+  },
+  broadcast_success: {
+    icon: <Send className="h-5 w-5" />,
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200'
+  },
+  broadcast_partial: {
+    icon: <Send className="h-5 w-5" />,
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200'
   }
 }
 
@@ -316,7 +342,7 @@ export function NotificationCenter({
         </SheetHeader>
 
         {/* Notification List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto p-6 space-y-3 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <AnimatePresence mode="popLayout">
             {hasNotifications ? (
               notifications.map((notification) => (

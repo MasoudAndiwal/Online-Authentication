@@ -218,6 +218,11 @@ const getNavigationItems = (role: string): NavigationItem[] => {
         href: "/teacher/dashboard/student-progress",
         icon: TrendingUp,
       },
+      {
+        label: "Messages",
+        href: "/teacher/dashboard/messages",
+        icon: MessageSquare,
+      },
     ];
   }
 

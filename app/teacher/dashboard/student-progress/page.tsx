@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/modern-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TeacherNotificationsWrapper } from "@/components/teacher";
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
@@ -108,6 +109,7 @@ function StudentProgressContent() {
       onNavigate={handleNavigation}
       onLogout={handleLogoutClick}
       onSearch={handleSearch}
+      notificationTrigger={<TeacherNotificationsWrapper />}
     >
       <PageContainer>
         {/* Header Section */}

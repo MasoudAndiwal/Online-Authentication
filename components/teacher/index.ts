@@ -55,6 +55,8 @@ export type { Notification, NotificationType } from './notification-center'
 export { NotificationSettings } from './notification-settings'
 export type { NotificationPreferences } from './notification-settings'
 
+export { TeacherNotificationsWrapper } from './teacher-notifications-wrapper'
+
 
 // Loading States and Skeleton Components
 export {
@@ -91,3 +93,12 @@ export {
   NetworkStatusIcon,
   OfflineModeProvider
 } from './offline-indicator'
+
+// Messaging Components
+export { TeacherMessagingInterface } from './teacher-messaging-interface'
+export { TeacherConversationList } from './teacher-conversation-list'
+export { TeacherMessageThread } from './teacher-message-thread'
+export { TeacherComposeMessage } from './teacher-compose-message'
+export { TeacherNewConversationDialog } from './teacher-new-conversation-dialog'
+export { BroadcastDialog } from './broadcast-dialog'
+export { BroadcastHistory } from './broadcast-history'

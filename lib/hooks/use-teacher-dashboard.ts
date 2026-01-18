@@ -52,6 +52,15 @@ const classesApi = {
         if (sessionData) {
           const session = JSON.parse(sessionData);
           teacherId = session.id || '';
+          console.log('[useTeacherClasses] Session data:', {
+            id: session.id,
+            username: session.username,
+            firstName: session.firstName,
+            lastName: session.lastName,
+            role: session.role
+          });
+        } else {
+          console.log('[useTeacherClasses] No session data found in localStorage');
         }
       }
       
@@ -60,23 +69,25 @@ const classesApi = {
         ? `/api/teachers/classes?teacherId=${teacherId}`
         : '/api/teachers/classes';
       
-      console.log('Fetching classes for teacher:', teacherId);
+      console.log('[useTeacherClasses] Fetching classes for teacher:', teacherId);
+      console.log('[useTeacherClasses] API URL:', apiUrl);
       
       const response = await fetch(apiUrl);
       if (!response.ok) {
+        console.error('[useTeacherClasses] API response not OK:', response.status, response.statusText);
         throw new Error('Failed to fetch teacher classes');
       }
       const apiClasses = await response.json();
       
-      console.log('Fetched classes from API:', apiClasses);
-      console.log('Classes array length:', Array.isArray(apiClasses) ? apiClasses.length : 'Not an array');
-      console.log('Classes data:', JSON.stringify(apiClasses, null, 2));
+      console.log('[useTeacherClasses] Fetched classes from API:', apiClasses);
+      console.log('[useTeacherClasses] Classes array length:', Array.isArray(apiClasses) ? apiClasses.length : 'Not an array');
+      console.log('[useTeacherClasses] Classes data:', JSON.stringify(apiClasses, null, 2));
       
       // Ensure we always return an array
       const classesArray = Array.isArray(apiClasses) ? apiClasses : [apiClasses];
       return classesArray;
     } catch (error) {
-      console.error('Error fetching teacher classes:', error);
+      console.error('[useTeacherClasses] Error fetching teacher classes:', error);
       throw error;
     }
   },

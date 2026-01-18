@@ -22,11 +22,13 @@ Select **Office** role on the login page.
 
 Select **Teacher** role on the login page.
 
-| Username | Name |
-|----------|------|
-| `masoudandiwal` | masoud andiwal |
-| `MasoudA` | مسعود اندیوال |
-| `jamelmire` | Jamil Mire |
+| Username | Name | Classes Assigned |
+|----------|------|------------------|
+| `masoudandiwal` | masoud andiwal | Section C, Section D, Section B, Morning Batch |
+| `MasoudA` | مسعود اندیوال | AI-401-A (AFTERNOON), ARCH-101-A (MORNING), ARCH-201-A (AFTERNOON), ARCH-301-A (MORNING), BM-101-A (MORNING) |
+| `dd` | d d | Section B, Section C, Morning Batch, Afternoon Batch |
+| `مسعوداندیوال` | مسعود اندیوال | Section C, CS-301-A (MORNING), ME-101-A (MORNING), IS-401-A (AFTERNOON), MATH-101-A (MORNING) |
+| `jamelmire` | Jamil Mire | (No classes assigned) |
 
 ---
 

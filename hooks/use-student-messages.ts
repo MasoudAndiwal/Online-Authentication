@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 
 export interface Conversation {
   id: string;
-  recipientType: "teacher" | "office";
+  recipientType: "student" | "teacher" | "office";
   recipientId: string;
   recipientName: string;
   recipientAvatar?: string;
@@ -48,7 +48,7 @@ export interface Attachment {
 export interface SendMessageData {
   conversationId?: string;
   recipientId: string;
-  recipientType: "teacher" | "office";
+  recipientType: "student" | "teacher" | "office";
   content: string;
   category: string;
   attachments: File[];
@@ -85,7 +85,9 @@ export function useConversations() {
   return useQuery<Conversation[], Error>({
     queryKey: ["conversations"],
     queryFn: async () => {
-      const response = await fetch("/api/conversations");
+      const response = await fetch("/api/conversations", {
+        credentials: 'include', // Include cookies for authentication
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -134,7 +136,9 @@ export function useConversationMessages(conversationId?: string) {
     queryFn: async () => {
       if (!conversationId) throw new Error("Conversation ID is required");
 
-      const response = await fetch(`/api/conversations/${conversationId}/messages`);
+      const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+        credentials: 'include', // Include cookies for authentication
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -181,7 +185,9 @@ export function useAvailableRecipients() {
   return useQuery<Recipient[], Error>({
     queryKey: ["available-recipients"],
     queryFn: async () => {
-      const response = await fetch("/api/messages/recipients");
+      const response = await fetch("/api/messages/recipients", {
+        credentials: 'include', // Include cookies for authentication
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -221,6 +227,7 @@ export function useSendMessage() {
       const response = await fetch("/api/messages", {
         method: "POST",
         body: formData,
+        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
@@ -253,6 +260,7 @@ export function useMarkMessagesRead() {
     mutationFn: async (conversationId: string) => {
       const response = await fetch(`/api/conversations/${conversationId}/read`, {
         method: "POST",
+        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
@@ -278,7 +286,9 @@ export function useSystemMessages(includeRead = false) {
   return useQuery<SystemMessage[], Error>({
     queryKey: ["system-messages", includeRead],
     queryFn: async () => {
-      const response = await fetch(`/api/messages/system?includeRead=${includeRead}`);
+      const response = await fetch(`/api/messages/system?includeRead=${includeRead}`, {
+        credentials: 'include', // Include cookies for authentication
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -316,6 +326,7 @@ export function useMarkSystemMessageRead() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "read" }),
+        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
@@ -342,6 +353,7 @@ export function useDismissSystemMessage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "dismiss" }),
+        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {

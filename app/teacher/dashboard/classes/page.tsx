@@ -19,6 +19,7 @@ import {
 import { TeacherClassGrid } from "@/components/classes/teacher-class-grid";
 import { useTeacherDashboardSelectors } from "@/lib/stores/teacher-dashboard-store";
 import { useInitializeTeacherDashboard } from "@/lib/hooks/use-teacher-dashboard";
+import { TeacherNotificationsWrapper } from "@/components/teacher";
 
 export default function TeacherClassesPage() {
   const router = useRouter();
@@ -100,6 +101,7 @@ export default function TeacherClassesPage() {
       onNavigate={handleNavigation}
       onLogout={handleLogoutClick}
       onSearch={handleSearch}
+      notificationTrigger={<TeacherNotificationsWrapper />}
     >
       <PageContainer>
         {/* Header Section */}

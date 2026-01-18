@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StudentGuard } from "@/components/auth/role-guard";
 import { ModernDashboardLayout, PageContainer } from "@/components/layout/modern-dashboard-layout";
@@ -26,6 +26,11 @@ export default function AttendanceHistoryPage() {
   const { user, loading: userLoading } = useCurrentUser();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
   
+  // State for attendance records
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(true);
+  const [recordsError, setRecordsError] = useState<string | null>(null);
+  
   // Fetch system messages for notifications
   const { data: systemMessages = [] } = useSystemMessages(true);
   const markSystemReadMutation = useMarkSystemMessageRead();
@@ -43,8 +48,42 @@ export default function AttendanceHistoryPage() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Mock data for demonstration
-  const mockRecords: AttendanceRecord[] = generateMockRecords();
+  // Fetch attendance records from API
+  useEffect(() => {
+    const fetchAttendanceRecords = async () => {
+      if (!user?.id) return;
+
+      try {
+        setIsLoadingRecords(true);
+        setRecordsError(null);
+
+        console.log('[Attendance History Page] Fetching records for student:', user.id);
+
+        const response = await fetch(`/api/students/${user.id}/attendance/history?days=60`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch attendance records');
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          console.log('[Attendance History Page] Loaded records:', result.data.length);
+          setAttendanceRecords(result.data);
+        } else {
+          throw new Error(result.error || 'Failed to load attendance records');
+        }
+      } catch (error) {
+        console.error('[Attendance History Page] Error fetching records:', error);
+        setRecordsError(error instanceof Error ? error.message : 'Failed to load attendance records');
+        setAttendanceRecords([]);
+      } finally {
+        setIsLoadingRecords(false);
+      }
+    };
+
+    fetchAttendanceRecords();
+  }, [user?.id]);
 
   const handleNavigation = (href: string) => {
     router.push(href);
@@ -86,6 +125,48 @@ export default function AttendanceHistoryPage() {
     );
   }
 
+  // Show error state if records failed to load
+  if (recordsError && !isLoadingRecords) {
+    return (
+      <StudentGuard>
+        <ModernDashboardLayout
+          user={user || undefined}
+          title="Attendance History"
+          subtitle="View your complete attendance records"
+          currentPath="/student/student-dashboard/attendance-history"
+          onNavigate={handleNavigation}
+          onLogout={onLogout}
+          hideSearch={true}
+          notificationTrigger={
+            <NotificationBell
+              unreadCount={unreadCount}
+              onClick={handleNotificationClick}
+              isActive={isNotificationPanelOpen}
+            />
+          }
+        >
+          <PageContainer>
+            <div className="rounded-2xl shadow-xl bg-white/80 backdrop-blur-xl border-0 p-8 text-center">
+              <div className="text-red-600 mb-4">
+                <svg className="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-slate-800 mb-2">Failed to Load Attendance History</h3>
+              <p className="text-slate-600 mb-4">{recordsError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </PageContainer>
+        </ModernDashboardLayout>
+      </StudentGuard>
+    );
+  }
+
   return (
     <StudentGuard>
       <ModernDashboardLayout
@@ -114,9 +195,9 @@ export default function AttendanceHistoryPage() {
             </div>
           }>
             <AttendanceHistoryView
-              records={mockRecords}
+              records={attendanceRecords}
               studentName={user?.firstName ? `${user.firstName} ${user.lastName}` : "Student"}
-              isLoading={false}
+              isLoading={isLoadingRecords}
             />
           </Suspense>
         </PageContainer>
@@ -130,7 +211,7 @@ export default function AttendanceHistoryPage() {
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
-        onReply={(notification) => {
+        onReply={() => {
           router.push("/student/student-dashboard/messages");
           setIsNotificationPanelOpen(false);
         }}
@@ -141,61 +222,4 @@ export default function AttendanceHistoryPage() {
       />
     </StudentGuard>
   );
-}
-
-/**
- * Generate mock attendance records for demonstration
- */
-function generateMockRecords(): AttendanceRecord[] {
-  const records: AttendanceRecord[] = [];
-  const statuses: Array<"present" | "absent" | "sick" | "leave"> = [
-    "present",
-    "absent",
-    "sick",
-    "leave",
-  ];
-  const courses = [
-    "Computer Science 101",
-    "Mathematics 201",
-    "Physics 150",
-    "English Literature",
-    "Database Systems",
-    "Web Development",
-  ];
-  const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
-  const teachers = ["Dr. Smith", "Prof. Johnson", "Dr. Williams", "Prof. Brown"];
-
-  // Generate records for the past 60 days
-  const today = new Date();
-  for (let i = 0; i < 60; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-
-    // Skip Fridays (no classes)
-    if (date.getDay() === 5) continue;
-
-    const dayOfWeek = days[date.getDay()];
-    const numSessions = Math.floor(Math.random() * 3) + 2; // 2-4 sessions per day
-
-    for (let session = 1; session <= numSessions; session++) {
-      // 85% chance of being present
-      const statusIndex = Math.random() < 0.85 ? 0 : Math.floor(Math.random() * 4);
-      const status = statuses[statusIndex];
-      const course = courses[Math.floor(Math.random() * courses.length)];
-      const teacher = teachers[Math.floor(Math.random() * teachers.length)];
-      const time = `${8 + session}:00 AM`;
-
-      records.push({
-        id: `record-${i}-${session}`,
-        date: date.toISOString(),
-        dayOfWeek,
-        status,
-        courseName: course,
-        period: session,
-        notes: `Marked by: ${teacher} at ${time}`,
-      });
-    }
-  }
-
-  return records;
 }

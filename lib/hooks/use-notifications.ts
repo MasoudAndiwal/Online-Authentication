@@ -4,99 +4,58 @@
  */
 
 import * as React from 'react'
+import { useTeacherNotifications, useMarkNotificationRead, type TeacherNotification } from '@/hooks/use-teacher-notifications'
 import type { Notification } from '@/components/teacher/notification-center'
 
-// Mock notification data - replace with actual API calls
-const getMockNotifications = (): Notification[] => [
-  {
-    id: '1',
-    type: 'student_risk',
-    title: 'Student At Risk',
-    message: 'Ahmed Hassan has exceeded 75% absence threshold in CS101',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    isRead: false,
-    metadata: {
-      studentName: 'Ahmed Hassan',
-      className: 'CS101',
-      riskType: 'محروم'
-    }
-  },
-  {
-    id: '2',
-    type: 'schedule_change',
-    title: 'Schedule Update',
-    message: 'Your CS101 class has been moved to Room B-305',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    isRead: false,
-    metadata: {
-      className: 'CS101'
-    }
-  },
-  {
-    id: '3',
-    type: 'system_update',
-    title: 'System Maintenance',
-    message: 'Scheduled maintenance on Sunday 2:00 AM - 4:00 AM',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    isRead: true
-  },
-  {
-    id: '4',
-    type: 'student_risk',
-    title: 'Student Needs Attention',
-    message: 'Sara Ali is approaching تصدیق طلب threshold with 4 absences',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
-    isRead: true,
-    metadata: {
-      studentName: 'Sara Ali',
-      className: 'CS101',
-      riskType: 'تصدیق طلب'
-    }
-  }
-]
+// Convert API notification to component notification format
+const convertNotification = (apiNotification: TeacherNotification): Notification => ({
+  id: apiNotification.id,
+  type: apiNotification.type as Notification['type'],
+  title: apiNotification.title,
+  message: apiNotification.message,
+  timestamp: new Date(apiNotification.timestamp),
+  isRead: apiNotification.isRead,
+  actionUrl: apiNotification.actionUrl,
+  metadata: apiNotification.metadata
+})
 
 export function useNotifications() {
-  const [notifications, setNotifications] = React.useState<Notification[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
+  const { data, isLoading, refetch } = useTeacherNotifications()
+  const markReadMutation = useMarkNotificationRead()
+  
+  // Convert API notifications to component format
+  const notifications = React.useMemo(() => {
+    if (!data?.notifications) return []
+    return data.notifications.map(convertNotification)
+  }, [data])
 
-  // Load notifications on mount
-  React.useEffect(() => {
-    // Simulate API call
-    const timer = setTimeout(() => {
-      setNotifications(getMockNotifications())
-      setIsLoading(false)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [])
+  const unreadCount = data?.unreadCount || 0
 
   // Mark notification as read
   const markAsRead = React.useCallback((notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-    )
-  }, [])
+    markReadMutation.mutate(notificationId)
+  }, [markReadMutation])
 
   // Mark all notifications as read
   const markAllAsRead = React.useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
-  }, [])
+    // Mark all notifications as read
+    notifications.forEach(n => {
+      if (!n.isRead) {
+        markReadMutation.mutate(n.id)
+      }
+    })
+  }, [notifications, markReadMutation])
 
-  // Delete notification
+  // Delete notification (for now, just mark as read)
   const deleteNotification = React.useCallback((notificationId: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId))
-  }, [])
+    markReadMutation.mutate(notificationId)
+  }, [markReadMutation])
 
   // Add new notification (for real-time updates)
-  const addNotification = React.useCallback((notification: Notification) => {
-    setNotifications(prev => [notification, ...prev])
-  }, [])
-
-  // Get unread count
-  const unreadCount = React.useMemo(
-    () => notifications.filter(n => !n.isRead).length,
-    [notifications]
-  )
+  const addNotification = React.useCallback((_notification: Notification) => {
+    // Refetch to get latest notifications
+    refetch()
+  }, [refetch])
 
   // Get notifications by type
   const getByType = React.useCallback(

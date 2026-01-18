@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { handleLogout } from "@/lib/auth/logout";
 import type { Class } from "@/types/attendance";
+import { TeacherNotificationsWrapper } from "@/components/teacher";
 
 function AttendanceContent() {
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
@@ -70,6 +71,7 @@ function AttendanceContent() {
         onNavigate={(href) => window.location.href = href}
         onLogout={async () => await handleLogout()}
         onSearch={() => {}}
+        notificationTrigger={<TeacherNotificationsWrapper />}
       >
         <PageContainer>
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -107,6 +109,7 @@ function AttendanceContent() {
         onNavigate={(href) => window.location.href = href}
         onLogout={async () => await handleLogout()}
         onSearch={() => {}}
+        notificationTrigger={<TeacherNotificationsWrapper />}
       >
         <PageContainer>
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -135,6 +138,7 @@ function AttendanceContent() {
         onNavigate={(href) => window.location.href = href}
         onLogout={async () => await handleLogout()}
         onSearch={() => {}}
+        notificationTrigger={<TeacherNotificationsWrapper />}
       >
         <PageContainer>
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -194,6 +198,7 @@ function AttendanceContent() {
       onNavigate={handleNavigation}
       onLogout={handleLogoutClick}
       onSearch={handleSearch}
+      notificationTrigger={<TeacherNotificationsWrapper />}
     >
       <PageContainer>
         <AttendanceManagement

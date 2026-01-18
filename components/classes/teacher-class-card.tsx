@@ -74,7 +74,7 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
       }}
     >
       <Card className={cn(
-        "rounded-xl sm:rounded-2xl shadow-lg border-0 overflow-hidden relative touch-manipulation transition-all duration-300",
+        "rounded-xl sm:rounded-2xl shadow-lg border-0 overflow-hidden relative touch-manipulation transition-shadow duration-300",
         colorScheme.hover,
         "bg-gradient-to-br",
         colorScheme.bg
@@ -193,10 +193,8 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.3 }}
           >
-            <motion.div 
+            <div 
               className="cursor-pointer touch-manipulation bg-white/60 backdrop-blur-sm rounded-xl p-3 sm:p-4 transition-all duration-200 hover:bg-white/80 hover:shadow-md"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 if (isTouch) lightTap();
                 if (onViewStudents) {
@@ -209,7 +207,7 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
                 <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Students</span>
               </div>
               <p className="text-2xl font-bold text-slate-900">{classData.studentCount}</p>
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* Action Buttons */}
@@ -221,43 +219,39 @@ export const TeacherClassCard = React.forwardRef<HTMLDivElement, TeacherClassCar
           >
             {onMarkAttendance && (
               <div className="flex-1">
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    onClick={() => {
-                      if (isTouch) lightTap();
-                      onMarkAttendance(classData.id);
-                      toast.success('Opening attendance interface...');
-                    }}
-                    className="w-full min-h-[44px] sm:h-11 bg-white/70 text-slate-700 hover:bg-white shadow-md border-0 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold touch-manipulation transition-all duration-200"
-                  >
-                    <div className="flex items-center justify-center">
-                      <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                      <span className="hidden xs:inline">Mark Attendance</span>
-                      <span className="xs:hidden">Mark</span>
-                    </div>
-                  </Button>
-                </motion.div>
+                <Button
+                  onClick={() => {
+                    if (isTouch) lightTap();
+                    onMarkAttendance(classData.id);
+                    toast.success('Opening attendance interface...');
+                  }}
+                  className="w-full min-h-[44px] sm:h-11 bg-white/70 text-slate-700 hover:bg-white shadow-md border-0 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold touch-manipulation transition-all duration-200"
+                >
+                  <div className="flex items-center justify-center">
+                    <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                    <span className="hidden xs:inline">Mark Attendance</span>
+                    <span className="xs:hidden">Mark</span>
+                  </div>
+                </Button>
               </div>
             )}
             
             {onViewDetails && (
               <div className="flex-1">
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    onClick={() => {
-                      if (isTouch) lightTap();
-                      onViewDetails(classData.id);
-                      toast.success('Loading class details...');
-                    }}
-                    className="w-full min-h-[44px] sm:h-11 bg-white text-slate-700 hover:bg-white/90 shadow-md border-0 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold touch-manipulation transition-all duration-200"
-                  >
-                    <div className="flex items-center justify-center">
-                      <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                      <span className="hidden xs:inline">View Class</span>
-                      <span className="xs:hidden">View</span>
-                    </div>
-                  </Button>
-                </motion.div>
+                <Button
+                  onClick={() => {
+                    if (isTouch) lightTap();
+                    onViewDetails(classData.id);
+                    toast.success('Loading class details...');
+                  }}
+                  className="w-full min-h-[44px] sm:h-11 bg-white text-slate-700 hover:bg-white/90 shadow-md border-0 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold touch-manipulation transition-all duration-200"
+                >
+                  <div className="flex items-center justify-center">
+                    <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                    <span className="hidden xs:inline">View Class</span>
+                    <span className="xs:hidden">View</span>
+                  </div>
+                </Button>
               </div>
             )}
           </motion.div>

@@ -3,6 +3,7 @@
  * 
  * POST /api/messages/broadcast - Send a message to all students in a class
  * Only teachers and office users can use this endpoint
+ * Supports file attachments via FormData
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -27,11 +28,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { classId, content, category = 'general' } = body as {
-      classId: string
-      content: string
-      category?: MessageCategory
+    // Parse FormData to support file attachments
+    const formData = await request.formData()
+    const classId = formData.get('classId') as string
+    const content = formData.get('content') as string
+    const category = (formData.get('category') as MessageCategory) || 'general'
+    
+    // Extract file attachments
+    const attachments: File[] = []
+    const attachmentEntries = formData.getAll('attachments')
+    for (const entry of attachmentEntries) {
+      if (entry instanceof File) {
+        attachments.push(entry)
+      }
     }
 
     if (!classId || !content) {
@@ -50,7 +59,8 @@ export async function POST(request: NextRequest) {
       },
       classId,
       content,
-      category
+      category,
+      attachments.length > 0 ? attachments : undefined
     )
 
     return NextResponse.json(result, { status: 201 })

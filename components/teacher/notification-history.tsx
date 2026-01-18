@@ -289,7 +289,7 @@ export function NotificationHistory({
         </SheetHeader>
 
         {/* History List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto p-6 space-y-3 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <AnimatePresence mode="popLayout">
             {filteredHistory.length > 0 ? (
               filteredHistory.map((item) => (

@@ -171,33 +171,33 @@ export function TeacherClassGrid({
 function ClassCardSkeleton() {
   return (
     <div
-      className="rounded-2xl shadow-md border border-slate-200/60 bg-[#FEF7ED] overflow-hidden"
+      className="rounded-2xl shadow-md border-0 bg-[#FEF7ED] overflow-hidden"
     >
       <div className="p-6">
         {/* Header skeleton */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-slate-200 to-slate-300 rounded-2xl animate-pulse" />
+            <div className="w-12 h-12 bg-slate-200 rounded-2xl" />
             <div>
-              <div className="h-5 w-32 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-2 animate-pulse" />
-              <div className="h-4 w-24 bg-gradient-to-r from-slate-200 to-slate-300 rounded animate-pulse" />
+              <div className="h-5 w-32 bg-slate-200 rounded mb-2" />
+              <div className="h-4 w-24 bg-slate-200 rounded" />
             </div>
           </div>
-          <div className="w-8 h-8 bg-gradient-to-r from-slate-200 to-slate-300 rounded-xl animate-pulse" />
+          <div className="w-8 h-8 bg-slate-200 rounded-xl" />
         </div>
 
         {/* Students count skeleton */}
         <div className="mb-5">
           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4">
-            <div className="h-4 w-16 bg-gradient-to-r from-slate-200 to-slate-300 rounded mb-2 animate-pulse" />
-            <div className="h-8 w-12 bg-gradient-to-r from-slate-200 to-slate-300 rounded animate-pulse" />
+            <div className="h-4 w-16 bg-slate-200 rounded mb-2" />
+            <div className="h-8 w-12 bg-slate-200 rounded" />
           </div>
         </div>
 
         {/* Buttons skeleton */}
         <div className="flex gap-3">
-          <div className="flex-1 h-11 bg-gradient-to-r from-slate-200 to-slate-300 rounded-xl animate-pulse" />
-          <div className="flex-1 h-11 bg-gradient-to-r from-slate-200 to-slate-300 rounded-xl animate-pulse" />
+          <div className="flex-1 h-11 bg-slate-200 rounded-xl" />
+          <div className="flex-1 h-11 bg-slate-200 rounded-xl" />
         </div>
       </div>
     </div>

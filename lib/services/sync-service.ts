@@ -199,7 +199,7 @@ export class SyncQueueManager {
           operation.retryCount++
           
           if (operation.retryCount >= operation.maxRetries) {
-            console.error(`❌ Max retries reached for operation: ${operation.id}`)
+            console.warn(`⚠️ Max retries reached for operation: ${operation.id} (${operation.type} ${operation.resource})`)
             this.removeOperation(operation.id)
             this.stats.failedOperations++
           } else {
@@ -208,10 +208,11 @@ export class SyncQueueManager {
           }
         }
       } catch (error) {
-        console.error(`❌ Sync operation failed: ${operation.id}`, error)
+        console.warn(`⚠️ Sync operation error: ${operation.id} (${operation.type} ${operation.resource})`, error instanceof Error ? error.message : 'Unknown error')
         operation.retryCount++
         
         if (operation.retryCount >= operation.maxRetries) {
+          console.warn(`⚠️ Removing failed operation after ${operation.maxRetries} retries: ${operation.id}`)
           this.removeOperation(operation.id)
           this.stats.failedOperations++
         } else {

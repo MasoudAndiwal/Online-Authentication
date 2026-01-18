@@ -13,8 +13,7 @@ import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { handleLogout } from "@/lib/auth/logout";
 import { AttendanceHistoryView } from "@/components/attendance/attendance-history-view";
 import { useResponsive } from "@/lib/hooks/use-responsive";
-import { NotificationTrigger } from "@/components/teacher";
-import { useNotifications } from "@/lib/hooks/use-notifications";
+import { TeacherNotificationsWrapper } from "@/components/teacher";
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
@@ -23,10 +22,6 @@ function AttendanceHistoryContent() {
   const { user, isLoading } = useAuth({ requiredRole: 'TEACHER' });
   const searchParams = useSearchParams();
   const { isMobile } = useResponsive();
-  
-  // Notification state
-  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
-  const { unreadCount } = useNotifications();
 
   // Get classId from URL params (optional)
   const classIdParam = searchParams.get('classId');
@@ -131,12 +126,7 @@ function AttendanceHistoryContent() {
       onNavigate={handleNavigation}
       onLogout={handleLogoutClick}
       onSearch={handleSearch}
-      notificationTrigger={
-        <NotificationTrigger
-          unreadCount={unreadCount}
-          onClick={() => setIsNotificationOpen(true)}
-        />
-      }
+      notificationTrigger={<TeacherNotificationsWrapper />}
     >
       <PageContainer>
         <PageHeader

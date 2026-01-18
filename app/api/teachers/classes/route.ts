@@ -12,13 +12,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const teacherId = searchParams.get('teacherId');
 
+    console.log('[Teacher Classes API] Request received with teacherId:', teacherId);
+
     // Step 1: Get teacher's assigned classes
     let teacherClasses: string[] = [];
     
     if (teacherId) {
       const { data: teacher, error: teacherError } = await supabase
         .from('teachers')
-        .select('classes')
+        .select('id, username, first_name, last_name, classes')
         .eq('id', teacherId)
         .single();
 
@@ -28,7 +30,15 @@ export async function GET(request: NextRequest) {
         return NextResponse.json([]);
       }
 
+      console.log('[Teacher Classes API] Teacher found:', {
+        id: teacher?.id,
+        username: teacher?.username,
+        name: `${teacher?.first_name} ${teacher?.last_name}`,
+        classes: teacher?.classes
+      });
+
       teacherClasses = teacher?.classes || [];
+      console.log('[Teacher Classes API] Teacher assigned classes:', teacherClasses);
     }
 
     // Step 2: Get all classes from database
@@ -42,7 +52,10 @@ export async function GET(request: NextRequest) {
       throw classError;
     }
 
+    console.log('[Teacher Classes API] Total classes in database:', allClasses?.length || 0);
+
     if (!allClasses || allClasses.length === 0) {
+      console.log('[Teacher Classes API] No classes found in database');
       return NextResponse.json([]);
     }
 
@@ -54,9 +67,16 @@ export async function GET(request: NextRequest) {
       // Teacher classes are stored as "ClassName - Session" format
       filteredClasses = allClasses.filter(cls => {
         const classKey = `${cls.name} - ${cls.session || 'MORNING'}`;
-        return teacherClasses.includes(classKey);
+        const isMatch = teacherClasses.includes(classKey);
+        
+        if (isMatch) {
+          console.log('[Teacher Classes API] Matched class:', classKey);
+        }
+        
+        return isMatch;
       });
       
+      console.log('[Teacher Classes API] Filtered classes count:', filteredClasses.length);
     }
 
     // Get class IDs for additional data
@@ -117,6 +137,9 @@ export async function GET(request: NextRequest) {
         attendanceRate: 94.2, // TODO: Calculate from attendance records
       };
     });
+
+    console.log('[Teacher Classes API] Transformed classes:', transformedClasses.length);
+    console.log('[Teacher Classes API] Returning classes:', JSON.stringify(transformedClasses, null, 2));
 
     return NextResponse.json(transformedClasses);
 
