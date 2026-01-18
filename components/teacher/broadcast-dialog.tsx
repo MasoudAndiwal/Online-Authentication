@@ -51,7 +51,7 @@ export function BroadcastDialog({
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("announcement");
+  const [category, setCategory] = useState("general");
   const [attachments, setAttachments] = useState<AttachmentPreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +201,7 @@ export function BroadcastDialog({
       // Reset form on success
       setSelectedClass("");
       setContent("");
-      setCategory("announcement");
+      setCategory("general");
       setAttachments([]);
       
       // Close dialog - parent component will show success message
@@ -318,17 +318,17 @@ export function BroadcastDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="announcement" className="rounded-lg">
-                  Announcement
+                <SelectItem value="general" className="rounded-lg">
+                  General Information
                 </SelectItem>
                 <SelectItem value="urgent" className="rounded-lg">
                   Urgent Notice
                 </SelectItem>
-                <SelectItem value="general" className="rounded-lg">
-                  General Information
-                </SelectItem>
                 <SelectItem value="attendance_inquiry" className="rounded-lg">
                   Attendance Related
+                </SelectItem>
+                <SelectItem value="documentation" className="rounded-lg">
+                  Documentation
                 </SelectItem>
               </SelectContent>
             </Select>

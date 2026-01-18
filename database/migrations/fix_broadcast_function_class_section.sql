@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION send_broadcast_to_class(
     p_sender_name VARCHAR(255),
     p_class_id TEXT,
     p_content TEXT,
-    p_category VARCHAR(30) DEFAULT 'announcement'
+    p_category VARCHAR(30) DEFAULT 'general'
 )
 RETURNS TEXT AS $$
 DECLARE
