@@ -11,6 +11,9 @@ const config: Config = {
     extend: {
       screens: {
         'xs': '475px',
+        'tablet': '768px',
+        'desktop': '1024px',
+        'wide': '1440px',
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -45,6 +48,32 @@ const config: Config = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        // Messaging system colors
+        messaging: {
+          primary: {
+            50: '#E3F2FD',
+            100: '#BBDEFB',
+            200: '#90CAF9',
+            300: '#64B5F6',
+            400: '#42A5F5',
+            500: '#2196F3',
+            600: '#1E88E5',
+            700: '#1976D2',
+            800: '#1565C0',
+            900: '#0D47A1',
+          },
+          status: {
+            sent: '#90CAF9',
+            delivered: '#64B5F6',
+            read: '#2196F3',
+            failed: '#F44336',
+          },
+          priority: {
+            normal: '#9E9E9E',
+            important: '#FF9800',
+            urgent: '#F44336',
+          },
         },
       },
       borderRadius: {
@@ -94,6 +123,32 @@ const config: Config = {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' },
         },
+        // Messaging system animations
+        'message-send': {
+          '0%': { opacity: '0', transform: 'translateY(20px) scale(0.95)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'message-receive': {
+          '0%': { opacity: '0', transform: 'translateX(-20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'typing-dots': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
+        'notification-slide': {
+          '0%': { transform: 'translateX(300px)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        'reaction-pop': {
+          '0%': { transform: 'scale(0)' },
+          '50%': { transform: 'scale(1.2)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        'unread-pulse': {
+          '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'scale(1.1)', opacity: '0.8' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -105,6 +160,24 @@ const config: Config = {
         'shake': 'shake 0.5s ease-in-out',
         'pulse-slow': 'pulse-slow 2s ease-in-out infinite',
         'spin-slow': 'spin-slow 3s linear infinite',
+        // Messaging system animations
+        'message-send': 'message-send 0.25s ease-out',
+        'message-receive': 'message-receive 0.3s ease-out',
+        'typing-dots': 'typing-dots 0.6s ease-in-out infinite',
+        'notification-slide': 'notification-slide 0.3s ease-out',
+        'reaction-pop': 'reaction-pop 0.3s ease-out',
+        'unread-pulse': 'unread-pulse 2s ease-in-out infinite',
+      },
+      backdropBlur: {
+        xs: '2px',
+        sm: '4px',
+        md: '10px',
+        lg: '20px',
+        xl: '40px',
+      },
+      boxShadow: {
+        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'glow': '0 0 20px rgba(33, 150, 243, 0.3)',
       },
     },
   },

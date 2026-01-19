@@ -1,0 +1,99 @@
+{
+  "common": {
+    "send": "لیږل",
+    "cancel": "لغوه کول",
+    "save": "خوندي کول",
+    "delete": "ړنګول",
+    "edit": "سمول",
+    "search": "لټون",
+    "filter": "فلټر",
+    "sort": "ترتیبول",
+    "loading": "بارېږي...",
+    "error": "تېروتنه",
+    "success": "بریالی",
+    "retry": "بیا هڅه",
+    "close": "تړل"
+  },
+  "inbox": {
+    "title": "پیغامونه",
+    "newConversation": "نوې خبرې اترې",
+    "searchPlaceholder": "خبرې اترې لټول...",
+    "noConversations": "تر اوسه خبرې اترې نشته",
+    "unreadCount": "{{count}} نه لوستل شوي"
+  },
+  "conversation": {
+    "typingIndicator": "{{name}} لیکي...",
+    "messageDeleted": "پیغام ړنګ شو",
+    "messageFailed": "لیږل ناکام شول",
+    "retry": "بیا هڅه",
+    "noMessages": "تر اوسه پیغام نشته"
+  },
+  "compose": {
+    "placeholder": "یو پیغام ولیکئ...",
+    "attachFile": "فایل ضمیمه کړئ",
+    "selectTemplate": "کينډۍ غوره کړئ",
+    "selectCategory": "کټګورۍ غوره کړئ",
+    "selectPriority": "لومړیتوب غوره کړئ",
+    "scheduleMessage": "پیغام مهالویش",
+    "characterCount": "{{count}} توري"
+  },
+  "categories": {
+    "administrative": "اداري",
+    "attendance_alert": "حاضرۍ خبرتیا",
+    "schedule_change": "مهالویش بدلون",
+    "announcement": "اعلان",
+    "general": "عمومي",
+    "urgent": "بیړنی"
+  },
+  "priority": {
+    "normal": "عادي",
+    "important": "مهم",
+    "urgent": "بیړنی"
+  },
+  "status": {
+    "sent": "لیږل شوی",
+    "delivered": "رسول شوی",
+    "read": "لوستل شوی",
+    "failed": "ناکام"
+  },
+  "actions": {
+    "pin": "پین کول",
+    "unpin": "پین لرې کول",
+    "star": "ستوری کول",
+    "unstar": "ستوری لرې کول",
+    "archive": "بایګاني",
+    "unarchive": "بایګاني څخه وباسئ",
+    "resolve": "حل شوی",
+    "markUnread": "د نه لوستل شوي په توګه نښه کړئ",
+    "markRead": "د لوستل شوي په توګه نښه کړئ",
+    "forward": "نورو ته لیږل",
+    "react": "غبرګون",
+    "reply": "ځواب"
+  },
+  "broadcast": {
+    "title": "ګروپي پیغام",
+    "selectRecipients": "ترلاسه کوونکي غوره کړئ",
+    "allStudents": "ټول زده کوونکي",
+    "specificClass": "ځانګړی ټولګی",
+    "allTeachers": "ټول ښوونکي",
+    "specificDepartment": "ځانګړی څانګه",
+    "recipientCount": "{{count}} ترلاسه کوونکي",
+    "confirmSend": "{{count}} ترلاسه کوونکو ته ولیږئ؟"
+  },
+  "notifications": {
+    "title": "خبرتیاوې",
+    "newMessage": "د {{name}} څخه نوی پیغام",
+    "messageRead": "{{name}} ستاسو پیغام ولوست",
+    "broadcastComplete": "ګروپي پیغام {{count}} ترلاسه کوونکو ته ولیږل شو",
+    "deliveryFailed": "پیغام لیږل ناکام شول",
+    "settings": "د خبرتیا تنظیمات",
+    "quietHours": "خاموش ساعتونه",
+    "muteConversation": "خبرې اترې خاموشه کړئ"
+  },
+  "keyboard": {
+    "shortcuts": "د کیبورډ لنډې لارې",
+    "navigation": "نیویګیشن",
+    "actions": "کړنې",
+    "composition": "لیکل"
+  }
+}

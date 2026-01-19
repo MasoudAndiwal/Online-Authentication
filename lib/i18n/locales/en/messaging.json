@@ -1,0 +1,99 @@
+{
+  "common": {
+    "send": "Send",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "retry": "Retry",
+    "close": "Close"
+  },
+  "inbox": {
+    "title": "Messages",
+    "newConversation": "New Conversation",
+    "searchPlaceholder": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "unreadCount": "{{count}} unread"
+  },
+  "conversation": {
+    "typingIndicator": "{{name}} is typing...",
+    "messageDeleted": "Message deleted",
+    "messageFailed": "Failed to send",
+    "retry": "Retry",
+    "noMessages": "No messages yet"
+  },
+  "compose": {
+    "placeholder": "Type a message...",
+    "attachFile": "Attach file",
+    "selectTemplate": "Select template",
+    "selectCategory": "Select category",
+    "selectPriority": "Select priority",
+    "scheduleMessage": "Schedule message",
+    "characterCount": "{{count}} characters"
+  },
+  "categories": {
+    "administrative": "Administrative",
+    "attendance_alert": "Attendance Alert",
+    "schedule_change": "Schedule Change",
+    "announcement": "Announcement",
+    "general": "General",
+    "urgent": "Urgent"
+  },
+  "priority": {
+    "normal": "Normal",
+    "important": "Important",
+    "urgent": "Urgent"
+  },
+  "status": {
+    "sent": "Sent",
+    "delivered": "Delivered",
+    "read": "Read",
+    "failed": "Failed"
+  },
+  "actions": {
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "star": "Star",
+    "unstar": "Unstar",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "resolve": "Resolve",
+    "markUnread": "Mark as unread",
+    "markRead": "Mark as read",
+    "forward": "Forward",
+    "react": "React",
+    "reply": "Reply"
+  },
+  "broadcast": {
+    "title": "Broadcast Message",
+    "selectRecipients": "Select Recipients",
+    "allStudents": "All Students",
+    "specificClass": "Specific Class",
+    "allTeachers": "All Teachers",
+    "specificDepartment": "Specific Department",
+    "recipientCount": "{{count}} recipients",
+    "confirmSend": "Send to {{count}} recipients?"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "newMessage": "New message from {{name}}",
+    "messageRead": "{{name}} read your message",
+    "broadcastComplete": "Broadcast sent to {{count}} recipients",
+    "deliveryFailed": "Failed to deliver message",
+    "settings": "Notification Settings",
+    "quietHours": "Quiet Hours",
+    "muteConversation": "Mute Conversation"
+  },
+  "keyboard": {
+    "shortcuts": "Keyboard Shortcuts",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "composition": "Composition"
+  }
+}

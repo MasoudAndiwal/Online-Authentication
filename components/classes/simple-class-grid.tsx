@@ -86,7 +86,7 @@ export function SimpleClassGrid({
 // Skeleton component for loading state
 function ClassCardSkeleton() {
   return (
-    <div className="rounded-2xl shadow-lg border-0 bg-gradient-to-br from-slate-50 to-slate-100/50 overflow-hidden">
+    <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-50 to-slate-100/50 overflow-hidden">
       <div className="p-6">
         {/* Header skeleton */}
         <div className="flex items-center gap-4 mb-6">

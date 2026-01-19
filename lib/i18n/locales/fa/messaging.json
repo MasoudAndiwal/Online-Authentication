@@ -1,0 +1,99 @@
+{
+  "common": {
+    "send": "ارسال",
+    "cancel": "لغو",
+    "save": "ذخیره",
+    "delete": "حذف",
+    "edit": "ویرایش",
+    "search": "جستجو",
+    "filter": "فیلتر",
+    "sort": "مرتب سازی",
+    "loading": "در حال بارگذاری...",
+    "error": "خطا",
+    "success": "موفق",
+    "retry": "تلاش مجدد",
+    "close": "بستن"
+  },
+  "inbox": {
+    "title": "پیام‌ها",
+    "newConversation": "گفتگوی جدید",
+    "searchPlaceholder": "جستجوی گفتگوها...",
+    "noConversations": "هنوز گفتگویی وجود ندارد",
+    "unreadCount": "{{count}} خوانده نشده"
+  },
+  "conversation": {
+    "typingIndicator": "{{name}} در حال نوشتن است...",
+    "messageDeleted": "پیام حذف شد",
+    "messageFailed": "ارسال ناموفق",
+    "retry": "تلاش مجدد",
+    "noMessages": "هنوز پیامی وجود ندارد"
+  },
+  "compose": {
+    "placeholder": "یک پیام بنویسید...",
+    "attachFile": "پیوست فایل",
+    "selectTemplate": "انتخاب قالب",
+    "selectCategory": "انتخاب دسته",
+    "selectPriority": "انتخاب اولویت",
+    "scheduleMessage": "زمان‌بندی پیام",
+    "characterCount": "{{count}} کاراکتر"
+  },
+  "categories": {
+    "administrative": "اداری",
+    "attendance_alert": "هشدار حضور",
+    "schedule_change": "تغییر برنامه",
+    "announcement": "اعلان",
+    "general": "عمومی",
+    "urgent": "فوری"
+  },
+  "priority": {
+    "normal": "عادی",
+    "important": "مهم",
+    "urgent": "فوری"
+  },
+  "status": {
+    "sent": "ارسال شده",
+    "delivered": "تحویل داده شده",
+    "read": "خوانده شده",
+    "failed": "ناموفق"
+  },
+  "actions": {
+    "pin": "سنجاق کردن",
+    "unpin": "برداشتن سنجاق",
+    "star": "ستاره دار کردن",
+    "unstar": "برداشتن ستاره",
+    "archive": "بایگانی",
+    "unarchive": "خارج از بایگانی",
+    "resolve": "حل شده",
+    "markUnread": "علامت به عنوان خوانده نشده",
+    "markRead": "علامت به عنوان خوانده شده",
+    "forward": "ارسال به دیگران",
+    "react": "واکنش",
+    "reply": "پاسخ"
+  },
+  "broadcast": {
+    "title": "پیام گروهی",
+    "selectRecipients": "انتخاب گیرندگان",
+    "allStudents": "همه دانشجویان",
+    "specificClass": "کلاس خاص",
+    "allTeachers": "همه معلمان",
+    "specificDepartment": "بخش خاص",
+    "recipientCount": "{{count}} گیرنده",
+    "confirmSend": "ارسال به {{count}} گیرنده؟"
+  },
+  "notifications": {
+    "title": "اعلان‌ها",
+    "newMessage": "پیام جدید از {{name}}",
+    "messageRead": "{{name}} پیام شما را خواند",
+    "broadcastComplete": "پیام گروهی به {{count}} گیرنده ارسال شد",
+    "deliveryFailed": "ارسال پیام ناموفق بود",
+    "settings": "تنظیمات اعلان",
+    "quietHours": "ساعات سکوت",
+    "muteConversation": "بی‌صدا کردن گفتگو"
+  },
+  "keyboard": {
+    "shortcuts": "میانبرهای صفحه کلید",
+    "navigation": "ناوبری",
+    "actions": "اقدامات",
+    "composition": "نوشتن"
+  }
+}
