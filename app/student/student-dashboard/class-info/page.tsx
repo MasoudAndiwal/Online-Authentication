@@ -10,6 +10,7 @@ import { handleLogout } from "@/lib/auth/logout";
 import { NotificationBell } from "@/components/student/notification-bell";
 import { NotificationPanel, type Notification } from "@/components/student/notification-panel";
 import { ClassInformationSection } from "@/components/student/class-information-section";
+import { ClassInformationSkeleton } from "@/components/student/class-information-skeleton";
 import { AlertCircle } from "lucide-react";
 import { useSystemMessages, useMarkSystemMessageRead, useDismissSystemMessage } from "@/hooks/use-student-messages";
 
@@ -104,12 +105,30 @@ export default function ClassInfoPage() {
     router.push(`/student/student-dashboard/messages?teacherId=${teacherId}`);
   };
 
+  // Show skeleton loading while data is being fetched
   if (userLoading || loadingClassData) {
     return (
       <StudentGuard>
-        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 flex items-center justify-center">
-          <div className="text-emerald-600">Loading...</div>
-        </div>
+        <ModernDashboardLayout
+          user={user || undefined}
+          title="Class Information"
+          subtitle="View your class details, schedule, and policies"
+          currentPath="/student/class-info"
+          onNavigate={handleNavigation}
+          onLogout={onLogout}
+          hideSearch={true}
+          notificationTrigger={
+            <NotificationBell
+              unreadCount={unreadCount}
+              onClick={handleNotificationClick}
+              isActive={isNotificationPanelOpen}
+            />
+          }
+        >
+          <PageContainer>
+            <ClassInformationSkeleton />
+          </PageContainer>
+        </ModernDashboardLayout>
       </StudentGuard>
     );
   }
@@ -154,7 +173,7 @@ export default function ClassInfoPage() {
         <PageContainer>
           <div className="space-y-6 sm:space-y-8">
             {/* Page Header */}
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-6 sm:p-8 border border-emerald-200/50">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-6 sm:p-8">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-700 mb-2">
                 {classData.className}
               </h1>
@@ -184,9 +203,9 @@ export default function ClassInfoPage() {
             />
 
             {/* Help Note */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-0 shadow-sm rounded-xl p-4 sm:p-5">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-sm rounded-xl p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/25">
                   <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -212,7 +231,7 @@ export default function ClassInfoPage() {
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
-        onReply={(notification) => {
+        onReply={() => {
           router.push("/student/student-dashboard/messages");
           setIsNotificationPanelOpen(false);
         }}
