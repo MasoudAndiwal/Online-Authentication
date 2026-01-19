@@ -791,7 +791,7 @@ export class MessagingService {
 
     if (userType === 'student') {
       // Students can only message teachers who teach their class
-      // First, get the student's class_section (e.g., "AI-401-A - AFTERNOON")
+      // First, get the student's class_section (e.g., "CS-301-A - MORNING")
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('class_section')
@@ -804,34 +804,36 @@ export class MessagingService {
       }
 
       if (studentData?.class_section) {
-        // Parse class_section to extract class name and session
-        // Format: "AI-401-A - AFTERNOON" -> name: "AI-401-A", session: "AFTERNOON"
         const classSection = studentData.class_section as string
+        console.log('Student class_section:', classSection)
+
+        // Parse class_section to extract class name and session
+        // Format: "CS-301-A - MORNING" -> name: "CS-301-A", session: "MORNING"
         const parts = classSection.split(' - ')
         const className = parts[0]?.trim()
         const classSession = parts[1]?.trim()
 
-        if (!className) {
-          console.error('Could not parse class name from class_section:', classSection)
+        if (!className || !classSession) {
+          console.error('Could not parse class_section:', classSection)
           return recipients
         }
 
-        // Find the class in classes table by name and session
-        let classQuery = supabase
+        console.log('Parsed class name:', className, 'session:', classSession)
+
+        // Find the class in classes table by name and session to get class_id
+        const { data: classData, error: classError } = await supabase
           .from('classes')
           .select('id')
           .eq('name', className)
-
-        if (classSession) {
-          classQuery = classQuery.eq('session', classSession)
-        }
-
-        const { data: classData, error: classError } = await classQuery.single()
+          .eq('session', classSession)
+          .single()
 
         if (classError || !classData) {
           console.error('Error finding class:', classError, 'className:', className, 'session:', classSession)
           return recipients
         }
+
+        console.log('Found class_id:', classData.id)
 
         // Get all teachers from schedule_entries for this class_id
         const { data: scheduleData, error: scheduleError } = await supabase
@@ -843,6 +845,8 @@ export class MessagingService {
           console.error('Error fetching schedule data:', scheduleError)
           return recipients
         }
+
+        console.log('Schedule data found:', scheduleData?.length || 0, 'entries')
 
         // Use a Set to avoid duplicate teachers
         const teacherIds = new Set<string>()
@@ -874,6 +878,8 @@ export class MessagingService {
             }
           }
         }
+
+        console.log('Found teachers for student:', recipients.length)
       }
     } else if (userType === 'teacher') {
       // Teachers can message their students and office

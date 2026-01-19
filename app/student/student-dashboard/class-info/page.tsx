@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
@@ -24,11 +25,38 @@ export default function ClassInfoPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const [classData, setClassData] = React.useState<any>(null);
+  const [loadingClassData, setLoadingClassData] = React.useState(true);
   
   // Fetch system messages for notifications
   const { data: systemMessages = [] } = useSystemMessages(true);
   const markSystemReadMutation = useMarkSystemMessageRead();
   const dismissSystemMutation = useDismissSystemMessage();
+  
+  // Fetch class data from API
+  React.useEffect(() => {
+    const fetchClassData = async () => {
+      try {
+        const response = await fetch('/api/student/class-info');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setClassData(result.data);
+          }
+        } else {
+          console.error('Failed to fetch class data:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching class data:', error);
+      } finally {
+        setLoadingClassData(false);
+      }
+    };
+
+    if (user) {
+      fetchClassData();
+    }
+  }, [user]);
   
   // Convert system messages to notification format
   const notifications: Notification[] = systemMessages.map(msg => ({
@@ -41,80 +69,6 @@ export default function ClassInfoPage() {
   }));
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  // TODO: Fetch actual class data from API
-  // For now, using mock data that matches the student's class
-  const classData = {
-    className: "Computer Science 101",
-    classCode: "CS-101",
-    semester: 1,
-    academicYear: "2024-2025",
-    credits: 3,
-    room: "Room 204",
-    building: "Engineering Building",
-    major: "Computer Science",
-    studentCount: 45,
-    session: "MORNING",
-    schedule: [
-      {
-        day: "Saturday",
-        startTime: "08:00 AM",
-        endTime: "10:00 AM",
-        room: "Room 204",
-        sessionType: "lecture" as const
-      },
-      {
-        day: "Monday",
-        startTime: "10:00 AM",
-        endTime: "12:00 PM",
-        room: "Lab 3",
-        sessionType: "lab" as const
-      },
-      {
-        day: "Wednesday",
-        startTime: "02:00 PM",
-        endTime: "04:00 PM",
-        room: "Room 204",
-        sessionType: "lecture" as const
-      }
-    ],
-    teachers: [
-      {
-        id: "teacher-1",
-        name: "Dr. Ahmad Hassan",
-        title: "Associate Professor of Computer Science",
-        avatar: undefined,
-        sessions: [
-          {
-            day: "Saturday",
-            time: "08:00 AM - 10:00 AM",
-            type: "lecture"
-          },
-          {
-            day: "Wednesday",
-            time: "02:00 PM - 04:00 PM",
-            type: "lecture"
-          }
-        ]
-      },
-      {
-        id: "teacher-2",
-        name: "Prof. Sarah Johnson",
-        title: "Senior Lecturer",
-        avatar: undefined,
-        sessions: [
-          {
-            day: "Monday",
-            time: "10:00 AM - 12:00 PM",
-            type: "lab"
-          }
-        ]
-      }
-    ],
-    maxAbsences: 10,
-    mahroomThreshold: 75,
-    tasdiqThreshold: 85
-  };
 
   const handleNavigation = (href: string) => {
     router.push(href);
@@ -150,11 +104,30 @@ export default function ClassInfoPage() {
     router.push(`/student/student-dashboard/messages?teacherId=${teacherId}`);
   };
 
-  if (userLoading) {
+  if (userLoading || loadingClassData) {
     return (
       <StudentGuard>
         <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 flex items-center justify-center">
           <div className="text-emerald-600">Loading...</div>
+        </div>
+      </StudentGuard>
+    );
+  }
+
+  if (!classData) {
+    return (
+      <StudentGuard>
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">No Class Information</h2>
+            <p className="text-slate-600 mb-6">You don&apos;t have a class assigned yet.</p>
+            <button
+              onClick={() => router.push('/student/student-dashboard')}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          </div>
         </div>
       </StudentGuard>
     );
