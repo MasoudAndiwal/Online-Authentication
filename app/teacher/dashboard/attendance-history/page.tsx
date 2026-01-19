@@ -14,6 +14,13 @@ import { handleLogout } from "@/lib/auth/logout";
 import { AttendanceHistoryView } from "@/components/attendance/attendance-history-view";
 import { useResponsive } from "@/lib/hooks/use-responsive";
 import { TeacherNotificationsWrapper } from "@/components/teacher";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
@@ -34,8 +41,11 @@ function AttendanceHistoryContent() {
   // Fetch teacher's classes
   React.useEffect(() => {
     const fetchClasses = async () => {
+      if (!user?.id) return;
+      
       try {
-        const response = await fetch('/api/teachers/classes');
+        // Fetch only classes that this teacher teaches
+        const response = await fetch(`/api/teachers/${user.id}/classes`);
         if (response.ok) {
           const data = await response.json();
           setClasses(data);
@@ -45,15 +55,15 @@ function AttendanceHistoryContent() {
             setSelectedClassId(data[0].id);
           }
         }
-      } catch {
-        // Failed to fetch classes
+      } catch (error) {
+        console.error('Failed to fetch teacher classes:', error);
       } finally {
         setLoadingClasses(false);
       }
     };
 
     fetchClasses();
-  }, [selectedClassId]);
+  }, [user?.id, selectedClassId]);
 
   // If no classes available, show message
   if (!loadingClasses && classes.length === 0) {
@@ -131,7 +141,7 @@ function AttendanceHistoryContent() {
       <PageContainer>
         <PageHeader
           title={isMobile ? "Attendance History" : "Attendance History"}
-          subtitle={`${mockClassData.name} - Historical attendance records`}
+          subtitle={loadingClasses ? "" : `${mockClassData.name} - Historical attendance records`}
           breadcrumbs={[
             { label: "Dashboard", href: "/teacher/dashboard" },
             { label: "Attendance History" },
@@ -144,17 +154,21 @@ function AttendanceHistoryContent() {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Select Class
             </label>
-            <select
-              value={selectedClassId || ''}
-              onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            >
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name} - {cls.session}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedClassId || ''} onValueChange={setSelectedClassId}>
+              <SelectTrigger className="w-full sm:w-auto bg-white/80 backdrop-blur-sm border-slate-200 rounded-xl shadow-sm hover:bg-white transition-all focus:ring-2 focus:ring-orange-500">
+                <SelectValue placeholder="Choose a class..." />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id} className="rounded-lg">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-medium">{cls.name}</span>
+                      <span className="text-xs text-slate-500 ml-4">{cls.session}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
         

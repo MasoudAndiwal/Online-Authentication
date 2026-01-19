@@ -19,6 +19,7 @@ import { CalendarIcon, Filter, X, RotateCcw, CheckCircle, XCircle, Heart, Calend
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { AttendanceStatus } from "@/types/types";
+import { getSolarMonthName } from "@/lib/utils/solar-calendar";
 
 export interface HistoryFilters {
   dateRange: { start: Date | undefined; end: Date | undefined };
@@ -53,18 +54,18 @@ export function AttendanceHistoryFilters({
   ];
 
   const monthOptions = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
+    { value: 1, label: getSolarMonthName(1) }, // حمل (Hamal)
+    { value: 2, label: getSolarMonthName(2) }, // ثور (Sawr)
+    { value: 3, label: getSolarMonthName(3) }, // جوزا (Jawza)
+    { value: 4, label: getSolarMonthName(4) }, // سرطان (Saratan)
+    { value: 5, label: getSolarMonthName(5) }, // اسد (Asad)
+    { value: 6, label: getSolarMonthName(6) }, // سنبله (Sonbola)
+    { value: 7, label: getSolarMonthName(7) }, // میزان (Mizan)
+    { value: 8, label: getSolarMonthName(8) }, // عقرب (Aqrab)
+    { value: 9, label: getSolarMonthName(9) }, // قوس (Qaws)
+    { value: 10, label: getSolarMonthName(10) }, // جدی (Jadi)
+    { value: 11, label: getSolarMonthName(11) }, // دلو (Dalvæ)
+    { value: 12, label: getSolarMonthName(12) }, // حوت (Hut)
   ];
 
   const handleStatusToggle = (status: AttendanceStatus) => {

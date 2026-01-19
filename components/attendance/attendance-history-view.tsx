@@ -6,23 +6,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Calendar,
-  Download,
-  Search,
-  Users,
-  TrendingUp,
-  CheckCircle,
-  AlertTriangle,
-  BarChart3,
-} from "lucide-react";
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue, } from "@/components/ui/select";
+import {Calendar,Download,Search,Users,TrendingUp,CheckCircle,AlertTriangle,BarChart3, } from "lucide-react";
 import { useResponsive } from "@/lib/hooks/use-responsive";
 import { useHapticFeedback } from "@/lib/hooks/use-touch-gestures";
 import type { Class } from "@/types/attendance";
@@ -137,7 +122,178 @@ export function AttendanceHistoryView({
 
   const handleExport = () => {
     if (isTouch) lightTap();
-    // Export functionality would go here
+    
+    // Create a printable HTML document with all records
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups to export the report');
+      return;
+    }
+
+    const className = classData?.name || 'Class';
+    const dateRangeText = dateRange === '7' ? 'Last 7 days' : dateRange === '30' ? 'Last 30 days' : 'Last 3 months';
+    const currentDate = new Date().toLocaleDateString();
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Attendance History - ${className}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              max-width: 1200px;
+              margin: 0 auto;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0;
+              color: #333;
+            }
+            .header p {
+              margin: 5px 0;
+              color: #666;
+            }
+            .stats {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
+              margin-bottom: 30px;
+            }
+            .stat-card {
+              padding: 15px;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .stat-card.total { background: #e3f2fd; }
+            .stat-card.present { background: #e8f5e9; }
+            .stat-card.absent { background: #ffebee; }
+            .stat-card.rate { background: #fff3e0; }
+            .stat-card h3 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: bold;
+            }
+            .stat-card p {
+              margin: 5px 0 0 0;
+              font-size: 14px;
+              color: #666;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              padding: 12px;
+              text-align: left;
+              border-bottom: 1px solid #ddd;
+            }
+            th {
+              background-color: #f5f5f5;
+              font-weight: bold;
+              color: #333;
+            }
+            tr:hover {
+              background-color: #f9f9f9;
+            }
+            .status {
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            .status.present { background: #e8f5e9; color: #2e7d32; }
+            .status.absent { background: #ffebee; color: #c62828; }
+            .status.late { background: #fff3e0; color: #f57c00; }
+            .status.excused { background: #e3f2fd; color: #1565c0; }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              color: #666;
+              font-size: 12px;
+              border-top: 1px solid #ddd;
+              padding-top: 20px;
+            }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Attendance History Report</h1>
+            <p><strong>${className}</strong></p>
+            <p>${dateRangeText} • Generated on ${currentDate}</p>
+          </div>
+
+          <div class="stats">
+            <div class="stat-card total">
+              <h3>${overallStats.total}</h3>
+              <p>Total Records</p>
+            </div>
+            <div class="stat-card present">
+              <h3>${overallStats.present}</h3>
+              <p>Present</p>
+            </div>
+            <div class="stat-card absent">
+              <h3>${overallStats.absent}</h3>
+              <p>Absent</p>
+            </div>
+            <div class="stat-card rate">
+              <h3>${overallStats.rate}%</h3>
+              <p>Attendance Rate</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Student ID</th>
+                <th>Student Name</th>
+                <th>Status</th>
+                <th>Marked By</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredRecords.map((record, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${new Date(record.date).toLocaleDateString()}</td>
+                  <td>${record.studentId}</td>
+                  <td>${record.studentName}</td>
+                  <td><span class="status ${record.status.toLowerCase()}">${record.status}</span></td>
+                  <td>${record.markedBy}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>This report contains ${filteredRecords.length} attendance records</p>
+            <p>University Attendance Management System</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   const getStatusColor = (status: string) => {
@@ -153,16 +309,42 @@ export function AttendanceHistoryView({
   if (isLoading) {
     return (
       <div className={cn("space-y-6", className)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Statistics Cards Skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-4 bg-slate-200 rounded mb-2"></div>
-                <div className="h-8 bg-slate-200 rounded"></div>
+            <Card key={i} className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-0 shadow-lg animate-pulse">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 bg-slate-200 rounded-lg sm:rounded-xl flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10"></div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-6 sm:h-8 bg-slate-200 rounded w-12"></div>
+                    <div className="h-3 sm:h-4 bg-slate-200 rounded w-20"></div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
+        
+        {/* Content Skeleton */}
+        <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg animate-pulse">
+          <CardContent className="p-4 sm:p-6">
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-3 sm:p-4 bg-slate-100 rounded-lg sm:rounded-xl">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="h-10 w-10 bg-slate-200 rounded-lg"></div>
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-slate-200 rounded w-32"></div>
+                      <div className="h-3 bg-slate-200 rounded w-24"></div>
+                    </div>
+                  </div>
+                  <div className="h-6 w-16 bg-slate-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
