@@ -65,6 +65,10 @@ export function useNotifications(): UseNotificationsReturn {
 
   // Local state for browser notification permission
   const [permission, setPermission] = useState<NotificationPermission>('default');
+  
+  // Track recent notifications for grouping
+  // Requirement 29.3, 29.4
+  const [recentNotifications, setRecentNotifications] = useState<Map<string, { count: number; lastTimestamp: number }>>(new Map());
 
   // ============================================================================
   // Check if quiet hours are active
@@ -94,6 +98,7 @@ export function useNotifications(): UseNotificationsReturn {
 
   /**
    * Request browser notification permission
+   * Requirement 16.2
    */
   const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
     if (!('Notification' in window)) {
@@ -101,6 +106,7 @@ export function useNotifications(): UseNotificationsReturn {
       return 'denied';
     }
 
+    // Check current permission
     if (Notification.permission === 'granted') {
       setPermission('granted');
       return 'granted';
@@ -108,15 +114,39 @@ export function useNotifications(): UseNotificationsReturn {
 
     if (Notification.permission === 'denied') {
       setPermission('denied');
+      console.warn('Notification permission was previously denied');
       return 'denied';
     }
 
+    // Request permission
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
+      
+      if (result === 'granted') {
+        console.log('Notification permission granted');
+        // Show a test notification
+        try {
+          const testNotification = new Notification('Notifications Enabled', {
+            body: 'You will now receive message notifications',
+            icon: '/icon.svg',
+            tag: 'permission-granted',
+          });
+          
+          setTimeout(() => {
+            testNotification.close();
+          }, 3000);
+        } catch (error) {
+          console.error('Failed to show test notification:', error);
+        }
+      } else if (result === 'denied') {
+        console.warn('Notification permission denied by user');
+      }
+      
       return result;
     } catch (error) {
       console.error('Failed to request notification permission:', error);
+      setPermission('denied');
       return 'denied';
     }
   }, []);
@@ -127,6 +157,11 @@ export function useNotifications(): UseNotificationsReturn {
   useEffect(() => {
     if ('Notification' in window) {
       setPermission(Notification.permission);
+      
+      // Log current permission status
+      console.log('Current notification permission:', Notification.permission);
+    } else {
+      console.warn('Browser does not support notifications');
     }
   }, []);
 
@@ -136,6 +171,7 @@ export function useNotifications(): UseNotificationsReturn {
 
   /**
    * Show a browser notification
+   * Requirements: 16.2, 16.5
    */
   const showNotification = useCallback((notification: Notification) => {
     // Check if notifications are enabled
@@ -149,6 +185,7 @@ export function useNotifications(): UseNotificationsReturn {
     }
 
     // Check quiet hours (only show urgent notifications during quiet hours)
+    // Requirement 29.1, 29.2
     if (isQuietHoursActive() && notification.priority !== 'urgent') {
       return;
     }
@@ -158,56 +195,128 @@ export function useNotifications(): UseNotificationsReturn {
       return;
     }
 
-    // Determine notification content based on preview setting
+    // Handle notification grouping
+    // Requirement 29.3, 29.4
     let title = 'New Message';
     let body = '';
     let icon = '/icon.svg';
+    let shouldGroup = false;
 
-    switch (notificationSettings.preview) {
-      case 'full':
-        title = notification.senderName || 'New Message';
-        body = notification.message || '';
-        break;
-      case 'sender_only':
-        title = notification.senderName || 'New Message';
-        body = 'You have a new message';
-        break;
-      case 'count_only':
-        title = 'New Message';
-        body = `You have ${unreadCount} unread messages`;
-        break;
+    if (notificationSettings.grouping && notification.senderId) {
+      const now = Date.now();
+      const senderId = notification.senderId;
+      const recentNotif = recentNotifications.get(senderId);
+
+      // Group if within 30 seconds
+      if (recentNotif && (now - recentNotif.lastTimestamp) < 30000) {
+        shouldGroup = true;
+        const newCount = recentNotif.count + 1;
+        
+        // Update tracking
+        setRecentNotifications(prev => {
+          const updated = new Map(prev);
+          updated.set(senderId, { count: newCount, lastTimestamp: now });
+          return updated;
+        });
+
+        // Show grouped notification
+        title = notification.senderName || 'New Messages';
+        body = `${newCount} new messages`;
+      } else {
+        // Start new group
+        setRecentNotifications(prev => {
+          const updated = new Map(prev);
+          updated.set(senderId, { count: 1, lastTimestamp: now });
+          return updated;
+        });
+      }
+    }
+
+    // Determine notification content based on preview setting if not grouped
+    // Requirement 16.5
+    if (!shouldGroup) {
+      switch (notificationSettings.preview) {
+        case 'full':
+          title = notification.senderName || 'New Message';
+          body = notification.message || '';
+          break;
+        case 'sender_only':
+          title = notification.senderName || 'New Message';
+          body = 'You have a new message';
+          break;
+        case 'count_only':
+          title = 'New Message';
+          body = `You have ${unreadCount} unread messages`;
+          break;
+      }
     }
 
     // Create browser notification
+    // Requirement 16.2
     try {
       const browserNotification = new Notification(title, {
         body,
         icon,
         badge: icon,
-        tag: notification.id,
+        tag: shouldGroup ? `grouped-${notification.senderId}` : notification.id,
         requireInteraction: notification.priority === 'urgent',
         silent: notificationSettings.sound === 'silent',
+        data: {
+          conversationId: notification.conversationId,
+          notificationId: notification.id,
+          timestamp: notification.timestamp,
+          isGrouped: shouldGroup,
+        },
+        renotify: shouldGroup, // Re-alert for grouped notifications
       });
 
-      // Handle notification click
-      browserNotification.onclick = () => {
+      // Handle notification click to open conversation
+      // Requirement 16.2
+      browserNotification.onclick = (event) => {
+        event.preventDefault();
         window.focus();
+        
         // Navigate to conversation if available
         if (notification.conversationId) {
-          // This would trigger navigation in the app
-          console.log('Navigate to conversation:', notification.conversationId);
+          // Dispatch custom event to trigger navigation in the app
+          const navigationEvent = new CustomEvent('navigate-to-conversation', {
+            detail: { conversationId: notification.conversationId },
+          });
+          window.dispatchEvent(navigationEvent);
+          
+          // Mark notification as read when clicked
+          markNotificationAsRead(notification.id);
         }
+        
         browserNotification.close();
       };
 
-      // Play notification sound
-      if (notificationSettings.sound !== 'silent') {
+      // Handle notification close
+      browserNotification.onclose = () => {
+        // Cleanup if needed
+      };
+
+      // Handle notification error
+      browserNotification.onerror = (error) => {
+        console.error('Browser notification error:', error);
+      };
+
+      // Play notification sound (only for first notification in group)
+      // Requirement 16.5
+      if (notificationSettings.sound !== 'silent' && !shouldGroup) {
         playNotificationSound(notificationSettings.sound);
+      }
+
+      // Auto-close non-urgent notifications after 5 seconds
+      if (notification.priority !== 'urgent') {
+        setTimeout(() => {
+          browserNotification.close();
+        }, 5000);
       }
     } catch (error) {
       console.error('Failed to show browser notification:', error);
     }
-  }, [notificationSettings, isQuietHoursActive, unreadCount]);
+  }, [notificationSettings, isQuietHoursActive, unreadCount, markNotificationAsRead, recentNotifications]);
 
   // ============================================================================
   // Notification Sound
@@ -311,6 +420,28 @@ export function useNotifications(): UseNotificationsReturn {
         // Permission query not supported
       });
     }
+  }, []);
+
+  // ============================================================================
+  // Cleanup old notification grouping data
+  // ============================================================================
+
+  useEffect(() => {
+    // Clean up notification grouping data older than 1 minute
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setRecentNotifications(prev => {
+        const updated = new Map(prev);
+        for (const [senderId, data] of updated.entries()) {
+          if (now - data.lastTimestamp > 60000) {
+            updated.delete(senderId);
+          }
+        }
+        return updated;
+      });
+    }, 60000); // Run every minute
+
+    return () => clearInterval(interval);
   }, []);
 
   // ============================================================================

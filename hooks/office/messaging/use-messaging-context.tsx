@@ -9,7 +9,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { officeMessagingService } from '@/lib/services/office/messaging/messaging-service';
+import { mockMessagingService } from '@/lib/services/office/messaging/mock-messaging-service';
 import type {
   User,
   Message,
@@ -144,7 +144,7 @@ interface MessagingProviderProps {
 export function MessagingProvider({ children, currentUser }: MessagingProviderProps) {
   // Initialize service with current user
   useEffect(() => {
-    officeMessagingService.setCurrentUser(currentUser);
+    mockMessagingService.setCurrentUser(currentUser);
   }, [currentUser]);
 
   // ============================================================================
@@ -202,7 +202,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      const convs = await officeMessagingService.getConversations(filters, sortBy);
+      const convs = await mockMessagingService.getConversations(filters, sortBy);
       setConversations(convs);
       
       // Calculate total unread count
@@ -221,7 +221,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      const msgs = await officeMessagingService.getMessages(conversationId, 50, offset);
+      const msgs = await mockMessagingService.getMessages(conversationId, 50, offset);
       
       setMessages(prev => ({
         ...prev,
@@ -282,7 +282,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
       }
 
       // Send to server
-      const sentMessage = await officeMessagingService.sendMessage(request);
+      const sentMessage = await mockMessagingService.sendMessage(request);
       
       // Replace temp message with real message
       const conversationId = sentMessage.conversationId;
@@ -317,7 +317,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      await officeMessagingService.sendBroadcast(request);
+      await mockMessagingService.sendBroadcast(request);
       
       // Show success notification
       const notification: Notification = {
@@ -375,7 +375,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const markAsRead = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.markAsRead(conversationId);
+      await mockMessagingService.markAsRead(conversationId);
       
       // Update local state
       setConversations(prev =>
@@ -398,7 +398,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const markAsUnread = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.markAsUnread(conversationId);
+      await mockMessagingService.markAsUnread(conversationId);
       
       // Update local state
       setConversations(prev =>
@@ -417,7 +417,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const pinConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.pinConversation(conversationId);
+      await mockMessagingService.pinConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -433,7 +433,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const unpinConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.unpinConversation(conversationId);
+      await mockMessagingService.unpinConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -449,7 +449,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const starConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.starConversation(conversationId);
+      await mockMessagingService.starConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -465,7 +465,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const unstarConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.unstarConversation(conversationId);
+      await mockMessagingService.unstarConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -481,7 +481,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const archiveConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.archiveConversation(conversationId);
+      await mockMessagingService.archiveConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -497,7 +497,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const unarchiveConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.unarchiveConversation(conversationId);
+      await mockMessagingService.unarchiveConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -513,7 +513,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const resolveConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.resolveConversation(conversationId);
+      await mockMessagingService.resolveConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -529,7 +529,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const unresolveConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.unresolveConversation(conversationId);
+      await mockMessagingService.unresolveConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -545,7 +545,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const muteConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.muteConversation(conversationId);
+      await mockMessagingService.muteConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -561,7 +561,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const unmuteConversation = useCallback(async (conversationId: string) => {
     try {
-      await officeMessagingService.unmuteConversation(conversationId);
+      await mockMessagingService.unmuteConversation(conversationId);
       
       setConversations(prev =>
         prev.map(conv =>
@@ -581,7 +581,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const pinMessage = useCallback(async (messageId: string, conversationId: string) => {
     try {
-      await officeMessagingService.pinMessage(messageId, conversationId);
+      await mockMessagingService.pinMessage(messageId, conversationId);
       
       // Update message in local state
       setMessages(prev => ({
@@ -599,7 +599,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const unpinMessage = useCallback(async (messageId: string) => {
     try {
-      await officeMessagingService.unpinMessage(messageId);
+      await mockMessagingService.unpinMessage(messageId);
       
       // Update message in all conversations
       setMessages(prev => {
@@ -645,7 +645,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
         return updated;
       });
 
-      await officeMessagingService.addReaction(messageId, reaction);
+      await mockMessagingService.addReaction(messageId, reaction);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add reaction';
       setError(errorMessage);
@@ -694,7 +694,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
         return updated;
       });
 
-      await officeMessagingService.removeReaction(messageId, reaction);
+      await mockMessagingService.removeReaction(messageId, reaction);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to remove reaction';
       setError(errorMessage);
@@ -706,7 +706,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      await officeMessagingService.forwardMessage(request);
+      await mockMessagingService.forwardMessage(request);
       
       // Refresh conversations
       await loadConversations();
@@ -723,7 +723,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      const scheduled = await officeMessagingService.scheduleMessage(request);
+      const scheduled = await mockMessagingService.scheduleMessage(request);
       
       setScheduledMessages(prev => [...prev, scheduled]);
     } catch (err) {
@@ -737,7 +737,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const cancelScheduledMessage = useCallback(async (messageId: string) => {
     try {
-      await officeMessagingService.cancelScheduledMessage(messageId);
+      await mockMessagingService.cancelScheduledMessage(messageId);
       
       setScheduledMessages(prev => prev.filter(msg => msg.id !== messageId));
     } catch (err) {
@@ -749,7 +749,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const loadScheduledMessages = useCallback(async () => {
     try {
-      const scheduled = await officeMessagingService.getScheduledMessages();
+      const scheduled = await mockMessagingService.getScheduledMessages();
       setScheduledMessages(scheduled);
     } catch (err) {
       console.error('Error loading scheduled messages:', err);

@@ -13,6 +13,7 @@ import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { fetchDashboardStats, fetchRecentActivity } from "@/lib/api/dashboard-api";
 import type { DashboardStats, ActivityItem } from "@/lib/database/dashboard-operations";
 import { toast } from "sonner";
+import { MessageNotificationBell } from "@/components/layout/message-notification-bell";
 import {
   ModernCard,
   ModernCardHeader,
@@ -39,6 +40,9 @@ export default function OfficeDashboardPage() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [activities, setActivities] = React.useState<ActivityItem[]>([]);
   const [loadingStats, setLoadingStats] = React.useState(true);
+  
+  // Mock unread messages count - in production, this would come from your messaging service
+  const [unreadMessagesCount] = React.useState(3);
 
   const [hasShownWelcome, setHasShownWelcome] = React.useState(false);
 
@@ -141,6 +145,12 @@ export default function OfficeDashboardPage() {
       onNavigate={handleNavigation}
       onLogout={handleLogoutClick}
       onSearch={handleSearch}
+      notificationTrigger={
+        <MessageNotificationBell 
+          unreadCount={unreadMessagesCount}
+          onNavigateToMessages={() => handleNavigation("/dashboard/messages")}
+        />
+      }
     >
       <PageContainer>
         {/* Ultra Modern Welcome Section - NO BORDERS */}

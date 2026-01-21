@@ -51,6 +51,17 @@ const translations: Record<Language, Record<string, string>> = {
     'messaging.noMessages': 'No messages yet',
     'messaging.messageSent': 'Message sent',
     'messaging.messageFailed': 'Failed to send message',
+    'messaging.emptyState.title': 'Select a conversation',
+    'messaging.emptyState.description': 'Choose a conversation from the sidebar to start messaging with students and teachers.',
+    'messaging.search.placeholder': 'Search in conversation...',
+    'messaging.pinnedMessages.title': 'Pinned Messages',
+    'messaging.actions.search': 'Search messages',
+    'messaging.actions.pin': 'Pin conversation',
+    'messaging.actions.archive': 'Archive conversation',
+    'messaging.actions.resolve': 'Mark as resolved',
+    'messaging.actions.more': 'More options',
+    'messaging.actions.collapse': 'Collapse',
+    'messaging.actions.expand': 'Expand',
     
     // Conversations
     'conversations.all': 'All Conversations',
@@ -117,6 +128,20 @@ const translations: Record<Language, Record<string, string>> = {
     'error.fileTypeNotAllowed': 'File type not allowed',
     'error.connectionLost': 'Connection lost',
     'error.reconnecting': 'Reconnecting...',
+    
+    // Export
+    'messaging.export.title': 'Export Conversation',
+    'messaging.export.recipient': 'Recipient',
+    'messaging.export.role': 'Role',
+    'messaging.export.messages': 'Messages',
+    'messaging.export.format': 'Export Format',
+    'messaging.export.pdfDesc': 'Formatted document',
+    'messaging.export.csvDesc': 'Spreadsheet data',
+    'messaging.export.success': 'Export completed successfully!',
+    'messaging.export.error': 'Failed to export conversation. Please try again.',
+    'messaging.export.exporting': 'Exporting...',
+    'messaging.export.export': 'Export',
+    'messaging.actions.export': 'Export conversation',
   },
   fa: {
     // Common (Dari/Farsi)

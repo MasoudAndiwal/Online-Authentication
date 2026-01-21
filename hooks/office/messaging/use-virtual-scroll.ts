@@ -25,7 +25,7 @@ interface UseVirtualScrollReturn<T> {
   visibleItems: Array<{ item: T; index: number; offsetTop: number }>;
   totalHeight: number;
   scrollToIndex: (index: number, behavior?: ScrollBehavior) => void;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   isScrolling: boolean;
 }
 

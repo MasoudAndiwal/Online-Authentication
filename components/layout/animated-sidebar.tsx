@@ -51,6 +51,11 @@ const getNavigationItems = (role: string): NavigationItem[] => {
     return [
       ...baseItems,
       {
+        label: "Messages",
+        href: "/dashboard/messages",
+        icon: MessageSquare,
+      },
+      {
         label: "User Management",
         href: "/dashboard/teachers",
         icon: Users,

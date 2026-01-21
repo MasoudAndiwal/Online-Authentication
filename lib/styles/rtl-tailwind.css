@@ -1,0 +1,312 @@
+/**
+ * RTL/LTR Tailwind CSS Utilities
+ * 
+ * Custom Tailwind utilities for RTL/LTR layout support.
+ * These classes automatically adjust based on the dir attribute.
+ * 
+ * Requirements: 25.2, 25.3, 25.6, 25.8, 25.10
+ */
+
+/* ============================================================================
+ * Directional Padding
+ * ============================================================================ */
+
+/* Padding Start (left in LTR, right in RTL) */
+[dir='ltr'] .ps-1 { padding-left: 0.25rem; }
+[dir='rtl'] .ps-1 { padding-right: 0.25rem; }
+
+[dir='ltr'] .ps-2 { padding-left: 0.5rem; }
+[dir='rtl'] .ps-2 { padding-right: 0.5rem; }
+
+[dir='ltr'] .ps-3 { padding-left: 0.75rem; }
+[dir='rtl'] .ps-3 { padding-right: 0.75rem; }
+
+[dir='ltr'] .ps-4 { padding-left: 1rem; }
+[dir='rtl'] .ps-4 { padding-right: 1rem; }
+
+[dir='ltr'] .ps-6 { padding-left: 1.5rem; }
+[dir='rtl'] .ps-6 { padding-right: 1.5rem; }
+
+[dir='ltr'] .ps-8 { padding-left: 2rem; }
+[dir='rtl'] .ps-8 { padding-right: 2rem; }
+
+/* Padding End (right in LTR, left in RTL) */
+[dir='ltr'] .pe-1 { padding-right: 0.25rem; }
+[dir='rtl'] .pe-1 { padding-left: 0.25rem; }
+
+[dir='ltr'] .pe-2 { padding-right: 0.5rem; }
+[dir='rtl'] .pe-2 { padding-left: 0.5rem; }
+
+[dir='ltr'] .pe-3 { padding-right: 0.75rem; }
+[dir='rtl'] .pe-3 { padding-left: 0.75rem; }
+
+[dir='ltr'] .pe-4 { padding-right: 1rem; }
+[dir='rtl'] .pe-4 { padding-left: 1rem; }
+
+[dir='ltr'] .pe-6 { padding-right: 1.5rem; }
+[dir='rtl'] .pe-6 { padding-left: 1.5rem; }
+
+[dir='ltr'] .pe-8 { padding-right: 2rem; }
+[dir='rtl'] .pe-8 { padding-left: 2rem; }
+
+/* ============================================================================
+ * Directional Margins
+ * ============================================================================ */
+
+/* Margin Start (left in LTR, right in RTL) */
+[dir='ltr'] .ms-auto { margin-left: auto; }
+[dir='rtl'] .ms-auto { margin-right: auto; }
+
+[dir='ltr'] .ms-1 { margin-left: 0.25rem; }
+[dir='rtl'] .ms-1 { margin-right: 0.25rem; }
+
+[dir='ltr'] .ms-2 { margin-left: 0.5rem; }
+[dir='rtl'] .ms-2 { margin-right: 0.5rem; }
+
+[dir='ltr'] .ms-3 { margin-left: 0.75rem; }
+[dir='rtl'] .ms-3 { margin-right: 0.75rem; }
+
+[dir='ltr'] .ms-4 { margin-left: 1rem; }
+[dir='rtl'] .ms-4 { margin-right: 1rem; }
+
+[dir='ltr'] .ms-6 { margin-left: 1.5rem; }
+[dir='rtl'] .ms-6 { margin-right: 1.5rem; }
+
+/* Margin End (right in LTR, left in RTL) */
+[dir='ltr'] .me-auto { margin-right: auto; }
+[dir='rtl'] .me-auto { margin-left: auto; }
+
+[dir='ltr'] .me-1 { margin-right: 0.25rem; }
+[dir='rtl'] .me-1 { margin-left: 0.25rem; }
+
+[dir='ltr'] .me-2 { margin-right: 0.5rem; }
+[dir='rtl'] .me-2 { margin-left: 0.5rem; }
+
+[dir='ltr'] .me-3 { margin-right: 0.75rem; }
+[dir='rtl'] .me-3 { margin-left: 0.75rem; }
+
+[dir='ltr'] .me-4 { margin-right: 1rem; }
+[dir='rtl'] .me-4 { margin-left: 1rem; }
+
+[dir='ltr'] .me-6 { margin-right: 1.5rem; }
+[dir='rtl'] .me-6 { margin-left: 1.5rem; }
+
+/* ============================================================================
+ * Text Alignment
+ * ============================================================================ */
+
+[dir='ltr'] .text-start { text-align: left; }
+[dir='rtl'] .text-start { text-align: right; }
+
+[dir='ltr'] .text-end { text-align: right; }
+[dir='rtl'] .text-end { text-align: left; }
+
+/* ============================================================================
+ * Flex Direction
+ * ============================================================================ */
+
+[dir='rtl'] .flex-row-dir { flex-direction: row-reverse; }
+[dir='ltr'] .flex-row-dir { flex-direction: row; }
+
+/* ============================================================================
+ * Border Radius
+ * ============================================================================ */
+
+/* Border Start (left in LTR, right in RTL) */
+[dir='ltr'] .rounded-s { border-top-left-radius: 0.25rem; border-bottom-left-radius: 0.25rem; }
+[dir='rtl'] .rounded-s { border-top-right-radius: 0.25rem; border-bottom-right-radius: 0.25rem; }
+
+[dir='ltr'] .rounded-s-lg { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
+[dir='rtl'] .rounded-s-lg { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+
+/* Border End (right in LTR, left in RTL) */
+[dir='ltr'] .rounded-e { border-top-right-radius: 0.25rem; border-bottom-right-radius: 0.25rem; }
+[dir='rtl'] .rounded-e { border-top-left-radius: 0.25rem; border-bottom-left-radius: 0.25rem; }
+
+[dir='ltr'] .rounded-e-lg { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+[dir='rtl'] .rounded-e-lg { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
+
+/* ============================================================================
+ * Borders
+ * ============================================================================ */
+
+/* Border Start (left in LTR, right in RTL) */
+[dir='ltr'] .border-s { border-left-width: 1px; }
+[dir='rtl'] .border-s { border-right-width: 1px; }
+
+[dir='ltr'] .border-s-2 { border-left-width: 2px; }
+[dir='rtl'] .border-s-2 { border-right-width: 2px; }
+
+[dir='ltr'] .border-s-4 { border-left-width: 4px; }
+[dir='rtl'] .border-s-4 { border-right-width: 4px; }
+
+/* Border End (right in LTR, left in RTL) */
+[dir='ltr'] .border-e { border-right-width: 1px; }
+[dir='rtl'] .border-e { border-left-width: 1px; }
+
+[dir='ltr'] .border-e-2 { border-right-width: 2px; }
+[dir='rtl'] .border-e-2 { border-left-width: 2px; }
+
+[dir='ltr'] .border-e-4 { border-right-width: 4px; }
+[dir='rtl'] .border-e-4 { border-left-width: 4px; }
+
+/* ============================================================================
+ * Positioning
+ * ============================================================================ */
+
+/* Start (left in LTR, right in RTL) */
+[dir='ltr'] .start-0 { left: 0; }
+[dir='rtl'] .start-0 { right: 0; }
+
+[dir='ltr'] .start-2 { left: 0.5rem; }
+[dir='rtl'] .start-2 { right: 0.5rem; }
+
+[dir='ltr'] .start-4 { left: 1rem; }
+[dir='rtl'] .start-4 { right: 1rem; }
+
+/* End (right in LTR, left in RTL) */
+[dir='ltr'] .end-0 { right: 0; }
+[dir='rtl'] .end-0 { left: 0; }
+
+[dir='ltr'] .end-2 { right: 0.5rem; }
+[dir='rtl'] .end-2 { left: 0.5rem; }
+
+[dir='ltr'] .end-4 { right: 1rem; }
+[dir='rtl'] .end-4 { left: 1rem; }
+
+/* ============================================================================
+ * Icon Flipping
+ * ============================================================================ */
+
+/* Icons that should flip in RTL */
+[dir='rtl'] .icon-flip {
+  transform: scaleX(-1);
+}
+
+/* Icons that should NOT flip in RTL */
+[dir='rtl'] .icon-no-flip {
+  transform: none;
+}
+
+/* ============================================================================
+ * Message Bubble Alignment
+ * ============================================================================ */
+
+/* Sent messages (align to end) */
+[dir='ltr'] .message-sent {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+[dir='rtl'] .message-sent {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+/* Received messages (align to start) */
+[dir='ltr'] .message-received {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+[dir='rtl'] .message-received {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* ============================================================================
+ * Message Bubble Border Radius (Tail Effect)
+ * ============================================================================ */
+
+/* Sent message bubble */
+[dir='ltr'] .bubble-sent {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
+[dir='rtl'] .bubble-sent {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  border-bottom-left-radius: 0.25rem;
+}
+
+/* Received message bubble */
+[dir='ltr'] .bubble-received {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  border-bottom-left-radius: 0.25rem;
+}
+
+[dir='rtl'] .bubble-received {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
+/* ============================================================================
+ * Slide Animations
+ * ============================================================================ */
+
+/* Slide from end (right in LTR, left in RTL) */
+@keyframes slide-in-end-ltr {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slide-in-end-rtl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+[dir='ltr'] .slide-in-end {
+  animation: slide-in-end-ltr 0.3s ease-out;
+}
+
+[dir='rtl'] .slide-in-end {
+  animation: slide-in-end-rtl 0.3s ease-out;
+}
+
+/* Slide from start (left in LTR, right in RTL) */
+@keyframes slide-in-start-ltr {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slide-in-start-rtl {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+[dir='ltr'] .slide-in-start {
+  animation: slide-in-start-ltr 0.3s ease-out;
+}
+
+[dir='rtl'] .slide-in-start {
+  animation: slide-in-start-rtl 0.3s ease-out;
+}
+
+/* ============================================================================
+ * Utility Classes
+ * ============================================================================ */
+
+/* Force LTR (for numbers, codes, etc.) */
+.force-ltr {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Force RTL */
+.force-rtl {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* Inherit direction from parent */
+.dir-inherit {
+  direction: inherit;
+}

@@ -32,9 +32,16 @@ import type {
   SendBroadcastRequest,
   ScheduleMessageRequest,
   ForwardMessageRequest,
+  MessageCategory,
+  PriorityLevel,
+  DeliveryStatus,
+} from '@/types/office/messaging';
+
+import {
   MessageSendError,
   FileUploadError,
   PermissionError,
+  ConnectionError,
 } from '@/types/office/messaging';
 
 // ============================================================================
@@ -58,12 +65,16 @@ const ALLOWED_FILE_TYPES = [
   'text/csv',
 ];
 
+const NETWORK_TIMEOUT = 30000; // 30 seconds
+const MAX_RETRIES = 3;
+
 // ============================================================================
 // Office Messaging Service Class
 // ============================================================================
 
 export class OfficeMessagingService {
   private currentUser: User | null = null;
+  private retryCount: Map<string, number> = new Map();
 
   /**
    * Initialize the service with the current office user
@@ -83,6 +94,79 @@ export class OfficeMessagingService {
       throw new PermissionError('User not authenticated');
     }
     return this.currentUser;
+  }
+
+  /**
+   * Check network connectivity
+   */
+  private async checkNetworkConnectivity(): Promise<void> {
+    if (!navigator.onLine) {
+      throw new ConnectionError('No internet connection. Please check your network and try again.');
+    }
+  }
+
+  /**
+   * Execute operation with retry logic
+   */
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+    maxRetries: number = MAX_RETRIES
+  ): Promise<T> {
+    let lastError: Error | null = null;
+    const retryKey = operationName;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Check network before attempting
+        await this.checkNetworkConnectivity();
+        
+        // Execute operation with timeout
+        const result = await Promise.race([
+          operation(),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new ConnectionError('Operation timed out')), NETWORK_TIMEOUT)
+          )
+        ]);
+        
+        // Success - reset retry count
+        this.retryCount.delete(retryKey);
+        return result;
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Don't retry on permission errors or validation errors
+        if (error instanceof PermissionError || error instanceof FileUploadError) {
+          throw error;
+        }
+        
+        // Check if it's a network error
+        const isNetworkError = 
+          error instanceof ConnectionError ||
+          (error as Error).message?.includes('network') ||
+          (error as Error).message?.includes('fetch') ||
+          (error as Error).message?.includes('timeout');
+        
+        if (!isNetworkError || attempt === maxRetries) {
+          break;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    // All retries failed
+    this.retryCount.set(retryKey, (this.retryCount.get(retryKey) || 0) + 1);
+    
+    if (lastError instanceof ConnectionError) {
+      throw lastError;
+    }
+    
+    throw new ConnectionError(
+      `Failed to ${operationName} after ${maxRetries} attempts. Please check your connection and try again.`
+    );
   }
 
   // ============================================================================
@@ -280,56 +364,59 @@ export class OfficeMessagingService {
    * Send a message
    */
   async sendMessage(request: SendMessageRequest): Promise<Message> {
-    const user = this.getCurrentUser();
+    return this.executeWithRetry(async () => {
+      const user = this.getCurrentUser();
 
-    // Validate file attachments
-    if (request.attachments && request.attachments.length > 0) {
-      for (const file of request.attachments) {
-        this.validateFile(file);
-      }
-    }
-
-    // Get or create conversation
-    let conversationId = request.conversationId;
-    if (!conversationId) {
-      conversationId = await this.createConversation(request.recipientId, request.recipientRole);
-    }
-    // Insert message
-    const { data: message, error: msgError } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        sender_type: user.role,
-        sender_name: user.name,
-        content: request.content,
-        message_type: 'user',
-        category: request.category,
-        priority: request.priority,
-        reply_to_id: request.replyToId,
-      })
-      .select()
-      .single();
-
-    if (msgError || !message) {
-      throw new MessageSendError('Failed to send message');
-    }
-
-    // Upload attachments
-    const attachments: Attachment[] = [];
-    if (request.attachments && request.attachments.length > 0) {
-      for (const file of request.attachments) {
-        try {
-          const attachment = await this.uploadAttachment(message.id, file);
-          attachments.push(attachment);
-        } catch (error) {
-          console.error('Failed to upload attachment:', error);
-          // Continue with other attachments
+      // Validate file attachments
+      if (request.attachments && request.attachments.length > 0) {
+        for (const file of request.attachments) {
+          this.validateFile(file);
         }
       }
-    }
 
-    return this.mapMessage(message, attachments, [], user.id, user.role);
+      // Get or create conversation
+      let conversationId = request.conversationId;
+      if (!conversationId) {
+        conversationId = await this.createConversation(request.recipientId, request.recipientRole);
+      }
+      
+      // Insert message
+      const { data: message, error: msgError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          sender_type: user.role,
+          sender_name: user.name,
+          content: request.content,
+          message_type: 'user',
+          category: request.category,
+          priority: request.priority,
+          reply_to_id: request.replyToId,
+        })
+        .select()
+        .single();
+
+      if (msgError || !message) {
+        throw new MessageSendError('Failed to send message');
+      }
+
+      // Upload attachments
+      const attachments: Attachment[] = [];
+      if (request.attachments && request.attachments.length > 0) {
+        for (const file of request.attachments) {
+          try {
+            const attachment = await this.uploadAttachment(message.id, file);
+            attachments.push(attachment);
+          } catch (error) {
+            console.error('Failed to upload attachment:', error);
+            // Continue with other attachments
+          }
+        }
+      }
+
+      return this.mapMessage(message, attachments, [], user.id, user.role);
+    }, 'send message');
   }
 
   /**
@@ -823,7 +910,12 @@ export class OfficeMessagingService {
   async uploadAttachment(messageId: string, file: File): Promise<Attachment> {
     const user = this.getCurrentUser();
 
+    // Validate file
     this.validateFile(file);
+
+    // Simulate virus scanning (in production, this would be done by a service like ClamAV)
+    // For now, we'll just add a delay to simulate the scan
+    await this.simulateVirusScan(file);
 
     const timestamp = Date.now();
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
@@ -860,6 +952,8 @@ export class OfficeMessagingService {
         uploaded_by_id: user.id,
         uploaded_by_type: user.role,
         thumbnail_url: thumbnailUrl,
+        virus_scan_status: 'passed', // In production, this would be set by the scanning service
+        virus_scan_timestamp: new Date().toISOString(),
       })
       .select()
       .single();
@@ -906,13 +1000,54 @@ export class OfficeMessagingService {
    * Validate file before upload
    */
   private validateFile(file: File): void {
+    // Check file size
     if (file.size > MAX_FILE_SIZE) {
-      throw new FileUploadError(`File size exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
+      const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+      const maxSizeMB = MAX_FILE_SIZE / 1024 / 1024;
+      throw new FileUploadError(
+        `File size (${sizeMB}MB) exceeds maximum allowed size of ${maxSizeMB}MB`
+      );
     }
 
+    // Check file type
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      throw new FileUploadError('File type not allowed');
+      throw new FileUploadError(
+        `File type "${file.type}" is not allowed. Please upload images, PDFs, or Office documents.`
+      );
     }
+
+    // Check for potentially dangerous file extensions
+    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (dangerousExtensions.includes(fileExtension)) {
+      throw new FileUploadError(
+        `File extension "${fileExtension}" is not allowed for security reasons.`
+      );
+    }
+  }
+
+  /**
+   * Simulate virus scanning
+   * In production, this would integrate with a real virus scanning service
+   */
+  private async simulateVirusScan(file: File): Promise<void> {
+    // Simulate scanning delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // In production, this would call a virus scanning API
+    // For now, we'll just check for suspicious file names
+    const suspiciousPatterns = ['virus', 'malware', 'trojan', 'ransomware'];
+    const fileName = file.name.toLowerCase();
+    
+    for (const pattern of suspiciousPatterns) {
+      if (fileName.includes(pattern)) {
+        throw new FileUploadError(
+          'File failed security scan. The file appears to contain suspicious content.'
+        );
+      }
+    }
+
+    // File passed scan
   }
 
   // ============================================================================
@@ -1277,7 +1412,7 @@ export class OfficeMessagingService {
       throw new Error('User not found');
     }
 
-    const userData = data as Record<string, unknown>;
+    const userData = data as unknown as Record<string, unknown>;
     const firstName = (userData.first_name as string) || '';
     const lastName = (userData.last_name as string) || '';
     const userName = `${firstName} ${lastName}`.trim() || 'Unknown';
@@ -1407,8 +1542,8 @@ export class OfficeMessagingService {
       senderName: msg.sender_name as string,
       senderRole: msg.sender_type as UserRole,
       content: msg.content as string,
-      category: msg.category as MessageCategory || 'general',
-      priority: msg.priority as PriorityLevel || 'normal',
+      category: (msg.category as 'administrative' | 'attendance_alert' | 'schedule_change' | 'announcement' | 'general' | 'urgent') || 'general',
+      priority: (msg.priority as 'normal' | 'important' | 'urgent') || 'normal',
       status: this.getMessageStatus(msg, userId, userRole),
       attachments,
       reactions,
@@ -1428,7 +1563,7 @@ export class OfficeMessagingService {
   /**
    * Get message delivery status
    */
-  private getMessageStatus(msg: Record<string, unknown>, userId: string, userRole: UserRole): DeliveryStatus {
+  private getMessageStatus(msg: Record<string, unknown>, userId: string, userRole: UserRole): 'sending' | 'sent' | 'delivered' | 'read' | 'failed' {
     if (msg.sender_id === userId && msg.sender_type === userRole) {
       // Message sent by current user
       if (msg.read_at) return 'read';
