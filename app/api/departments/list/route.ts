@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     // Get all unique departments from the teachers table
     const { data: teachers, error } = await supabase
       .from('teachers')
-      .select('department')
-      .not('department', 'is', null);
+      .select('departments')
+      .not('departments', 'is', null);
 
     if (error) {
       console.error('Error fetching departments:', error);
@@ -39,12 +39,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get unique departments
-    const uniqueDepartments = [...new Set(
-      (teachers || [])
-        .map(t => t.department)
-        .filter(d => d && d.trim() !== '')
-    )].sort();
+    // Get unique departments - handle both string and array types
+    const departmentSet = new Set<string>();
+    
+    (teachers || []).forEach(teacher => {
+      const dept = teacher.departments;
+      
+      // Handle if departments is an array
+      if (Array.isArray(dept)) {
+        dept.forEach(d => {
+          if (d && typeof d === 'string' && d.trim() !== '') {
+            departmentSet.add(d.trim());
+          }
+        });
+      }
+      // Handle if departments is a string
+      else if (dept && typeof dept === 'string' && dept.trim() !== '') {
+        departmentSet.add(dept.trim());
+      }
+    });
+
+    const uniqueDepartments = Array.from(departmentSet).sort();
 
     return NextResponse.json({ departments: uniqueDepartments }, { status: 200 });
   } catch (error) {

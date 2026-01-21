@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, GraduationCap, User, X } from "lucide-react";
+import { Search, GraduationCap, User, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface OfficeNewConversationDialogProps {
@@ -25,15 +25,24 @@ interface OfficeNewConversationDialogProps {
   }) => void;
 }
 
-// Mock data - in production, this would come from an API
-const mockUsers = [
-  { id: "1", name: "Ahmed Mohammed", type: "student" as const, studentId: "S12345" },
-  { id: "2", name: "Fatima Ali", type: "student" as const, studentId: "S12346" },
-  { id: "3", name: "Dr. Sarah Johnson", type: "teacher" as const, department: "Computer Science" },
-  { id: "4", name: "Prof. Mohammed Hassan", type: "teacher" as const, department: "Mathematics" },
-  { id: "5", name: "Layla Ibrahim", type: "student" as const, studentId: "S12347" },
-  { id: "6", name: "Dr. Aisha Rahman", type: "teacher" as const, department: "Physics" },
-];
+interface Student {
+  id: string;
+  studentId: string;
+  name: string;
+  email: string;
+  type: "student";
+}
+
+interface Teacher {
+  id: string;
+  teacherId: string;
+  name: string;
+  email: string;
+  department: string;
+  type: "teacher";
+}
+
+type User = Student | Teacher;
 
 export function OfficeNewConversationDialog({
   open,
@@ -42,14 +51,50 @@ export function OfficeNewConversationDialog({
 }: OfficeNewConversationDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<"all" | "student" | "teacher">("all");
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredUsers = mockUsers.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase());
+  // Fetch users from the database when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchUsers();
+    }
+  }, [open]);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch students and teachers in parallel
+      const [studentsRes, teachersRes] = await Promise.all([
+        fetch("/api/students/list"),
+        fetch("/api/teachers/list"),
+      ]);
+
+      const studentsData = await studentsRes.json();
+      const teachersData = await teachersRes.json();
+
+      const allUsers: User[] = [
+        ...(studentsData.students || []),
+        ...(teachersData.teachers || []),
+      ];
+
+      setUsers(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.type === "student" && user.studentId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (user.type === "teacher" && user.teacherId.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesType = selectedType === "all" || user.type === selectedType;
     return matchesSearch && matchesType;
   });
 
-  const handleSelect = (user: typeof mockUsers[0]) => {
+  const handleSelect = (user: User) => {
     onSelectRecipient({
       id: user.id,
       type: user.type,
@@ -139,7 +184,12 @@ export function OfficeNewConversationDialog({
 
           {/* Results List - Hide scrollbar */}
           <div className="flex-1 overflow-y-auto rounded-xl scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {filteredUsers.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full p-8">
+                <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+                <p className="text-sm text-slate-500">Loading users...</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mb-4">
                   <Search className="h-8 w-8 text-slate-400" />

@@ -1359,7 +1359,7 @@ export class OfficeMessagingService {
         const { data } = await supabase
           .from('teachers')
           .select('id, first_name, last_name')
-          .eq('department', criteria.department);
+          .eq('departments', criteria.department);
 
         data?.forEach(teacher => {
           recipients.push({

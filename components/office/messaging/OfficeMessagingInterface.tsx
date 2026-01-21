@@ -207,11 +207,13 @@ export function OfficeMessagingInterface() {
           className="hidden lg:block w-80 shrink-0"
           variants={itemVariants}
         >
-          <div className="h-full rounded-2xl shadow-xl bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl overflow-hidden">
-            <div className="p-5">
+          <div className="h-full rounded-2xl shadow-xl bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl overflow-hidden flex flex-col">
+            <div className="p-5 shrink-0">
               <h3 className="text-lg font-semibold text-slate-800 mb-5">Quick Actions</h3>
+            </div>
               
-              {/* Quick Action Buttons */}
+            {/* Quick Action Buttons - Scrollable */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-5">
               <div className="space-y-3 mb-6">
                 <Button
                   onClick={() => setShowBroadcastDialog(true)}
@@ -285,21 +287,6 @@ export function OfficeMessagingInterface() {
                         {activeConversation.recipientRole}
                       </p>
                     </div>
-                    {activeConversation.unreadCount > 0 && (
-                      <motion.div 
-                        className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50"
-                        initial={{ scale: 0.9 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
-                        <p className="text-xs font-medium text-amber-600 mb-1 uppercase tracking-wide">
-                          Unread
-                        </p>
-                        <p className="text-2xl font-bold text-amber-700">
-                          {activeConversation.unreadCount}
-                        </p>
-                      </motion.div>
-                    )}
                   </motion.div>
                 ) : (
                   <motion.p

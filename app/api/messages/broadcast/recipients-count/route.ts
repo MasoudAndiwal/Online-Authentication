@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         const { count: teacherCount, error } = await supabase
           .from('teachers')
           .select('*', { count: 'exact', head: true })
-          .eq('department', department);
+          .eq('departments', department);
 
         if (error) {
           console.error('Error counting department teachers:', error);

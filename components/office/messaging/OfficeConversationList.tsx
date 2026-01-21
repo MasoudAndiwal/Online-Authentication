@@ -174,7 +174,8 @@ export function OfficeConversationList({
                         </span>
                       )}
                     </div>
-                    {conversation.unreadCount > 0 && (
+                    {/* Hide unread badge when conversation is active (user is viewing it) */}
+                    {conversation.unreadCount > 0 && activeConversationId !== conversation.id && (
                       <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg">
                         {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
                       </div>

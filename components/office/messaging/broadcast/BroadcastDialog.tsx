@@ -66,6 +66,8 @@ export function BroadcastDialog({ isOpen, onClose }: BroadcastDialogProps) {
   const [departments, setDepartments] = useState<string[]>([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const fetchClasses = async () => {
     try {
@@ -150,6 +152,9 @@ export function BroadcastDialog({ isOpen, onClose }: BroadcastDialogProps) {
 
   const handleSend = useCallback(async () => {
     try {
+      setSendError(null);
+      setSendSuccess(false);
+      
       const request: SendBroadcastRequest = {
         criteria: formData.criteria,
         content: formData.content,
@@ -160,18 +165,26 @@ export function BroadcastDialog({ isOpen, onClose }: BroadcastDialogProps) {
 
       await sendBroadcast(request);
       
-      // Reset and close
-      setFormData({
-        criteria: { type: 'all_students' },
-        content: '',
-        category: 'announcement',
-        priority: 'normal',
-        attachments: [],
-      });
-      setCurrentStep('recipients');
-      onClose();
+      // Show success message
+      setSendSuccess(true);
+      
+      // Wait a moment to show success, then close
+      setTimeout(() => {
+        // Reset and close
+        setFormData({
+          criteria: { type: 'all_students' },
+          content: '',
+          category: 'announcement',
+          priority: 'normal',
+          attachments: [],
+        });
+        setCurrentStep('recipients');
+        setSendSuccess(false);
+        onClose();
+      }, 2000);
     } catch (error) {
       console.error('Failed to send broadcast:', error);
+      setSendError(error instanceof Error ? error.message : 'Failed to send broadcast message');
     }
   }, [formData, sendBroadcast, onClose]);
 
@@ -302,6 +315,8 @@ export function BroadcastDialog({ isOpen, onClose }: BroadcastDialogProps) {
                     key="confirm"
                     formData={formData}
                     recipientCount={recipientCount}
+                    sendSuccess={sendSuccess}
+                    sendError={sendError}
                   />
                 )}
               </AnimatePresence>
@@ -691,9 +706,11 @@ function MessageComposition({
 interface ConfirmationStepProps {
   formData: BroadcastFormData;
   recipientCount: number;
+  sendSuccess: boolean;
+  sendError: string | null;
 }
 
-function ConfirmationStep({ formData, recipientCount }: ConfirmationStepProps) {
+function ConfirmationStep({ formData, recipientCount, sendSuccess, sendError }: ConfirmationStepProps) {
   const getCriteriaDescription = () => {
     switch (formData.criteria.type) {
       case 'all_students':
@@ -723,17 +740,56 @@ function ConfirmationStep({ formData, recipientCount }: ConfirmationStepProps) {
         </p>
       </div>
 
+      {/* Success Message */}
+      {sendSuccess && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-4 rounded-xl bg-green-50 border-0 shadow-md flex items-start gap-3"
+        >
+          <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-green-900 mb-1">Broadcast Sent Successfully!</div>
+            <div className="text-sm text-green-800">
+              Your message has been sent to {recipientCount} recipient{recipientCount !== 1 ? 's' : ''}. 
+              They will receive it shortly.
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Error Message */}
+      {sendError && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-4 rounded-xl bg-red-50 border-0 shadow-md flex items-start gap-3"
+        >
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <div className="font-semibold text-red-900 mb-1">Failed to Send Broadcast</div>
+            <div className="text-sm text-red-800">{sendError}</div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Warning */}
-      <div className="p-4 rounded-xl bg-amber-50 border-0 shadow-md flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-800">
-          <div className="font-semibold mb-1">Important</div>
-          <div>
-            This message will be sent to {recipientCount} recipient{recipientCount !== 1 ? 's' : ''}. 
-            This action cannot be undone.
+      {!sendSuccess && !sendError && (
+        <div className="p-4 rounded-xl bg-amber-50 border-0 shadow-md flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-800">
+            <div className="font-semibold mb-1">Important</div>
+            <div>
+              This message will be sent to {recipientCount} recipient{recipientCount !== 1 ? 's' : ''}. 
+              This action cannot be undone.
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Summary */}
       <div className="space-y-4">
