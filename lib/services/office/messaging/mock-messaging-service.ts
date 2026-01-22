@@ -5,6 +5,7 @@
  * This service simulates the real messaging service with in-memory data.
  */
 
+import { supabase } from '@/lib/supabase-simple';
 import type {
   Conversation,
   Message,
@@ -340,11 +341,40 @@ export class MockMessagingService {
 
   async createConversation(recipientId: string, recipientRole: 'student' | 'teacher'): Promise<string> {
     await this.simulateDelay();
+    
+    // Fetch the recipient's actual name from the database
+    let recipientName = `User ${recipientId}`;
+    try {
+      if (recipientRole === 'student') {
+        const { data: student } = await supabase
+          .from('students')
+          .select('first_name, last_name')
+          .eq('id', recipientId)
+          .single();
+        
+        if (student) {
+          recipientName = `${student.first_name} ${student.last_name}`;
+        }
+      } else if (recipientRole === 'teacher') {
+        const { data: teacher } = await supabase
+          .from('teachers')
+          .select('first_name, last_name')
+          .eq('id', recipientId)
+          .single();
+        
+        if (teacher) {
+          recipientName = `${teacher.first_name} ${teacher.last_name}`;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recipient name:', error);
+    }
+    
     const newId = `conv-${Date.now()}`;
     const newConv: Conversation = {
       id: newId,
       recipientId,
-      recipientName: `User ${recipientId}`,
+      recipientName,
       recipientRole,
       recipientAvatar: undefined,
       lastMessage: {

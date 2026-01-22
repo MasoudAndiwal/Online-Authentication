@@ -22,16 +22,19 @@ export function useBroadcastHistory() {
     queryFn: async () => {
       const response = await fetch("/api/messages/broadcast/history", {
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error("Unauthorized. Please login again.");
+          throw new Error("User not authenticated");
         }
         if (response.status === 403) {
-          throw new Error("You don't have permission to view broadcast history.");
+          throw new Error("You don't have permission to view broadcast history");
         }
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({ error: 'Failed to fetch broadcast history' }));
         throw new Error(errorData.error || "Failed to fetch broadcast history");
       }
 
@@ -40,6 +43,7 @@ export function useBroadcastHistory() {
     },
     staleTime: 1000 * 60, // 1 minute
     refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
-    retry: 2,
+    retry: 1,
+    retryDelay: 1000,
   });
 }

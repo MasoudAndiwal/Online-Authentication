@@ -1,15 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-simple";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    // Get pagination parameters from query string
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const search = searchParams.get("search") || "";
 
-    // Fetch all teachers from the database
-    const { data: teachers, error } = await supabase
+    // Calculate offset for pagination
+    const offset = (page - 1) * limit;
+
+    // Build query
+    let query = supabase
       .from("teachers")
-      .select("id, teacher_id, first_name, last_name, email, departments")
+      .select("id, teacher_id, first_name, last_name, phone, departments, subjects", { count: "exact" })
       .order("first_name", { ascending: true });
+
+    // Add search filter if provided
+    if (search) {
+      query = query.or(
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,teacher_id.ilike.%${search}%`
+      );
+    }
+
+    // Add pagination
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: teachers, error, count } = await query;
 
     if (error) {
       console.error("Error fetching teachers:", error);
@@ -31,17 +50,35 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Handle subjects - can be string or array
+      let subjects = "N/A";
+      if (teacher.subjects) {
+        if (Array.isArray(teacher.subjects)) {
+          subjects = teacher.subjects.join(", ");
+        } else if (typeof teacher.subjects === "string") {
+          subjects = teacher.subjects;
+        }
+      }
+
       return {
         id: teacher.id,
         teacherId: teacher.teacher_id,
         name: `${teacher.first_name} ${teacher.last_name}`,
-        email: teacher.email,
         department,
+        subjects,
         type: "teacher" as const,
       };
     });
 
-    return NextResponse.json({ teachers: formattedTeachers }, { status: 200 });
+    return NextResponse.json({
+      teachers: formattedTeachers,
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        hasMore: (count || 0) > offset + limit,
+      },
+    }, { status: 200 });
   } catch (error) {
     console.error("Error in teachers list API:", error);
     return NextResponse.json(

@@ -29,7 +29,7 @@ interface Student {
   id: string;
   studentId: string;
   name: string;
-  email: string;
+  classSection: string;
   type: "student";
 }
 
@@ -37,8 +37,8 @@ interface Teacher {
   id: string;
   teacherId: string;
   name: string;
-  email: string;
   department: string;
+  subjects: string;
   type: "teacher";
 }
 
@@ -53,36 +53,100 @@ export function OfficeNewConversationDialog({
   const [selectedType, setSelectedType] = useState<"all" | "student" | "teacher">("all");
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // Fetch users from the database when dialog opens
+  // Fetch users from the database when dialog opens or filters change
   useEffect(() => {
     if (open) {
-      fetchUsers();
+      setUsers([]);
+      setPage(1);
+      setHasMore(true);
+      fetchUsers(1, true);
     }
-  }, [open]);
+  }, [open, selectedType]);
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
+  // Debounced search
+  useEffect(() => {
+    if (!open) return;
+    
+    const timer = setTimeout(() => {
+      setUsers([]);
+      setPage(1);
+      setHasMore(true);
+      fetchUsers(1, true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchUsers = async (pageNum: number, reset: boolean = false) => {
+    if (reset) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
-      // Fetch students and teachers in parallel
-      const [studentsRes, teachersRes] = await Promise.all([
-        fetch("/api/students/list"),
-        fetch("/api/teachers/list"),
-      ]);
+      const params = new URLSearchParams({
+        page: pageNum.toString(),
+        limit: "10",
+        search: searchQuery,
+      });
 
-      const studentsData = await studentsRes.json();
-      const teachersData = await teachersRes.json();
+      // Fetch based on selected type
+      const promises = [];
+      
+      if (selectedType === "all" || selectedType === "student") {
+        promises.push(fetch(`/api/students/list?${params}`).then(res => res.json()));
+      } else {
+        promises.push(Promise.resolve({ students: [], pagination: { hasMore: false } }));
+      }
 
-      const allUsers: User[] = [
+      if (selectedType === "all" || selectedType === "teacher") {
+        promises.push(fetch(`/api/teachers/list?${params}`).then(res => res.json()));
+      } else {
+        promises.push(Promise.resolve({ teachers: [], pagination: { hasMore: false } }));
+      }
+
+      const [studentsData, teachersData] = await Promise.all(promises);
+
+      const newUsers: User[] = [
         ...(studentsData.students || []),
         ...(teachersData.teachers || []),
       ];
 
-      setUsers(allUsers);
+      // Sort combined results by name
+      newUsers.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (reset) {
+        setUsers(newUsers);
+      } else {
+        setUsers(prev => [...prev, ...newUsers]);
+      }
+
+      // Check if there's more data
+      const hasMoreData = studentsData.pagination?.hasMore || teachersData.pagination?.hasMore;
+      setHasMore(hasMoreData);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Handle scroll to load more
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+
+    if (bottom && hasMore && !isLoadingMore && !isLoading) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchUsers(nextPage, false);
     }
   };
 
@@ -125,7 +189,7 @@ export function OfficeNewConversationDialog({
               placeholder="Search by name or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 rounded-xl border-0 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 bg-slate-50"
+              className="pl-10 pr-10 rounded-xl border-0 shadow-sm bg-slate-50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
             />
             {searchQuery && (
               <button
@@ -182,8 +246,12 @@ export function OfficeNewConversationDialog({
             </Button>
           </div>
 
-          {/* Results List - Hide scrollbar */}
-          <div className="flex-1 overflow-y-auto rounded-xl scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {/* Results List - Hide scrollbar with infinite scroll */}
+          <div 
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto rounded-xl scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          >
             {isLoading ? (
               <div className="flex flex-col items-center justify-center h-full p-8">
                 <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
@@ -202,61 +270,78 @@ export function OfficeNewConversationDialog({
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 border border-slate-100 rounded-xl overflow-hidden">
-                {filteredUsers.map((user, index) => (
-                  <motion.button
-                    key={user.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => handleSelect(user)}
-                    className="w-full p-4 text-left hover:bg-slate-50 transition-colors border-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Avatar */}
-                      <div
-                        className={cn(
-                          "w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shadow-md",
-                          user.type === "teacher"
-                            ? "bg-gradient-to-br from-green-400 to-green-600"
-                            : "bg-gradient-to-br from-blue-400 to-blue-600"
-                        )}
-                      >
-                        {user.type === "teacher" ? (
-                          <User className="h-6 w-6" />
-                        ) : (
-                          <GraduationCap className="h-6 w-6" />
-                        )}
-                      </div>
+              <>
+                <div className="divide-y divide-slate-200 border border-slate-100 rounded-xl overflow-hidden">
+                  {filteredUsers.map((user, index) => (
+                    <motion.button
+                      key={user.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => handleSelect(user)}
+                      className="w-full p-4 text-left hover:bg-slate-50 transition-colors border-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Avatar */}
+                        <div
+                          className={cn(
+                            "w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shadow-md",
+                            user.type === "teacher"
+                              ? "bg-gradient-to-br from-green-400 to-green-600"
+                              : "bg-gradient-to-br from-blue-400 to-blue-600"
+                          )}
+                        >
+                          {user.type === "teacher" ? (
+                            <User className="h-6 w-6" />
+                          ) : (
+                            <GraduationCap className="h-6 w-6" />
+                          )}
+                        </div>
 
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-slate-800 truncate">
-                          {user.name}
-                        </h4>
-                        <p className="text-sm text-slate-600">
-                          {user.type === "student"
-                            ? `Student ID: ${user.studentId}`
-                            : user.department}
-                        </p>
-                      </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-slate-800 truncate">
+                            {user.name}
+                          </h4>
+                          <p className="text-sm text-slate-600 truncate">
+                            {user.type === "student"
+                              ? `Student ID: ${user.studentId} • ${user.classSection}`
+                              : `${user.department} • ${user.subjects}`}
+                          </p>
+                        </div>
 
-                      {/* Badge */}
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "capitalize",
-                          user.type === "teacher"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-blue-100 text-blue-700"
-                        )}
-                      >
-                        {user.type}
-                      </Badge>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
+                        {/* Badge */}
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "capitalize",
+                            user.type === "teacher"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-blue-100 text-blue-700"
+                          )}
+                        >
+                          {user.type}
+                        </Badge>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+                
+                {/* Loading more indicator */}
+                {isLoadingMore && (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="h-6 w-6 text-blue-500 animate-spin mr-2" />
+                    <p className="text-sm text-slate-500">Loading more...</p>
+                  </div>
+                )}
+
+                {/* End of results indicator */}
+                {!hasMore && users.length > 0 && (
+                  <div className="flex items-center justify-center p-4">
+                    <p className="text-sm text-slate-400">No more users to load</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

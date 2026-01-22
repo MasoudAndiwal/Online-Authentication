@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquarePlus, Users, Clock, Download } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, Users, Clock, Download, History, FileText, Forward, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMessaging } from "@/hooks/office/messaging/use-messaging-context";
 import { OfficeConversationList } from "./OfficeConversationList";
@@ -12,8 +12,11 @@ import { OfficeMessageThread } from "./OfficeMessageThread";
 import { OfficeComposeMessage } from "./OfficeComposeMessage";
 import { OfficeNewConversationDialog } from "./OfficeNewConversationDialog";
 import { BroadcastDialog } from "./broadcast/BroadcastDialog";
+import { BroadcastHistoryDialog } from "./broadcast/BroadcastHistoryDialog";
 import { ScheduleMessageDialog } from "./schedule/ScheduleMessageDialog";
 import { ExportDialog } from "./message-view/ExportDialog";
+import { ForwardMessageDialog } from "./message-view/ForwardMessageDialog";
+import { TemplateSelector } from "./message-view/TemplateSelector";
 import { MessageBubble3D } from "@/components/ui/message-3d-icons";
 
 const containerVariants = {
@@ -36,6 +39,10 @@ export function OfficeMessagingInterface() {
   const [showBroadcastDialog, setShowBroadcastDialog] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showBroadcastHistory, setShowBroadcastHistory] = useState(false);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [selectedMessageToForward, setSelectedMessageToForward] = useState<any>(null);
   
   const {
     conversations,
@@ -44,6 +51,8 @@ export function OfficeMessagingInterface() {
     selectConversation,
     sendMessage,
     scheduleMessage,
+    createConversation,
+    forwardMessage,
     isLoading,
   } = useMessaging();
 
@@ -69,9 +78,24 @@ export function OfficeMessagingInterface() {
     setShowNewConversationDialog(true);
   };
 
-  const handleSelectRecipient = (recipient: { id: string; type: "student" | "teacher"; name: string }) => {
-    console.log("Selected recipient:", recipient);
-    setShowNewConversationDialog(false);
+  const handleSelectRecipient = async (recipient: { id: string; type: "student" | "teacher"; name: string }) => {
+    try {
+      // Create or get existing conversation with the selected recipient
+      const conversationId = await createConversation(recipient.id, recipient.type);
+      
+      // Select the conversation to open it
+      selectConversation(conversationId);
+      
+      // Close the dialog
+      setShowNewConversationDialog(false);
+      
+      // On mobile, show the conversation view
+      if (isMobile) {
+        setShowConversationList(false);
+      }
+    } catch (error) {
+      console.error("Failed to create conversation:", error);
+    }
   };
 
   const handleSendMessage = async (data: {
@@ -101,6 +125,17 @@ export function OfficeMessagingInterface() {
     } catch (error) {
       console.error("Failed to schedule message:", error);
     }
+  };
+
+  const handleForwardMessage = (message: any) => {
+    setSelectedMessageToForward(message);
+    setShowForwardDialog(true);
+  };
+
+  const handleSelectTemplate = (content: string, category: any) => {
+    // Template content will be inserted into compose area
+    // This would need to be passed to OfficeComposeMessage component
+    setShowTemplateSelector(false);
   };
 
   const handleDownloadAttachment = (attachment: any) => {
@@ -215,6 +250,7 @@ export function OfficeMessagingInterface() {
             {/* Quick Action Buttons - Scrollable */}
             <div className="flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-5">
               <div className="space-y-3 mb-6">
+                {/* Broadcast Message */}
                 <Button
                   onClick={() => setShowBroadcastDialog(true)}
                   className="w-full justify-start bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 shadow-md rounded-xl"
@@ -222,12 +258,30 @@ export function OfficeMessagingInterface() {
                   <Users className="h-4 w-4 mr-2" />
                   Broadcast Message
                 </Button>
+
+                {/* Broadcast History */}
+                <Button
+                  onClick={() => setShowBroadcastHistory(true)}
+                  className="w-full justify-start bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-0 shadow-md rounded-xl"
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  Broadcast History
+                </Button>
+
+                {/* Message Templates */}
+                <Button
+                  onClick={() => setShowTemplateSelector(true)}
+                  className="w-full justify-start bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white border-0 shadow-md rounded-xl"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Message Templates
+                </Button>
                 
                 {activeConversation && (
                   <>
                     <Button
                       onClick={() => setShowScheduleDialog(true)}
-                      className="w-full justify-start bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md rounded-xl"
+                      className="w-full justify-start bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-md rounded-xl"
                     >
                       <Clock className="h-4 w-4 mr-2" />
                       Schedule Message
@@ -407,6 +461,32 @@ export function OfficeMessagingInterface() {
         isOpen={showBroadcastDialog}
         onClose={() => setShowBroadcastDialog(false)}
       />
+
+      {/* Broadcast History Dialog */}
+      <BroadcastHistoryDialog
+        isOpen={showBroadcastHistory}
+        onClose={() => setShowBroadcastHistory(false)}
+      />
+
+      {/* Template Selector */}
+      <TemplateSelector
+        isOpen={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelectTemplate={handleSelectTemplate}
+        recipientName={activeConversation?.recipientName}
+      />
+
+      {/* Forward Message Dialog */}
+      {selectedMessageToForward && (
+        <ForwardMessageDialog
+          isOpen={showForwardDialog}
+          onClose={() => {
+            setShowForwardDialog(false);
+            setSelectedMessageToForward(null);
+          }}
+          message={selectedMessageToForward}
+        />
+      )}
 
       {activeConversation && (
         <>

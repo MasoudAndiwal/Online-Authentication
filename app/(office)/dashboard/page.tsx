@@ -13,7 +13,10 @@ import { AuthLoadingScreen } from "@/components/ui/auth-loading";
 import { fetchDashboardStats, fetchRecentActivity } from "@/lib/api/dashboard-api";
 import type { DashboardStats, ActivityItem } from "@/lib/database/dashboard-operations";
 import { toast } from "sonner";
-import { MessageNotificationBell } from "@/components/layout/message-notification-bell";
+import { MessagingProvider } from "@/hooks/office/messaging/use-messaging-context";
+import { NotificationCenter } from "@/components/office/messaging/notifications/NotificationCenter";
+import { NotificationBellTrigger } from "@/components/office/messaging/notifications/NotificationBellTrigger";
+import { useNotifications } from "@/hooks/office/messaging/use-notifications";
 import {
   ModernCard,
   ModernCardHeader,
@@ -40,9 +43,6 @@ export default function OfficeDashboardPage() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [activities, setActivities] = React.useState<ActivityItem[]>([]);
   const [loadingStats, setLoadingStats] = React.useState(true);
-  
-  // Mock unread messages count - in production, this would come from your messaging service
-  const [unreadMessagesCount] = React.useState(3);
 
   const [hasShownWelcome, setHasShownWelcome] = React.useState(false);
 
@@ -84,6 +84,11 @@ export default function OfficeDashboardPage() {
 
   // Show loading state while checking authentication
   if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
+
+  // Ensure user is loaded
+  if (!user) {
     return <AuthLoadingScreen />;
   }
 
@@ -134,24 +139,83 @@ export default function OfficeDashboardPage() {
     }
   };
 
-
+  // Create current user object for messaging context
+  const currentUser = {
+    id: user.id,
+    name: `${user.firstName} ${user.lastName}`,
+    email: user.email || '',
+    role: 'office' as const,
+    avatar: undefined,
+  };
 
   return (
-    <ModernDashboardLayout
-      user={displayUser}
-      title="Office Dashboard"
-      subtitle="University Attendance Management System"
-      currentPath={currentPath}
-      onNavigate={handleNavigation}
-      onLogout={handleLogoutClick}
-      onSearch={handleSearch}
-      notificationTrigger={
-        <MessageNotificationBell 
-          unreadCount={unreadMessagesCount}
-          onNavigateToMessages={() => handleNavigation("/dashboard/messages")}
-        />
-      }
-    >
+    <MessagingProvider currentUser={currentUser}>
+      <DashboardWithNotifications
+        displayUser={displayUser}
+        currentPath={currentPath}
+        handleNavigation={handleNavigation}
+        handleLogoutClick={handleLogoutClick}
+        handleSearch={handleSearch}
+        getWelcomeMessage={getWelcomeMessage}
+        stats={stats}
+        activities={activities}
+        loadingStats={loadingStats}
+      />
+    </MessagingProvider>
+  );
+}
+
+// Separate component that uses the notification hook (must be inside MessagingProvider)
+interface DashboardWithNotificationsProps {
+  displayUser: {
+    name: string;
+    email: string;
+    role: "OFFICE" | "TEACHER" | "STUDENT";
+    avatar?: string;
+  };
+  currentPath: string;
+  handleNavigation: (href: string) => void;
+  handleLogoutClick: () => void;
+  handleSearch: (query: string) => void;
+  getWelcomeMessage: () => string;
+  stats: DashboardStats | null;
+  activities: ActivityItem[];
+  loadingStats: boolean;
+}
+
+function DashboardWithNotifications({
+  displayUser,
+  currentPath,
+  handleNavigation,
+  handleLogoutClick,
+  handleSearch,
+  getWelcomeMessage,
+  stats,
+  activities,
+  loadingStats,
+}: DashboardWithNotificationsProps) {
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = React.useState(false);
+  const { unreadCount } = useNotifications();
+
+  const notificationTrigger = (
+    <NotificationBellTrigger
+      unreadCount={unreadCount}
+      onClick={() => setIsNotificationPanelOpen(true)}
+    />
+  );
+
+  return (
+    <>
+      <ModernDashboardLayout
+        user={displayUser}
+        title="Office Dashboard"
+        subtitle="University Attendance Management System"
+        currentPath={currentPath}
+        onNavigate={handleNavigation}
+        onLogout={handleLogoutClick}
+        onSearch={handleSearch}
+        notificationTrigger={notificationTrigger}
+      >
       <PageContainer>
         {/* Ultra Modern Welcome Section - NO BORDERS */}
         <motion.div
@@ -321,5 +385,11 @@ export default function OfficeDashboardPage() {
         </ModernCard>
       </PageContainer>
     </ModernDashboardLayout>
+
+    <NotificationCenter
+      isOpen={isNotificationPanelOpen}
+      onClose={() => setIsNotificationPanelOpen(false)}
+    />
+  </>
   );
 }

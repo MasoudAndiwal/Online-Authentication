@@ -18,11 +18,11 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, BellOff, Settings, Check, Clock, Trash2, Moon, Volume2, VolumeX, Eye, EyeOff } from 'lucide-react';
+import { X, Bell, BellOff, Settings, Check, Clock, Trash2, Moon, Volume2, VolumeX } from 'lucide-react';
 import { useNotifications } from '@/hooks/office/messaging/use-notifications';
 import { useLanguage } from '@/hooks/office/messaging/use-language';
 import type { Notification, NotificationSettings as NotificationSettingsType } from '@/types/office/messaging';
-import { colors, glassmorphism, spacing, animations, borderRadius, zIndex } from '@/lib/design-system/office-messaging';
+import { colors, zIndex } from '@/lib/design-system/office-messaging';
 import { formatDistanceToNow } from 'date-fns';
 
 // ============================================================================
@@ -113,7 +113,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
       x: 0,
       opacity: 1,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         damping: 25,
         stiffness: 300,
       },
@@ -502,7 +502,9 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
             style={{
               [direction === 'ltr' ? 'right' : 'left']: 0,
               zIndex: zIndex.modal + 1,
-              ...glassmorphism.panel,
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
             }}
           >
             {/* Header */}
@@ -526,7 +528,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                 {isQuietHoursActive && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-purple-100 text-purple-700">
                     <Moon className="w-4 h-4" />
-                    <span className="text-xs font-medium">{t('notification.quietHours')}</span>
+                    <span className="text-xs font-medium">Quiet Hours</span>
                   </div>
                 )}
 
@@ -566,13 +568,13 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                         onClick={markAllAsRead}
                         className="flex-1 px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium"
                       >
-                        {t('notification.markAllRead')}
+                        Mark All as Read
                       </button>
                       <button
                         onClick={clearAll}
                         className="flex-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors text-sm font-medium"
                       >
-                        {t('notification.clearAll')}
+                        Clear All
                       </button>
                     </div>
                   )}
@@ -581,7 +583,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                   {notifications.length === 0 ? (
                     <div className="text-center py-12">
                       <BellOff className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">{t('notification.empty')}</p>
+                      <p className="text-gray-500">No notifications</p>
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -589,7 +591,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                       {groupedNotifications.today.length > 0 && (
                         <div>
                           <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-                            {t('notification.today')}
+                            Today
                           </h3>
                           <AnimatePresence>
                             {groupedNotifications.today.map(renderNotificationItem)}
@@ -601,7 +603,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                       {groupedNotifications.yesterday.length > 0 && (
                         <div>
                           <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-                            {t('notification.yesterday')}
+                            Yesterday
                           </h3>
                           <AnimatePresence>
                             {groupedNotifications.yesterday.map(renderNotificationItem)}
@@ -613,7 +615,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                       {groupedNotifications.older.length > 0 && (
                         <div>
                           <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-                            {t('notification.older')}
+                            Older
                           </h3>
                           <AnimatePresence>
                             {groupedNotifications.older.map(renderNotificationItem)}

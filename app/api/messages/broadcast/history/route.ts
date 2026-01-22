@@ -12,14 +12,14 @@ export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession()
     
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || !session.id) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 })
     }
 
-    const senderType = session.role.toLowerCase()
+    const senderType = session.role?.toUpperCase() || 'OFFICE'
 
     // Only teachers and office can view broadcast history
-    if (senderType === 'student') {
+    if (senderType === 'STUDENT') {
       return NextResponse.json(
         { error: 'Students cannot access broadcast history' },
         { status: 403 }
@@ -43,7 +43,7 @@ export async function GET(_request: NextRequest) {
         created_at
       `)
       .eq('sender_id', session.id)
-      .eq('sender_type', senderType.toUpperCase())
+      .eq('sender_type', senderType)
       .order('created_at', { ascending: false })
       .limit(50)
 

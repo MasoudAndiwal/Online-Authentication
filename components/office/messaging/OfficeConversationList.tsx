@@ -34,7 +34,7 @@ export function OfficeConversationList({
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   const filteredConversations = conversations.filter((conv) =>
-    conv.recipientName.toLowerCase().includes(searchQuery.toLowerCase())
+    conv.recipientName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

@@ -74,6 +74,7 @@ interface MessagingContextState {
   loadConversations: () => Promise<void>;
   loadMessages: (conversationId: string, offset?: number) => Promise<void>;
   selectConversation: (id: string | null) => void;
+  createConversation: (recipientId: string, recipientRole: 'student' | 'teacher') => Promise<string>;
   
   // Actions - Search and Filter
   searchConversations: (query: string) => void;
@@ -202,12 +203,94 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      const convs = await mockMessagingService.getConversations(filters, sortBy);
-      setConversations(convs);
+      
+      // Call real API instead of mock service
+      const response = await fetch('/api/conversations', {
+        credentials: 'include', // Include cookies for authentication
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to fetch conversations:', response.status, errorData);
+        
+        // Don't throw error, just set empty conversations
+        // This allows the UI to work even if API fails
+        setConversations([]);
+        setUnreadCount(0);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      // Transform API response to match component expectations
+      const transformedConversations = (data.conversations || []).map((conv: any) => ({
+        id: conv.id,
+        recipientId: conv.otherParticipant?.id || '',
+        recipientName: conv.otherParticipant?.name || 'Unknown User',
+        recipientRole: conv.otherParticipant?.type || 'student',
+        recipientAvatar: conv.otherParticipant?.avatar,
+        lastMessage: {
+          id: `msg-${Date.now()}`,
+          conversationId: conv.id,
+          senderId: '',
+          senderName: '',
+          senderRole: 'office' as const,
+          content: conv.lastMessagePreview || '',
+          category: 'general' as const,
+          priority: 'normal' as const,
+          status: 'sent' as const,
+          attachments: [],
+          reactions: [],
+          isPinned: false,
+          isForwarded: false,
+          timestamp: conv.lastMessageAt ? new Date(conv.lastMessageAt) : new Date(),
+        },
+        unreadCount: conv.unreadCount || 0,
+        isPinned: false,
+        isStarred: false,
+        isArchived: conv.isArchived || false,
+        isResolved: false,
+        isMuted: conv.isMuted || false,
+        pinnedMessages: [],
+        createdAt: new Date(),
+        updatedAt: conv.lastMessageAt ? new Date(conv.lastMessageAt) : new Date(),
+      }));
+      
+      setConversations(transformedConversations);
       
       // Calculate total unread count
-      const total = convs.reduce((sum, conv) => sum + conv.unreadCount, 0);
+      const total = transformedConversations.reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0);
       setUnreadCount(total);
+      
+      // Create notifications for conversations with unread messages
+      // Only create notifications for new unread messages (not already in notifications)
+      const existingNotificationConvIds = new Set(
+        notifications.map(n => n.conversationId).filter(Boolean)
+      );
+      
+      const newNotifications: Notification[] = [];
+      transformedConversations.forEach((conv: any) => {
+        if (conv.unreadCount > 0 && !existingNotificationConvIds.has(conv.id)) {
+          // Create a notification for this conversation
+          const notification: Notification = {
+            id: `notif-${conv.id}-${Date.now()}`,
+            type: 'new_message',
+            conversationId: conv.id,
+            senderId: conv.recipientId,
+            senderName: conv.recipientName,
+            message: conv.lastMessage.content || 'New message',
+            timestamp: conv.lastMessage.timestamp,
+            isRead: false,
+            priority: 'normal',
+          };
+          newNotifications.push(notification);
+        }
+      });
+      
+      // Add new notifications to the beginning of the list
+      if (newNotifications.length > 0) {
+        setNotifications(prev => [...newNotifications, ...prev]);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load conversations';
       setError(errorMessage);
@@ -221,11 +304,42 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      const msgs = await mockMessagingService.getMessages(conversationId, 50, offset);
+      
+      // Call real API instead of mock service
+      const response = await fetch(`/api/conversations/${conversationId}/messages?offset=${offset}&limit=50`, {
+        credentials: 'include', // Include cookies for authentication
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to fetch messages:', response.status, errorData);
+        throw new Error(errorData.error || `Failed to fetch messages (${response.status})`);
+      }
+      
+      const data = await response.json();
+      const apiMessages = data.messages || [];
+      
+      // Transform API messages to match component expectations
+      const transformedMessages = apiMessages.map((msg: any) => ({
+        id: msg.id,
+        conversationId: msg.conversationId,
+        senderId: msg.senderId,
+        senderName: msg.senderName,
+        senderRole: msg.senderType as 'student' | 'teacher' | 'office',
+        content: msg.content,
+        category: msg.category,
+        priority: 'normal' as const,
+        status: 'sent' as const,
+        attachments: msg.attachments || [],
+        reactions: [],
+        isPinned: false,
+        isForwarded: msg.isForwarded || false,
+        timestamp: new Date(msg.createdAt),
+      }));
       
       setMessages(prev => ({
         ...prev,
-        [conversationId]: offset === 0 ? msgs : [...(prev[conversationId] || []), ...msgs],
+        [conversationId]: offset === 0 ? transformedMessages : [...(prev[conversationId] || []), ...transformedMessages],
       }));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load messages';
@@ -238,10 +352,131 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const selectConversation = useCallback((id: string | null) => {
     setSelectedConversationId(id);
-    if (id && !messages[id]) {
+    // Only load messages if:
+    // 1. There's a conversation ID
+    // 2. Messages haven't been loaded yet
+    // 3. It's NOT a temporary conversation (starts with temp-conv-)
+    if (id && !messages[id] && !id.startsWith('temp-conv-')) {
       loadMessages(id);
     }
-  }, [messages, loadMessages]);
+    
+    // Mark conversation as read when selected (call API directly to avoid circular dependency)
+    if (id && !id.startsWith('temp-conv-')) {
+      // Call API to mark as read
+      fetch(`/api/conversations/${id}/read`, {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(err => console.error('Error marking as read:', err));
+      
+      // Update local state immediately
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === id ? { ...conv, unreadCount: 0 } : conv
+        )
+      );
+      
+      // Recalculate total unread count
+      setUnreadCount(prev => {
+        const conv = conversations.find(c => c.id === id);
+        return Math.max(0, prev - (conv?.unreadCount || 0));
+      });
+    }
+  }, [messages, loadMessages, conversations]);
+
+  const createConversation = useCallback(async (recipientId: string, recipientRole: 'student' | 'teacher') => {
+    try {
+      setError(null);
+      
+      // Check if conversation already exists
+      const existingConv = conversations.find(
+        c => c.recipientId === recipientId && c.recipientRole === recipientRole
+      );
+      
+      if (existingConv) {
+        // Conversation already exists, just select it
+        setSelectedConversationId(existingConv.id);
+        return existingConv.id;
+      }
+      
+      // Create a temporary conversation ID
+      // The real conversation will be created when the first message is sent
+      const tempConvId = `temp-conv-${Date.now()}`;
+      
+      // Fetch recipient name from database
+      let recipientName = 'Unknown User';
+      try {
+        const params = new URLSearchParams({ page: '1', limit: '1000' });
+        
+        if (recipientRole === 'student') {
+          const response = await fetch(`/api/students/list?${params}`, { credentials: 'include' });
+          if (response.ok) {
+            const data = await response.json();
+            const foundStudent = (data.students || []).find((s: any) => s.id === recipientId);
+            if (foundStudent) recipientName = foundStudent.name;
+          }
+        } else if (recipientRole === 'teacher') {
+          const response = await fetch(`/api/teachers/list?${params}`, { credentials: 'include' });
+          if (response.ok) {
+            const data = await response.json();
+            const foundTeacher = (data.teachers || []).find((t: any) => t.id === recipientId);
+            if (foundTeacher) recipientName = foundTeacher.name;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching recipient name:', error);
+      }
+      
+      // Add temporary conversation to state
+      const tempConv = {
+        id: tempConvId,
+        recipientId,
+        recipientName,
+        recipientRole,
+        recipientAvatar: undefined,
+        lastMessage: {
+          id: '',
+          conversationId: tempConvId,
+          senderId: '',
+          senderName: '',
+          senderRole: 'office' as const,
+          content: '',
+          category: 'general' as const,
+          priority: 'normal' as const,
+          status: 'sent' as const,
+          attachments: [],
+          reactions: [],
+          isPinned: false,
+          isForwarded: false,
+          timestamp: new Date(),
+        },
+        unreadCount: 0,
+        isPinned: false,
+        isStarred: false,
+        isArchived: false,
+        isResolved: false,
+        isMuted: false,
+        pinnedMessages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      setConversations(prev => [tempConv, ...prev]);
+      setSelectedConversationId(tempConvId);
+      
+      // Initialize empty messages array
+      setMessages(prev => ({
+        ...prev,
+        [tempConvId]: [],
+      }));
+      
+      return tempConvId;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create conversation';
+      setError(errorMessage);
+      console.error('Error creating conversation:', err);
+      throw err;
+    }
+  }, [conversations]);
 
   const refreshConversations = useCallback(async () => {
     await loadConversations();
@@ -281,20 +516,88 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
         }));
       }
 
-      // Send to server
-      const sentMessage = await mockMessagingService.sendMessage(request);
+      // Send to server using real API
+      const conversation = conversations.find(c => c.id === request.conversationId);
+      if (!conversation) {
+        throw new Error('Conversation not found');
+      }
       
-      // Replace temp message with real message
-      const conversationId = sentMessage.conversationId;
-      setMessages(prev => ({
-        ...prev,
-        [conversationId]: (prev[conversationId] || []).map(msg =>
-          msg.id === tempMessage.id ? sentMessage : msg
-        ),
-      }));
+      // Check if this is a temporary conversation
+      const isTempConversation = conversation.id.startsWith('temp-conv-');
+      
+      const formData = new FormData();
+      formData.append('recipientId', conversation.recipientId);
+      formData.append('recipientType', conversation.recipientRole);
+      formData.append('content', request.content);
+      formData.append('category', request.category);
+      
+      // Only include conversationId if it's not a temporary one
+      if (!isTempConversation && request.conversationId) {
+        formData.append('conversationId', request.conversationId);
+      }
+      
+      // Add attachments if any
+      if (request.attachments && request.attachments.length > 0) {
+        request.attachments.forEach(file => {
+          formData.append('attachments', file);
+        });
+      }
+      
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // Include cookies for authentication
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
+      }
+      
+      const data = await response.json();
+      const sentMessage = data.message;
+      
+      // If this was a temporary conversation, update it with the real conversation ID
+      if (isTempConversation) {
+        const realConversationId = sentMessage.conversationId;
+        
+        // Remove temporary conversation and messages
+        setConversations(prev => prev.filter(c => c.id !== conversation.id));
+        setMessages(prev => {
+          const updated = { ...prev };
+          delete updated[conversation.id];
+          return updated;
+        });
+        
+        // Refresh conversations to get the real one from database
+        await loadConversations();
+        
+        // Select the real conversation
+        setSelectedConversationId(realConversationId);
+        
+        // Load messages for the real conversation
+        await loadMessages(realConversationId);
+      } else {
+        // Replace temp message with real message
+        const conversationId = sentMessage.conversationId;
+        setMessages(prev => ({
+          ...prev,
+          [conversationId]: (prev[conversationId] || []).map(msg =>
+            msg.id === tempMessage.id ? {
+              ...sentMessage,
+              senderRole: sentMessage.senderType,
+              timestamp: new Date(sentMessage.createdAt),
+              priority: 'normal',
+              status: 'sent',
+              reactions: [],
+              isPinned: false,
+            } : msg
+          ),
+        }));
 
-      // Refresh conversations to update last message
-      await loadConversations();
+        // Refresh conversations to update last message
+        await loadConversations();
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       setError(errorMessage);
@@ -311,7 +614,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
       
       throw err;
     }
-  }, [currentUser, loadConversations]);
+  }, [currentUser, loadConversations, conversations, loadMessages]);
 
   const sendBroadcast = useCallback(async (request: SendBroadcastRequest) => {
     try {
@@ -375,24 +678,41 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
 
   const markAsRead = useCallback(async (conversationId: string) => {
     try {
-      await mockMessagingService.markAsRead(conversationId);
+      // Call real API to mark messages as read
+      const response = await fetch(`/api/conversations/${conversationId}/read`, {
+        method: 'POST',
+        credentials: 'include',
+      });
       
-      // Update local state
+      if (!response.ok) {
+        console.error('Failed to mark as read:', response.status);
+        // Don't throw error, just log it
+      }
+      
+      // Update local state immediately for better UX
       setConversations(prev =>
         prev.map(conv =>
           conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
         )
       );
       
-      // Recalculate unread count
+      // Recalculate total unread count
       setUnreadCount(prev => {
         const conv = conversations.find(c => c.id === conversationId);
-        return prev - (conv?.unreadCount || 0);
+        return Math.max(0, prev - (conv?.unreadCount || 0));
       });
+      
+      // Mark related notifications as read
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.conversationId === conversationId
+            ? { ...notif, isRead: true }
+            : notif
+        )
+      );
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to mark as read';
-      setError(errorMessage);
-      throw err;
+      console.error('Error marking as read:', err);
+      // Don't throw error, just log it
     }
   }, [conversations]);
 
@@ -723,7 +1043,24 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     try {
       setIsLoading(true);
       setError(null);
-      const scheduled = await mockMessagingService.scheduleMessage(request);
+      
+      // Call real API to schedule message
+      const response = await fetch('/api/messages/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to schedule message');
+      }
+
+      const data = await response.json();
+      const scheduled = data.scheduled;
       
       setScheduledMessages(prev => [...prev, scheduled]);
     } catch (err) {
@@ -894,6 +1231,7 @@ export function MessagingProvider({ children, currentUser }: MessagingProviderPr
     loadConversations,
     loadMessages,
     selectConversation,
+    createConversation,
     
     // Actions - Search and Filter
     searchConversations,

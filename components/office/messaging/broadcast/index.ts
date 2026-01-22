@@ -1,8 +1,5 @@
 /**
- * Broadcast Messaging Components
- * 
- * Export all broadcast-related components for the office messaging system.
+ * Broadcast Components Export
  */
 
-export { BroadcastDialog } from './BroadcastDialog';
-export { BroadcastHistory } from './BroadcastHistory';
+export { BroadcastHistoryDialog } from './BroadcastHistoryDialog';

@@ -53,8 +53,10 @@ export function ScheduleMessageDialog({
 }: ScheduleMessageDialogProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>('');
+  const [messageContent, setMessageContent] = useState<string>(draft.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // ============================================================================
   // Computed Values
@@ -73,6 +75,10 @@ export function ScheduleMessageDialog({
 
   // Validate scheduled time is in the future
   const validationError = useMemo(() => {
+    if (!messageContent.trim()) {
+      return 'Please enter a message';
+    }
+    
     if (!scheduledDateTime) {
       return 'Please select a time';
     }
@@ -85,7 +91,7 @@ export function ScheduleMessageDialog({
     }
 
     return null;
-  }, [scheduledDateTime]);
+  }, [scheduledDateTime, messageContent]);
 
   const canSchedule = !validationError && !isSubmitting;
 
@@ -105,28 +111,40 @@ export function ScheduleMessageDialog({
       const request: ScheduleMessageRequest = {
         conversationId,
         recipientId,
-        draft,
+        draft: {
+          ...draft,
+          content: messageContent,
+        },
         scheduledFor: scheduledDateTime,
       };
 
       await onSchedule(request);
 
-      // Reset and close
-      setSelectedDate(new Date());
-      setSelectedTime('');
-      onClose();
+      // Show success message
+      setShowSuccess(true);
+
+      // Auto-close after 2 seconds
+      setTimeout(() => {
+        setSelectedDate(new Date());
+        setSelectedTime('');
+        setMessageContent('');
+        setShowSuccess(false);
+        onClose();
+      }, 2000);
     } catch (err) {
       console.error('Failed to schedule message:', err);
       setError(err instanceof Error ? err.message : 'Failed to schedule message');
     } finally {
       setIsSubmitting(false);
     }
-  }, [scheduledDateTime, validationError, conversationId, recipientId, draft, onSchedule, onClose]);
+  }, [scheduledDateTime, validationError, conversationId, recipientId, draft, messageContent, onSchedule, onClose]);
 
   const handleClose = useCallback(() => {
     setSelectedDate(new Date());
     setSelectedTime('');
+    setMessageContent('');
     setError(null);
+    setShowSuccess(false);
     onClose();
   }, [onClose]);
 
@@ -240,6 +258,23 @@ export function ScheduleMessageDialog({
               </div>
             </div>
 
+            {/* Message Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Message
+              </label>
+              <textarea
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                placeholder="Type your message here..."
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border-0 shadow-md bg-white resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                {messageContent.length} characters
+              </div>
+            </div>
+
             {/* Date Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -267,7 +302,7 @@ export function ScheduleMessageDialog({
                 <SelectTrigger className="w-full border-0 shadow-md bg-white">
                   <SelectValue placeholder="Select time" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
                   {timeOptions.map((time) => (
                     <SelectItem key={time} value={time}>
                       {format(new Date(`2000-01-01T${time}`), 'h:mm a')}
@@ -325,16 +360,36 @@ export function ScheduleMessageDialog({
               </motion.div>
             )}
 
-            {/* Message Preview */}
-            <div className="p-4 rounded-xl bg-gray-50 border-0 shadow-md">
-              <div className="text-sm font-medium text-gray-700 mb-2">Message Preview</div>
-              <div className="text-sm text-gray-900 line-clamp-3">{draft.content}</div>
-              {draft.attachments.length > 0 && (
-                <div className="text-xs text-gray-500 mt-2">
-                  {draft.attachments.length} attachment{draft.attachments.length !== 1 ? 's' : ''}
+            {/* Success Message */}
+            {showSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl bg-green-50 border-0 shadow-md flex items-start gap-3"
+              >
+                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-              )}
-            </div>
+                <div>
+                  <div className="text-sm font-medium text-green-900">Message scheduled successfully!</div>
+                  <div className="text-xs text-green-700 mt-1">
+                    Your message will be sent on {scheduledDateTime && format(scheduledDateTime, 'MMM d, yyyy at h:mm a')}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Attachments Info (if any) */}
+            {draft.attachments.length > 0 && (
+              <div className="p-4 rounded-xl bg-gray-50 border-0 shadow-md">
+                <div className="text-sm font-medium text-gray-700 mb-2">Attachments</div>
+                <div className="text-xs text-gray-500">
+                  {draft.attachments.length} attachment{draft.attachments.length !== 1 ? 's' : ''} will be included
+                </div>
+              </div>
+            )}
             </div>
           </div>
 

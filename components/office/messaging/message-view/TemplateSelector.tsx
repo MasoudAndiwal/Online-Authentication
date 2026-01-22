@@ -23,11 +23,23 @@ import {
   ChevronRight,
   Tag,
   Clock,
-  TrendingUp
+  TrendingUp,
+  MessageCircle,
+  Clipboard,
+  AlertTriangle,
+  Calendar,
+  Megaphone,
+  AlertCircle
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMessageTemplates, previewTemplate } from '@/hooks/office/messaging/use-message-templates';
 import type { MessageTemplate, MessageCategory } from '@/types/office/messaging';
-import { glassmorphism } from '@/lib/design-system/office-messaging';
 
 // ============================================================================
 // Component Props
@@ -42,16 +54,16 @@ interface TemplateSelectorProps {
 }
 
 // ============================================================================
-// Category Icons
+// Category Icons - Using Lucide Icons
 // ============================================================================
 
-const CATEGORY_ICONS: Record<MessageCategory, string> = {
-  general: '💬',
-  administrative: '📋',
-  attendance_alert: '⚠️',
-  schedule_change: '📅',
-  announcement: '📢',
-  urgent: '🚨',
+const CATEGORY_ICON_COMPONENTS: Record<MessageCategory, React.ComponentType<{ className?: string }>> = {
+  general: MessageCircle,
+  administrative: Clipboard,
+  attendance_alert: AlertTriangle,
+  schedule_change: Calendar,
+  announcement: Megaphone,
+  urgent: AlertCircle,
 };
 
 const CATEGORY_COLORS: Record<MessageCategory, string> = {
@@ -228,16 +240,11 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', duration: 0.3 }}
-          className="relative w-full max-w-4xl max-h-[80vh] m-4 rounded-2xl shadow-2xl overflow-hidden"
-          style={{
-            background: glassmorphism.light.background,
-            backdropFilter: glassmorphism.light.backdropFilter,
-            WebkitBackdropFilter: glassmorphism.light.WebkitBackdropFilter,
-          }}
+          className="relative w-full max-w-4xl max-h-[80vh] m-4 rounded-2xl shadow-2xl overflow-hidden bg-white"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
+          <div className="flex items-center justify-between p-6 border-0 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
                 <FileText className="w-6 h-6 text-white" />
@@ -260,7 +267,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           </div>
           
           {/* Search and Filters */}
-          <div className="p-6 border-b border-gray-200/50 space-y-4">
+          <div className="p-6 border-0 shadow-sm space-y-4">
             {/* Search bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -269,7 +276,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search templates..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border-0 shadow-md rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {searchQuery && (
                 <button
@@ -285,7 +292,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             <div className="flex items-center gap-3 flex-wrap">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border-0 shadow-sm ${
                   selectedCategory === 'all'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -294,41 +301,45 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 All
               </button>
               
-              {availableCategories.map(category => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    selectedCategory === category
-                      ? CATEGORY_COLORS[category]
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <span className="mr-1">{CATEGORY_ICONS[category]}</span>
-                  {category.replace('_', ' ')}
-                </button>
-              ))}
+              {availableCategories.map(category => {
+                const IconComponent = CATEGORY_ICON_COMPONENTS[category];
+                return (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border-0 shadow-sm flex items-center gap-1.5 ${
+                      selectedCategory === category
+                        ? CATEGORY_COLORS[category]
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <IconComponent className="w-3.5 h-3.5" />
+                    {category.replace('_', ' ')}
+                  </button>
+                );
+              })}
               
               <div className="flex-1" />
               
-              {/* Sort dropdown */}
+              {/* Sort dropdown - Shadcn Select */}
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-gray-400" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'name' | 'usage' | 'recent')}
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <option value="usage">Most Used</option>
-                  <option value="name">Name</option>
-                  <option value="recent">Recent</option>
-                </select>
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'name' | 'usage' | 'recent')}>
+                  <SelectTrigger className="w-[140px] border-0 shadow-sm">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="usage">Most Used</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="recent">Recent</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
           
-          {/* Template List */}
-          <div className="p-6 overflow-y-auto max-h-[calc(80vh-280px)]">
+          {/* Template List - Hidden Scrollbar */}
+          <div className="p-6 overflow-y-auto max-h-[calc(80vh-280px)] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <motion.div
@@ -359,7 +370,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   >
                     {editingTemplateId === template.id ? (
                       // Edit mode
-                      <div className="p-4 bg-white rounded-lg border-2 border-blue-500 shadow-lg">
+                      <div className="p-4 bg-white rounded-lg border-0 shadow-lg">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-gray-900">{template.name}</h3>
                           <div className="flex items-center gap-2">
@@ -382,7 +393,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         <textarea
                           value={editedContent}
                           onChange={(e) => setEditedContent(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[120px]"
+                          className="w-full px-3 py-2 border-0 shadow-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
                           placeholder="Edit template content..."
                         />
                         <p className="mt-2 text-xs text-gray-500">
@@ -391,13 +402,14 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       </div>
                     ) : (
                       // View mode
-                      <div className="p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
+                      <div className="p-4 bg-white rounded-lg border-0 shadow-md hover:shadow-lg transition-all cursor-pointer">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${CATEGORY_COLORS[template.category]}`}>
-                                {CATEGORY_ICONS[template.category]} {template.category.replace('_', ' ')}
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${CATEGORY_COLORS[template.category]}`}>
+                                {React.createElement(CATEGORY_ICON_COMPONENTS[template.category], { className: 'w-3 h-3' })}
+                                {template.category.replace('_', ' ')}
                               </span>
                             </div>
                             <p className="text-sm text-gray-600 line-clamp-2">
@@ -427,7 +439,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         </div>
                         
                         {/* Template metadata */}
-                        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                        <div className="flex items-center gap-4 mt-3 pt-3 border-0">
                           <div className="flex items-center gap-1 text-xs text-gray-500">
                             <Clock className="w-3 h-3" />
                             Used {template.usageCount} times
