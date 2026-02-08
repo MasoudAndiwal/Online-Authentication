@@ -676,7 +676,7 @@ For support, email support@attendancehub.edu or open an issue on GitHub.
 
 <div align="center">
 
-**Made with ❤️ for Universities**
+**Made with ❤️ for Universities----
 
 [Website](https://attendancehub.edu) • [Documentation](https://docs.attendancehub.edu) • [Report Bug](https://github.com/yourusername/university-attendance/issues) • [Request Feature](https://github.com/yourusername/university-attendance/issues)
 
