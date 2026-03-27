@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/lib/providers/query-provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Using CDN fonts as fallback for Turbopack compatibility
 // const inter = Inter({
@@ -49,6 +50,7 @@ export default function RootLayout({
           <Toaster position="bottom-center" richColors expand={false} />
           <div id="root">{children}</div>
         </QueryProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
